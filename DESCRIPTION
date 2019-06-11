@@ -1,0 +1,20 @@
+Package: RstoxFramework
+Title: The engine of StoX
+Version: 1.0
+Authors@R: c(
+  person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
+  person(given = "Ibrahim", family = "Umar", role = "aut"), 
+  person(given = "Edvin", family = "Fuglebakk", role = "aut"), 
+  person(given = "Aasmund", family = "Skaalevik", role = "aut"), 
+  person(given = "Sindre", family = "Vatnehol", role = "aut"), 
+  person(given = "Esmael Musema", family = "Hassen", role = "aut"), 
+  person(given = "Espen", family = "Johnsen", role = "aut"), 
+  person(given = "Atle", family = "Totland", role = "aut"), 
+  person(given = "Mikko Juhani", family = "Vihtakari", role = "aut"))
+Depends: R (>= 3.5)
+Description: This package contains all functions and framwork for running a StoX project.
+URL: https://github.com/IMR-StoX/RstoxFramework
+BugReports: https://github.com/IMR-StoX/RstoxFramework/issues
+License: LGPL-3
+LazyData: true
+RoxygenNote: 6.1.0

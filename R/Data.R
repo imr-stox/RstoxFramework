@@ -1,5 +1,5 @@
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -17,13 +17,16 @@
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-DATRASConvert <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+DATRASConvert <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -41,13 +44,16 @@ DATRASConvert <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-FilterAcoustic <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+FilterAcoustic <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -65,13 +71,16 @@ FilterAcoustic <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-FilterBiotic <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+FilterBiotic <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -89,13 +98,16 @@ FilterBiotic <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-FilterLanding <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+FilterLanding <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -113,13 +125,16 @@ FilterLanding <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-ReadAcousticXML <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+ReadAcousticXML <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -137,13 +152,16 @@ ReadAcousticXML <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-ReadBioticXML <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+ReadBioticXML <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -161,13 +179,16 @@ ReadBioticXML <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-ReadLandingXML <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+ReadLandingXML <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -185,8 +206,11 @@ ReadLandingXML <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-WriteAcousticDataToXML <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+WriteAcousticDataToXML <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 

@@ -1,5 +1,5 @@
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -17,13 +17,16 @@
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-Catchability <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+Catchability <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -41,13 +44,16 @@ Catchability <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-LengthWeightRelationship <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+LengthWeightRelationship <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -65,13 +71,16 @@ LengthWeightRelationship <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-RegroupLengthDist <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+RegroupLengthDist <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -89,37 +98,272 @@ RegroupLengthDist <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-RelLengthDist <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+RelLengthDist <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
-#' Station length distribution
+##################################################
+##################################################
+#' Calculate length distributions of each combination of station and SpecCat
 #' 
-#' This function calculates length frequency distribution per species per station, either given as percentages, or as counts, possibly normalized by towing distance.
+#' Merges two data tables with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
 #' 
-#' @param parameterName Parameter descrption.
-#' 
-#' @details
-#' This function is awesome and does excellent stuff.
+#' @param BioticData			The BioticData input, which is a list of data.tables as returned from \code{\link{ReadBioticXML}}.
+#' @param LengthDistType		The type of length distribution to use, one of "LengthDist", "NormLengthDist" and "PercentLengthDist" (see 'Details').
+#' @param allowMissingWeight	Logical: If TRUE and \code{LengthDistType} == "PercentLengthDist" accept stations with missing pairs of lengthsampleweight and (total) weight or lengthsamplecatch and (total) catch.
+#' @param fishstationName		The name of the fishstation table in the list BioticData.
+#' @param catchsampleName		The name of the catchsample table in the list BioticData.
+#' @param individualName		The name of the individual table in the list BioticData.
+#'
+#' @details The purpose of function StationLengthDist is to produce a length frequency distribution for each biotic station by species. Three different distributions (LengthDistType) can be generated:
 #' 
 #' @return
 #' A data.table is returned with awesome stuff.
 #' 
 #' @examples
-#' x <- 1
+#' library(Rstox)
+#' # Read biotic data:
+#' dat <- getBaseline("Test_Rstox", input=FALSE, proc="ReadBioticXML", endProcess="ReadBioticXML")
+#' # Convert to data.table, since the current Rstox uses data.frames:
+#' dat <- lapply(dat, data.table::as.data.table)
+#' # Generate the station length distribution using the data.frame names of the current Rstox (crashes because the column 'cruise' has been removed from StoX. We need to use all the keys now.):
+#' SLD <- StationLengthDist(dat, fishstationName = "ReadBioticXML_BioticData_fishstation.txt", catchsampleName = "ReadBioticXML_BioticData_catchsample.txt", individualName = "ReadBioticXML_BioticData_individual.txt")
+#' str(SLD)
 #' 
-#' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
+#' @seealso \code{StationLengthDist} is called by \code{\link[Rstox]{getBaseline}}.
 #' 
-StationLengthDist <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+StationLengthDist <- function(
+    BioticData, 
+    LengthDistType = "PercentLengthDist", 
+    allowMissingWeight = TRUE, 
+    fishstationName = "fishstation",
+    catchsampleName = "catchsample",
+    individualName = "individual",
+    ...) {
+    
+    #### Functions: ####
+    # Fast table function for integer valued data:
+    tabulatePlusOne <- function(x, range) {
+        # Allow for double precision, which may occur when multiplying by a raising factor such as weight/lengthsampleweight:
+        out <- as.double(tabulate(x, range[2]))
+        out[seq(range[1], range[2])]
+    }
+    
+    # Take the sum of a number of length distributions, and return the input object subset to only the sum. This function is used in \code{getStationLengthDist} when summing over part samples, and is somewhat ad hoc:
+    psum <- function(y) {
+        y$WeightedCount <- rowSums(matrix(y$WeightedCount, nrow=numLengthIntervals), na.rm=TRUE)
+        y[seq_len(numLengthIntervals), ]
+    }
+    
+    # Function to get missing data and number of part samples
+    checkCatchsample <- function(x) {
+        has_SpecCat <- !is.na(x$SpecCat)
+        has_weight <- !is.na(x$weight)
+        has_lengthsampleweight <- !is.na(x$lengthsampleweight)
+        has_weight <- has_weight & has_lengthsampleweight
+        has_catchcount <- !is.na(x$catchcount)
+        has_lengthsamplecount <- !is.na(x$lengthsamplecount)
+        has_count <- has_catchcount & has_lengthsamplecount
+        
+        has_weightORcount <- has_weight | has_count
+        has_NOTweightBUTcount <- !has_weight & has_count
+        
+        numPartSamples <- x$samplenumber
+        has_onlyOnePartSample <- numPartSamples == 1
+        
+        out <- list(
+            has_SpecCat = has_SpecCat, 
+            has_weight = has_weight, 
+            has_weightORcount = has_weightORcount, 
+            has_NOTweightBUTcount = has_NOTweightBUTcount, 
+            has_onlyOnePartSample = has_onlyOnePartSample
+        )
+        
+        # Add the tests to the input data table and return:
+        out <- as.data.table(out)
+        cbind(x, out)
+    }
+    
+    
+    #### Names and definitions: ####
+    # Check that the specified  'fishstationName', 'catchsampleName' and 'individualName' are present in the BioticData. This will be handeled by definitions using an initiateRstox function once the infrastructure has been decided upon:
+    if(any(length(BioticData[[fishstationName]]) == 0, length(BioticData[[fishstationName]]) == 0, length(BioticData[[fishstationName]]) == 0)) {
+        stop("'fishstationName', 'catchsampleName' and 'individualName' are not present in the data.")
+    }
+    
+    # Define names of required variables:
+    var <- c("distance", "catchweight", "lengthsampleweight", "catchcount", "lengthsamplecount", "length", "lengthresolution")
+    keys <- c("cruise", "serialnumber", "SpecCat")
+    aggregate_keys <- "samplenumber"
+    keys <- c(keys, aggregate_keys)
+    
+    
+    #### First merge the fish station and catch sample data tables, to be sure to remove the entire station if none of the catch samples have e.g. weight and lengthsampleweight: ####
+    fishstation_catchsample <- merge2(BioticData[[fishstationName]], BioticData[[catchsampleName]], var=var, keys=keys)
+    
+    
+    #### Subset datasets given 'LengthDistType': ####
+    # If LengthDistType="NormLengthDist", accept only stations with 'distance':
+    if(LengthDistType == "NormLengthDist") {
+        fishstation_catchsample <- subset(fishstation_catchsample, !is.na(distance))
+    }
+    
+    # Check validity of the data:
+    fishstation_catchsample <- checkCatchsample(fishstation_catchsample)
+    
+    # If LengthDistType="PercentLengthDist" there is a possibility to accept stations with missing weight and count, as long as there is only one sample:
+    if(LengthDistType == "PercentLengthDist" && allowMissingWeight) {
+        fishstation_catchsample <- subset(fishstation_catchsample, has_SpecCat & (has_weightORcount | has_onlyOnePartSample))
+    }
+    else {
+        fishstation_catchsample <- subset(fishstation_catchsample, has_SpecCat & has_weightORcount)
+    }
+    
+    # Merge fishstation with catchsample, and then the result with individual:
+    thisvar <- c(var, "has_weight", "has_NOTweightBUTcount", "has_onlyOnePartSample")
+    temp <- merge2(fishstation_catchsample, BioticData[[individualName]], var=thisvar, keys=keys, keys.out=TRUE)
+    fishstation_catchsample_individual <- temp$data
+    keys <- temp$keys
+    
+    
+    #### Get length intervals: ####
+    # The 'lengthresolution' from biotic v1.4 is coded as given by getNMDinfo("lengthresolution"), which says code = 1:7, resolutionMeters = c(0.001, 0.005, 0.010, 0.030, 0.050, 0.0005, 0.0001):
+    resolutionMeters = c(0.001, 0.005, 0.010, 0.030, 0.050, 0.0005, 0.0001)
+    lengthRes <- max(resolutionMeters[fishstation_catchsample_individual$lengthresolution], na.rm=TRUE)
+    lengthResCM <- lengthRes * 100
+    
+    # Get largest length resolution:
+    # Round down all length measurements to the nearest length interval (add 1 to make the first interval start at 0, thus rounding down):
+    fishstation_catchsample_individual$lengthInt <- floor(fishstation_catchsample_individual$length / lengthResCM) + 1
+    rangeLengthInt <- range(fishstation_catchsample_individual$lengthInt, na.rm=TRUE)
+    # Get the range of the lengths:
+    rangeLengths <- (range(fishstation_catchsample_individual$lengthInt, na.rm=TRUE) - 1) * lengthResCM
+    # Create a vector of all length intervals:
+    lengthIntervals <- seq(rangeLengths[1], rangeLengths[2], by=lengthResCM)
+    numLengthIntervals <- length(lengthIntervals)
+    
+    
+    #### Generate length distributions per station and SpecCat: ####
+    # Set the keys used by the data.table package:
+    setkeyv(fishstation_catchsample_individual, cols=keys)
+    byGrp <- keys
+    
+    # Declare the variables used in the fishstation_catchsample_individual[] expression below (this is done to avoid warnings when building the package):
+    . <- NULL
+    distance <- NULL
+    has_SpecCat <- NULL
+    has_weightORcount <- NULL
+    has_onlyOnePartSample <- NULL
+    lengthInt <- NULL
+    weight <- NULL
+    lengthsampleweight <- NULL
+    has_weight <- NULL
+    has_NOTweightBUTcount <- NULL
+    WeightedCount <- NULL
+    count <- NULL
+    lengthsamplecount <- NULL
+    Station <- NULL
+    cruise <- NULL
+    serialnumber <- NULL
+    
+    # Use the data.table package to generate the length distributions:
+    out <- fishstation_catchsample_individual[,  .(
+        "WeightedCount" = tabulatePlusOne(lengthInt, rangeLengthInt), 
+        "LengthGroup (cm)" = lengthIntervals, 
+        "LengthInterval (cm)" = rep(lengthResCM[1], numLengthIntervals), 
+        "LengthDistType" = rep(LengthDistType[1], numLengthIntervals),
+        "distance" = rep(distance[1], numLengthIntervals),
+        "weight" = rep(weight[1], numLengthIntervals),
+        "lengthsampleweight" = rep(lengthsampleweight[1], numLengthIntervals), 
+        "has_weight" = rep(has_weight[1], numLengthIntervals),
+        "has_NOTweightBUTcount" = rep(has_NOTweightBUTcount[1], numLengthIntervals), 
+        "has_onlyOnePartSample" = rep(has_onlyOnePartSample[1], numLengthIntervals)
+    ), by=byGrp]
+    
+    
+    #### Sum over part samples: ####
+    # Apply so called raising factors, which are total weight/count divided by sample weight/count:
+    out[has_weight==TRUE, WeightedCount := WeightedCount * weight / lengthsampleweight]
+    if(any(out$has_NOTweightBUTcount, na.rm=TRUE)) {
+        message("Here there seems to be bug, where count is not present, and this shoul also be catchcount")
+        out[has_NOTweightBUTcount==TRUE, WeightedCount := WeightedCount * count / lengthsamplecount]
+    }
+    
+    thiskeys <- setdiff(keys, aggregate_keys)
+    setkeyv(out, cols=thiskeys)
+    
+    # Sum over part samples only if there are stations with more than one part sample:
+    if(!all(out$has_onlyOnePartSample, na.rm=TRUE)) {
+        out <- out[has_onlyOnePartSample == TRUE, psum(.SD), by=thiskeys]
+    }
+    
+    
+    ##### Output: #####
+    # Define the Station column, which is a concatination of cruise and seialno:
+    out[, Station := paste(cruise, serialnumber, sep="/")]
+    
+    # Convert to percent:
+    if(LengthDistType == "PercentLengthDist") {
+        out[, WeightedCount := WeightedCount/sum(WeightedCount, na.rm=TRUE) * 100, by=thiskeys]
+    }
+    # Normalize by trawled distance:
+    else if(LengthDistType == "NormLengthDist") {
+        out[, WeightedCount := WeightedCount/distance, by=thiskeys]
+    }
+    
+    out
+}
+#*********************************************
+#*********************************************
+#' Merge two data tables with all=TRUE and the specified columns and keys.
+#' 
+#' Merges two data tables (see \code{\link[data.table]{data.table}}) with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
+#' 
+#' @param x,y		Two data tables to be merged.
+#' @param var		A character vector of names of the columns to keep while merging.
+#' @param keys		A character vector of names of the columns to merge by (see the \code{by} argument in \code{\link[data.table]{merge}}).
+#' @param keys.out	Logical: If TRUE return a list with the keys used and the merged data.
+#'
+#' @return A merged data table.
+#' 
+#' @noRd
+#'
+#' @import data.table
+#' 
+merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "length", "lengthresolution"), keys=c("cruise", "serialnumber", "samplenumber", "SpecCat"), keys.out=FALSE) {
+    # Get the keys common for the two data tables:
+    commonVar <- intersect(names(x), names(y))
+    thisKeys <- intersect(keys, commonVar)
+    # Get the variables requested for x and y:
+    xvar <- intersect(names(x), c(var, keys))
+    yvar <- intersect(names(y), c(var, keys))
+    # Remove variables named identically ('weight' in biotic v1.4):
+    yvar <- setdiff(yvar, xvar)
+    # Add the keys:
+    xvar <- unique(c(thisKeys, xvar))
+    yvar <- unique(c(thisKeys, yvar))
+    browser()
+    # Merge the data.tables:
+    out <- merge(x[,xvar, with=FALSE], y[,yvar, with=FALSE], all=TRUE, by=thisKeys)
+    
+    if(keys.out) {
+        list(data=out, keys=thisKeys)
+    }
+    else {
+        out
+    }
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -137,13 +381,16 @@ StationLengthDist <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-StationSpecCatDensity <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+StationSpecCatDensity <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -161,13 +408,16 @@ StationSpecCatDensity <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-SweptAreaDensity <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+SweptAreaDensity <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -185,8 +435,11 @@ SweptAreaDensity <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-TotalLengthDist <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+TotalLengthDist <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 

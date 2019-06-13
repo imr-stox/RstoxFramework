@@ -1,5 +1,5 @@
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -17,13 +17,16 @@
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-BioStationAssignment <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+BioStationAssignment <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -41,13 +44,16 @@ BioStationAssignment <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-BioStationWeighting <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+BioStationWeighting <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -65,13 +71,16 @@ BioStationWeighting <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-DefineAcousticPSU <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+DefineAcousticPSU <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -89,13 +98,16 @@ DefineAcousticPSU <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-DefineStrata <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+DefineStrata <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 
-#============================================
-#============================================
+##################################################
+##################################################
 #' Some title
 #' 
 #' Some description
@@ -113,8 +125,11 @@ DefineStrata <- function(){
 #' 
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
-DefineSweptAreaPSU <- function(){
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline()
+#' @export
+#' @import data.table
+#' 
+DefineSweptAreaPSU <- function() {
+	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
 }
 
 

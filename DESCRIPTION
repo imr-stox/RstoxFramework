@@ -18,3 +18,5 @@ BugReports: https://github.com/IMR-StoX/RstoxFramework/issues
 License: LGPL-3
 LazyData: true
 RoxygenNote: 6.1.0
+Imports: 
+    data.table (>= 1.10.4-3)

@@ -2,26 +2,45 @@
 % Please edit documentation in R/Biotic.R
 \name{StationLengthDist}
 \alias{StationLengthDist}
-\title{Station length distribution}
+\title{Calculate length distributions of each combination of station and SpecCat}
 \usage{
-StationLengthDist()
+StationLengthDist(BioticData, LengthDistType = "PercentLengthDist",
+  allowMissingWeight = TRUE, fishstationName = "fishstation",
+  catchsampleName = "catchsample", individualName = "individual", ...)
 }
 \arguments{
-\item{parameterName}{Parameter descrption.}
+\item{BioticData}{The BioticData input, which is a list of data.tables as returned from \code{\link{ReadBioticXML}}.}
+
+\item{LengthDistType}{The type of length distribution to use, one of "LengthDist", "NormLengthDist" and "PercentLengthDist" (see 'Details').}
+
+\item{allowMissingWeight}{Logical: If TRUE and \code{LengthDistType} == "PercentLengthDist" accept stations with missing pairs of lengthsampleweight and (total) weight or lengthsamplecatch and (total) catch.}
+
+\item{fishstationName}{The name of the fishstation table in the list BioticData.}
+
+\item{catchsampleName}{The name of the catchsample table in the list BioticData.}
+
+\item{individualName}{The name of the individual table in the list BioticData.}
 }
 \value{
 A data.table is returned with awesome stuff.
 }
 \description{
-This function calculates length frequency distribution per species per station, either given as percentages, or as counts, possibly normalized by towing distance.
+Merges two data tables with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
 }
 \details{
-This function is awesome and does excellent stuff.
+The purpose of function StationLengthDist is to produce a length frequency distribution for each biotic station by species. Three different distributions (LengthDistType) can be generated:
 }
 \examples{
-x <- 1
+library(Rstox)
+# Read biotic data:
+dat <- getBaseline("Test_Rstox", input=FALSE, proc="ReadBioticXML", endProcess="ReadBioticXML")
+# Convert to data.table, since the current Rstox uses data.frames:
+dat <- lapply(dat, data.table::as.data.table)
+# Generate the station length distribution using the data.frame names of the current Rstox:
+SLD <- StationLengthDist(dat, fishstationName = "ReadBioticXML_BioticData_fishstation.txt", catchsampleName = "ReadBioticXML_BioticData_catchsample.txt", individualName = "ReadBioticXML_BioticData_individual.txt")
+str(SLD)
 
 }
 \seealso{
-\code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
+\code{StationLengthDist} is called by \code{\link[Rstox]{getBaseline}}.
 }

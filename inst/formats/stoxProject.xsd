@@ -1,0 +1,864 @@
+<?xml version="1.0"?>
+<!-- Based on http://www.imr.no/formats/stox/v1.2/stoxv1_2.xsd, 
+moved processdata from StoxProjectType to ProcessType and changed maxOccurs so that it can only exist once for each process, 
+Changed all elements in procesdata to be optional so that we don't have to add a lot of empty tags to processes with no process data.
+Merged TemporalType, GearfactorType, and SpatialType into CategoricalCovariateType.
+extended with platformfactor and covparam 
+
+added a type inputdata to abstract common functionality in stox for linking a data source to the output of a previous source.
+extracted commonly provided parameter useProcessdata (element 'skip') to abstract responsisbility for not running a function from the functions themselves.
+-->
+<xs:schema version="1.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           targetNamespace="http://www.imr.no/formats/stox/v3"
+           xmlns="http://www.imr.no/formats/stox/v3"
+           xmlns:imrd="http://www.imr.no/formats/nmddocumentation/v1_0">
+
+    <xs:annotation>
+        <xs:documentation>
+            <imrd:imrDoc>
+                <imrd:description lang="en">
+                    Schema for StoX process models. Supports storing information necessary for reproducing a StoX-estimate given the same data files are provided. It also serves to save state for the StoX interface.
+                    The specification of StoX models does not enforce self-containment. That is, data and resource files can be linked from external sources, which may be local resources inaccessible at run time.
+                    Constructs like 'processDataType' and 'prosessType/skip' are provided to support importing of resource data to xml, and storing of manual resource-manipulation.
+                </imrd:description>
+            </imrd:imrDoc>
+        </xs:documentation>
+    </xs:annotation>
+                
+    <xs:element name="projects" type="ProjectsType" >
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">A collection of stox projects.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+    </xs:element>
+
+    <xs:element name="project" type="StoxProjectType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">A stox project.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+    </xs:element>
+
+    <!--
+        Stox type.
+    -->
+    <xs:complexType name="ProjectsType">
+        <xs:sequence>
+            <xs:element name="project" type="StoxProjectType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--
+        Stox project type
+    -->
+    <xs:complexType name="StoxProjectType">
+        <xs:sequence>
+            <xs:element name="meta" type="MetaType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="model" type="ModelsType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            
+            <!-- moved to processType 
+            <xs:element name="processdata" type="ProcessdataType" minOccurs="0" maxOccurs="unbounded"/>
+            -->
+        </xs:sequence>
+        <xs:attribute name="template" type="xs:string" use="optional" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Need to define this</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="lastmodified" type="xs:string" use="optional" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Need to define this</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="rstoxversion" type="xs:string" use="optional" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Specifies which rstox version the model is specified for.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="stoxversion" type="xs:string" use="optional" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Specifies which version of the StoX user interface the model is specified for.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="rversion" type="xs:string" use="optional" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Specifies which R version the model is specified for.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="resourceversion" type="xs:string" use="optional" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Need to define this.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="version" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Need to define this.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="ProcessdataType">
+        <xs:sequence>
+            <!-- Made all elements optional, so that each process does not have to get bloated with empty tags -->
+            <xs:element name="bioticassignment" type="BioticassignmentType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="suassignment" type="SuassignmentType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="assignmentresolution" type="AssignmentresolutionType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            
+            <xs:element name="edsupsu" type="EdsupsuType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="psustratum" type="PsustratumType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            
+            <xs:element name="stratumpolygon" type="StratumpolygonType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specification of spatial stratification, may include polygons for mapping positions to strata.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            
+            <xs:element name="temporal" type="CategoricalCovariateType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Mapping for categorical covariate temporal. Maps value for categorical temporal definitions, such as quarters or period to a string describing the time-span encoded by each value for the covariate. The string is formatted as "DD/MM-DD/MM", denoting the start day/month and end day/month of the temporal covariate value. The range is inclusive in both ends.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="gearfactor" type="CategoricalCovariateType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Mapping for categorical covariate gearfactor. Maps common gear definitions to a comma-separated list of gear codes used in the format identified by the 'sourcetype' attribute (may be 'Biotic' or 'Landing').</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="spatial" type="CategoricalCovariateType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Mapping for categorical covariate spatial. Maps common area codes to area codes in the format identified by the 'sourcetype' attribute (may be 'Biotic' or 'Landing').</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="platformfactor" type="CategoricalCovariateType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Mapping for categorical covariate platformfactor. Maps common platform codes to area codes in the format identified by the 'sourcetype' attribute (may be 'Biotic' or 'Landing').</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="covparam" type="CovariateEffectType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies how covariates should be modelled in estimation (fixed effect, random effect ... etc).</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ageerror" type="AgeErrorType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Encodes the probability of errors in age determination.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="stratumneighbour" type="StratumNeighbourType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Encodes which covariates values in &lt;spatial&gt; are to be considered neighbours. Used for conditional autoregressive models.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="StratumpolygonType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">A specification of spatial stratification.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="value" type="StratumpolygonValueType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specification of a spatial stratum.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="StratumpolygonValueType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Type for polygon definitions. Content is determined by the value for polygonvairable.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="polygonkey" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">Name of spatial stratum.</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="polygonvariable" type="PolygonVariableType">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">Specifies what kind of information about stratumpolygon is encoded in this element.</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:simpleType name="PolygonVariableType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="includeintotal">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="polygon">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Content of StratumpolygonValueType is a WKT representations of polygons in WGS 84 coordinates.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="PsustratumType">
+        <xs:sequence>
+            <xs:element name="stratum" type="psustratumValueType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="psustratumValueType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="psu" type="xs:string" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="EdsupsuType">
+        <xs:sequence>
+            <xs:element name="psu" type="EdsupsuValueType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="EdsupsuValueType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="edsu" type="xs:string" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="AssignmentresolutionType">
+        <xs:sequence>
+            <xs:element name="value" type="AssignmentresolutionValueType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="AssignmentresolutionValueType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="variable" type="xs:string" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="SuassignmentType">
+        <xs:sequence>
+            <xs:element name="assignmentid" type="AssignmentType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="AssignmentType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="sampleunit" type="xs:string" />
+                <xs:attribute name="estlayer" type="xs:string" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="BioticassignmentType">
+        <xs:sequence>
+            <xs:element name="stationweight" type="StationweightType" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="StationweightType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="assignmentid" type="xs:string" />
+                <xs:attribute name="station" type="xs:string" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+
+    <!--
+        Meta type.
+    -->
+    <xs:complexType name="MetaType">
+        <xs:sequence>
+            <xs:element name="description" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="surveyTimeseriesName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--
+        Model type.
+    -->
+    <xs:complexType name="ModelsType">
+        <xs:sequence>
+            <xs:element name="process" type="ProcessType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="ProcessType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">A process maps data and parameters to a function to be executed. A process may have several data inputs of different types, but may produce only one output. Processdata is considered an output, so a process can not both write to processdata and produce other kinds of output.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="function" type="FunctionType" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Identifies the StoX-function to be exectued in this process.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="enabled" type="xs:boolean" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether the function should be executed. The output and processData from processes that are not enabled are not available to later processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="skip" type="xs:boolean" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether the function should be exectued. Any previously calculated processData from processes that have 'skip' set will be available for later processes</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="respondingui" type="xs:boolean" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="breakingui" type="xs:boolean" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="fileoutput" type="xs:boolean" minOccurs="0" >
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether output from this process is to be written to space for intermediate results.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="inputdata" type="inputDataType" minOccurs="0" maxOccurs="unbounded">
+                <!-- Added to abstract input handling from the functions -->
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Named inputdata to the function identified in &lt;function&gt;. Data should be assigned to the functions formal parameters by name, not order.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="parameter" type="StringWithParamNameType" minOccurs="0" maxOccurs="unbounded" >
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Named parameters to the function identified in &lt;function&gt;. Parameters should be assigned by name, not order.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="output" type="DataFormatType" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Identifies the data format of the output from this process, for identification of which other process can consume it. A Special case is the type ProcessData which indicate that output from the process is written to &lt;processsata&gt; </imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <!-- moved proceddata from StoxProjectType and changed maxOccurs so that it can only exist once for each process-->
+            <xs:element name="processdata" type="ProcessdataType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Processdata produced by this element. Only populated if &lt;output&gt; contains the text 'ProcessData'. Processdata are used for importing configurations from resourec files, or storing manual selections in interfaces such as maps. Processdata may be used for input to other process, and a process may use its own processdata (stored from previous executions) as input.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required" />
+    </xs:complexType>
+    
+    <xs:complexType name="inputDataType">
+        <!-- Added to abstract input handling from the functions -->
+        <xs:attribute name="dataparameter">
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Name of the formal argument of the function to be executed that this data should be assigned to.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="sourcetype" type="DataFormatType">
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Identifies the data format of this input.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="inputprocess" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Name of the process that input should be taken from. That is the output of 'inputprocess' that matches the 'sourcetype' of this element will be bound to the 'dataparameter' of the executed function. The inputprocess can not occur later in the model than the process using its output, but a process may consume its own processdata from previous executions. </imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    
+    <xs:simpleType name="FunctionType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">FunctionType is extracted as separate type, so that restrictions on function names can be added.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string" />
+    </xs:simpleType>
+
+    <xs:simpleType name="DataFormatType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Specifies which data formats that are acceptable as output and input in StoX.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AcousticData">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output is Acoustic data. Format is internal to StoX-processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="LandingData">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output is Landing data. Format is internal to StoX-processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="BioticData">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output is Biotic data. Format is internal to StoX-processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ProcessData">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output is written to processData. Format documented in this schema.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+
+    <xs:complexType name="StringWithParamNameType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:string" use="required" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+
+    <!-- Merged TemporalType, GearfactorType, and SpatialType into this one type -->
+    <xs:complexType name="CategoricalCovariateType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">A collection of categorical covariate mappings.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="value" type="CategoricalValueType" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+    
+    
+    <xs:complexType name="CovariateEffectType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">A collection of effect spesifications for estimation.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="value" type="CovariateEffectElementType" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">An effect spesification.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CovariateEffectElementType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Type for effect specification. The value for the effect is the content of this element.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="covariatetable" type="xs:string" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">Identifies which covariate this effect applies to.</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="parameter" type="CovariateEffectSpecType" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">Identifies the effect. Possible effects are: CovariateType (with possible values 'Fixed' and 'Random') and UseStratumNeighbour (with possible values 'true' and 'false') </imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:simpleType name="CovariateEffectSpecType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="CovariateType">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifying whether the covariate should be treated as a fixed or random effect.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="UseStratumNeighbour">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifying whether a spatial covariate should be treated as a conditonal autoreggressive variable for obtaining parameters of unsampled areas.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:complexType name="AgeErrorType">
+        <xs:sequence>
+            <xs:element name="probability" type="ProbabiltityType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Encodes the conditional probability of reading an age given the true age.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>  
+    <xs:complexType name="StratumNeighbourType">
+        <xs:sequence>
+            <xs:element name="value" type="StratumNeighbourValueType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Maps a value for spatial covariate to its neighbours. Must be symetric, so that if a is a neighbour of b, b is also a neigbour of a.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>       
+    
+    <xs:complexType name="CategoricalValueType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Type for mapping a categorical value to some structured text identifying how each categorical value is identified for a given source type or data format. The structured text is the content of elements of this type.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="covariatesourcetype" type="xs:string" use="required" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">Specifies which data format or soruce type this mapping applies to.</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="covariate" type="xs:string" use="required" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">A value for the mapped covariate, common across 'sourcetype's. </imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:complexType name="ProbabiltityType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Type for the conditional probability of observing ages, given the true age. The probability is the content of elements of this type.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="readage" type="xs:string" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">The obsered / read age</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="realage" type="xs:string" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">The true age.</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>   
+    <xs:complexType name="StratumNeighbourValueType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Type for mapping a spatial covariate to its neighbours. Content is a comma-separated list of neighbours (must all be valid values ofr the covariate spatial).</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="variable" type="xs:string" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">Identifies the value of the spatial covariate that is mapped.</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>      
+
+</xs:schema>

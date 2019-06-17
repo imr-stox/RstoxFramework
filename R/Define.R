@@ -101,8 +101,20 @@ DefineSpecCat <- function() {
 #' @export
 #' @import data.table
 #' 
-MergeAgeDeterminationToIndividual <- function() {
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
+MergeAgeDeterminationToIndividual <- function(BioticData, 
+    individualName = "individual",
+	ageDeterminationName = "agedetermination",
+    ...) {
+
+    if(any(length(BioticData[[individualName]]) == 0, length(BioticData[[ageDeterminationName]]) == 0)) {
+        stop("'individual' and/or 'agedetermination' are not present in the data.")
+    }	
+		
+    commonVar <- intersect(names(BioticData[[individualName]]), names(BioticData[[ageDeterminationName]]))
+
+    out <- merge(BioticData[[individualName]], BioticData[[ageDeterminationName]], by = commonVar)
+
+    return (out)
 }
 
 

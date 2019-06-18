@@ -2,7 +2,7 @@
 % Please edit documentation in R/Biotic.R
 \name{StationLengthDist}
 \alias{StationLengthDist}
-\title{Calculate length distributions of each combination of station and SpecCat}
+\title{Station length distribution}
 \usage{
 StationLengthDist(BioticData, LengthDistType = "PercentLengthDist",
   allowMissingWeight = TRUE, fishstationName = "fishstation",
@@ -25,7 +25,7 @@ StationLengthDist(BioticData, LengthDistType = "PercentLengthDist",
 A data.table is returned with awesome stuff.
 }
 \description{
-Merges two data tables with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
+This function calculates length frequency distribution per SpecCat per serialnumber, either given as percentages, or as counts, possibly normalized by towing distance.
 }
 \details{
 The purpose of function StationLengthDist is to produce a length frequency distribution for each biotic station by species. Three different distributions (LengthDistType) can be generated:
@@ -37,7 +37,10 @@ dat <- getBaseline("Test_Rstox", input=FALSE, proc="ReadBioticXML", endProcess="
 # Convert to data.table, since the current Rstox uses data.frames:
 dat <- lapply(dat, data.table::as.data.table)
 # Generate the station length distribution using the data.frame names of the current Rstox:
-SLD <- StationLengthDist(dat, fishstationName = "ReadBioticXML_BioticData_fishstation.txt", catchsampleName = "ReadBioticXML_BioticData_catchsample.txt", individualName = "ReadBioticXML_BioticData_individual.txt")
+SLD <- StationLengthDist(dat, 
+    fishstationName = "ReadBioticXML_BioticData_fishstation.txt", 
+    catchsampleName = "ReadBioticXML_BioticData_catchsample.txt", 
+    individualName = "ReadBioticXML_BioticData_individual.txt")
 str(SLD)
 
 }

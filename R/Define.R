@@ -29,7 +29,7 @@ DefineIndividualWeightGram <- function(BioticData, individualName = "individual"
 
     temp$IndividualWeightGram <- temp$individualweight * 1000
 
-    BioticData[[individualName]] = temp
+    BioticData[[individualName]] <- temp
 
     BioticData	
 }

@@ -4,7 +4,7 @@
 \alias{ReadLandingXML}
 \title{Read landing XML files}
 \usage{
-ReadLandingXML(FileNames, landingFormat = NULL)
+ReadLandingXML(FileNames = NA, landingFormat = NULL)
 }
 \arguments{
 \item{FileNames}{A vector of paths to XML files.}

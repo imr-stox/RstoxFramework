@@ -4,7 +4,7 @@
 \alias{ReadAcousticXML}
 \title{Read acoustic XML files}
 \usage{
-ReadAcousticXML(FileNames, acousticFormat = "25")
+ReadAcousticXML(FileNames = NA, acousticFormat = "25")
 }
 \arguments{
 \item{FileNames}{A vector of paths to XML files.}

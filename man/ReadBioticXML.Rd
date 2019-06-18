@@ -4,14 +4,14 @@
 \alias{ReadBioticXML}
 \title{Read biotic XML files}
 \usage{
-ReadBioticXML(FileNames, SpecCatMethod = "ResourceFile",
+ReadBioticXML(FileNames = NA, SpecCatMethod = "ResourceFile",
   SpecCat = NULL, SpecVarBiotic = "commonname", SpecVarRef = NULL,
   SpecCatRef = NULL, bioticFormat = "3.0")
 }
 \arguments{
 \item{FileNames}{A vector of paths to XML files.}
 
-\item{SpecCatMethod}{The method used for defining the SpecCat variable, which is the species variable used by StoX. The \code{SpecCatMethod} parameter has the following three possible values: (1) "SelectVar", which copies the column \code{SpecVarBiotic} of the "catchsample" table to the SpecCat column of the tables "catchsample", "individual" and all non-empty tables at levels lower than these (run e.g. getBioticLevels("3.0") for a table of levels from the biotic version 3.0 format). (2) "Expression", which ***************. (3) "ResourceFile", which requires the parameters \code{FileName}, \code{SpecVarBiotic}, \code{SpecVarRef} and \code{SpecCatRef} to be set. See Details.}
+\item{SpecCatMethod}{The method used for defining the SpecCat variable, which is the species variable used by StoX. The \code{SpecCatMethod} parameter has the following three possible values: (1) "SelectVar", which copies the column \code{SpecVarBiotic} of the "catchsample" table to the SpecCat column of the tables "catchsample", "individual" and all non-empty tables at lower levels. (2) "Expression", which ***************. (3) "ResourceFile", which requires the parameters \code{FileName}, \code{SpecVarBiotic}, \code{SpecVarRef} and \code{SpecCatRef} to be set. See Details.}
 
 \item{SpecCat}{An expression indicating how to create the SpecCat********************.}
 

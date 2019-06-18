@@ -4,7 +4,8 @@
 \alias{DefineIndividualWeightGram}
 \title{Some title}
 \usage{
-DefineIndividualWeightGram()
+DefineIndividualWeightGram(BioticData, individualName = "individual",
+  ...)
 }
 \arguments{
 \item{parameterName}{Parameter descrption.}

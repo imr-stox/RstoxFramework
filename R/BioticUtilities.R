@@ -27,7 +27,7 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
     # Add the keys:
     xvar <- unique(c(thisKeys, xvar))
     yvar <- unique(c(thisKeys, yvar))
-    browser()
+    
     # Merge the data.tables:
     out <- merge(x[,xvar, with=FALSE], y[,yvar, with=FALSE], all=TRUE, by=thisKeys)
     

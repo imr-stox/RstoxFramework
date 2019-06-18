@@ -120,13 +120,36 @@ MergeAgeDeterminationToIndividual <- function(BioticData,
 
     if(any(length(BioticData[[individualName]]) == 0, length(BioticData[[ageDeterminationName]]) == 0)) {
         stop("'individual' and/or 'agedetermination' are not present in the data.")
-    }	
-		
-    commonVar <- intersect(names(BioticData[[individualName]]), names(BioticData[[ageDeterminationName]]))
-
-    out <- merge(BioticData[[individualName]], BioticData[[ageDeterminationName]], by = commonVar)
-
-    return (out)
+    }
+    
+    # Merge individual and agedetermination:
+    temp <- merge(BioticData[[individualName]], BioticData[[ageDeterminationName]], by = commonVar, all = TRUE)
+    
+    # Warning if there are more tmhan one age reading and preferredagereading is NA:
+    temp$NumberOfAgeReadings <- table(apply(temp[, commonVar], 1, paste, collapse="_"))
+    missing <- temp$NumberOfAgeReadings > 1 & is.na(temp$preferredagereading)
+    if(any(missing)) {
+        missingInfo <- paste(commonVar, BioticData[[individualName]][, commonVar][which(missing),], collapse=", ", sep=" = ")
+        warning("The following individuals had several age readings but no preferred age reading. The first was chosen:\n", missingInfo)
+    }
+    
+    # Insert 1 for missing preferredagereading:
+    temp$PreferredAgeReadingTemp <- replace(temp$preferredagereading, is.na(temp$preferredagereading), values=1)
+    
+    # Pick out the preffered age readings:
+    isPreferred <- temp$PreferredAgeReadingTemp == temp$agedeterminationid
+    # Do not remove the individuals wich do not have age determination:
+    isPreferred <- replace(isPreferred, is.na(isPreferred), values=TRUE)
+    # Remove the non-preferred age readings:
+    temp <- subset(temp, isPreferred)
+    
+    # Remove the temporary preferredagereading (since we inserted ones above):
+    temp$NumberOfAgeReadings <- NULL
+    temp$PreferredAgeReadingTemp <- NULL
+    
+    # Replace the individual table by the merged individual and agedetermination table, and return the biotic data:
+    BioticData[[individualName]] <- temp
+    BioticData
 }
 
 

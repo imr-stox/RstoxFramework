@@ -23,11 +23,15 @@
 DefineIndividualWeightGram <- function(BioticData, individualName = "individual", ...) {
     if(any(length(BioticData[[individualName]]) == 0)) {
         stop("'individual' is not present in the data.")
-    }    
+    }   
 
-    BioticData[[individualName]]$individualWeightGram <- BioticData[[individualName]]$individualweight * 1000
+    temp <- BioticData[[individualName]]
 
-    return (BioticData[[individualName]])	
+    temp$IndividualWeightGram <- temp$individualweight * 1000
+
+    BioticData[[individualName]] = temp
+
+    BioticData	
 }
 
 
@@ -58,9 +62,13 @@ DefineLengthCentimeter <- function(BioticData, individualName = "individual", ..
         stop("'individual' is not present in the data.")
     }    
 
-    BioticData[[individualName]]$lengthCentimeter <- BioticData[[individualName]]$length * 100
+    temp <- BioticData[[individualName]]
 
-    return (BioticData[[individualName]])
+    temp$LengthCentimeter <- temp$length * 100
+
+    BioticData[[individualName]] <- temp
+
+    BioticData
 }
 
 

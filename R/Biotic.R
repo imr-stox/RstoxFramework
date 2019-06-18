@@ -108,9 +108,9 @@ RelLengthDist <- function() {
 
 ##################################################
 ##################################################
-#' Calculate length distributions of each combination of station and SpecCat
+#' Station length distribution
 #' 
-#' Merges two data tables with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
+#' This function calculates length frequency distribution per SpecCat per serialnumber, either given as percentages, or as counts, possibly normalized by towing distance.
 #' 
 #' @param BioticData			The BioticData input, which is a list of data.tables as returned from \code{\link{ReadBioticXML}}.
 #' @param LengthDistType		The type of length distribution to use, one of "LengthDist", "NormLengthDist" and "PercentLengthDist" (see 'Details').
@@ -130,8 +130,11 @@ RelLengthDist <- function() {
 #' dat <- getBaseline("Test_Rstox", input=FALSE, proc="ReadBioticXML", endProcess="ReadBioticXML")
 #' # Convert to data.table, since the current Rstox uses data.frames:
 #' dat <- lapply(dat, data.table::as.data.table)
-#' # Generate the station length distribution using the data.frame names of the current Rstox (crashes because the column 'cruise' has been removed from StoX. We need to use all the keys now.):
-#' SLD <- StationLengthDist(dat, fishstationName = "ReadBioticXML_BioticData_fishstation.txt", catchsampleName = "ReadBioticXML_BioticData_catchsample.txt", individualName = "ReadBioticXML_BioticData_individual.txt")
+#' # Generate the station length distribution using the data.frame names of the current Rstox:
+#' SLD <- StationLengthDist(dat, 
+#'     fishstationName = "ReadBioticXML_BioticData_fishstation.txt", 
+#'     catchsampleName = "ReadBioticXML_BioticData_catchsample.txt", 
+#'     individualName = "ReadBioticXML_BioticData_individual.txt")
 #' str(SLD)
 #' 
 #' @seealso \code{StationLengthDist} is called by \code{\link[Rstox]{getBaseline}}.
@@ -165,7 +168,7 @@ StationLengthDist <- function(
     # Function to get missing data and number of part samples
     checkCatchsample <- function(x) {
         has_SpecCat <- !is.na(x$SpecCat)
-        has_weight <- !is.na(x$weight)
+        has_weight <- !is.na(x$catchweight)
         has_lengthsampleweight <- !is.na(x$lengthsampleweight)
         has_weight <- has_weight & has_lengthsampleweight
         has_catchcount <- !is.na(x$catchcount)
@@ -175,7 +178,7 @@ StationLengthDist <- function(
         has_weightORcount <- has_weight | has_count
         has_NOTweightBUTcount <- !has_weight & has_count
         
-        numPartSamples <- x$samplenumber
+        numPartSamples <- x$catchpartnumber
         has_onlyOnePartSample <- numPartSamples == 1
         
         out <- list(
@@ -199,8 +202,13 @@ StationLengthDist <- function(
     }
     
     # Define names of required variables:
-    var <- c("distance", "catchweight", "lengthsampleweight", "catchcount", "lengthsamplecount", "length", "lengthresolution")
-    keys <- c("cruise", "serialnumber", "SpecCat")
+    browser()
+    var <- c("distance", "catchpartnumber", "catchweight", "lengthsampleweight", "catchcount", "lengthsamplecount", "length", "lengthresolution")
+    #keys <- c("cruise", "serialnumber", "SpecCat")
+    keys <- getBioticKeys()
+    # Add the SpecCat, since we wish to present the length distribution per species:
+    keys <- c(keys, "SpecCat")
+    # Define also the key to use for aggregating the length distribution, i.e., one distribution per station:
     aggregate_keys <- "samplenumber"
     keys <- c(keys, aggregate_keys)
     
@@ -262,15 +270,13 @@ StationLengthDist <- function(
     has_weightORcount <- NULL
     has_onlyOnePartSample <- NULL
     lengthInt <- NULL
-    weight <- NULL
+    catchweight <- NULL
     lengthsampleweight <- NULL
     has_weight <- NULL
     has_NOTweightBUTcount <- NULL
     WeightedCount <- NULL
     count <- NULL
     lengthsamplecount <- NULL
-    Station <- NULL
-    cruise <- NULL
     serialnumber <- NULL
     
     # Use the data.table package to generate the length distributions:
@@ -280,7 +286,7 @@ StationLengthDist <- function(
         "LengthInterval (cm)" = rep(lengthResCM[1], numLengthIntervals), 
         "LengthDistType" = rep(LengthDistType[1], numLengthIntervals),
         "distance" = rep(distance[1], numLengthIntervals),
-        "weight" = rep(weight[1], numLengthIntervals),
+        "weight" = rep(catchweight[1], numLengthIntervals),
         "lengthsampleweight" = rep(lengthsampleweight[1], numLengthIntervals), 
         "has_weight" = rep(has_weight[1], numLengthIntervals),
         "has_NOTweightBUTcount" = rep(has_NOTweightBUTcount[1], numLengthIntervals), 
@@ -307,7 +313,7 @@ StationLengthDist <- function(
     
     ##### Output: #####
     # Define the Station column, which is a concatination of cruise and seialno:
-    out[, Station := paste(cruise, serialnumber, sep="/")]
+    out[, Station := paste(missionnumber, serialnumber, sep="/")]
     
     # Convert to percent:
     if(LengthDistType == "PercentLengthDist") {
@@ -319,46 +325,6 @@ StationLengthDist <- function(
     }
     
     out
-}
-#*********************************************
-#*********************************************
-#' Merge two data tables with all=TRUE and the specified columns and keys.
-#' 
-#' Merges two data tables (see \code{\link[data.table]{data.table}}) with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
-#' 
-#' @param x,y		Two data tables to be merged.
-#' @param var		A character vector of names of the columns to keep while merging.
-#' @param keys		A character vector of names of the columns to merge by (see the \code{by} argument in \code{\link[data.table]{merge}}).
-#' @param keys.out	Logical: If TRUE return a list with the keys used and the merged data.
-#'
-#' @return A merged data table.
-#' 
-#' @noRd
-#'
-#' @import data.table
-#' 
-merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "length", "lengthresolution"), keys=c("cruise", "serialnumber", "samplenumber", "SpecCat"), keys.out=FALSE) {
-    # Get the keys common for the two data tables:
-    commonVar <- intersect(names(x), names(y))
-    thisKeys <- intersect(keys, commonVar)
-    # Get the variables requested for x and y:
-    xvar <- intersect(names(x), c(var, keys))
-    yvar <- intersect(names(y), c(var, keys))
-    # Remove variables named identically ('weight' in biotic v1.4):
-    yvar <- setdiff(yvar, xvar)
-    # Add the keys:
-    xvar <- unique(c(thisKeys, xvar))
-    yvar <- unique(c(thisKeys, yvar))
-    browser()
-    # Merge the data.tables:
-    out <- merge(x[,xvar, with=FALSE], y[,yvar, with=FALSE], all=TRUE, by=thisKeys)
-    
-    if(keys.out) {
-        list(data=out, keys=thisKeys)
-    }
-    else {
-        out
-    }
 }
 
 

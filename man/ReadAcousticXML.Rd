@@ -2,18 +2,20 @@
 % Please edit documentation in R/Data.R
 \name{ReadAcousticXML}
 \alias{ReadAcousticXML}
-\title{Some title}
+\title{Read acoustic XML files}
 \usage{
-ReadAcousticXML()
+ReadAcousticXML(FileNames, acousticFormat = "25")
 }
 \arguments{
-\item{parameterName}{Parameter descrption.}
+\item{FileNames}{A vector of paths to XML files.}
+
+\item{acousticFormat}{The format of the acoustic data, referring to the List User File (LUF) naming used by the Large Scale Survey System (LSSS) ************** refer to ICES instead!!!!!!!!!!!!!!}
 }
 \value{
-A data.table is returned with awesome stuff.
+A list of data.tables in the specified format.
 }
 \description{
-Some description
+This function reads multiple acoustic XML files.
 }
 \details{
 This function is awesome and does excellent stuff.
@@ -23,5 +25,5 @@ x <- 1
 
 }
 \seealso{
-\code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
+\code{\link[RNMDAPI]{readNMDxmlFile}}.
 }

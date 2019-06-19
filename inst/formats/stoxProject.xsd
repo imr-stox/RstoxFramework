@@ -27,58 +27,22 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:documentation>
     </xs:annotation>
                 
-    <xs:element name="projects" type="ProjectsType" >
-        <xs:annotation>
-            <xs:documentation>
-                <imrd:imrDoc>
-                    <imrd:description lang="en">A collection of stox projects.</imrd:description>
-                </imrd:imrDoc>
-            </xs:documentation>
-        </xs:annotation>
-    </xs:element>
-
     <xs:element name="project" type="StoxProjectType">
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">A stox project.</imrd:description>
+                    <imrd:description lang="en">The StoX porject</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
     </xs:element>
-
-    <!--
-        Stox type.
-    -->
-    <xs:complexType name="ProjectsType">
-        <xs:sequence>
-            <xs:element name="project" type="StoxProjectType" minOccurs="0" maxOccurs="unbounded">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-        </xs:sequence>
-    </xs:complexType>
 
     <!--
         Stox project type
     -->
     <xs:complexType name="StoxProjectType">
         <xs:sequence>
-            <xs:element name="meta" type="MetaType" minOccurs="0" maxOccurs="1">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="model" type="ModelsType" minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="model" type="ModelType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -101,11 +65,11 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="lastmodified" type="xs:string" use="optional" >
+        <xs:attribute name="lastmodified" type="xs:dateTime" use="optional" >
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Need to define this</imrd:description>
+                        <imrd:description lang="en">Timestamp of latest change to StoX project.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
@@ -138,6 +102,9 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="resourceversion" type="xs:string" use="optional" >
+            
+            <!-- Replace with element containing structure for listing dependencies ?-->
+            
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
@@ -432,21 +399,10 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:simpleContent>
     </xs:complexType>
 
-
-    <!--
-        Meta type.
-    -->
-    <xs:complexType name="MetaType">
-        <xs:sequence>
-            <xs:element name="description" type="xs:string" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="surveyTimeseriesName" type="xs:string" minOccurs="1" maxOccurs="1"/>
-        </xs:sequence>
-    </xs:complexType>
-
     <!--
         Model type.
     -->
-    <xs:complexType name="ModelsType">
+    <xs:complexType name="ModelType">
         <xs:sequence>
             <xs:element name="process" type="ProcessType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
@@ -499,10 +455,13 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </xs:annotation>
             </xs:element>
             <xs:element name="breakingui" type="xs:boolean" minOccurs="0">
+                
+                <!-- Check if pausing should be before or after execution of this process -->
+                
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this.</imrd:description>
+                            <imrd:description lang="en">Signals that user interaction should be allowed during execution of this process. The details of this user interaction is specified in the function.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -555,7 +514,15 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </xs:annotation>
             </xs:element>
         </xs:sequence>
-        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="name" type="xs:string" use="required" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Name to identify process.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
     
     <xs:complexType name="inputDataType">
@@ -582,7 +549,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Name of the process that input should be taken from. That is the output of 'inputprocess' that matches the 'sourcetype' of this element will be bound to the 'dataparameter' of the executed function. The inputprocess can not occur later in the model than the process using its output, but a process may consume its own processdata from previous executions. </imrd:description>
+                        <imrd:description lang="en">Name of the process that input should be taken from (processType/name). That is the output of 'inputprocess' that matches the 'sourcetype' of this element will be bound to the 'dataparameter' of the executed function. The inputprocess can not occur later in the model than the process using its output, but a process may consume its own processdata from previous executions. </imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
@@ -601,6 +568,10 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     </xs:simpleType>
 
     <xs:simpleType name="DataFormatType">
+        
+        
+        <!-- Add NASC, Lengthdistribution, split up processdata-->
+        
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>

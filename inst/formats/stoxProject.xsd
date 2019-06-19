@@ -51,6 +51,15 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="rstoxdependencies" type="RstoxDependenciesType" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies the versions of Rstox dependencies (R-libraries) that the models are specified for.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
             
             <!-- moved to processType 
             <xs:element name="processdata" type="ProcessdataType" minOccurs="0" maxOccurs="unbounded"/>
@@ -78,7 +87,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Specifies which rstox version the model is specified for.</imrd:description>
+                        <imrd:description lang="en">Specifies which rstox version the models are specified for.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
@@ -87,7 +96,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Specifies which version of the StoX user interface the model is specified for.</imrd:description>
+                        <imrd:description lang="en">Specifies which version of the StoX user interface the models are specified for.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
@@ -96,28 +105,51 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Specifies which R version the model is specified for.</imrd:description>
+                        <imrd:description lang="en">Specifies which R version the models are specified for.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="resourceversion" type="xs:string" use="optional" >
-            
-            <!-- Replace with element containing structure for listing dependencies ?-->
-            
+    </xs:complexType>
+    
+    <xs:complexType name="RstoxDependenciesType">
+        <xs:sequence>
+            <xs:element name="rlibrary" type="VersionedLibraryType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">A versioned identification of an R library.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="VersionedLibraryType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Identfies a versioned library.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+
+        <xs:attribute name="library" type="xs:string">
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Need to define this.</imrd:description>
+                        <imrd:description lang="en">Library name.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="version" type="xs:string" use="optional">
+        <xs:attribute name="version" type="xs:string">
+    
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Need to define this.</imrd:description>
+                        <imrd:description lang="en">library version.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>

@@ -129,6 +129,8 @@ MergeAgeDeterminationToIndividual <- function(BioticData,
     if(any(length(BioticData[[individualName]]) == 0, length(BioticData[[ageDeterminationName]]) == 0)) {
         stop("'individual' and/or 'agedetermination' are not present in the data.")
     }
+
+    commonVar <- intersect(names(BioticData[[individualName]]), names(BioticData[[ageDeterminationName]]))
     
     # Merge individual and agedetermination:
     temp <- merge(BioticData[[individualName]], BioticData[[ageDeterminationName]], by = commonVar, all = TRUE)

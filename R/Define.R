@@ -81,7 +81,7 @@ DefineLengthCentimeter <- function(BioticData, individualName = "individual", ..
 #' @param SpecVarRef    The name of the column of \code{FileName} which should be matched with the field named by \code{SpecVarBiotic} in the biotic data.
 #' @param SpecCatRef    The name of the column of \code{FileName} defining the SpecCat.
 #' 
-DefineSpecCat <- function(	BioticData, 
+DefineSpecCat <- function(BioticData, 
 	SpecCatMethod = c("SelectVar", "ResourceFile", "Expression"), 
 	SpecVarBiotic = "commonname", ...) {
 

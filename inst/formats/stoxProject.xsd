@@ -41,12 +41,20 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         Stox project type
     -->
     <xs:complexType name="StoxProjectType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Rerpesents a StoX project.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+
         <xs:sequence>
             <xs:element name="model" type="ModelType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this.</imrd:description>
+                            <imrd:description lang="en">Models in the project.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -55,7 +63,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Specifies the versions of Rstox dependencies (R-libraries) that the models are specified for.</imrd:description>
+                            <imrd:description lang="en">CHECK THIS. Specifies the versions of Rstox dependencies (R-libraries) that the models in the project are specified for.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -69,7 +77,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Need to define this</imrd:description>
+                        <imrd:description lang="en">NEED TO DEFINE</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
@@ -113,6 +121,14 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     </xs:complexType>
     
     <xs:complexType name="RstoxDependenciesType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents a collection of library dependencies to Rstox.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+
         <xs:sequence>
             <xs:element name="rlibrary" type="VersionedLibraryType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
@@ -130,7 +146,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Identfies a versioned library.</imrd:description>
+                    <imrd:description lang="en">Represents a versioned library for some programming language.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -157,13 +173,20 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     </xs:complexType>
 
     <xs:complexType name="ProcessdataType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents Specific kind of process output that is stored in the project files. Used for importing resources and to allow state representation of user choices.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
         <xs:sequence>
             <!-- Made all elements optional, so that each process does not have to get bloated with empty tags -->
             <xs:element name="bioticassignment" type="BioticassignmentType" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this</imrd:description>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -172,7 +195,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this</imrd:description>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -181,7 +204,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this</imrd:description>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -191,7 +214,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this</imrd:description>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -200,7 +223,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this</imrd:description>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -286,7 +309,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">A specification of spatial stratification.</imrd:description>
+                    <imrd:description lang="en">Represents a spatial stratificion.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -307,7 +330,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Type for polygon definitions. Content is determined by the value for polygonvairable.</imrd:description>
+                    <imrd:description lang="en">Represents properties of a spatial stratum. Content is determined by the value for polygonvairable.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -336,12 +359,19 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     </xs:complexType>
     
     <xs:simpleType name="PolygonVariableType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents the different stratum properties availabe.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
         <xs:restriction base="xs:string">
             <xs:enumeration value="includeintotal">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this.</imrd:description>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -361,72 +391,179 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
 
     <xs:complexType name="PsustratumType">
         <xs:sequence>
-            <xs:element name="stratum" type="psustratumValueType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="stratum" type="psustratumValueType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="psustratumValueType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
-                <xs:attribute name="psu" type="xs:string" />
+                <xs:attribute name="psu" type="xs:string" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+
+                </xs:attribute>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
 
     <xs:complexType name="EdsupsuType">
         <xs:sequence>
-            <xs:element name="psu" type="EdsupsuValueType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="psu" type="EdsupsuValueType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="EdsupsuValueType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
-                <xs:attribute name="edsu" type="xs:string" />
+                <xs:attribute name="edsu" type="xs:string" >                
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
 
     <xs:complexType name="AssignmentresolutionType">
         <xs:sequence>
-            <xs:element name="value" type="AssignmentresolutionValueType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="value" type="AssignmentresolutionValueType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="AssignmentresolutionValueType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
-                <xs:attribute name="variable" type="xs:string" />
+                <xs:attribute name="variable" type="xs:string" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+
+                </xs:attribute>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
 
     <xs:complexType name="SuassignmentType">
         <xs:sequence>
-            <xs:element name="assignmentid" type="AssignmentType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="assignmentid" type="AssignmentType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="AssignmentType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
-                <xs:attribute name="sampleunit" type="xs:string" />
-                <xs:attribute name="estlayer" type="xs:string" />
+                <xs:attribute name="sampleunit" type="xs:string" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+
+                </xs:attribute>
+                <xs:attribute name="estlayer" type="xs:string" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+
+                </xs:attribute>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
 
     <xs:complexType name="BioticassignmentType">
         <xs:sequence>
-            <xs:element name="stationweight" type="StationweightType" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="stationweight" type="StationweightType" minOccurs="0" maxOccurs="unbounded" >
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="StationweightType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
-                <xs:attribute name="assignmentid" type="xs:string" />
-                <xs:attribute name="station" type="xs:string" />
+                <xs:attribute name="assignmentid" type="xs:string" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+
+                </xs:attribute>
+                <xs:attribute name="station" type="xs:string" >
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+
+                </xs:attribute>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
@@ -435,22 +572,46 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         Model type.
     -->
     <xs:complexType name="ModelType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">CHECK THIS. Represents a model in stox. A model prescribes the order of execution for a collection of processes. Processes in a model may access output from other models and even trigger execution of other models.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
         <xs:sequence>
-            <xs:element name="process" type="ProcessType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="process" type="ProcessType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">A StoX process.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:sequence>
-        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="name" type="xs:string" use="required" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="ProcessType">
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">A process maps data and parameters to a function to be executed. A process may have several data inputs of different types, but may produce only one output. Processdata is considered an output, so a process can not both write to processdata and produce other kinds of output.</imrd:description>
+                    <imrd:description lang="en">Represents a StoX process. A process maps data and parameters to a function to be executed. A process may have several data inputs of different types, but may produce only one output. Processdata is considered an output, so a process can not both write to processdata and produce other kinds of output.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
-            <xs:element name="function" type="FunctionType" minOccurs="0">
+            <xs:element name="function" type="xs:string" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -481,19 +642,16 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this.</imrd:description>
+                            <imrd:description lang="en">CHECK THIS. Signals that output from this model should be inspected for updates to the graphical user interfaces. For instance that parameters for map overlays, such as position or strata borders, have changed.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="breakingui" type="xs:boolean" minOccurs="0">
-                
-                <!-- Check if pausing should be before or after execution of this process -->
-                
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Signals that user interaction should be allowed during execution of this process. The details of this user interaction is specified in the function.</imrd:description>
+                            <imrd:description lang="en">CHECK THIS. Signals that user interaction should be allowed during execution of this process. The details of this user interaction is specified in the function.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -559,6 +717,13 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     
     <xs:complexType name="inputDataType">
         <!-- Added to abstract input handling from the functions -->
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents a function parameters that need to be connected to output from other processes.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
         <xs:attribute name="dataparameter">
             <xs:annotation>
                 <xs:documentation>
@@ -588,17 +753,6 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:attribute>
     </xs:complexType>
     
-    <xs:simpleType name="FunctionType">
-        <xs:annotation>
-            <xs:documentation>
-                <imrd:imrDoc>
-                    <imrd:description lang="en">FunctionType is extracted as separate type, so that restrictions on function names can be added.</imrd:description>
-                </imrd:imrDoc>
-            </xs:documentation>
-        </xs:annotation>
-        <xs:restriction base="xs:string" />
-    </xs:simpleType>
-
     <xs:simpleType name="DataFormatType">
         
         
@@ -607,7 +761,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Specifies which data formats that are acceptable as output and input in StoX.</imrd:description>
+                    <imrd:description lang="en">CHECK THIS. ADD ALL CURRENTLY DEFINED DATA TYPES. Rerpesents data formats that are acceptable as output and input to StoX processes. The formats that are not detailed in this schema are internal to StoX, but named here for arranging data flow between processes. If not otherwise specified, the internal data formats specified minimal requirements. So StoX processes may add information to internal data types wihtout declaring a different ouput format.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -653,9 +807,25 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
 
 
     <xs:complexType name="StringWithParamNameType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Rerpesents a string with an attribute called name.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+
         <xs:simpleContent>
             <xs:extension base="xs:string">
-                <xs:attribute name="name" type="xs:string" use="required" />
+                <xs:attribute name="name" type="xs:string" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">Name attached to the string</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
@@ -666,12 +836,20 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">A collection of categorical covariate mappings.</imrd:description>
+                    <imrd:description lang="en">Represents a collection of categorical covariate mappings.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
-            <xs:element name="value" type="CategoricalValueType" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="value" type="CategoricalValueType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">A categorical covariate mapping.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
     
@@ -680,7 +858,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">A collection of effect spesifications for estimation.</imrd:description>
+                    <imrd:description lang="en">Rerpesents a collection of effect spesifications for estimation.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -701,7 +879,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Type for effect specification. The value for the effect is the content of this element.</imrd:description>
+                    <imrd:description lang="en">Represents effect specifications available. The value for the effect is the content of this element.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -730,6 +908,13 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     </xs:complexType>
 
     <xs:simpleType name="CovariateEffectSpecType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents effects available for covariate effect specifications..</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
         <xs:restriction base="xs:string">
             <xs:enumeration value="CovariateType">
                 <xs:annotation>
@@ -753,6 +938,13 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     </xs:simpleType>
     
     <xs:complexType name="AgeErrorType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents an age-error matrix.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
         <xs:sequence>
             <xs:element name="probability" type="ProbabiltityType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
@@ -765,7 +957,15 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:element>
         </xs:sequence>
     </xs:complexType>  
+    
     <xs:complexType name="StratumNeighbourType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents a neighbour matrix for spatial autoregressive modelling.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
         <xs:sequence>
             <xs:element name="value" type="StratumNeighbourValueType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
@@ -783,7 +983,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Type for mapping a categorical value to some structured text identifying how each categorical value is identified for a given source type or data format. The structured text is the content of elements of this type.</imrd:description>
+                    <imrd:description lang="en">Represents a mapping of a categorical value to some structured text identifying how each categorical value is identified for a given source type or data format. The structured text is the content of elements of this type.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -810,11 +1010,12 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
+    
     <xs:complexType name="ProbabiltityType">
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Type for the conditional probability of observing ages, given the true age. The probability is the content of elements of this type.</imrd:description>
+                    <imrd:description lang="en">Represents the conditional probability of observing ages, given the true age. The probability is the content of elements of this type.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -845,7 +1046,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Type for mapping a spatial covariate to its neighbours. Content is a comma-separated list of neighbours (must all be valid values ofr the covariate spatial).</imrd:description>
+                    <imrd:description lang="en">Rerpesents a mapping of spatial covariate to its neighbours. Content is a comma-separated list of neighbours (must all be valid values ofr the covariate spatial).</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>

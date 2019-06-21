@@ -5,32 +5,6 @@
 
 initiateRstoxEnv <- function(){
     
-# Function used for extracting defaults and possible values of functions:
-getDefaultsAndPredefinedValues <- function(data){
-        
-        getDefaultsAndPredefinedValuesOne <- function(data){
-            fun_formals <- formals(data$Name)
-            # Remove the first the projectName:
-            fun_formals <- fun_formals[names(fun_formals) != "projectName"]
-            # Keep only the specified arguments:
-            fun_formals <- subset(fun_formals, names(fun_formals) %in% data$Parameters$Name)
-            # Evaluate the arguments:
-            fun_formalsEval <- lapply(fun_formals, eval)
-            
-            
-            data$Parameters$DataType <- sapply(fun_formalsEval, function(x) if(is.numeric(x) && x==round(x)) "Integer" else if(is.numeric(x) && x!=round(x)) "Double" else "String")
-            
-            # Convert to string, by converting numeric and character using as.character() and all other using deparse():
-            data$Parameters$Values <- lapply(fun_formalsEval, function(x) if(is.numeric(x) || is.character(x)) as.character(x) else deparse(x))
-            # Assume that all the parameters of functions passed to StoX have length 1, and thus that if there are more than one value given as default, these are the possible values, and the first of these is the true default.
-            data$Parameters$DefaultValue <- sapply(data$Parameters$Values, function(x) head(x, 1))
-            
-            data
-        }
-        
-        lapply(data, getDefaultsAndPredefinedValuesOne)
-    }
-    
     # Create a Rstox environment in which the baseline objects of the various projects are placed. This allows for a check for previously run baseline models and avoids memory leakage:", 
     assign("RstoxEnv", new.env(), envir=.GlobalEnv)
     
@@ -42,7 +16,7 @@ getDefaultsAndPredefinedValues <- function(data){
         input = file.path("input", StoX_data_sources), 
         output = file.path("output", outer(c("baseline", "r"), c("data", "report"), file.path)), 
         process = "process"
-    )
+    ) # [NOTE] We should revise whether to restructure this 
     StoXFoldersRecursiveSansOutput <- unlist(StoXFoldersRecursive[names(StoXFoldersRecursive) != "output"])
     
             # NMD and StoX defines different data types (StoX has the more general category "acoustic"):

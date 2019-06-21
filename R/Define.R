@@ -81,8 +81,17 @@ DefineLengthCentimeter <- function(BioticData, individualName = "individual", ..
 #' @param SpecVarRef    The name of the column of \code{FileName} which should be matched with the field named by \code{SpecVarBiotic} in the biotic data.
 #' @param SpecCatRef    The name of the column of \code{FileName} defining the SpecCat.
 #' 
-DefineSpecCat <- function() {
-	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
+DefineSpecCat <- function(BioticData, 
+	SpecCatMethod = c("SelectVar", "ResourceFile", "Expression"), 
+	SpecVarBiotic = "commonname", ...) {
+
+	if(!identical(SpecCatMethod[1], "SelectVar")){
+		stop("Not a valid parameter")
+	}
+	
+	BioticData[["catchsample"]]$SpecCat <- BioticData[["catchsample"]][[SpecVarBiotic]] 
+
+	BioticData	
 }
 
 

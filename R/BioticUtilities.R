@@ -53,7 +53,10 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
 #' @noRd
 #' 
 getBioticKeys <- function(xsd = "3.0") {
-    unlist(Rstox::readHIXSD(xsd = xsd, xsdtype = "biotic")$attrs_required)
+    out <- Rstox::readHIXSD(xsd = xsd, xsdtype = "biotic")$attrs_required
+    out <- out[lengths(out) > 0]
+    out <- out[!duplicated(out)]
+    out    
 }
 
 

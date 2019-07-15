@@ -19,31 +19,19 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:documentation>
             <imrd:imrDoc>
                 <imrd:description lang="en">
-                    Schema for StoX process models. Supports storing information necessary for reproducing a StoX-estimate given the same data files are provided. It also serves to save state for the StoX interface.
+                    Schema for StoX projects. Supports storing information necessary for reproducing a StoX-estimate given that the same data files are provided. It also serves to save state for the StoX interface.
                     The specification of StoX models does not enforce self-containment. That is, data and resource files can be linked from external sources, which may be local resources inaccessible at run time.
-                    Constructs like 'processDataType' and 'prosessType/skip' are provided to support importing of resource data to xml, and storing of manual resource-manipulation.
+                    Constructs like 'ProcessDataType' and 'ProsessType/skip' are provided to support importing of resource data to xml, and storing of manual resource-manipulation.
                 </imrd:description>
             </imrd:imrDoc>
         </xs:documentation>
     </xs:annotation>
                 
-    <!-- Consider not allowing plural projects as top level element. Check with NMD. -->
-                
-    <xs:element name="projects" type="ProjectsType" >
-        <xs:annotation>
-            <xs:documentation>
-                <imrd:imrDoc>
-                    <imrd:description lang="en">A collection of stox projects.</imrd:description>
-                </imrd:imrDoc>
-            </xs:documentation>
-        </xs:annotation>
-    </xs:element>
-
     <xs:element name="project" type="StoxProjectType">
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Need to define this.</imrd:description>
+                    <imrd:description lang="en">A StoX project .</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -71,23 +59,11 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     -->
     <xs:complexType name="StoxProjectType">
         <xs:sequence>
-            <xs:element name="meta" type="MetaType" minOccurs="0" maxOccurs="1">
-                
-                <!-- check use of this with NMD. Not needed for StoX -->
-                
+           <xs:element name="model" type="ModelType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="model" type="ModelType" minOccurs="0" maxOccurs="unbounded">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this.</imrd:description>
+                            <imrd:description lang="en">A sequence of processes, which are unevaluated functions calls to functions of the specific model type.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -165,7 +141,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:attribute>
     </xs:complexType>
 
-    <xs:complexType name="ProcessdataType">
+    <xs:complexType name="ProcessDataType">
         <xs:sequence>
             <!-- Made all elements optional, so that each process does not have to get bloated with empty tags -->
             <xs:element name="bioticassignment" type="BioticassignmentType" minOccurs="0" maxOccurs="1">
@@ -441,17 +417,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     </xs:complexType>
 
 
-    <!--
-        Meta type.
-    -->
-    <xs:complexType name="MetaType">
-        <xs:sequence>
-            <xs:element name="description" type="xs:string" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="surveyTimeseriesName" type="xs:string" minOccurs="1" maxOccurs="1"/>
-        </xs:sequence>
-    </xs:complexType>
-
-    <!--
+     <!--
         Model type.
     -->
     <xs:complexType name="ModelType">
@@ -470,7 +436,29 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
-            <xs:element name="function" type="FunctionType" minOccurs="0">
+			
+			<xs:element name="ProcessParameters" type="ProcessParametersType" minOccurs="0" maxOccurs="unbounded">
+                <!-- Added to abstract input handling from the functions -->
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">A sequence of parameters to the process, independent of the parameters to the function called by the process.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+			
+			<xs:element name="ProcessPata" type="ProcessDataType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Processdata produced by this element. Only populated if &lt;output&gt; contains the text 'ProcessData'. Processdata are used for importing configurations from resourec files, or storing manual selections in interfaces such as maps. Processdata may be used for input to other process, and a process may use its own processdata (stored from previous executions) as input.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+			
+            <xs:element name="FunctionName" type="FunctionNameType" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -479,55 +467,20 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="enabled" type="xs:boolean" minOccurs="0">
+            
+            <xs:element name="FunctionParameters" type="FunctionParametersType" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Declares whether the function should be executed. The output and processData from processes that are not enabled are not available to later processes.</imrd:description>
+                            <imrd:description lang="en">A sequence of parameters to the function.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="skip" type="xs:boolean" minOccurs="1" maxOccurs="1" default="false">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Declares whether the function should be exectued. Any previously calculated processData from processes that have 'skip' set will be available for later processes</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="respondingui" type="xs:boolean" minOccurs="0" default="false">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Need to define this.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="breakingui" type="xs:boolean" minOccurs="0" default="false">
-                
-                <!-- Check if pausing should be before or after execution of this process -->
-                
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Signals that user interaction should be allowed during execution of this process. The details of this user interaction is specified in the function.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="fileoutput" type="xs:boolean" minOccurs="0" default="true">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Declares whether output from this process is to be written to space for intermediate results.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="inputdata" type="inputDataType" minOccurs="0" maxOccurs="unbounded">
+            
+			
+			
+			<xs:element name="FunctionInputs" type="inputDataType" minOccurs="0" maxOccurs="unbounded">
                 <!-- Added to abstract input handling from the functions -->
                 <xs:annotation>
                     <xs:documentation>
@@ -537,7 +490,9 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="parameter" type="StringWithParamNameType" minOccurs="0" maxOccurs="unbounded" >
+            
+			
+			<xs:element name="parameter" type="StringWithParamNameType" minOccurs="0" maxOccurs="unbounded" >
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -556,17 +511,9 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </xs:annotation>
             </xs:element>
             <!-- moved proceddata from StoxProjectType and changed maxOccurs so that it can only exist once for each process-->
-            <xs:element name="processdata" type="ProcessdataType" minOccurs="0" maxOccurs="1">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Processdata produced by this element. Only populated if &lt;output&gt; contains the text 'ProcessData'. Processdata are used for importing configurations from resourec files, or storing manual selections in interfaces such as maps. Processdata may be used for input to other process, and a process may use its own processdata (stored from previous executions) as input.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
+            
         </xs:sequence>
-        <xs:attribute name="name" type="xs:string" use="required" >
+        <xs:attribute name="ProcessName" type="xs:string" use="required" >
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
@@ -577,7 +524,102 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:attribute>
     </xs:complexType>
     
-    <xs:complexType name="inputDataType">
+    
+	
+	
+	
+	
+    <xs:complexType name="ProcessParametersType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">A sequence of parameters to the process, independent of the parameters to the function called by the process.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Enabled" type="xs:boolean" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether the function should be executed. The output and processData from processes that are not enabled are not available to later processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="Skip" type="xs:boolean" minOccurs="1" maxOccurs="1" default="false">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether the function should be exectued. Any previously calculated processData from processes that have 'skip' set will be available for later processes</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="RespondInGUI" type="xs:boolean" minOccurs="0" default="false">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="BreakInGUI" type="xs:boolean" minOccurs="0" default="false">
+            
+                <!-- Check if pausing should be before or after execution of this process -->
+            
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Signals that user interaction should be allowed during execution of this process. The details of this user interaction is specified in the function.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="FileOutput" type="xs:boolean" minOccurs="0" default="true">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether output from this process is to be written to space for intermediate results.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+	
+	 <xs:complexType name="FunctionParametersType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">A sequence of parameters to the function called by the process.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+			<xs:element name="parameter" type="StringWithParamNameType" minOccurs="0" maxOccurs="unbounded" >
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Named parameters to a StoX function. Parameters should be assigned by name, not order.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<xs:complexType name="inputDataType">
         <!-- Added to abstract input handling from the functions -->
         <xs:attribute name="dataparameter">
             <xs:annotation>
@@ -608,11 +650,11 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:attribute>
     </xs:complexType>
     
-    <xs:simpleType name="FunctionType">
+    <xs:simpleType name="FunctionNameType">
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">FunctionType is extracted as separate type, so that restrictions on function names can be added.</imrd:description>
+                    <imrd:description lang="en">FunctionNameType is extracted as separate type, so that restrictions on function names can be added.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -636,16 +678,16 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Specifies that output is Acoustic data. Format is internal to StoX-processes.</imrd:description>
+                            <imrd:description lang="en">Specifies that output is Acoustic data. Format is defined by .</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
-            <xs:enumeration value="LandingData">
+            <xs:enumeration value="LayerNASC">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Specifies that output is Landing data. Format is internal to StoX-processes.</imrd:description>
+                            <imrd:description lang="en">A table containing nautical area scattering coefficient (NASC) per depth layer. Format is internal to StoX-processes.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -659,7 +701,84 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
-            <xs:enumeration value="ProcessData">
+            <xs:enumeration value="LengthDist">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Frequency distrubution by specimen length. Format is internal to StoX-processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Density">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">A table holding area density per species and length group. Format is internal to StoX-processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Abundance">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">A table holding estimated number of individuals per species and length group. Format is internal to StoX-processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="IndividualDataStations">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="IndividualData">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="SuperIndividuals">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Need to define this.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="PolygonArea">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">A table of PolygonKey and Area (squared nautical miles).</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="LandingData">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output is Landing data. Format is internal to StoX-processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            
+		    <!--
+		        Define all individual process data here
+		    -->
+			
+			<xs:enumeration value="ProcessData">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>

@@ -1,6 +1,6 @@
 initiateRstox <- function(){
     
-    # NMD and StoX defines different data types (StoX has the more general category "acoustic"):
+    # NMD and Stox defines different data types (Stox has the more general category "acoustic"):
     NMD_data_sources <- c(acoustic = "echosounder", biotic = "biotic", landing = "landing")
     # The implemented NMD APIs for the NMD_data_sources:
     NMD_API_versions <- list(
@@ -33,7 +33,7 @@ initiateRstox <- function(){
     # Define the process levels for the presicion estimate:
     processLevels <- c("bootstrap", "bootstrapImpute")
     
-    # Define ECA covariates:
+    # Define ECA covariates ******************** THIS SHOULD PROBABLY BE MOVED TO THE RstoxECA package:
     ECACovariates <- data.frame(
         Name = c(
             "temporal", 
@@ -61,9 +61,7 @@ initiateRstox <- function(){
     
     # Assign to RstoxEnv and return the definitions:
     Definitions <- list(
-        StoX_data_sources = StoX_data_sources, 
-        StoX_data_type_keys = StoX_data_type_keys, 
-        StoX_reading_processes = StoX_reading_processes, 
+        Stox_reading_processes = Stox_reading_processes, 
         dateTimeNMDAPIFormat = dateTimeNMDAPIFormat, 
         NMD_data_sources = NMD_data_sources, 
         ver = ver, 
@@ -85,32 +83,3 @@ initiateRstox <- function(){
 }
 
 
-initiateRstoxFramework <- function(){
-    
-    # The folders in a StoX project:
-    StoXFolders <- c("input", "output", "process")
-    StoX_data_sources <- c(echosounder = "acoustic", biotic = "biotic", landing = "landing")
-    StoXFoldersRecursive <- list(
-        input = file.path("input", StoX_data_sources), 
-        output = file.path("output", outer(c("baseline", "r"), c("data", "report"), file.path)), 
-        process = "process"
-    ) # [NOTE] We should revise whether to restructure this to only one level, and hopefully the folders "baseline", "statistics" and "reports"
-    StoXFoldersRecursiveSansOutput <- unlist(StoXFoldersRecursive[names(StoXFoldersRecursive) != "output"])
-    
-    # Assign to RstoxEnv and return the definitions:
-    Definitions <- list(
-        StoXFolders = StoXFolders, 
-        StoXFoldersRecursive = StoXFoldersRecursive, 
-        StoXFoldersRecursiveSansOutput = StoXFoldersRecursiveSansOutput
-    )
-    
-    # Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv:
-    utils::globalVariables("RstoxFrameworkEnv")
-    assign("RstoxFrameworkEnv", new.env(), parent.env(environment()))
-    
-    assign("Definitions", Definitions, envir=get("RstoxFrameworkEnv"))
-    assign("Projects", list(), envir=get("RstoxFrameworkEnv"))
-   
-    # Return the definitions:
-    Definitions
-}

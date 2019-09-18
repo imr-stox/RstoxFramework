@@ -27,32 +27,15 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:documentation>
     </xs:annotation>
                 
-    <xs:element name="project" type="StoxProjectType">
+    <xs:element name="StoxProject" type="StoxProjectType">
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">A StoX project .</imrd:description>
+                    <imrd:description lang="en">A StoX project.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
     </xs:element>
-
-    <!--
-        Stox type.
-    -->
-    <xs:complexType name="ProjectsType">
-        <xs:sequence>
-            <xs:element name="project" type="StoxProjectType" minOccurs="0" maxOccurs="unbounded">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">A stox project.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-        </xs:sequence>
-    </xs:complexType>
 
     <!--
         Stox project type
@@ -73,68 +56,56 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             <xs:element name="processdata" type="ProcessdataType" minOccurs="0" maxOccurs="unbounded"/>
             -->
         </xs:sequence>
-        <xs:attribute name="template" type="xs:string" use="optional" >
+        <xs:attribute name="Template" type="xs:string" use="optional" >
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Need to define this</imrd:description>
+                        <imrd:description lang="en">The template used to generate the project. Templates are defined by each Rstox version.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="lastmodified" type="xs:dateTime" use="optional" >
+        <xs:attribute name="LastModified" type="xs:dateTime" use="optional" >
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Timestamp of latest change to StoX project.</imrd:description>
+                        <imrd:description lang="en">Timestamp of latest change to the StoX project.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="rstoxversion" type="xs:string" use="optional" >
+        <xs:attribute name="RstoxVersion" type="xs:string" use="optional" >
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Specifies which rstox version the model is specified for.</imrd:description>
+                        <imrd:description lang="en">Specifies the version of Rstox used when saving the StoX project.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="stoxversion" type="xs:string" use="optional" >
+        <xs:attribute name="StoxVersion" type="xs:string" use="optional" >
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Specifies which version of the StoX user interface the model is specified for.</imrd:description>
+                        <imrd:description lang="en">Specifies the version of the StoX user interface used when saving the StoX project. If the StoX project was not saved using the StoX user interface, this attributes is empty.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="rversion" type="xs:string" use="optional" >
+        <xs:attribute name="RVersion" type="xs:string" use="optional" >
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Specifies which R version the model is specified for.</imrd:description>
+                        <imrd:description lang="en">Specifies the R version used when saving the StoX project.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="resourceversion" type="xs:string" use="optional" >
-            
-            <!-- Replace with element containing structure for listing dependencies ?-->
-            
+        <xs:attribute name="RDependencies" type="xs:string" use="optional" >
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Need to define this.</imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="version" type="xs:string" use="optional">
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">Need to define this.</imrd:description>
+                        <imrd:description lang="en">A comma separeted string or R depends and imports.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
@@ -143,6 +114,22 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
 
     <xs:complexType name="ProcessDataType">
         <xs:sequence>
+			
+			
+			
+			<xs:element name="StratumNeighbour" type="StratumNeighbourType" minOccurs="0" maxOccurs="1">
+			    <xs:annotation>
+			        <xs:documentation>
+			            <imrd:imrDoc>
+			                <imrd:description lang="en">A table of stratum and stratum neighbours.</imrd:description>
+			            </imrd:imrDoc>
+			        </xs:documentation>
+			    </xs:annotation>
+			</xs:element>
+			
+			
+			
+			
             <!-- Made all elements optional, so that each process does not have to get bloated with empty tags -->
             <xs:element name="bioticassignment" type="BioticassignmentType" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
@@ -422,7 +409,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
     -->
     <xs:complexType name="ModelType">
         <xs:sequence>
-            <xs:element name="process" type="ProcessType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Process" type="ProcessType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required" />
     </xs:complexType>
@@ -480,7 +467,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             
 			
 			
-			<xs:element name="FunctionInputs" type="inputDataType" minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="FunctionInputData" type="FunctionInputDataType" minOccurs="0" maxOccurs="unbounded">
                 <!-- Added to abstract input handling from the functions -->
                 <xs:annotation>
                     <xs:documentation>
@@ -501,7 +488,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="output" type="DataFormatType" minOccurs="0">
+            <xs:element name="output" type="DataTypeType" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -619,27 +606,17 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
 	
 	
 	
-	<xs:complexType name="inputDataType">
-        <!-- Added to abstract input handling from the functions -->
-        <xs:attribute name="dataparameter">
+	<xs:complexType name="FunctionInputDataType">
+        <xs:attribute name="DataType" type="DataTypeType">
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
-                        <imrd:description lang="en">Name of the formal argument of the function to be executed that this data should be assigned to.</imrd:description>
+                        <imrd:description lang="en">Identifies the data format of this input, which is also the name of the parameter.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="sourcetype" type="DataFormatType">
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">Identifies the data format of this input.</imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="inputprocess" type="xs:string">
+        <xs:attribute name="InputProcess" type="xs:string">
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
@@ -649,6 +626,10 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
+	
+	
+	
+	
     
     <xs:simpleType name="FunctionNameType">
         <xs:annotation>
@@ -661,7 +642,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:restriction base="xs:string" />
     </xs:simpleType>
 
-    <xs:simpleType name="DataFormatType">
+    <xs:simpleType name="DataTypeType">
         
         
         <!-- Add NASC, Lengthdistribution, split up processdata-->

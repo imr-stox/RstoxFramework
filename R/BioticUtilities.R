@@ -53,7 +53,10 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
 #' @noRd
 #' 
 getBioticKeys <- function(xsd = "3.0") {
-    unlist(Rstox::readHIXSD(xsd = xsd, xsdtype = "biotic")$attrs_required)
+    out <- Rstox::readHIXSD(xsd = xsd, xsdtype = "biotic")$attrs_required
+    out <- out[lengths(out) > 0]
+    out <- out[!duplicated(out)]
+    out    
 }
 
 
@@ -78,3 +81,54 @@ getBioticLevels <- function(xsd = "3.0") {
     out
 }
 
+
+
+##################################################
+##################################################
+#' Intitate RstoxFramework
+#' 
+#' This function writes vital definitions to the RstoxFramework environment.
+#' 
+#' @return
+#' A list of paths to the "stox" folder and sub folders.
+#' 
+#' @noRd
+#' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
+#' 
+initiateRstoxFramework <- function(){
+    
+    # The folders in a Stox project:
+    StoxFolders <- c(
+        input = "input", 
+        output = "output", 
+        process = "process"
+    )
+    StoxDataSources <- c(
+        acoustic = "acoustic", 
+        biotic = "biotic", 
+        landing = "landing"
+    )
+    StoxModelTypes <- c(
+        baseline = "baseline", 
+        analysis = "analysis", 
+        report = "report"
+    )
+    
+    # Assign to RstoxEnv and return the definitions:
+    Definitions <- list(
+        StoxFolders = StoxFolders, 
+        StoxDataSources = StoxDataSources, 
+        StoxModelTypes = StoxModelTypes, 
+        projectXML = "project.xml"
+    )
+    
+    # Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv:
+    utils::globalVariables("RstoxFrameworkEnv")
+    assign("RstoxFrameworkEnv", new.env(), parent.env(environment()))
+    
+    assign("Definitions", Definitions, envir=get("RstoxFrameworkEnv"))
+    assign("Projects", list(), envir=get("RstoxFrameworkEnv"))
+    
+    # Return the definitions:
+    Definitions
+}

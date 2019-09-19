@@ -4,7 +4,7 @@
 \alias{DefineLengthCentimeter}
 \title{Some title}
 \usage{
-DefineLengthCentimeter()
+DefineLengthCentimeter(BioticData, individualName = "individual", ...)
 }
 \arguments{
 \item{parameterName}{Parameter descrption.}

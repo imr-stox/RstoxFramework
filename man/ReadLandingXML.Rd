@@ -2,18 +2,20 @@
 % Please edit documentation in R/Data.R
 \name{ReadLandingXML}
 \alias{ReadLandingXML}
-\title{Some title}
+\title{Read landing XML files}
 \usage{
-ReadLandingXML()
+ReadLandingXML(FileNames = NA, landingFormat = NULL)
 }
 \arguments{
-\item{parameterName}{Parameter descrption.}
+\item{FileNames}{A vector of paths to XML files.}
+
+\item{landingFormat}{The format of the landing data.}
 }
 \value{
-A data.table is returned with awesome stuff.
+A list of data.tables in the specified format.
 }
 \description{
-Some description
+This function reads multiple landing XML files.
 }
 \details{
 This function is awesome and does excellent stuff.
@@ -23,5 +25,5 @@ x <- 1
 
 }
 \seealso{
-\code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
+\code{\link[RNMDAPI]{readNMDxmlFile}}.
 }

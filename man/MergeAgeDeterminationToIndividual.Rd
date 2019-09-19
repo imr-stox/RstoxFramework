@@ -4,7 +4,9 @@
 \alias{MergeAgeDeterminationToIndividual}
 \title{Some title}
 \usage{
-MergeAgeDeterminationToIndividual()
+MergeAgeDeterminationToIndividual(BioticData,
+  individualName = "individual",
+  ageDeterminationName = "agedetermination", ...)
 }
 \arguments{
 \item{parameterName}{Parameter descrption.}

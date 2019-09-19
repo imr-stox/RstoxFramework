@@ -2,18 +2,34 @@
 % Please edit documentation in R/Data.R
 \name{ReadBioticXML}
 \alias{ReadBioticXML}
-\title{Some title}
+\title{Read biotic XML files}
 \usage{
-ReadBioticXML()
+ReadBioticXML(FileNames = NA, SpecCatMethod = "ResourceFile",
+  SpecCat = NULL, SpecVarBiotic = "commonname", SpecVarRef = NULL,
+  SpecCatRef = NULL, bioticFormat = "3.0")
 }
 \arguments{
-\item{parameterName}{Parameter descrption.}
+\item{FileNames}{A vector of paths to XML files.}
+
+\item{SpecCatMethod}{The method used for defining the SpecCat variable, which is the species variable used by StoX. The \code{SpecCatMethod} parameter has the following three possible values: (1) "SelectVar", which copies the column \code{SpecVarBiotic} of the "catchsample" table to the SpecCat column of the tables "catchsample", "individual" and all non-empty tables at lower levels. (2) "Expression", which ***************. (3) "ResourceFile", which requires the parameters \code{FileName}, \code{SpecVarBiotic}, \code{SpecVarRef} and \code{SpecCatRef} to be set. See Details.}
+
+\item{SpecCat}{An expression indicating how to create the SpecCat********************.}
+
+\item{SpecVarBiotic}{The name of the field on the biotic data to match with the column named by \code{SpecVarRef} in \code{FileName}.}
+
+\item{SpecVarRef}{The name of the column of \code{FileName} which should be matched with the field named by \code{SpecVarBiotic} in the biotic data.}
+
+\item{SpecCatRef}{The name of the column of \code{FileName} defining the SpecCat.}
+
+\item{bioticFormat}{The format given as a string or decimal number such as "3.0" or 3.}
+
+\item{FileName}{The name of the file holding a table of at least two columns, (1) the species variable in a column named by \code{SpecVarRef}, corresponding to the field named by \code{SpecVarBiotic} in the biotic data, and (2) a column named by \code{SpecCatRef} defining the SpecCat variable.}
 }
 \value{
-A data.table is returned with awesome stuff.
+A list of data.tables in the specified format.
 }
 \description{
-Some description
+This function reads multiple biotic XML files and adds the columns "LengthCentimeter" and "IndividualWeightGram", merges age readings to the individual data.table, and adds the SpecCat as specified by the user.
 }
 \details{
 This function is awesome and does excellent stuff.
@@ -23,5 +39,5 @@ x <- 1
 
 }
 \seealso{
-\code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
+\code{\link[RNMDAPI]{readNMDxmlFile}}.
 }

@@ -571,7 +571,6 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            
             <xs:element name="edsupsu" type="EdsupsuType" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>
@@ -582,6 +581,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </xs:annotation>
             </xs:element>
             <xs:element name="psustratum" type="PsustratumType" minOccurs="0" maxOccurs="1">
+
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -590,7 +590,6 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            
             <xs:element name="stratumpolygon" type="StratumpolygonType" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>

@@ -54,7 +54,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Baeline models in the project. Processes in baseline models may contain a special structure "processdata" to save manual choices and imported parameters in the project xml.</imrd:description>
+                            <imrd:description lang="en">Baseline models in the project. Processes in baseline models may contain a special structure "processdata" to save manual choices and imported parameters in the project xml.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>

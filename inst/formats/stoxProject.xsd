@@ -31,7 +31,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">The StoX porject</imrd:description>
+                    <imrd:description lang="en">The StoX project</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -44,17 +44,26 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Rerpesents a StoX project.</imrd:description>
+                    <imrd:description lang="en">Represents a StoX project.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
 
         <xs:sequence>
+            <xs:element name="model" type="BaselineModelType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Baeline models in the project. Processes in baseline models may contain a special structure "processdata" to save manual choices and imported parameters in the project xml.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
             <xs:element name="model" type="ModelType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Models in the project.</imrd:description>
+                            <imrd:description lang="en">Models in the project. Non-baseline models may not contain process data.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -63,7 +72,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">CHECK THIS. Specifies the versions of Rstox dependencies (R-libraries) that the models in the project are specified for.</imrd:description>
+                            <imrd:description lang="en">Specifies the versions of Rstox dependencies (R-libraries) that the models in the project are specified for.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
@@ -172,6 +181,359 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:attribute>
     </xs:complexType>
 
+    <!--
+        Model type.
+    -->
+    <xs:complexType name="ModelType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents a model in stox. A model prescribes the order of execution for a collection of processes. Processes in a model may access output from other models and even trigger execution of other models.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="process" type="ProcessType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">A StoX process.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="modelname" type="xs:string" use="required" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Identifies the model, must be unique in the project.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+
+        </xs:attribute>
+    </xs:complexType>
+    
+    <xs:complexType name="BaselineModelType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents a baseline model in stox. A model prescribes the order of execution for a collection of processes. Processes in a model may access output from other models and even trigger execution of other models.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="process" type="BaelineProcessType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">A StoX process.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="modelname" type="xs:string" use="required" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Identifies the model, must be unique in the project.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="ProcessType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents a StoX process. A process maps data and parameters to a function to be executed. A process may have several data inputs of different types, but may produce only one output. Processdata is considered an output, so a process can not both write to processdata and produce other kinds of output.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="function" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Identifies the StoX-function to be exectued in this process.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="enabled" type="xs:boolean" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether the function should be executed. The output and processData from processes that are not enabled are not available to later processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="skip" type="xs:boolean" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether the function should be exectued. Any previously calculated processData from processes that have 'skip' set will be available for later processes</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="respondingui" type="xs:boolean" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">CHECK THIS. Signals that output from this model should be inspected for updates to the graphical user interfaces. For instance that parameters for map overlays, such as position or strata borders, have changed.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="breakingui" type="xs:boolean" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">CHECK THIS. Signals that user interaction should be allowed during execution of this process. The details of this user interaction is specified in the function.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="fileoutput" type="xs:boolean" minOccurs="0" >
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether output from this process is to be written to space for intermediate results.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="inputdata" type="inputDataType" minOccurs="0" maxOccurs="unbounded">
+                <!-- Added to abstract input handling from the functions -->
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Named inputdata to the function identified in &lt;function&gt;. Data should be assigned to the functions formal parameters by name, not order.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="parameter" type="StringWithParamNameType" minOccurs="0" maxOccurs="unbounded" >
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Named parameters to the function identified in &lt;function&gt;. Parameters should be assigned by name, not order.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="output" type="DataFormatType" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Identifies the data format of the output from this process, for identification of which other process can consume it. A Special case is the type ProcessData which indicate that output from the process is written to &lt;processsata&gt; </imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="processname" type="xs:string" use="required" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Name to identify process.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    
+    <xs:complexType name="BaselineProcessType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Processes in baseline models. These are extensions of other processes that also allow storing of processdata.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="ProcessType">
+                <xs:sequence>
+                    <!-- moved proceddata from StoxProjectType and changed maxOccurs so that it can only exist once for each process-->
+                    <xs:element name="processdata" type="ProcessdataType" minOccurs="0" maxOccurs="1">
+                        <xs:annotation>
+                            <xs:documentation>
+                                <imrd:imrDoc>
+                                    <imrd:description lang="en">Processdata produced by this process Only populated if &lt;output&gt; contains the text 'ProcessData'. Processdata are used for importing configurations from resourec files, or storing manual selections in interfaces such as maps. Processdata may be used for input to other process, and a process may use its own processdata (stored from previous executions) as input.</imrd:description>
+                                </imrd:imrDoc>
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    
+    <xs:complexType name="inputDataType">
+        <!-- Added to abstract input handling from the functions -->
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents a function parameters that need to be connected to output from other processes.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="dataparameter">
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Name of the formal argument of the function to be executed that this data should be assigned to.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="sourcetype" type="DataFormatType">
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Identifies the data format of this input.</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="inputprocessname" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Name of the process that input should be taken from (processType/processname). Must exist in the same model. The output of 'inputprocess' that matches the 'sourcetype' of this element will be bound to the 'dataparameter' of the executed function. The inputprocess can not occur later in the model than the process using its output, but a process may consume its own processdata from previous executions. </imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    
+    <xs:simpleType name="DataFormatType">
+        
+        
+        <!-- Add NASC, Lengthdistribution, split up processdata-->
+        
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">CHECK THIS. ADD ALL CURRENTLY DEFINED DATA TYPES. Represents data formats that are acceptable as output and input to StoX processes. The formats that are not detailed in this schema are internal to StoX, but named here for arranging data flow between processes. If not otherwise specified, the internal data formats specified minimal requirements. So StoX processes may add information to internal data types wihtout declaring a different ouput format.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NMDEchoSounderData1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output is derived from data compatible with NMD Echosounder v.1. SPECIFY FORMAT.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ICESAcoustic">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output is derived from data compatible with ICES Acoustic. SPECIFY FORMAT.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="StoxAcoustic">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Internal StoX format for acoustic data that is can be populated from other acoustic data definitions supported.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="NMDLandingData2">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output data is derived from data compatible with NMD Landings v.2. data is flattened to one data frame, and column names are identical to NMD Biotic 2 elements and attributes. Norwegian documentation at: http://www.imr.no/formats/landinger/v2/</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="NMDBioticData3">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output data is derived from data compatible with NMD Biotic v.3. Each level in Biotic 3 is represented by a data frame, and column names are identical to NMD Biotic 3 elements and attributes. Documentation at: http://www.imr.no/formats/nmdbiotic/v3/</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ICESBiotic">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output data is derived from data compatible with ICES Biotic. Each level in ICES Biotic is represented by a data frame, and column names are identical to ICES Biotic elements and attributes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="StoXBiotic">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Internal StoX format for biotic data that is can be populated from other biotic data definitions supported. SPECIFY FORMAT.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="StoxLanding">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Internal StoX format for landings data that is can be populated from other landing data definitions supported. SPECIFY FORMAT.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ProcessData">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Specifies that output is written to processData. Format documented in this schema (complexType ProcessData).</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+
+    <xs:complexType name="StringWithParamNameType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Rerpesents a string with an attribute called name.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:string" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">Name attached to the string</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+  
     <xs:complexType name="ProcessdataType">
         <xs:annotation>
             <xs:documentation>
@@ -567,270 +929,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
-
-    <!--
-        Model type.
-    -->
-    <xs:complexType name="ModelType">
-        <xs:annotation>
-            <xs:documentation>
-                <imrd:imrDoc>
-                    <imrd:description lang="en">CHECK THIS. Represents a model in stox. A model prescribes the order of execution for a collection of processes. Processes in a model may access output from other models and even trigger execution of other models.</imrd:description>
-                </imrd:imrDoc>
-            </xs:documentation>
-        </xs:annotation>
-        <xs:sequence>
-            <xs:element name="process" type="ProcessType" minOccurs="0" maxOccurs="unbounded">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">A StoX process.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-        </xs:sequence>
-        <xs:attribute name="name" type="xs:string" use="required" >
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">NEED TO DEFINE</imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-
-        </xs:attribute>
-    </xs:complexType>
-
-    <xs:complexType name="ProcessType">
-        <xs:annotation>
-            <xs:documentation>
-                <imrd:imrDoc>
-                    <imrd:description lang="en">Represents a StoX process. A process maps data and parameters to a function to be executed. A process may have several data inputs of different types, but may produce only one output. Processdata is considered an output, so a process can not both write to processdata and produce other kinds of output.</imrd:description>
-                </imrd:imrDoc>
-            </xs:documentation>
-        </xs:annotation>
-        <xs:sequence>
-            <xs:element name="function" type="xs:string" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Identifies the StoX-function to be exectued in this process.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="enabled" type="xs:boolean" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Declares whether the function should be executed. The output and processData from processes that are not enabled are not available to later processes.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="skip" type="xs:boolean" minOccurs="1" maxOccurs="1">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Declares whether the function should be exectued. Any previously calculated processData from processes that have 'skip' set will be available for later processes</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="respondingui" type="xs:boolean" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">CHECK THIS. Signals that output from this model should be inspected for updates to the graphical user interfaces. For instance that parameters for map overlays, such as position or strata borders, have changed.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="breakingui" type="xs:boolean" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">CHECK THIS. Signals that user interaction should be allowed during execution of this process. The details of this user interaction is specified in the function.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="fileoutput" type="xs:boolean" minOccurs="0" >
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Declares whether output from this process is to be written to space for intermediate results.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="inputdata" type="inputDataType" minOccurs="0" maxOccurs="unbounded">
-                <!-- Added to abstract input handling from the functions -->
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Named inputdata to the function identified in &lt;function&gt;. Data should be assigned to the functions formal parameters by name, not order.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="parameter" type="StringWithParamNameType" minOccurs="0" maxOccurs="unbounded" >
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Named parameters to the function identified in &lt;function&gt;. Parameters should be assigned by name, not order.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="output" type="DataFormatType" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Identifies the data format of the output from this process, for identification of which other process can consume it. A Special case is the type ProcessData which indicate that output from the process is written to &lt;processsata&gt; </imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <!-- moved proceddata from StoxProjectType and changed maxOccurs so that it can only exist once for each process-->
-            <xs:element name="processdata" type="ProcessdataType" minOccurs="0" maxOccurs="1">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Processdata produced by this element. Only populated if &lt;output&gt; contains the text 'ProcessData'. Processdata are used for importing configurations from resourec files, or storing manual selections in interfaces such as maps. Processdata may be used for input to other process, and a process may use its own processdata (stored from previous executions) as input.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-        </xs:sequence>
-        <xs:attribute name="name" type="xs:string" use="required" >
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">Name to identify process.</imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-    </xs:complexType>
     
-    <xs:complexType name="inputDataType">
-        <!-- Added to abstract input handling from the functions -->
-        <xs:annotation>
-            <xs:documentation>
-                <imrd:imrDoc>
-                    <imrd:description lang="en">Represents a function parameters that need to be connected to output from other processes.</imrd:description>
-                </imrd:imrDoc>
-            </xs:documentation>
-        </xs:annotation>
-        <xs:attribute name="dataparameter">
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">Name of the formal argument of the function to be executed that this data should be assigned to.</imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="sourcetype" type="DataFormatType">
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">Identifies the data format of this input.</imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="inputprocess" type="xs:string">
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">Name of the process that input should be taken from (processType/name). That is the output of 'inputprocess' that matches the 'sourcetype' of this element will be bound to the 'dataparameter' of the executed function. The inputprocess can not occur later in the model than the process using its output, but a process may consume its own processdata from previous executions. </imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-    </xs:complexType>
-    
-    <xs:simpleType name="DataFormatType">
-        
-        
-        <!-- Add NASC, Lengthdistribution, split up processdata-->
-        
-        <xs:annotation>
-            <xs:documentation>
-                <imrd:imrDoc>
-                    <imrd:description lang="en">CHECK THIS. ADD ALL CURRENTLY DEFINED DATA TYPES. Rerpesents data formats that are acceptable as output and input to StoX processes. The formats that are not detailed in this schema are internal to StoX, but named here for arranging data flow between processes. If not otherwise specified, the internal data formats specified minimal requirements. So StoX processes may add information to internal data types wihtout declaring a different ouput format.</imrd:description>
-                </imrd:imrDoc>
-            </xs:documentation>
-        </xs:annotation>
-        <xs:restriction base="xs:string">
-            <xs:enumeration value="AcousticData">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Specifies that output is Acoustic data. Format is internal to StoX-processes.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="LandingData">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Specifies that output is Landing data. Format is internal to StoX-processes.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="BioticData">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Specifies that output is Biotic data. Format is internal to StoX-processes.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="ProcessData">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Specifies that output is written to processData. Format documented in this schema.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-        </xs:restriction>
-    </xs:simpleType>
-
-
-    <xs:complexType name="StringWithParamNameType">
-        <xs:annotation>
-            <xs:documentation>
-                <imrd:imrDoc>
-                    <imrd:description lang="en">Rerpesents a string with an attribute called name.</imrd:description>
-                </imrd:imrDoc>
-            </xs:documentation>
-        </xs:annotation>
-
-        <xs:simpleContent>
-            <xs:extension base="xs:string">
-                <xs:attribute name="name" type="xs:string" use="required">
-                    <xs:annotation>
-                        <xs:documentation>
-                            <imrd:imrDoc>
-                                <imrd:description lang="en">Name attached to the string</imrd:description>
-                            </imrd:imrDoc>
-                        </xs:documentation>
-                    </xs:annotation>
-                </xs:attribute>
-            </xs:extension>
-        </xs:simpleContent>
-    </xs:complexType>
-
-
     <!-- Merged TemporalType, GearfactorType, and SpatialType into this one type -->
     <xs:complexType name="CategoricalCovariateType">
         <xs:annotation>
@@ -1063,6 +1162,5 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </xs:attribute>
             </xs:extension>
         </xs:simpleContent>
-    </xs:complexType>      
-
+    </xs:complexType>    
 </xs:schema>

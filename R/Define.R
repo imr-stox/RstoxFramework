@@ -158,7 +158,6 @@ MergeAgeDeterminationToIndividual <- function(BioticData,
     BioticData
 }
 
-
 ##################################################
 ##################################################
 #' Some title

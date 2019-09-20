@@ -203,17 +203,18 @@ StationLengthDist <- function(
     
     # Define names of required variables:
     browser()
-    var <- c("distance", "catchpartnumber", "catchweight", "lengthsampleweight", "catchcount", "lengthsamplecount", "length", "lengthresolution")
+    var <- c("distance", "catchpartnumber", "catchweight", "lengthsampleweight", "catchcount", "lengthsamplecount", "length", "lengthresolution", "SpecCat")
     #keys <- c("cruise", "serialnumber", "SpecCat")
-    keys <- getBioticKeys()
+    bioticKeys <- getBioticKeys()
     # Add the SpecCat, since we wish to present the length distribution per species:
-    keys <- c(keys, "SpecCat")
+    #keys <- c(keys, )
     # Define also the key to use for aggregating the length distribution, i.e., one distribution per station:
-    aggregate_keys <- "samplenumber"
-    keys <- c(keys, aggregate_keys)
+    # aggregate_keys <- "samplenumber"
+    # keys <- c(keys, aggregate_keys)
     
     
     #### First merge the fish station and catch sample data tables, to be sure to remove the entire station if none of the catch samples have e.g. weight and lengthsampleweight: ####
+    keys <- unlist(bioticKeys[c("mission", "fishstation", "catchsample")])
     fishstation_catchsample <- merge2(BioticData[[fishstationName]], BioticData[[catchsampleName]], var=var, keys=keys)
     
     
@@ -236,9 +237,8 @@ StationLengthDist <- function(
     
     # Merge fishstation with catchsample, and then the result with individual:
     thisvar <- c(var, "has_weight", "has_NOTweightBUTcount", "has_onlyOnePartSample")
-    temp <- merge2(fishstation_catchsample, BioticData[[individualName]], var=thisvar, keys=keys, keys.out=TRUE)
-    fishstation_catchsample_individual <- temp$data
-    keys <- temp$keys
+    keys <- unlist(bioticKeys[c("mission", "fishstation", "catchsample", "individual")])
+    fishstation_catchsample_individual <- merge2(fishstation_catchsample, BioticData[[individualName]], var=thisvar, keys=keys)
     
     
     #### Get length intervals: ####
@@ -260,8 +260,8 @@ StationLengthDist <- function(
     
     #### Generate length distributions per station and SpecCat: ####
     # Set the keys used by the data.table package:
+    keys <- unlist(bioticKeys[c("mission", "fishstation", "catchsample")])
     setkeyv(fishstation_catchsample_individual, cols=keys)
-    byGrp <- keys
     
     # Declare the variables used in the fishstation_catchsample_individual[] expression below (this is done to avoid warnings when building the package):
     . <- NULL
@@ -291,7 +291,7 @@ StationLengthDist <- function(
         "has_weight" = rep(has_weight[1], numLengthIntervals),
         "has_NOTweightBUTcount" = rep(has_NOTweightBUTcount[1], numLengthIntervals), 
         "has_onlyOnePartSample" = rep(has_onlyOnePartSample[1], numLengthIntervals)
-    ), by=byGrp]
+    ), by=keys]
     
     
     #### Sum over part samples: ####
@@ -302,19 +302,17 @@ StationLengthDist <- function(
         out[has_NOTweightBUTcount==TRUE, WeightedCount := WeightedCount * count / lengthsamplecount]
     }
     
-    thiskeys <- setdiff(keys, aggregate_keys)
-    setkeyv(out, cols=thiskeys)
+    # Set the keys to the StationID and SpecCat, which are introduced in ReadBioticXML():
+    keys <- c("StationID", "SpecCat")
+    setkeyv(out, cols=keys)
     
     # Sum over part samples only if there are stations with more than one part sample:
     if(!all(out$has_onlyOnePartSample, na.rm=TRUE)) {
-        out <- out[has_onlyOnePartSample == TRUE, psum(.SD), by=thiskeys]
+        out <- out[has_onlyOnePartSample == TRUE, psum(.SD), by=keys]
     }
     
     
     ##### Output: #####
-    # Define the Station column, which is a concatination of cruise and seialno:
-    out[, Station := paste(missionnumber, serialnumber, sep="/")]
-    
     # Convert to percent:
     if(LengthDistType == "PercentLengthDist") {
         out[, WeightedCount := WeightedCount/sum(WeightedCount, na.rm=TRUE) * 100, by=thiskeys]

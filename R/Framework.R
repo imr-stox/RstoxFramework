@@ -1,4 +1,321 @@
-CreateProcect <- function(
+- Relative path to files "${STOX}"
+
+- Create the StoxRootDir and sub folders in OpenProject(), if missing
+
+- We will use FunctionInputs and FunctionParameters.
+
+
+
+
+
+
+Things to do in RstoxFramework:
+    
+1. Create project
+2. Open project
+3. Save project
+4. SaveAs project: Creates a new project as a copy of the current status of the old project, and keeps the old project open, but shifts focus to the new.
+5. Close project (1. Ask the user)
+6. Reset project
+
+
+
+# Functions for an isolated project object:
+createEmptyBaselineProcess
+
+modifyBaselineProcessName
+modifyBaselineFunctionName
+    modifyBaselineFunctionInputs
+    modifyBaselineFunctionParameters
+modifyBaselineProcessParameters
+modifyBaselineProcessData
+
+
+
+get_ftp_info <- function(ftp) {
+    # Download the list of contents of the ftp server:
+    destfile <- tempfile()
+    download.file(ftp, destfile)
+    # Pick out the last column of the table returned from the frp server:
+    dirs <- readLines(destfile)
+    permission <- substr(dirs, 1, 10)
+    path <- substring(dirs, 57)
+    
+    data.frame(
+        permission = permission, 
+        path = path, 
+        stringsAsFactors = FALSE
+    )
+}
+
+
+
+
+download_files_ftp_recursive <- function(ftp, dir) {
+    # Get the file names of the current ftp path:
+    dirs <- get_ftp_info(ftp)
+    
+    # Recursive downloading:
+    for(ind in seq_len(nrow(dirs))) {
+        # Is the path a directory, then recurse into that directory:
+        isdir <- startsWith(dirs$permission[ind], "d")
+        # Define the current path in the for loop:
+        #thisftp <- substr(ftp, 1, nchar(ftp) - 1)
+        
+        folderPath <- file.path(ftp, dirs$path[ind], "")
+        folderPathSansSlash <- substr(folderPath, 1, nchar(folderPath) - 1)
+        
+         if(isdir) {
+             download_files_ftp_recursive(folderPath, dir)
+        }
+        else {
+            localFileName <- file.path(dir, basename(folderPathSansSlash))
+            download.file(folderPathSansSlash, localFileName)
+        } 
+    }
+    
+}
+
+
+l <- download_files_ftp_recursive("ftp://ftp.imr.no/StoX/Download/reference/", "~/workspace/Test")
+
+downloadReferenceData <- function(ftp = "ftp://ftp.imr.no/StoX/Download/reference/", ) {
+    
+    referenceFiles <- list.files.ftp.recursive(ftp)
+    
+    localFiles <- 
+    
+    lapply(referenceFiles, download.file, )
+    
+}
+
+
+createStoxRoot <- function(StoxRootDir = NULL) {
+    # Get the default paths to the StoX root:
+    if(length(StoxRootDir) == 0) {
+        StoxRootDir <- getRstoxFrameworkDefinitions(StoxRootDir)
+    }
+    StoxProjectDir <- getRstoxFrameworkDefinitions(StoxProjectDir)
+    StoxReferenceDir <- getRstoxFrameworkDefinitions(StoxReferenceDir)
+    
+    # Create the directories:
+    dir.create(StoxRootDir)
+    dir.create(StoxProjectDir)
+    dir.create(StoxReferenceDir)
+    
+    # Copy the reference data to the StoxReferenceDir:
+    downloadReferenceData()
+    
+}
+
+
+##################################################
+##################################################
+#' Intitate RstoxFramework
+#' 
+#' This function writes vital definitions to the RstoxFramework environment.
+#' 
+#' @return
+#' A list of paths to the "stox" folder and sub folders.
+#' 
+#' @noRd
+#' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
+#' 
+initiateRstoxFramework <- function(){
+    
+    #### Define the default root directories of StoX: ####
+    stoxRootDir <- "~/workspace/stox"
+    stoxProjectDir <- file.path(stoxRootDir, "project")
+    stoxReferenceDir <- file.path(stoxRootDir, "reference")
+    
+    #### The folders, data sources, model types and data types in a Stox project: ####
+    stoxFolders <- c(
+        input = "input", 
+        output = "output", 
+        process = "process"
+    )
+    stoxDataSources <- c(
+        acoustic = "acoustic", 
+        biotic = "biotic", 
+        landing = "landing"
+    )
+    stoxModelTypes <- c(
+        baseline = "baseline", 
+        analysis = "statistics", 
+        report = "report"
+    )
+    
+    # Define the folder structure of StoX:
+    stoxFolderStructure <- list(
+        stoxDataSources, 
+        stoxModelTypes, 
+        ""
+    )
+    names(stoxFolderStructure) <- stoxFolders
+    stoxFolderStructure <- unname(unlist(mapply(file.path, names(stoxFolderStructure), stoxFolderStructure)))
+    
+    stoxModelDataTypes <- c(
+        "AcousticData", 
+        "StoxAcousticData", 
+        "MergedStoxAcousticData", 
+        "NASCData", 
+        "LandingData", 
+        "LandingCovariateData", 
+        "LandingWeightCovariateData", 
+        "BioticData", 
+        "StoxBioticData", 
+        "MergedStoxBioticData", 
+        "BioticCovariateData", 
+        "LengthDistributionData", 
+        "AssignmentLengthDistributionData", 
+        "Density", 
+        "StratumArea", 
+        "Abundance", 
+        "AssignedIndividuals", 
+        "AssignedStations", 
+        "SuperIndividuals"
+    )
+    stoxProcessDataTypes <- c(
+        "AcousticPSU", 
+        "AcousticLayer", 
+        "SweptAreaPSU", 
+        "SweptAreaLayer", 
+        "Assignment", 
+        "Survey", 
+        "SpeciesCategoryDefinition", 
+        "AcousticCategoryDefinition", 
+        "StratumPolygon", 
+        "TemporalCovariate", 
+        "GearCovariate", 
+        "SpatialCovariate", 
+        "PlatformCovariate", 
+        "AgeError", 
+        "StratumNeighbour"
+    )
+    stoxDataTypes <- c(
+        stoxModelDataTypes, 
+        stoxProcessDataTypes
+    )
+    
+    
+    
+    #### Assign to RstoxEnv and return the definitions: ####
+    definitions <- list(
+        stoxFolders = stoxFolders, 
+        stoxDataSources = stoxDataSources, 
+        stoxModelTypes = stoxModelTypes, 
+        stoxFolderStructure = stoxFolderStructure, 
+        stoxModelDataTypes = stoxModelDataTypes, 
+        stoxProcessDataTypes = stoxProcessDataTypes, 
+        stoxDataTypes = stoxDataTypes, 
+        stoxTemplates = stoxTemplates, 
+        projectXML = "project.xml"
+    )
+    
+    #### Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv: ####
+    utils::globalVariables("RstoxFrameworkEnv")
+    assign("RstoxFrameworkEnv", new.env(), parent.env(environment()))
+    
+    assign("Definitions", Definitions, envir=get("RstoxFrameworkEnv"))
+    assign("Projects", list(), envir=get("RstoxFrameworkEnv"))
+    
+    #### Return the definitions: ####
+    definitions
+}
+
+
+##################################################
+##################################################
+#' Get RstoxFramework definitions
+#' 
+#' This function gets vital definitions from the RstoxFramework environment.
+#' 
+#' @param name  An optional string vector denoting which definitions to extract.
+#' @param ...   Values overriding the values of definitions.
+#' 
+#' @return
+#' A list of vital definitions in RstoxFramework.
+#' 
+#' @examples
+#' getRstoxFrameworkDefinitions()
+#' 
+#' @export
+#' 
+getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
+    
+    # Save the optional inputs for overriding the output:
+    l <- list(...)
+    
+    # Get all or a subset of the definitions:
+    Definitions <- get("RstoxFrameworkEnv")$Definitions
+    if(length(name)){
+        Definitions <- Definitions[[name]]
+    }
+    
+    l <- l[names(l) %in% names(Definitions)]
+    if(length(l)){
+        Definitions <- utils::modifyList(Definitions, l)
+    }
+    
+    Definitions
+}
+
+
+
+
+getProjectSkeletonPaths <- function() {
+    
+    
+    StoxFolders <- getRstoxFrameworkDefinitions("StoxFolders")
+    StoxDataSources <- getRstoxFrameworkDefinitions("StoxDataSources")
+    StoxModelTypes <- getRstoxFrameworkDefinitions("StoxModelTypes")
+    
+    
+    file.path()
+
+}
+
+
+
+createProjectSkeleton <- function(ProjectName, ProjectDirectory = NULL) {
+    
+    # Get the paths of the root directory and StoX skeleton:
+    StoxRoot <- getRstoxFrameworkDefinitions("StoxRoot")
+    StoxFolderStructure <- getRstoxFrameworkDefinitions("StoxFolderStructure")
+    
+    # If the ProjectDirectory is not given, set it to the default StoxRoot:
+    if(length(ProjectDirectory) == 0) {
+        message("Creating the default StoX root directory ", StoxRoot)
+        ProjectDirectory <- StoxRoot
+    }
+    
+    thisStoxFolderStructure <- file.path()
+    
+    # Create the StoxRoot folder if missing:
+    if(!file.exists(StoxRoot)) {
+        message("Creating the 'stox' folder in the directory ", StoxRoot)
+        dir.create(
+            StoxRoot, recursive = TRUE, 
+            showWarnings = FALSE
+        )
+    }
+    
+    # Create the project folder structure if the "stox" folder exists:
+    if(!file.exists(StoxRoot)) {
+        message("Creation failed, possibly due to missing permission. Try setting the directory in which to put the stox folder, using the parameter 'ProjectDirectory'")
+    }
+    else{
+        # The directory paths$stox already exists:
+        temp <- lapply(paths, dir.create, recursive = TRUE)
+    }
+    
+    # Return the paths:
+    paths
+}
+
+
+
+CreateProject <- function(
     ProjectName, 
     ProjectDirectory = NULL, 
     Template = "EmptyTemplate"
@@ -57,6 +374,9 @@ ModifyProcessFunctionName <- function(Process, FunctionName) {
     # Set the function name:
     if(!identical(Process$FunctionName, FunctionName)) {
         Process$FunctionName <- FunctionName
+        
+        
+        # NOTE: WE NEED DEFAULKT VALUES
         
         # Change the function parameters:
         FunctionParameters <- GetFunctionParametersInStoX(FunctionName)
@@ -371,7 +691,7 @@ getOutputFileNames <- function(processName, ProjectName, fileExt="txt") {
 # 
 
 
-project.RData <- list(
+projectDescription <- list(
     Baseline = list(
 		ReadAcoustic = list(
 		    ProcessName = "ReadAcoustic", 
@@ -409,11 +729,13 @@ project.RData <- list(
 		        FileNames = c(
 		            "input/acoustic/Echosounder-1618.xml"
 		        ), 
-		        UseProcessData = TRUE
+		        UseProcessData = TRUE, 
+		        
 		    ), 
 		    FunctionInputs = list(
 		        BioticData = "FilterBiotic", 
-		        Density = "AcousticDensity"
+		        Density = "AcousticDensity", 
+		        StoxAcousticData = NA
 		    )
 		), 
 		StoxAcoustic = list(
@@ -435,8 +757,7 @@ project.RData <- list(
 		        )
 		    ), 
 		    FunctionInputs = list(
-		        BioticData = "FilterBiotic", 
-		        Density = "AcousticDensity"
+		        BioticData = "FilterBiotic"
 		    )
 		)
 	),
@@ -451,8 +772,8 @@ project.RData <- list(
 			), 
 			FunctionParameters = list(
 				bootstrapMethod = "AcousticTrawl", 
-				acousticMethod = PSU~Stratum, 
-				bioticMethod = PSU~Stratum, 
+				acousticMethod = "PSU~Stratum", 
+				bioticMethod = "PSU~Stratum", 
 				startProcess = "TotalLengthDist", 
 				endProcess = "SuperIndAbundance", 
 				nboot = 50, 
@@ -495,197 +816,7 @@ project.RData <- list(
 ##############################################################
 ##############################################################
 
-##################################################
-##################################################
-#' Intitate RstoxFramework
-#' 
-#' This function writes vital definitions to the RstoxFramework environment.
-#' 
-#' @return
-#' A list of paths to the "stox" folder and sub folders.
-#' 
-#' @noRd
-#' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
-#' 
-initiateRstoxFramework <- function(){
-    
-    #### The folders, data sources, model types and data types in a Stox project: ####
-    StoxFolders <- c(
-        input = "input", 
-        output = "output", 
-        process = "process"
-    )
-    StoxDataSources <- c(
-        acoustic = "acoustic", 
-        biotic = "biotic", 
-        landing = "landing"
-    )
-    StoxModelTypes <- c(
-        baseline = "baseline", 
-        analysis = "statistics", 
-        report = "report"
-    )
-    StoxModelDataTypes <- c(
-        "AcousticData", 
-        "StoxAcousticData", 
-        "MergedStoxAcousticData", 
-        "NASCData", 
-        "LandingData", 
-        "LandingCovariateData", 
-        "LandingWeightCovariateData", 
-        "BioticData", 
-        "StoxBioticData", 
-        "MergedStoxBioticData", 
-        "BioticCovariateData", 
-        "LengthDistributionData", 
-        "AssignmentLengthDistributionData", 
-        "Density", 
-        "StratumArea", 
-        "Abundance", 
-        "AssignedIndividuals", 
-        "AssignedStations", 
-        "SuperIndividuals"
-    )
-    StoxProcessDataTypes <- c(
-        "AcousticPSU", 
-        "AcousticLayer", 
-        "SweptAreaPSU", 
-        "SweptAreaLayer", 
-        "Assignment", 
-        "Survey", 
-        "SpeciesCategoryDefinition", 
-        "AcousticCategoryDefinition", 
-        "StratumPolygon", 
-        "TemporalCovariate", 
-        "GearCovariate", 
-        "SpatialCovariate", 
-        "PlatformCovariate", 
-        "AgeError", 
-        "StratumNeighbour"
-    )
-    StoxDataTypes <- c(
-        StoxModelDataTypes, 
-        StoxProcessDataTypes
-    )
-    
-    #### Templates: ####
-    StoxTemplates <- list(
-        
-        #### Empty template: ####
-        EmptyTemplate = NULL, 
-        
-        #### Template to calculate the length distribution per station: ####
-        StationLengthDistributionTemplate = list(
-            # Read the biotic data:
-            ReadBiotic = list(
-                ProcessName = "ReadBiotic", 
-                FunctionName = "ReadBiotic", 
-                ProcessParameters = list(
-                    FileOutput = FALSE
-                )
-            ), 
-            # Convert to StoxBiotic:
-            StoxBiotic = list(
-                ProcessName = "StoxBiotic", 
-                FunctionName = "StoxBiotic", 
-                FunctionInputs = list(
-                    BioticData = "ReadBiotic"
-                )
-            ),
-            # Filter StoxBiotic:
-            FilterStoxBiotic = list(
-                ProcessName = "FilterStoxBiotic", 
-                FunctionName = "FilterStoxBiotic", 
-                FunctionInputs = list(
-                    StoxBioticData = "StoxBiotic"
-                )
-            ),
-            # Get the length distribution per station:
-            StationLengthDist = list(
-                ProcessName = "StationLengthDist", 
-                FunctionName = "StationLengthDist", 
-                FunctionInputs = list(
-                    StoxBioticData = "FilterStoxBiotic"
-                ), 
-                FunctionParameters = list(
-                    LengthDistType = "PercentLengthDist"
-                )
-            )
-        ), 
-        
-        #### Simple template to read biotic data: ####
-        ReadBioticDataTemplate = list(
-            # Read the biotic data:
-            ReadBiotic = list(
-                ProcessName = "ReadBiotic", 
-                FunctionName = "ReadBiotic", 
-                ProcessParameters = list(
-                    FileOutput = FALSE
-                )
-            )
-        )
-        
-    )
-    
-    #### Assign to RstoxEnv and return the definitions: ####
-    Definitions <- list(
-        StoxFolders = StoxFolders, 
-        StoxDataSources = StoxDataSources, 
-        StoxModelTypes = StoxModelTypes, 
-        StoxModelDataTypes = StoxModelDataTypes, 
-        StoxProcessDataTypes = StoxProcessDataTypes, 
-        StoxDataTypes = StoxDataTypes, 
-        StoxTemplates = StoxTemplates, 
-        projectXML = "project.xml"
-    )
-    
-    #### Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv: ####
-    utils::globalVariables("RstoxFrameworkEnv")
-    assign("RstoxFrameworkEnv", new.env(), parent.env(environment()))
-    
-    assign("Definitions", Definitions, envir=get("RstoxFrameworkEnv"))
-    assign("Projects", list(), envir=get("RstoxFrameworkEnv"))
-    
-    #### Return the definitions: ####
-    Definitions
-}
 
-
-##################################################
-##################################################
-#' Get RstoxFramework definitions
-#' 
-#' This function gets vital definitions from the RstoxFramework environment.
-#' 
-#' @param name  An optional string vector denoting which definitions to extract.
-#' @param ...   Values overriding the values of definitions.
-#' 
-#' @return
-#' A list of vital definitions in RstoxFramework.
-#' 
-#' @examples
-#' getRstoxFrameworkDefinitions()
-#' 
-#' @export
-#' 
-getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
-    
-    # Save the optional inputs for overriding the output:
-    l <- list(...)
-    
-    # Get all or a subset of the definitions:
-    Definitions <- get("RstoxFrameworkEnv")$Definitions
-    if(length(name)){
-        Definitions <- Definitions[[name]]
-    }
-    
-    l <- l[names(l) %in% names(Definitions)]
-    if(length(l)){
-        Definitions <- utils::modifyList(Definitions, l)
-    }
-    
-    Definitions
-}
 
 
 ##################################################
@@ -930,30 +1061,6 @@ getProjectPaths <- function(ProjectName, ProjectDirectory = NULL) {
 }
 
 
-createProjectSkeleton <- function(ProjectName, ProjectDirectory = NULL) {
-    
-    # Get the paths of the StoX skeleton:
-    paths <- getProjectSkeletonPaths(ProjectName = ProjectName, ProjectDirectory = ProjectDirectory)
-    
-    # Create the "stox" folder if missing:
-    if(!file.exists()) {
-        message("Creating the 'stox' dirctory in the directory ", paths$stox)
-        dir.create(paths$stox, recursive = TRUE, showWarnings = FALSE)
-    }
-    
-    # Create the directories if the "stox" folder exists:
-    if(!file.exists()) {
-        message("Creation failed, possibly due to missing permission. Try setting the directory in which to put the stox folder, using the parameter 'ProjectDirectory'")
-    }
-    else{
-        # The directory paths$stox already exists:
-        paths$stox <- NULL
-        temp <- lapply(paths, dir.create, recursive = TRUE)
-    }
-    
-    # Return the paths:
-    paths
-}
 
 
 

@@ -955,24 +955,3 @@ createProjectSkeleton <- function(ProjectName, ProjectDirectory = NULL) {
     paths
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -8,15 +8,15 @@ stoxTemplates <- list(
     
     #### Empty template: ####
     emptyTemplate = list(
-        description <- "Empty template (user defined)"
+        description <- "Empty template (user defined)", 
         
         processes <- list()
-    )
+    ), 
     
     #### Template to calculate the length distribution per station: ####
     stationLengthDistributionTemplate = list(
         
-        description <- "Bla bla"
+        description <- "Bla bla", 
         
         processes <- list(
             # Read the biotic data:

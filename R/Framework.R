@@ -1,7 +1,9 @@
-# - Relative path to files "${STOX}"
+# The data types for communication with StoX: Boolean, String, Numeric, NULL, List of predefined values, FileName, FileNames
 # 
-# - Create the StoxRootDir and sub folders in OpenProject(), if missing
+# There is a hierarchy FuncitonName - FunctionParameters - FunctionInputs. This needs to be taken into account in the categories and items
 # 
+# What to do with boolean, integer, numeric, string?
+#
 # - We will use FunctionInputs and FunctionParameters.
 #
 # - We skip the test Tobis project created by StoX (assuming this is never used)
@@ -12,13 +14,19 @@
 # 
 # 
 # Things to do in RstoxFramework:
-#     
-# 1. Create project
-# 2. Open project
-# 3. Save project
-# 4. SaveAs project: Creates a new project as a copy of the current status of the old project, and # keeps the old project open, but shifts focus to the new.
-# 5. Close project (1. Ask the user)
-# 6. Reset project
+#
+# StoX
+# - Define the stox folder in the user home directory, since this avoids any global setting of StoX
+#
+# Project
+# - Create project
+# - Open project
+# - Save project
+# - SaveAs project: Creates a new project as a copy of the current status of the old project, and # keeps the old project open, but shifts focus to the new.
+# - Close project (1. Ask the user)
+# - Reset project
+#
+# Process
 # 
 # 
 # 
@@ -33,210 +41,20 @@
 # modifyBaselineProcessData
 
 
+
 ##################################################
 ##################################################
-#' Download files ftom and FTP sever, possibly recursively in the folder structure of the server
+#' Definitions stored in the RstoxFramework environment
 #' 
-#' The function \code{download_files_ftp} downloads files form an FTP srever using the function \code{download_files_ftp} which list files and directories.
-#' 
-#' @param ftp	    The path to an ftp server.
-#' @param dir       The path to the directory in which to place the files. 
-#' @param quiet     Logical: If TRUE suppress download messages.
-#' @param recursive Logical: If TRUE recurse into sub folders.
+#' This function declares the RstoxFramework environment and writes vital definitions to it.
 #' 
 #' @return
-#' A data frame the columns \code{path} and \code{isDir}.
-#' 
-#' @export
-#' @rdname download_files_ftp
-#' 
-download_files_ftp <- function(ftp, dir, quiet = TRUE, recursive = FALSE) {
-    
-    # Get the paths of the files on the ftp server:
-    ftpPaths <- list_files_ftp(ftp, quiet = quiet, recursive = recursive)
-    # If the 'dirs' is empty, return NULL:
-    if(length(ftpPaths) == 0) {
-        warning("No files downloaded. Check internett connection.")
-        return(NULL)
-    }
-    ftpPaths <- subset(ftpPaths, !isDir)$path
-    
-    # Get the relative paths, and construct the file paths to download the files to:
-    relativePaths <- sub(ftp, "", ftpPaths)
-    filePaths <- file.path(dir, relativePaths)
-    
-    # Create all unique directories:
-    uniqueDirectories <- unique(dirname(filePaths))
-    suppressWarnings(lapply(uniqueDirectories, dir.create, recursive = recursive))
-    
-    # Download the files:
-    if(length(ftpPaths)) {
-        status <- mapply(download.file, ftpPaths, filePaths, quiet = quiet)
-        if(any(status != 0)) {
-            warning("The following files were not downloaded:\n ", paste("\t", ftpPaths[status != 0], collapse = "\n"))
-        }
-    }
-    else {
-        message("No files found. Maybe try recursive = TRUE.")
-    }
-    
-    filePaths
-}
-#' 
-#' @export
-#' @rdname download_files_ftp
-#' 
-list_files_ftp <- function(ftp, quiet = TRUE, recursive = FALSE) {
-    
-    # Small function to remove the trailing slash of a file path:
-    removeTrailingSlash <- function(x) {
-        gsub('^/|/$', '', x)
-    }
-    # Function to read the contents of a ftp server (non-recursively):
-    get_ftp_info <- function(ftp, quiet = TRUE) {
-        
-        # Download the list of contents of the ftp server to a temporary file (return NULL if failing):
-        destfile <- tempfile()
-        #download.file(ftp, destfile, quiet = quiet)
-        err <- try(
-            download.file(ftp, destfile, quiet = quiet), silent = TRUE
-        )
-        if(class(err) == "try-error") {
-            warning("URL ", ftp, " not found.")
-            return(NULL)
-        }
-        
-        # Pick out the last column of the table returned from the frp server:
-        dirs <- readLines(destfile)
-        permission <- substr(dirs, 1, 10)
-        fileName <- substring(dirs, 57)
-        
-        # Output the file name and permission
-        data.frame(
-            permission = permission, 
-            fileName = fileName, 
-            stringsAsFactors = FALSE
-        )
-    }
-    
-    # Get the file names of the current ftp path:
-    dirs <- get_ftp_info(ftp, quiet = quiet)
-    # If the 'dirs' is empty, return NULL:
-    if(length(dirs) == 0) {
-        return(NULL)
-    }
-    
-    out <- NULL
-    # Recursive downloading:
-    for(ind in seq_len(nrow(dirs))) {
-        
-        # Detect whether the path is a directory:
-        isDir <- startsWith(dirs$permission[ind], "d")
-        
-        # Define the current path in the for loop:
-        ftpSansSlash <- removeTrailingSlash(ftp)
-        folderPath <- file.path(ftpSansSlash, dirs$fileName[ind], "")
-        folderPathSansSlash <- removeTrailingSlash(folderPath)
-        
-        # If the current path is a directory, recurse into that directory and store the output: 
-        if(recursive && isDir) {
-            temp <- list_files_ftp(ftp = folderPath, recursive = TRUE)
-            # Add both the folder and the output from list_files_ftp to the output:
-            out <- rbind(
-                out, 
-                data.frame(
-                    path = folderPath, 
-                    isDir = isDir, 
-                    stringsAsFactors = FALSE
-                ), 
-                temp
-            )
-        }
-        else {
-            # Add the file path to the output:
-            out <- rbind(
-                out, 
-                data.frame(
-                    path = folderPathSansSlash, 
-                    isDir = isDir, 
-                    stringsAsFactors = FALSE
-                )
-            )
-        } 
-    }
-    
-    # Return the vector of pahts:
-    out
-}
-
-
-##################################################
-##################################################
-#' Download StoX reference files
-#' 
-#' This function downloads reference files from the StoX ftp server.
-#' 
-#' @inheritParams download_files_ftp
-#' 
-#' @return
-#' A data frame the columns \code{path} and \code{isDir}.
-#' 
-#' @export
-#' @rdname downloadStoxReference
-#' 
-downloadStoxReference <- function(ftp = "ftp://ftp.imr.no/StoX/Download/reference/", quiet = TRUE) {
-    
-    # Get the path to the directory in which to place the reference data, and download the reference data:
-    StoxReferenceDir <- getRstoxFrameworkDefinitions(StoxReferenceDir)
-    # Create the StoxReferenceDir if missing.
-    if(!file.exists(StoxReferenceDir)) {
-        dir.create(StoxReferenceDir)
-    }
-    download_files_ftp_recursive(ftp = ftp, dir = StoxReferenceDir, quiet = quiet)
-}
-
-
-# system.time(l <- downloadStoxReference())
-
-            
-
-
-createStoxRoot <- function(StoxRootDir = NULL) {
-    
-    # Get the default paths to the StoX root:
-    if(length(StoxRootDir) == 0) {
-        StoxRootDir <- getRstoxFrameworkDefinitions(StoxRootDir)
-    }
-    StoxProjectDir <- getRstoxFrameworkDefinitions(StoxProjectDir)
-    StoxReferenceDir <- getRstoxFrameworkDefinitions(StoxReferenceDir)
-    
-    # Create the directories:
-    out <- c(
-        dir.create(StoxRootDir), 
-        dir.create(StoxProjectDir), 
-        dir.create(StoxReferenceDir)
-    )
-}
-
-
-##################################################
-##################################################
-#' Intitate RstoxFramework
-#' 
-#' This function writes vital definitions to the RstoxFramework environment.
-#' 
-#' @return
-#' A list of paths to the "stox" folder and sub folders.
+#' A list of definitions.
 #' 
 #' @noRd
 #' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
 #' 
 initiateRstoxFramework <- function(){
-    
-    #### Define the default root directories of StoX: ####
-    stoxRootDir <- "~/workspace/stox"
-    stoxProjectDir <- file.path(stoxRootDir, "project")
-    stoxReferenceDir <- file.path(stoxRootDir, "reference")
     
     #### The folders, data sources, model types and data types in a Stox project: ####
     stoxFolders <- c(
@@ -263,6 +81,25 @@ initiateRstoxFramework <- function(){
     )
     names(stoxFolderStructure) <- stoxFolders
     stoxFolderStructure <- unname(unlist(mapply(file.path, names(stoxFolderStructure), stoxFolderStructure)))
+    
+    # Define the folders and paths used when a project is open:
+    projectSessionFolder <- file.path(stoxFolders$output, "projectSession")
+    dataFolder <- file.path(projectSessionFolder, "data")
+    GUIFolder <- file.path(projectSessionFolder, "GUI")
+    projectDescriptionFolder <- file.path(projectSessionFolder, "projectDescription")
+    settingsFolder <- file.path(projectSessionFolder, "settings")
+    originalProjectDescription <- file.path(projectDescriptionFolder, "originalProjectDescription.rds")
+    pathToCurrentProjectDescription <- file.path(projectDescriptionFolder, "pathToCurrentProjectDescription.txt")
+    projectDescriptionIndex <- file.path(projectDescriptionFolder, "projectDescriptionIndex.txt")
+    
+    
+    
+    # Define the process parameters with default values:
+    processParameters <- list(
+        Enabled = TRUE, 
+        BreakInGUI = FALSE, 
+        FileOutput = TRUE
+    )
     
     # Do we need this???????:
     stoxModelDataTypes <- c(
@@ -316,11 +153,23 @@ initiateRstoxFramework <- function(){
         stoxDataSources = stoxDataSources, 
         stoxModelTypes = stoxModelTypes, 
         stoxFolderStructure = stoxFolderStructure, 
+        # 
+        projectSessionFolder = projectSessionFolder, 
+        dataFolder = dataFolder, 
+        GUIFolder = GUIFolder, 
+        projectDescriptionFolder = projectDescriptionFolder, 
+        settingsFolder = settingsFolder, 
+        originalProjectDescription = originalProjectDescription, 
+        pathToCurrentProjectDescription = pathToCurrentProjectDescription, 
+        projectDescriptionIndex = projectDescriptionIndex, 
+        # 
+        processParameters = processParameters, 
         stoxModelDataTypes = stoxModelDataTypes, 
         stoxProcessDataTypes = stoxProcessDataTypes, 
         stoxDataTypes = stoxDataTypes, 
         # This is defined in the file Templates.R:
         stoxTemplates = stoxTemplates, 
+        projectRData = "project.RData"
         projectXML = "project.xml"
     )
     
@@ -346,7 +195,7 @@ initiateRstoxFramework <- function(){
 #' @param ...   Values overriding the values of definitions.
 #' 
 #' @return
-#' A list of vital definitions in RstoxFramework.
+#' A list of definitions.
 #' 
 #' @examples
 #' getRstoxFrameworkDefinitions()
@@ -373,31 +222,14 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
 }
 
 
-createProjectSkeleton <- function(ProjectName, ProjectDirectory = NULL) {
+createProjectSkeleton <- function(ProjectPath) {
     
     # Get the paths of the root directory and StoX skeleton:
-    StoxRoot <- getRstoxFrameworkDefinitions("StoxRoot")
-    StoxFolderStructure <- getRstoxFrameworkDefinitions("StoxFolderStructure")
-    
-    # If the ProjectDirectory is not given, set it to the default StoxRoot:
-    if(length(ProjectDirectory) == 0) {
-        # Create the StoxRoot folder if missing:
-        if(!file.exists(StoxRoot)) {
-            message("Creating the 'stox' folder in the directory ", StoxRoot)
-            dir.create(
-                StoxRoot, recursive = TRUE, 
-                showWarnings = FALSE
-            )
-        }
-        # Set the ProjectDirectory to the default StoxRoot:
-        ProjectDirectory <- StoxRoot
-    }
-    
-    ProjectPath <- file.path(ProjectDirectory, ProjectName)
+    stoxFolderStructure <- getRstoxFrameworkDefinitions("stoxFolderStructure")
     
     # Check whether the project exists:
     if(dir.exists(ProjectPath)) {
-        warning("The project '", ProjectPath, "' exists. Choose another name or another location.")
+        warning("The project '", ProjectPath, "' exists. Choose a different project path.")
         return(NULL)
     }
     else {
@@ -411,104 +243,215 @@ createProjectSkeleton <- function(ProjectName, ProjectDirectory = NULL) {
 
 
 
-CreateProject <- function(
-    ProjectName, 
-    ProjectDirectory = NULL, 
-    Template = "EmptyTemplate"
-) {
+createProject <- function(ProjectPath, Template = "EmptyTemplate") {
+    
     # Create the project folder structure:
-    ProjectSkeleton <- createProjectSkeleton(
-        ProjectName = ProjectName, 
-        ProjectDirectory = ProjectDirectory
-    )
+    projectSkeleton <- createProjectSkeleton(ProjectPath)
     
     # Get the tempaltes:
-    Templates <- getAvaiableTemplates()
-    ThisTemplate <- Templates[[Template]]
-    if(length(ThisTemplate) == 0) {
+    templates <- getAvaiableTemplates()
+    thisTemplate <- templates[[Template]]
+    if(length(thisTemplate) == 0) {
         stop("The requested template does not exist. See getAvaiableTemplates() for a list of the available templates (with list.out = TRUE if you wish to see what the dirrefent templates are.)")
     }
     
     # Create an empty ProjectDescription:
-    ProjectDescription <- createEmptyProjectDescription()
+    projectDescription <- createEmptyProjectDescription()
     
     # Fill inn the processes::::::::::::::::::::::
 }
 
+createEmptyProjectDescription <- function() {
+    # Get the model types, and populate a list with these:
+    modelTypes <- getRstoxFrameworkDefinitions("stoxModelTypes")
+    projectDescription <- vector("list", length(modelTypes))
+    names(projectDescription) <- modelTypes
+    projectDescription
+}
 
-CreateEmptyBaselineProcess <- function() {
+
+createEmptyBaselineProcess <- function() {
     list(
         ProcessName = NULL, 
         FunctionName = NULL, 
-        ProcessParameters = list(
-            Enabled = TRUE, 
-            BreakInGUI = FALSE, 
-            FileOutput = TRUE
-        ),
+        ProcessParameters = getRstoxFrameworkDefinitions("processParameters"),
         ProcessData = list(), 
         FunctionParameters = list(), 
         FunctionInputs = list()
     )
 }
 
-GetFunctionOutputDataType <- function(FunctionName) {
+getFunctionOutputDataType <- function(FunctionName) {
     attr(get(FunctionName), "FunctionOutputDataType")
 }
 
-GetFunctionCategory <- function(FunctionName) {
+getFunctionCategory <- function(FunctionName) {
     attr(get(FunctionName), "FunctionCategory")
 }
 
-GetFunctionFunctionParameterParents <- function(FunctionName) {
+getFunctionParameterParents <- function(FunctionName) {
     attr(get(FunctionName), "FunctionParameterParents")
 }
 
+getParametersToShowInStoX <- function(FunctionName) {
+    functionParameterParents <- getFunctionParameterParents(FunctionName)
+    names(functionParameterParents)
+}
 
-ModifyProcessFunctionName <- function(Process, FunctionName) {
+getFunctionDefaults <- function(FunctionName) {
+    
+    # Get the formals:
+    f <- formals(FunctionName)
+    
+    # Convert missing inputs to NULL, to preserve the name-value-pair convention, and to allow evaluating the calls returned by formals():
+    areMissing <- sapply(f, class) == "name" & sapply(f, function(x) length(x) > 0 & sum(nchar(x)) == 0)
+    f[areMissing] <- vector("list", sum(areMissing))
+    
+    # Evaluate and return:
+    f <- lapply(f, eval)
+    f
+}
+
+
+getCurrentProjectDescriptionFile <- function(ProjectPath) {
+    # Get the path to the current project description file:
+    readLines(getRstoxFrameworkDefinitions("pathToCurrentProjectDescription"))[1]
+}
+
+
+getCurrentProjectDescription <- function(ProjectPath) {
+    getCurrentProjectDescriptionFile(ProjectPath)
+}
+
+
+ModifyFunctionName <- function(ProcessName, ModelName, ProjectName, NewFunctionName) {
+    
     # Set the function name:
     if(!identical(Process$FunctionName, FunctionName)) {
         Process$FunctionName <- FunctionName
         
+        # Get the parameters to display:
+        parametersToShowInStoX <- getParametersToShowInStoX(FunctionName)
         
-        # NOTE: WE NEED DEFAULKT VALUES
+        # Detect which parameters are data types, identifying them as function inputs (outputs from other processes):
+        areInputs <- isFunctionInput(parametersToShowInStoX)
         
-        # Change the function parameters:
-        FunctionParameters <- GetFunctionParametersInStoX(FunctionName)
+        # Get the default values:
+        defaults <- getFunctionDefaults(FunctionName)
+        defaults <- defaults[parametersToShowInStoX]
+        
+        # Split the defaults into function parameters and function inputs:
+        FunctionParameters <- defaults[!areInputs]
+        FunctionInputs <- defaults[areInputs]
+        
+        # Change the function parameters and inputs:
         Process$FunctionParameters <- FunctionParameters
-        # Change the function inputs:
-        FunctionInputs <- GetFunctionInputs(FunctionName)
         Process$FunctionInputs <- FunctionInputs
     }
     
     Process
 }
 
-ModifyProcessFunctionParameters <- function(Process, FunctionParameters) {
-    # Get the names of the possible funciton parameters to modify:
-    PossibleFunctionParameters <- GetFunctionParametersInStoX(Process$FunctionName)
+ModifyProcessName <- function(ProcessName, Model, NewProcessName) {
+    # Set the process name:
+    Process$ProcessName <- ProcessName
     
-    # Extract the valid parameters:
-    ValidFunctionParameters <- intersect(names(FunctionParameters), PossibleFunctionParameters)
-    FunctionParameters <- FunctionParameters[ValidFunctionParameters]
+    Process
+}
+
+ModifyFunctionParameters <- function(Process, FunctionParameters) {
     
+    # Report a warning for function parameters not present in the process:
+    valid <- names(FunctionParameters) %in% names(Process$FunctionParameters)
+    if(any(!valid)) {
+        warning("The following function parameters are not present for the function ", Process$FunctionName, " of the process ", Process$ProcessName, ": ", paste(names(FunctionParameters)[!valid], collapse = ", "))
+        FunctionParameters <- FunctionParameters[valid]
+    }
+    
+    # Insert the function parameters:
     for(ind in seq_along(FunctionParameters)) {
         Process$FunctionParameters[[names(FunctionParameters[ind])]] <- FunctionParameters[[ind]]
     }
- 
+    
+    Process
+}
+
+ModifyFunctionInputs <- function(Process, FunctionInputs) {
+    
+    # Report a warning for function inputs not present in the process:
+    valid <- names(FunctionInputs) %in% names(Process$FunctionInputs)
+    if(any(!valid)) {
+        warning("The following function inputs are not present for the function ", Process$FunctionName, " of the process ", Process$ProcessName, ": ", paste(names(FunctionInputs)[!valid], collapse = ", "))
+        FunctionInputs <- FunctionInputs[valid]
+    }
+    
+    # Insert the function inputs:
+    for(ind in seq_along(FunctionInputs)) {
+        Process$FunctionInputs[[names(FunctionInputs[ind])]] <- FunctionInputs[[ind]]
+    }
+    
+    Process
+}
+
+ModifyProcessParameters <- function(Process, ProcessParameters) {
+    
+    # Get names of the process parameters:
+    validProcessParameterNames = names(getRstoxFrameworkDefinitions("processParameters"))
+    
+    # Report a warning for non-existing process parameters:
+    valid <- names(ProcessParameters) %in% validProcessParameterNames
+    if(any(!valid)) {
+        warning("The following process parameters are not valid: ", paste(names(ProcessParameters)[!valid], collapse = ", "))
+        ProcessParameters <- ProcessParameters[valid]
+    }
+    
+    # Insert the process parameters:
+    for(ind in seq_along(ProcessParameters)) {
+        Process$ProcessParameters[[names(ProcessParameters[ind])]] <- ProcessParameters[[ind]]
+    }
+    
     Process
 }
 
 
 
-
-
-createEmptyProjectDescription <- function() {
-    # Get the model types, and populate a list with these:
-    ModelTypes <- getRstoxFrameworkDefinitions("StoxModelTypes")
-    ProjectDescription <- vector("list", length(ModelTypes))
-    names(ProjectDescription) <- ModelTypes
-    ProjectDescription
+# This function checks that 
+checkModel <- function(ProjectName, ModelName) {
+    
+    # Function to check that the function inputs of one process are all process names existing prior to that function:
+    checkFunctionInputs <- function(ind, functionInputs, processNames) {
+        all(functionInputs %in% processNames[seq_len(ind - 1)])
+    }
+    
+    # Get the processes of the model:
+    processes <- getProcesses(ProjectName, ModelName)
+    
+    # (1) Check process names:
+    processNames <- names(processes)
+    duplicatedProcessNames <- processNames[duplicated(processNames)]
+    if(length(duplicatedProcessNames)) {
+        message("The following process names are not unique: ", paste(duplicatedProcessNames))
+        return(FALSE)
+    }
+    
+    # (2) Check that all function inputs are existing process names prior to the current process:
+    functionInputs <- lapply(processes, "[[", "FunctionInputs")
+    areValidFunctionInputs <- sapply(seq_along(functionInputs), checkFunctionInputs, functionInputs = functionInputs, processNames = processNames)
+    processesWithInvalidFunctionInputs <- processNames[!areValidFunctionInputs]
+    if(length(processesWithInvalidFunctionInputs)) {
+        message("The following processes have function inputs that are not the name of a prior process: ", paste(processesWithInvalidFunctionInputs))
+        return(FALSE)
+    }
 }
+
+
+# Function to update all relevant function inputs of a model to the new process name when a process has changed name:
+updateFunctionInputs <- function() {
+    
+}
+
+
+
 
 
 getAvaiableTemplates <- function(list.out = FALSE) {
@@ -709,6 +652,7 @@ getOutputFileNames <- function(processName, ProjectName, fileExt="txt") {
 
 
 projectDescription <- list(
+    Description = "fasdvabadf", 
     Baseline = list(
 		ReadAcoustic = list(
 		    ProcessName = "ReadAcoustic", 
@@ -1075,6 +1019,7 @@ createStoxSkeleton <- function(ProjectDirectory = NULL) {
 ###         projectDirsList = projectDirsList
 ###     )
 ### }
+
 
 
 

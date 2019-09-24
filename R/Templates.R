@@ -1,7 +1,6 @@
 stoxTemplates <- list(
-
     #### AcousticAbundanceTransectTemplate: Acoustic abundance by transect and r-model with uncertainty
-    AcousticAbundanceTransectTemplate = list(
+    AcousticAbundanceTransectTemplate <- list(
         description <- "Acoustic abundance by transect and r-model with uncertainty",
         Baseline <- list(
             ReadProcessData <- list(
@@ -107,7 +106,7 @@ stoxTemplates <- list(
                     ProcessData = "ReadProcessData"
                 ),
                 FunctionParameters <- list(
-                    UseProcessData = false
+                    UseProcessData = FALSE
                 )
             ),
             StratumArea <- list(
@@ -409,9 +408,10 @@ stoxTemplates <- list(
                     out = "all"
                 )
             )
-        ),
+        )
+    ),
     #### SweptAreaTemplate: Swept area (length dependent)
-    SweptAreaTemplate = list(
+    SweptAreaTemplate <- list(
         description <- "Swept area (length dependent)",
         Baseline <- list(
             ReadProcessData <- list(
@@ -480,7 +480,7 @@ stoxTemplates <- list(
                     ProcessData = "ReadProcessData"
                 ),
                 FunctionParameters <- list(
-                    UseProcessData = false
+                    UseProcessData = FALSE
                 )
             ),
             StratumArea <- list(
@@ -722,9 +722,10 @@ stoxTemplates <- list(
                     out = "all"
                 )
             )
-        ),
+        )
+    ),
     #### SweptAreaTotalTemplate: Swept area (total catch)
-    SweptAreaTotalTemplate = list(
+    SweptAreaTotalTemplate <- list(
         description <- "Swept area (total catch)",
         Baseline <- list(
             ReadProcessData <- list(
@@ -765,7 +766,7 @@ stoxTemplates <- list(
                     ProcessData = "ReadProcessData"
                 ),
                 FunctionParameters <- list(
-                    UseProcessData = false
+                    UseProcessData = FALSE
                 )
             ),
             DefineSweptAreaPSU <- list(
@@ -952,9 +953,10 @@ stoxTemplates <- list(
                     options = "bootstrapMethod='SweptAreaTotal'"
                 )
             )
-        ),
+        )
+    ),
     #### SweptAreaTotalSpecCatTemplate: Station species category density
-    SweptAreaTotalSpecCatTemplate = list(
+    SweptAreaTotalSpecCatTemplate <- list(
         description <- "Station species category density",
         Baseline <- list(
             ReadProcessData <- list(
@@ -995,7 +997,7 @@ stoxTemplates <- list(
                     ProcessData = "ReadProcessData"
                 ),
                 FunctionParameters <- list(
-                    UseProcessData = false
+                    UseProcessData = FALSE
                 )
             ),
             DefineSweptAreaPSU <- list(
@@ -1085,9 +1087,10 @@ stoxTemplates <- list(
                     BreakInGUI = FALSE
                 )
             )
-        ),
+        )
+    ),
     #### SplitNASCTemplate: Split NASC
-    SplitNASCTemplate = list(
+    SplitNASCTemplate <- list(
         description <- "Split NASC",
         Baseline <- list(
             ReadAcousticXML <- list(
@@ -1304,9 +1307,10 @@ stoxTemplates <- list(
                     Directory = "output/baseline"
                 )
             )
-        ),
+        )
+    ),
     #### LengthWeightRelationShipTemplate: Length Weight relationship
-    LengthWeightRelationShipTemplate = list(
+    LengthWeightRelationShipTemplate <- list(
         description <- "Length Weight relationship",
         Baseline <- list(
             ReadProcessData <- list(
@@ -1347,7 +1351,7 @@ stoxTemplates <- list(
                     ProcessData = "ReadProcessData"
                 ),
                 FunctionParameters <- list(
-                    UseProcessData = false
+                    UseProcessData = FALSE
                 )
             ),
             DefineSweptAreaPSU <- list(
@@ -1385,9 +1389,10 @@ stoxTemplates <- list(
                     BreakInGUI = FALSE
                 )
             )
-        ),
+        )
+    ),
     #### StationLengthDistTemplate: Station length distribution
-    StationLengthDistTemplate = list(
+    StationLengthDistTemplate <- list(
         description <- "Station length distribution",
         Baseline <- list(
             ReadBioticXML <- list(
@@ -1437,9 +1442,10 @@ stoxTemplates <- list(
                     LengthInterval = 1.0
                 )
             )
-        ),
+        )
+    ),
     #### DATRASTemplate: DATRAS conversion
-    DATRASTemplate = list(
+    DATRASTemplate <- list(
         description <- "DATRAS conversion",
         Baseline <- list(
             ReadBioticXML <- list(
@@ -1482,8 +1488,10 @@ stoxTemplates <- list(
                     BreakInGUI = FALSE
                 )
             )
-        ),
+        )
+    ),
     #### UserDefinedTemplate: User defined (empty models)
-    UserDefinedTemplate = list(
-        description <- "User defined (empty models)",
+    UserDefinedTemplate <- list(
+        description <- "User defined (empty models)"
+    )
 )

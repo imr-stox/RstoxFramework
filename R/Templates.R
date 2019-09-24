@@ -410,8 +410,8 @@ stoxTemplates <- list(
                 )
             )
         )
-    #### SweptAreaTemplateTemplate: Swept area (length dependent)
-    SweptAreaTemplateTemplate = list(
+    #### SweptAreaTemplate: Swept area (length dependent)
+    SweptAreaTemplate = list(
         description <- "Swept area (length dependent)",
 
         Baseline <- list(
@@ -724,8 +724,8 @@ stoxTemplates <- list(
                 )
             )
         )
-    #### SweptAreaTotalTemplateTemplate: Swept area (total catch)
-    SweptAreaTotalTemplateTemplate = list(
+    #### SweptAreaTotalTemplate: Swept area (total catch)
+    SweptAreaTotalTemplate = list(
         description <- "Swept area (total catch)",
 
         Baseline <- list(
@@ -955,8 +955,8 @@ stoxTemplates <- list(
                 )
             )
         )
-    #### SweptAreaTotalSpecCatTemplateTemplate: Station species category density
-    SweptAreaTotalSpecCatTemplateTemplate = list(
+    #### SweptAreaTotalSpecCatTemplate: Station species category density
+    SweptAreaTotalSpecCatTemplate = list(
         description <- "Station species category density",
 
         Baseline <- list(
@@ -1391,8 +1391,8 @@ stoxTemplates <- list(
                 )
             )
         )
-    #### StationLengthDistTemplateTemplate: Station length distribution
-    StationLengthDistTemplateTemplate = list(
+    #### StationLengthDistTemplate: Station length distribution
+    StationLengthDistTemplate = list(
         description <- "Station length distribution",
 
         Baseline <- list(
@@ -1444,8 +1444,8 @@ stoxTemplates <- list(
                 )
             )
         )
-    #### DATRASTemplateTemplate: DATRAS conversion
-    DATRASTemplateTemplate = list(
+    #### DATRASTemplate: DATRAS conversion
+    DATRASTemplate = list(
         description <- "DATRAS conversion",
 
         Baseline <- list(

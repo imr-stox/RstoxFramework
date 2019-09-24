@@ -1,7 +1,7 @@
 stoxTemplates <- list(
     #### AcousticAbundanceTransectTemplate: Acoustic abundance by transect and r-model with uncertainty
     AcousticAbundanceTransectTemplate = list(
-        description <- "Acoustic abundance by transect and r-model with uncertainty"
+        description <- "Acoustic abundance by transect and r-model with uncertainty",
 
         Baseline <- list(
             ReadProcessData <- list(
@@ -412,7 +412,7 @@ stoxTemplates <- list(
         )
     #### SweptAreaTemplateTemplate: Swept area (length dependent)
     SweptAreaTemplateTemplate = list(
-        description <- "Swept area (length dependent)"
+        description <- "Swept area (length dependent)",
 
         Baseline <- list(
             ReadProcessData <- list(
@@ -726,7 +726,7 @@ stoxTemplates <- list(
         )
     #### SweptAreaTotalTemplateTemplate: Swept area (total catch)
     SweptAreaTotalTemplateTemplate = list(
-        description <- "Swept area (total catch)"
+        description <- "Swept area (total catch)",
 
         Baseline <- list(
             ReadProcessData <- list(
@@ -957,7 +957,7 @@ stoxTemplates <- list(
         )
     #### SweptAreaTotalSpecCatTemplateTemplate: Station species category density
     SweptAreaTotalSpecCatTemplateTemplate = list(
-        description <- "Station species category density"
+        description <- "Station species category density",
 
         Baseline <- list(
             ReadProcessData <- list(
@@ -1091,7 +1091,7 @@ stoxTemplates <- list(
         )
     #### SplitNASCTemplate: Split NASC
     SplitNASCTemplate = list(
-        description <- "Split NASC"
+        description <- "Split NASC",
 
         Baseline <- list(
             ReadAcousticXML <- list(
@@ -1311,7 +1311,7 @@ stoxTemplates <- list(
         )
     #### LengthWeightRelationShipTemplate: Length Weight relationship
     LengthWeightRelationShipTemplate = list(
-        description <- "Length Weight relationship"
+        description <- "Length Weight relationship",
 
         Baseline <- list(
             ReadProcessData <- list(
@@ -1393,7 +1393,7 @@ stoxTemplates <- list(
         )
     #### StationLengthDistTemplateTemplate: Station length distribution
     StationLengthDistTemplateTemplate = list(
-        description <- "Station length distribution"
+        description <- "Station length distribution",
 
         Baseline <- list(
             ReadBioticXML <- list(
@@ -1446,7 +1446,7 @@ stoxTemplates <- list(
         )
     #### DATRASTemplateTemplate: DATRAS conversion
     DATRASTemplateTemplate = list(
-        description <- "DATRAS conversion"
+        description <- "DATRAS conversion",
 
         Baseline <- list(
             ReadBioticXML <- list(

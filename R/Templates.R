@@ -1,321 +1,321 @@
 stoxTemplates <- list(
     #### AcousticAbundanceTransectTemplate: Acoustic abundance by transect and r-model with uncertainty
-    AcousticAbundanceTransectTemplate <- list(
-        description <- "Acoustic abundance by transect and r-model with uncertainty",
-        Baseline <- list(
-            ReadProcessData <- list(
+    AcousticAbundanceTransectTemplate = list(
+        description = "Acoustic abundance by transect and r-model with uncertainty",
+        Baseline = list(
+            ReadProcessData = list(
                 ProcessName = "ReadProcessData",
                 FunctionName = "ReadProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             ),
-            ReadAcousticXML <- list(
+            ReadAcousticXML = list(
                 ProcessName = "ReadAcousticXML",
                 FunctionName = "ReadAcousticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterAcoustic <- list(
+            FilterAcoustic = list(
                 ProcessName = "FilterAcoustic",
                 FunctionName = "FilterAcoustic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     AcousticData = "ReadAcousticXML"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     FreqExpr = "frequency == 38000 and transceiver == 2",
                     NASCExpr = "acocat == 12 and chtype == 'P'"
                 )
             ),
-            SumNASC <- list(
+            SumNASC = list(
                 ProcessName = "SumNASC",
                 FunctionName = "SumNASC",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     AcousticData = "FilterAcoustic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LayerType = "WaterColumn"
                 )
             ),
-            ReadBioticXML <- list(
+            ReadBioticXML = list(
                 ProcessName = "ReadBioticXML",
                 FunctionName = "ReadBioticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterBiotic <- list(
+            FilterBiotic = list(
                 ProcessName = "FilterBiotic",
                 FunctionName = "FilterBiotic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "RedefineSpecCat"
                 )
             ),
-            StationLengthDist <- list(
+            StationLengthDist = list(
                 ProcessName = "StationLengthDist",
                 FunctionName = "StationLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthDistType = "PercentLengthDist"
                 )
             ),
-            RegroupLengthDist <- list(
+            RegroupLengthDist = list(
                 ProcessName = "RegroupLengthDist",
                 FunctionName = "RegroupLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     LengthDist = "StationLengthDist"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthInterval = 1.0
                 )
             ),
-            DefineStrata <- list(
+            DefineStrata = list(
                 ProcessName = "DefineStrata",
                 FunctionName = "DefineStrata",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = TRUE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     UseProcessData = FALSE
                 )
             ),
-            StratumArea <- list(
+            StratumArea = list(
                 ProcessName = "StratumArea",
                 FunctionName = "StratumArea",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     AreaMethod = "Simple"
                 )
             ),
-            DefineAcousticPSU <- list(
+            DefineAcousticPSU = list(
                 ProcessName = "DefineAcousticPSU",
                 FunctionName = "DefineAcousticPSU",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = TRUE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     AcousticData = "FilterAcoustic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     DefinitionMethod = "UseProcessData"
                 )
             ),
-            MeanNASC <- list(
+            MeanNASC = list(
                 ProcessName = "MeanNASC",
                 FunctionName = "MeanNASC",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     NASC = "SumNASC"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SampleUnitType = "PSU"
                 )
             ),
-            BioStationAssignment <- list(
+            BioStationAssignment = list(
                 ProcessName = "BioStationAssignment",
                 FunctionName = "BioStationAssignment",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = TRUE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic",
                     AcousticData = "FilterAcoustic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     AssignmentMethod = "Stratum",
                     Radius = 15.0,
                     EstLayers = "1~PELBOT"
                 )
             ),
-            BioStationWeighting <- list(
+            BioStationWeighting = list(
                 ProcessName = "BioStationWeighting",
                 FunctionName = "BioStationWeighting",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic",
                     NASC = "SumNASC",
                     AcousticData = "FilterAcoustic",
                     LengthDist = "RegroupLengthDist"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     WeightingMethod = "Equal",
                     m = 20,
                     MaxNumLengthSamples = 100
                 )
             ),
-            TotalLengthDist <- list(
+            TotalLengthDist = list(
                 ProcessName = "TotalLengthDist",
                 FunctionName = "TotalLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     LengthDist = "RegroupLengthDist"
                 )
             ),
-            AcousticDensity <- list(
+            AcousticDensity = list(
                 ProcessName = "AcousticDensity",
                 FunctionName = "AcousticDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     LengthDist = "TotalLengthDist",
                     NASC = "MeanNASC"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     m = 20
                 )
             ),
-            MeanDensity_Stratum <- list(
+            MeanDensity_Stratum = list(
                 ProcessName = "MeanDensity_Stratum",
                 FunctionName = "MeanDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     Density = "AcousticDensity"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SampleUnitType = "Stratum"
                 )
             ),
-            SumDensity_Stratum <- list(
+            SumDensity_Stratum = list(
                 ProcessName = "SumDensity_Stratum",
                 FunctionName = "SumDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     Density = "MeanDensity_Stratum"
                 )
             ),
-            Abundance <- list(
+            Abundance = list(
                 ProcessName = "Abundance",
                 FunctionName = "Abundance",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     Density = "SumDensity_Stratum",
                     PolygonArea = "StratumArea"
                 )
             ),
-            IndividualDataStations <- list(
+            IndividualDataStations = list(
                 ProcessName = "IndividualDataStations",
                 FunctionName = "IndividualDataStations",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     Abundance = "Abundance"
                 )
             ),
-            IndividualData <- list(
+            IndividualData = list(
                 ProcessName = "IndividualData",
                 FunctionName = "IndividualData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "FilterBiotic",
                     IndividualDataStations = "IndividualDataStations"
                 )
             ),
-            SuperIndAbundance <- list(
+            SuperIndAbundance = list(
                 ProcessName = "SuperIndAbundance",
                 FunctionName = "SuperIndAbundance",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     Abundance = "Abundance",
                     IndividualData = "IndividualData",
                     ProcessData = "ReadProcessData",
                     LengthDist = "RegroupLengthDist"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     AbundWeightMethod = "Equal"
                 )
             ),
-            WriteProcessData <- list(
+            WriteProcessData = list(
                 ProcessName = "WriteProcessData",
                 FunctionName = "WriteProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             )
         ),
-        Statistics <- list(
-            runBootstrap <- list(
+        Statistics = list(
+            runBootstrap = list(
                 ProcessName = "runBootstrap",
                 FunctionName = "runBootstrap",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     bootstrapMethod = "AcousticTrawl",
                     acousticMethod = "PSU~Stratum",
                     bioticMethod = "PSU~Stratum",
@@ -326,39 +326,39 @@ stoxTemplates <- list(
                     cores = 1
                 )
             ),
-            imputeByAge <- list(
+            imputeByAge = list(
                 ProcessName = "imputeByAge",
                 FunctionName = "imputeByAge",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     seed = 1,
                     cores = 1
                 )
             ),
-            saveProjectData <- list(
+            saveProjectData = list(
                 ProcessName = "saveProjectData",
                 FunctionName = "saveProjectData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             )
         ),
-        Report <- list(
-            FillMissingData <- list(
+        Report = list(
+            FillMissingData = list(
                 ProcessName = "FillMissingData",
                 FunctionName = "FillMissingData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     SuperIndividuals = "SuperIndAbundance"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     FillVariables = "ImputeByAge",
                     Seed = 1,
                     FillWeight = "Mean",
@@ -366,17 +366,17 @@ stoxTemplates <- list(
                     b = "3.0"
                 )
             ),
-            EstimateByPopulationCategory <- list(
+            EstimateByPopulationCategory = list(
                 ProcessName = "EstimateByPopulationCategory",
                 FunctionName = "EstimateByPopulationCategory",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     SuperIndividuals = "FillMissingData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthInterval = 1.0,
                     Scale = 1000,
                     Dim1 = "LenGrp",
@@ -386,157 +386,157 @@ stoxTemplates <- list(
                     Dim5 = "none"
                 )
             ),
-            getReports <- list(
+            getReports = list(
                 ProcessName = "getReports",
                 FunctionName = "getReports",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     out = "all"
                 )
             ),
-            getPlots <- list(
+            getPlots = list(
                 ProcessName = "getPlots",
                 FunctionName = "getPlots",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     out = "all"
                 )
             )
         )
     ),
     #### SweptAreaTemplate: Swept area (length dependent)
-    SweptAreaTemplate <- list(
-        description <- "Swept area (length dependent)",
-        Baseline <- list(
-            ReadProcessData <- list(
+    SweptAreaTemplate = list(
+        description = "Swept area (length dependent)",
+        Baseline = list(
+            ReadProcessData = list(
                 ProcessName = "ReadProcessData",
                 FunctionName = "ReadProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             ),
-            ReadBioticXML <- list(
+            ReadBioticXML = list(
                 ProcessName = "ReadBioticXML",
                 FunctionName = "ReadBioticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterBiotic <- list(
+            FilterBiotic = list(
                 ProcessName = "FilterBiotic",
                 FunctionName = "FilterBiotic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "RedefineSpecCat"
                 )
             ),
-            StationLengthDist <- list(
+            StationLengthDist = list(
                 ProcessName = "StationLengthDist",
                 FunctionName = "StationLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthDistType = "NormLengthDist"
                 )
             ),
-            RegroupLengthDist <- list(
+            RegroupLengthDist = list(
                 ProcessName = "RegroupLengthDist",
                 FunctionName = "RegroupLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     LengthDist = "StationLengthDist"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthInterval = 1.0
                 )
             ),
-            DefineStrata <- list(
+            DefineStrata = list(
                 ProcessName = "DefineStrata",
                 FunctionName = "DefineStrata",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = TRUE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     UseProcessData = FALSE
                 )
             ),
-            StratumArea <- list(
+            StratumArea = list(
                 ProcessName = "StratumArea",
                 FunctionName = "StratumArea",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     AreaMethod = "Simple"
                 )
             ),
-            DefineSweptAreaPSU <- list(
+            DefineSweptAreaPSU = list(
                 ProcessName = "DefineSweptAreaPSU",
                 FunctionName = "DefineSweptAreaPSU",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     Method = "Station"
                 )
             ),
-            TotalLengthDist <- list(
+            TotalLengthDist = list(
                 ProcessName = "TotalLengthDist",
                 FunctionName = "TotalLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     LengthDist = "RegroupLengthDist"
                 )
             ),
-            SweptAreaDensity <- list(
+            SweptAreaDensity = list(
                 ProcessName = "SweptAreaDensity",
                 FunctionName = "SweptAreaDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic",
                     LengthDist = "TotalLengthDist"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SweptAreaMethod = "LengthDependent",
                     CatchVariable = "Weight",
                     DistanceMethod = "FullDistance",
@@ -544,92 +544,92 @@ stoxTemplates <- list(
                     SweepWidth = 25
                 )
             ),
-            MeanDensity_Stratum <- list(
+            MeanDensity_Stratum = list(
                 ProcessName = "MeanDensity_Stratum",
                 FunctionName = "MeanDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     Density = "SweptAreaDensity"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SampleUnitType = "Stratum"
                 )
             ),
-            Abundance <- list(
+            Abundance = list(
                 ProcessName = "Abundance",
                 FunctionName = "Abundance",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     Density = "MeanDensity_Stratum",
                     PolygonArea = "StratumArea"
                 )
             ),
-            IndividualDataStations <- list(
+            IndividualDataStations = list(
                 ProcessName = "IndividualDataStations",
                 FunctionName = "IndividualDataStations",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     Abundance = "Abundance"
                 )
             ),
-            IndividualData <- list(
+            IndividualData = list(
                 ProcessName = "IndividualData",
                 FunctionName = "IndividualData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "FilterBiotic",
                     IndividualDataStations = "IndividualDataStations"
                 )
             ),
-            SuperIndAbundance <- list(
+            SuperIndAbundance = list(
                 ProcessName = "SuperIndAbundance",
                 FunctionName = "SuperIndAbundance",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     Abundance = "Abundance",
                     IndividualData = "IndividualData",
                     ProcessData = "ReadProcessData",
                     LengthDist = "RegroupLengthDist"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     AbundWeightMethod = "StationDensity"
                 )
             ),
-            WriteProcessData <- list(
+            WriteProcessData = list(
                 ProcessName = "WriteProcessData",
                 FunctionName = "WriteProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             )
         ),
-        Statistics <- list(
-            runBootstrap <- list(
+        Statistics = list(
+            runBootstrap = list(
                 ProcessName = "runBootstrap",
                 FunctionName = "runBootstrap",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     bootstrapMethod = "SweptAreaLength",
                     acousticMethod = "",
                     bioticMethod = "PSU~Stratum",
@@ -640,39 +640,39 @@ stoxTemplates <- list(
                     cores = 1
                 )
             ),
-            imputeByAge <- list(
+            imputeByAge = list(
                 ProcessName = "imputeByAge",
                 FunctionName = "imputeByAge",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     seed = 1,
                     cores = 1
                 )
             ),
-            saveProjectData <- list(
+            saveProjectData = list(
                 ProcessName = "saveProjectData",
                 FunctionName = "saveProjectData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             )
         ),
-        Report <- list(
-            FillMissingData <- list(
+        Report = list(
+            FillMissingData = list(
                 ProcessName = "FillMissingData",
                 FunctionName = "FillMissingData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     SuperIndividuals = "SuperIndAbundance"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     FillVariables = "ImputeByAge",
                     Seed = 1,
                     FillWeight = "Mean",
@@ -680,17 +680,17 @@ stoxTemplates <- list(
                     b = "3.0"
                 )
             ),
-            EstimateByPopulationCategory <- list(
+            EstimateByPopulationCategory = list(
                 ProcessName = "EstimateByPopulationCategory",
                 FunctionName = "EstimateByPopulationCategory",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     SuperIndividuals = "FillMissingData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthInterval = 1.0,
                     Scale = 1000,
                     Dim1 = "LenGrp",
@@ -700,102 +700,102 @@ stoxTemplates <- list(
                     Dim5 = "none"
                 )
             ),
-            getReports <- list(
+            getReports = list(
                 ProcessName = "getReports",
                 FunctionName = "getReports",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     out = "all"
                 )
             ),
-            getPlots <- list(
+            getPlots = list(
                 ProcessName = "getPlots",
                 FunctionName = "getPlots",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     out = "all"
                 )
             )
         )
     ),
     #### SweptAreaTotalTemplate: Swept area (total catch)
-    SweptAreaTotalTemplate <- list(
-        description <- "Swept area (total catch)",
-        Baseline <- list(
-            ReadProcessData <- list(
+    SweptAreaTotalTemplate = list(
+        description = "Swept area (total catch)",
+        Baseline = list(
+            ReadProcessData = list(
                 ProcessName = "ReadProcessData",
                 FunctionName = "ReadProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             ),
-            ReadBioticXML <- list(
+            ReadBioticXML = list(
                 ProcessName = "ReadBioticXML",
                 FunctionName = "ReadBioticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterBiotic <- list(
+            FilterBiotic = list(
                 ProcessName = "FilterBiotic",
                 FunctionName = "FilterBiotic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "RedefineSpecCat"
                 )
             ),
-            DefineStrata <- list(
+            DefineStrata = list(
                 ProcessName = "DefineStrata",
                 FunctionName = "DefineStrata",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = TRUE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     UseProcessData = FALSE
                 )
             ),
-            DefineSweptAreaPSU <- list(
+            DefineSweptAreaPSU = list(
                 ProcessName = "DefineSweptAreaPSU",
                 FunctionName = "DefineSweptAreaPSU",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     Method = "Station"
                 )
             ),
-            SweptAreaCountDensity <- list(
+            SweptAreaCountDensity = list(
                 ProcessName = "SweptAreaCountDensity",
                 FunctionName = "SweptAreaDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SweptAreaMethod = "TotalCatch",
                     CatchVariable = "Count",
                     DistanceMethod = "FullDistance",
@@ -803,45 +803,45 @@ stoxTemplates <- list(
                     SweepWidth = 25
                 )
             ),
-            MeanCountDensity_Stratum <- list(
+            MeanCountDensity_Stratum = list(
                 ProcessName = "MeanCountDensity_Stratum",
                 FunctionName = "MeanDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     Density = "SweptAreaCountDensity"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SampleUnitType = "Stratum"
                 )
             ),
-            AbundanceCount_Stratum <- list(
+            AbundanceCount_Stratum = list(
                 ProcessName = "AbundanceCount_Stratum",
                 FunctionName = "Abundance",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     Density = "MeanCountDensity_Stratum",
                     PolygonArea = "StratumArea"
                 )
             ),
-            SweptAreaWeightDensity <- list(
+            SweptAreaWeightDensity = list(
                 ProcessName = "SweptAreaWeightDensity",
                 FunctionName = "SweptAreaDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SweptAreaMethod = "TotalCatch",
                     CatchVariable = "Weight",
                     DistanceMethod = "FullDistance",
@@ -849,51 +849,51 @@ stoxTemplates <- list(
                     SweepWidth = 25
                 )
             ),
-            MeanWeightDensity_Stratum <- list(
+            MeanWeightDensity_Stratum = list(
                 ProcessName = "MeanWeightDensity_Stratum",
                 FunctionName = "MeanDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     Density = "SweptAreaWeightDensity"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SampleUnitType = "Stratum"
                 )
             ),
-            AbundanceWeight_Stratum <- list(
+            AbundanceWeight_Stratum = list(
                 ProcessName = "AbundanceWeight_Stratum",
                 FunctionName = "Abundance",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     Density = "MeanWeightDensity_Stratum",
                     PolygonArea = "StratumArea"
                 )
             ),
-            WriteProcessData <- list(
+            WriteProcessData = list(
                 ProcessName = "WriteProcessData",
                 FunctionName = "WriteProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             )
         ),
-        Statistics <- list(
-            runBootstrap <- list(
+        Statistics = list(
+            runBootstrap = list(
                 ProcessName = "runBootstrap",
                 FunctionName = "runBootstrap",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     bootstrapMethod = "SweptAreaTotal",
                     acousticMethod = "",
                     bioticMethod = "PSU~Stratum",
@@ -904,51 +904,51 @@ stoxTemplates <- list(
                     cores = 1
                 )
             ),
-            saveProjectData <- list(
+            saveProjectData = list(
                 ProcessName = "saveProjectData",
                 FunctionName = "saveProjectData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             )
         ),
-        Report <- list(
-            TotalAbundance <- list(
+        Report = list(
+            TotalAbundance = list(
                 ProcessName = "TotalAbundance",
                 FunctionName = "TotalAbundance",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     WeightAbundance = "AbundanceWeight_Stratum",
                     CountAbundance = "AbundanceCount_Stratum"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     Scale = 1000
                 )
             ),
-            getReports <- list(
+            getReports = list(
                 ProcessName = "getReports",
                 FunctionName = "getReports",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     out = "all",
                     options = "bootstrapMethod='SweptAreaTotal'"
                 )
             ),
-            getPlots <- list(
+            getPlots = list(
                 ProcessName = "getPlots",
                 FunctionName = "getPlots",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     out = "all",
                     options = "bootstrapMethod='SweptAreaTotal'"
                 )
@@ -956,77 +956,77 @@ stoxTemplates <- list(
         )
     ),
     #### SweptAreaTotalSpecCatTemplate: Station species category density
-    SweptAreaTotalSpecCatTemplate <- list(
-        description <- "Station species category density",
-        Baseline <- list(
-            ReadProcessData <- list(
+    SweptAreaTotalSpecCatTemplate = list(
+        description = "Station species category density",
+        Baseline = list(
+            ReadProcessData = list(
                 ProcessName = "ReadProcessData",
                 FunctionName = "ReadProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             ),
-            ReadBioticXML <- list(
+            ReadBioticXML = list(
                 ProcessName = "ReadBioticXML",
                 FunctionName = "ReadBioticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterBiotic <- list(
+            FilterBiotic = list(
                 ProcessName = "FilterBiotic",
                 FunctionName = "FilterBiotic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "RedefineSpecCat"
                 )
             ),
-            DefineStrata <- list(
+            DefineStrata = list(
                 ProcessName = "DefineStrata",
                 FunctionName = "DefineStrata",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = TRUE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     UseProcessData = FALSE
                 )
             ),
-            DefineSweptAreaPSU <- list(
+            DefineSweptAreaPSU = list(
                 ProcessName = "DefineSweptAreaPSU",
                 FunctionName = "DefineSweptAreaPSU",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     Method = "Station"
                 )
             ),
-            SweptAreaCountDensity <- list(
+            SweptAreaCountDensity = list(
                 ProcessName = "SweptAreaCountDensity",
                 FunctionName = "SweptAreaDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SweptAreaMethod = "TotalCatch",
                     CatchVariable = "Count",
                     DistanceMethod = "FullDistance",
@@ -1034,31 +1034,31 @@ stoxTemplates <- list(
                     SweepWidth = 25
                 )
             ),
-            StationSpecCatDensity_Count <- list(
+            StationSpecCatDensity_Count = list(
                 ProcessName = "StationSpecCatDensity_Count",
                 FunctionName = "StationSpecCatDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "FilterBiotic",
                     ProcessData = "ReadProcessData",
                     Density = "SweptAreaCountDensity"
                 )
             ),
-            SweptAreaWeightDensity <- list(
+            SweptAreaWeightDensity = list(
                 ProcessName = "SweptAreaWeightDensity",
                 FunctionName = "SweptAreaDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SweptAreaMethod = "TotalCatch",
                     CatchVariable = "Weight",
                     DistanceMethod = "FullDistance",
@@ -1066,23 +1066,23 @@ stoxTemplates <- list(
                     SweepWidth = 25
                 )
             ),
-            StationSpecCatDensity_Weight <- list(
+            StationSpecCatDensity_Weight = list(
                 ProcessName = "StationSpecCatDensity_Weight",
                 FunctionName = "StationSpecCatDensity",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "FilterBiotic",
                     ProcessData = "ReadProcessData",
                     Density = "SweptAreaWeightDensity"
                 )
             ),
-            WriteProcessData <- list(
+            WriteProcessData = list(
                 ProcessName = "WriteProcessData",
                 FunctionName = "WriteProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
@@ -1090,301 +1090,301 @@ stoxTemplates <- list(
         )
     ),
     #### SplitNASCTemplate: Split NASC
-    SplitNASCTemplate <- list(
-        description <- "Split NASC",
-        Baseline <- list(
-            ReadAcousticXML <- list(
+    SplitNASCTemplate = list(
+        description = "Split NASC",
+        Baseline = list(
+            ReadAcousticXML = list(
                 ProcessName = "ReadAcousticXML",
                 FunctionName = "ReadAcousticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterAcoustic <- list(
+            FilterAcoustic = list(
                 ProcessName = "FilterAcoustic",
                 FunctionName = "FilterAcoustic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     AcousticData = "ReadAcousticXML"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     FreqExpr = "frequency == 38000 and transceiver == 2"
                 )
             ),
-            SumNASC <- list(
+            SumNASC = list(
                 ProcessName = "SumNASC",
                 FunctionName = "SumNASC",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     AcousticData = "FilterAcoustic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LayerType = "PChannel"
                 )
             ),
-            ReadBioticXML <- list(
+            ReadBioticXML = list(
                 ProcessName = "ReadBioticXML",
                 FunctionName = "ReadBioticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterBiotic <- list(
+            FilterBiotic = list(
                 ProcessName = "FilterBiotic",
                 FunctionName = "FilterBiotic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "RedefineSpecCat"
                 )
             ),
-            StationLengthDist <- list(
+            StationLengthDist = list(
                 ProcessName = "StationLengthDist",
                 FunctionName = "StationLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthDistType = "NormLengthDist"
                 )
             ),
-            RegroupLengthDist <- list(
+            RegroupLengthDist = list(
                 ProcessName = "RegroupLengthDist",
                 FunctionName = "RegroupLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     LengthDist = "StationLengthDist"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthInterval = 1.0
                 )
             ),
-            SplitNASCAssignment <- list(
+            SplitNASCAssignment = list(
                 ProcessName = "SplitNASCAssignment",
                 FunctionName = "SplitNASCAssignment",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     AcousticData = "FilterAcoustic",
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     Radius = 50.0
                 )
             ),
-            TotalLengthDist <- list(
+            TotalLengthDist = list(
                 ProcessName = "TotalLengthDist",
                 FunctionName = "TotalLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "SplitNASCAssignment",
                     LengthDist = "RegroupLengthDist"
                 )
             ),
-            SplitNASC_BUNN <- list(
+            SplitNASC_BUNN = list(
                 ProcessName = "SplitNASC_BUNN",
                 FunctionName = "SplitNASC",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "SplitNASCAssignment",
                     AcousticData = "FilterAcoustic",
                     LengthDist = "TotalLengthDist",
                     NASC = "SumNASC"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SpeciesTS = "2;22;SEI;20.0;-67.0;0.0/2;18;HVITTING;20.0;-67.0;0.0/2;31;TORSK;20.0;-66.0;0.0/2;30;HYSE;20.0;-65.0;0.0/2;28;ØYEPÅL;20.0;-67.0;0.0/2;24;KOLMULE;20.0;-67.0;0.0"
                 )
             ),
-            SplitNASC_BUNN2 <- list(
+            SplitNASC_BUNN2 = list(
                 ProcessName = "SplitNASC_BUNN2",
                 FunctionName = "SplitNASC",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "SplitNASCAssignment",
                     AcousticData = "FilterAcoustic",
                     LengthDist = "TotalLengthDist",
                     NASC = "SumNASC"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     SpeciesTS = "52;22;SEI;20.0;-67.0;0.0/52;18;HVITTING;20.0;-67.0;0.0/52;31;TORSK;20.0;-66.0;0.0/52;30;HYSE;20.0;-65.0;0.0/52;28;ØYEPÅL;20.0;-67.0;0.0"
                 )
             ),
-            CombineNASC_SEI <- list(
+            CombineNASC_SEI = list(
                 ProcessName = "CombineNASC_SEI",
                 FunctionName = "CombineNASC",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     NASC1 = "SplitNASC_BUNN",
                     NASC2 = "SplitNASC_BUNN2",
                     NASC3 = "SumNASC"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     TargetAcoCat = "22"
                 )
             ),
-            CombineNASC_TORSK <- list(
+            CombineNASC_TORSK = list(
                 ProcessName = "CombineNASC_TORSK",
                 FunctionName = "CombineNASC",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     NASC1 = "SplitNASC_BUNN",
                     NASC2 = "SplitNASC_BUNN2",
                     NASC3 = "SumNASC"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     TargetAcoCat = "31"
                 )
             ),
-            CombineNASC <- list(
+            CombineNASC = list(
                 ProcessName = "CombineNASC",
                 FunctionName = "CombineNASC",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     NASC1 = "CombineNASC_SEI",
                     NASC2 = "CombineNASC_TORSK"
                 )
             ),
-            NASCToAcousticData <- list(
+            NASCToAcousticData = list(
                 ProcessName = "NASCToAcousticData",
                 FunctionName = "NASCToAcousticData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     AcousticData = "FilterAcoustic",
                     NASC = "CombineNASC"
                 )
             ),
-            WriteAcousticDataToXML <- list(
+            WriteAcousticDataToXML = list(
                 ProcessName = "WriteAcousticDataToXML",
                 FunctionName = "WriteAcousticDataToXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     AcousticData = "NASCToAcousticData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     Directory = "output/baseline"
                 )
             )
         )
     ),
     #### LengthWeightRelationShipTemplate: Length Weight relationship
-    LengthWeightRelationShipTemplate <- list(
-        description <- "Length Weight relationship",
-        Baseline <- list(
-            ReadProcessData <- list(
+    LengthWeightRelationShipTemplate = list(
+        description = "Length Weight relationship",
+        Baseline = list(
+            ReadProcessData = list(
                 ProcessName = "ReadProcessData",
                 FunctionName = "ReadProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
             ),
-            ReadBioticXML <- list(
+            ReadBioticXML = list(
                 ProcessName = "ReadBioticXML",
                 FunctionName = "ReadBioticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterBiotic <- list(
+            FilterBiotic = list(
                 ProcessName = "FilterBiotic",
                 FunctionName = "FilterBiotic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "RedefineSpecCat"
                 )
             ),
-            DefineStrata <- list(
+            DefineStrata = list(
                 ProcessName = "DefineStrata",
                 FunctionName = "DefineStrata",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     UseProcessData = FALSE
                 )
             ),
-            DefineSweptAreaPSU <- list(
+            DefineSweptAreaPSU = list(
                 ProcessName = "DefineSweptAreaPSU",
                 FunctionName = "DefineSweptAreaPSU",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     Method = "Station"
                 )
             ),
-            LengthWeightRelationship <- list(
+            LengthWeightRelationship = list(
                 ProcessName = "LengthWeightRelationship",
                 FunctionName = "LengthWeightRelationship",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     ProcessData = "ReadProcessData",
                     BioticData = "FilterBiotic"
                 )
             ),
-            WriteProcessData <- list(
+            WriteProcessData = list(
                 ProcessName = "WriteProcessData",
                 FunctionName = "WriteProcessData",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
@@ -1392,98 +1392,98 @@ stoxTemplates <- list(
         )
     ),
     #### StationLengthDistTemplate: Station length distribution
-    StationLengthDistTemplate <- list(
-        description <- "Station length distribution",
-        Baseline <- list(
-            ReadBioticXML <- list(
+    StationLengthDistTemplate = list(
+        description = "Station length distribution",
+        Baseline = list(
+            ReadBioticXML = list(
                 ProcessName = "ReadBioticXML",
                 FunctionName = "ReadBioticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterBiotic <- list(
+            FilterBiotic = list(
                 ProcessName = "FilterBiotic",
                 FunctionName = "FilterBiotic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "RedefineSpecCat"
                 )
             ),
-            StationLengthDist <- list(
+            StationLengthDist = list(
                 ProcessName = "StationLengthDist",
                 FunctionName = "StationLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "FilterBiotic"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthDistType = "PercentLengthDist"
                 )
             ),
-            RegroupLengthDist <- list(
+            RegroupLengthDist = list(
                 ProcessName = "RegroupLengthDist",
                 FunctionName = "RegroupLengthDist",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     LengthDist = "StationLengthDist"
                 ),
-                FunctionParameters <- list(
+                FunctionParameters = list(
                     LengthInterval = 1.0
                 )
             )
         )
     ),
     #### DATRASTemplate: DATRAS conversion
-    DATRASTemplate <- list(
-        description <- "DATRAS conversion",
-        Baseline <- list(
-            ReadBioticXML <- list(
+    DATRASTemplate = list(
+        description = "DATRAS conversion",
+        Baseline = list(
+            ReadBioticXML = list(
                 ProcessName = "ReadBioticXML",
                 FunctionName = "ReadBioticXML",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = FALSE,
                     BreakInGUI = FALSE
                 )
             ),
-            FilterBiotic <- list(
+            FilterBiotic = list(
                 ProcessName = "FilterBiotic",
                 FunctionName = "FilterBiotic",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "RedefineSpecCat"
                 )
             ),
-            DATRASConvert <- list(
+            DATRASConvert = list(
                 ProcessName = "DATRASConvert",
                 FunctionName = "DATRASConvert",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 ),
-                FunctionInputs <- list(
+                FunctionInputs = list(
                     BioticData = "FilterBiotic"
                 )
             )
         ),
-        Statistics <- list(
-            prepareDATRAS <- list(
+        Statistics = list(
+            prepareDATRAS = list(
                 ProcessName = "prepareDATRAS",
                 FunctionName = "prepareDATRAS",
-                ProcessParameters <- list(
+                ProcessParameters = list(
                     FileOutput = TRUE,
                     BreakInGUI = FALSE
                 )
@@ -1491,7 +1491,7 @@ stoxTemplates <- list(
         )
     ),
     #### UserDefinedTemplate: User defined (empty models)
-    UserDefinedTemplate <- list(
-        description <- "User defined (empty models)"
+    UserDefinedTemplate = list(
+        description = "User defined (empty models)"
     )
 )

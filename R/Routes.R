@@ -7,7 +7,7 @@
 #' 
 #' @export
 getModelNames <- function() {
-    browser()
+    # browser()
     out <- getRstoxFrameworkDefinitions("stoxModelTypes")
     convertToJSON(out)
 }
@@ -16,7 +16,7 @@ getModelNames <- function() {
 #' @export
 #' @importFrom jsonlite toJSON fromJSON
 convertToJSON <- function(x) {
-    browser()
+    # browser()
     jsonlite::toJSON(x)
 }
 

@@ -56,7 +56,7 @@
 #' 
 initiateRstoxFramework <- function(){
     
-    #### The folders, data sources, model types and data types in a Stox project: ####
+    #### The folders, data sources, model types and data types in a StoX project: ####
     stoxFolders <- c(
         input = "input", 
         output = "output", 
@@ -233,7 +233,7 @@ createProjectSkeleton <- function(ProjectPath) {
         return(NULL)
     }
     else {
-        ProjectSkeleton <- file.path(ProjectPath, StoxFolderStructure)
+        ProjectSkeleton <- file.path(ProjectPath, stoxFolderStructure)
         lapply(ProjectSkeleton, dir.create, showWarnings = FALSE, recursive = TRUE)
     }
     
@@ -456,7 +456,7 @@ updateFunctionInputs <- function() {
 
 getAvaiableTemplates <- function(list.out = FALSE) {
     # Get the templates:
-    out <- getRstoxFrameworkDefinitions("StoxTemplates")
+    out <- getRstoxFrameworkDefinitions("stoxTemplates")
     # Return only the names if specified:
     if(!list.out) {
         out <- names(out)
@@ -823,10 +823,10 @@ setStoxFunctionAttributes <- function(x, FunctionCategory, FunctionParameterPare
 #' 
 checkFunctionCategory <- function(FunctionCategory) {
     # Get the defined model types and match the function category against these:
-    StoxModelTypes <- getRstoxFrameworkDefinitions("StoxModelTypes")
-    out <- FunctionCategory %in% StoxModelTypes
+    stoxModelTypes <- getRstoxFrameworkDefinitions("stoxModelTypes")
+    out <- FunctionCategory %in% stoxModelTypes
     if(!out) {
-        stop(paste0("FunctionCategory must be one of ", paste(StoxModelTypes, collapse = ", "), ". Was ", FunctionCategory, "."))
+        stop(paste0("FunctionCategory must be one of ", paste(stoxModelTypes, collapse = ", "), ". Was ", FunctionCategory, "."))
     }
 }
 
@@ -860,11 +860,11 @@ checkFunctionParametersInStoX <- function(FunctionParametersInStoX, fun) {
 
 checkFunctionOutputDataType <- function(FunctionOutputDataType) {
     # Get the defined model types and match the function category against these:
-    StoxDataTypes <- getRstoxFrameworkDefinitions("StoxDataTypes")
-    out <- FunctionOutputDataType %in% StoxDataTypes
+    stoxDataTypes <- getRstoxFrameworkDefinitions("stoxDataTypes")
+    out <- FunctionOutputDataType %in% stoxDataTypes
     
     if(!out) {
-        stop("FunctionOutputDataType must be one of the valid data types. See getRstoxFrameworkDefinitions('StoxDataTypes')")
+        stop("FunctionOutputDataType must be one of the valid data types. See getRstoxFrameworkDefinitions('stoxDataTypes')")
     }
 }
 
@@ -972,9 +972,9 @@ createStoxSkeleton <- function(ProjectDirectory = NULL) {
 ###     }
 ###     
 ###     # Get the paths to StoX:
-###     StoxPaths <- getStoxSkeletonPaths(ProjectDirectory = ProjectDirectory)
+###     stoxPaths <- getStoxSkeletonPaths(ProjectDirectory = ProjectDirectory)
 ###     # Get the project path:
-###     projectPath <- file.path(StoxPaths$project, ProjectName)
+###     projectPath <- file.path(stoxPaths$project, ProjectName)
 ###     
 ###     # Get project folder names:
 ###     projectFolders <- getRstoxFrameworkDefinitions()
@@ -982,21 +982,21 @@ createStoxSkeleton <- function(ProjectDirectory = NULL) {
 ###     # Define top level of the project:
 ###     projectDirs <- file.path(
 ###         projectPath, 
-###         projectFolders$StoxFolders
+###         projectFolders$stoxFolders
 ###     )
 ###     
 ###     # Define input folders of the project:
 ###     projectInputDirs <- file.path(
 ###         projectPath, 
-###         projectFolders$StoxFolders["input"], 
-###         projectFolders$StoxDataSources
+###         projectFolders$stoxFolders["input"], 
+###         projectFolders$stoxDataSources
 ###     )
 ###     
 ###     # Define output folders of the project:
 ###     projectOutputDirs <- file.path(
 ###         projectPath, 
-###         projectFolders$StoxFolders["output"], 
-###         projectFolders$StoxModelTypes
+###         projectFolders$stoxFolders["output"], 
+###         projectFolders$stoxModelTypes
 ###     )
 ###     
 ###     # Define project file:

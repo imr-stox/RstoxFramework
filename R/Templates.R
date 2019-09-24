@@ -1217,7 +1217,7 @@ stoxTemplates <- list(
                     NASC = "SumNASC"
                 ),
                 FunctionParameters = list(
-                    SpeciesTS = "2;22;SEI;20.0;-67.0;0.0/2;18;HVITTING;20.0;-67.0;0.0/2;31;TORSK;20.0;-66.0;0.0/2;30;HYSE;20.0;-65.0;0.0/2;28;ØYEPÅL;20.0;-67.0;0.0/2;24;KOLMULE;20.0;-67.0;0.0"
+                    SpeciesTS = "2;22;SEI;20.0;-67.0;0.0/2;18;HVITTING;20.0;-67.0;0.0/2;31;TORSK;20.0;-66.0;0.0/2;30;HYSE;20.0;-65.0;0.0/2;28;;20.0;-67.0;0.0/2;24;KOLMULE;20.0;-67.0;0.0"
                 )
             ),
             SplitNASC_BUNN2 = list(
@@ -1234,7 +1234,7 @@ stoxTemplates <- list(
                     NASC = "SumNASC"
                 ),
                 FunctionParameters = list(
-                    SpeciesTS = "52;22;SEI;20.0;-67.0;0.0/52;18;HVITTING;20.0;-67.0;0.0/52;31;TORSK;20.0;-66.0;0.0/52;30;HYSE;20.0;-65.0;0.0/52;28;ØYEPÅL;20.0;-67.0;0.0"
+                    SpeciesTS = "52;22;SEI;20.0;-67.0;0.0/52;18;HVITTING;20.0;-67.0;0.0/52;31;TORSK;20.0;-66.0;0.0/52;30;HYSE;20.0;-65.0;0.0/52;28;;20.0;-67.0;0.0"
                 )
             ),
             CombineNASC_SEI = list(

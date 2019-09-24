@@ -12,7 +12,7 @@ getRstoxFrameworkDefinitions(name = NULL, ...)
 \item{...}{Values overriding the values of definitions.}
 }
 \value{
-A list of vital definitions in RstoxFramework.
+A list of definitions.
 }
 \description{
 This function gets vital definitions from the RstoxFramework environment.

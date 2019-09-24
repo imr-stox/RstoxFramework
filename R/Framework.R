@@ -83,7 +83,7 @@ initiateRstoxFramework <- function(){
     stoxFolderStructure <- unname(unlist(mapply(file.path, names(stoxFolderStructure), stoxFolderStructure)))
     
     # Define the folders and paths used when a project is open:
-    projectSessionFolder <- file.path(stoxFolders$output, "projectSession")
+    projectSessionFolder <- file.path(stoxFolders["output"], "projectSession")
     dataFolder <- file.path(projectSessionFolder, "data")
     GUIFolder <- file.path(projectSessionFolder, "GUI")
     projectDescriptionFolder <- file.path(projectSessionFolder, "projectDescription")
@@ -169,7 +169,7 @@ initiateRstoxFramework <- function(){
         stoxDataTypes = stoxDataTypes, 
         # This is defined in the file Templates.R:
         stoxTemplates = stoxTemplates, 
-        projectRData = "project.RData"
+        projectRData = "project.RData", 
         projectXML = "project.xml"
     )
     

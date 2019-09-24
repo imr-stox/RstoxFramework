@@ -7,8 +7,6 @@
 ReadAcousticXML(FileNames = NA, acousticFormat = "25")
 }
 \arguments{
-\item{FileNames}{A vector of paths to XML files.}
-
 \item{acousticFormat}{The format of the acoustic data, referring to the List User File (LUF) naming used by the Large Scale Survey System (LSSS) ************** refer to ICES instead!!!!!!!!!!!!!!}
 }
 \value{
@@ -25,5 +23,5 @@ x <- 1
 
 }
 \seealso{
-\code{\link[RNMDAPI]{readNMDxmlFile}}.
+\code{\link[RstoxData]{readNMDxmlFile}}.
 }

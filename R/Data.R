@@ -124,7 +124,7 @@ FilterLanding <- function() {
 #' @examples
 #' x <- 1
 #' 
-#' @seealso \code{\link[RNMDAPI]{readNMDxmlFile}}.
+#' @seealso \code{\link[RstoxData]{readNMDxmlFile}}.
 #' 
 #' @export
 #' 
@@ -165,7 +165,7 @@ ReadAcousticXML <- function(
 #' @examples
 #' x <- 1
 #' 
-#' @seealso \code{\link[RNMDAPI]{readNMDxmlFile}}.
+#' @seealso \code{\link[RstoxData]{readNMDxmlFile}}.
 #' 
 #' @export
 #' 
@@ -220,7 +220,7 @@ ReadBioticXML <- function(
 #' @examples
 #' x <- 1
 #' 
-#' @seealso \code{\link[RNMDAPI]{readNMDxmlFile}}.
+#' @seealso \code{\link[RstoxData]{readNMDxmlFile}}.
 #' 
 #' @export
 #' 

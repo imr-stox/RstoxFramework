@@ -7,8 +7,6 @@
 ReadLandingXML(FileNames = NA, landingFormat = NULL)
 }
 \arguments{
-\item{FileNames}{A vector of paths to XML files.}
-
 \item{landingFormat}{The format of the landing data.}
 }
 \value{
@@ -25,5 +23,5 @@ x <- 1
 
 }
 \seealso{
-\code{\link[RNMDAPI]{readNMDxmlFile}}.
+\code{\link[RstoxData]{readNMDxmlFile}}.
 }

@@ -36,4 +36,18 @@ setProcessPropertyItem<- function(Process, PropertyItem, value) {
     Process$PropertyItem <- value
 }
 
+#' 
+#' @export
+getAvailableTemplatesDescriptions <- function() {
+    browser()
+    availableTemplates <- getRstoxFrameworkDefinitions("StoxTemplates")
+    
+    df <- data.frame(
+        name = names(availableTemplates), 
+        description = sapply(availableTemplates, "[[", "description")
+    )
+    
+    convertToJSON(df)
+} 
+
 

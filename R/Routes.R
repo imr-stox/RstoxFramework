@@ -39,7 +39,7 @@ setProcessPropertyItem<- function(Process, PropertyItem, value) {
 #' 
 #' @export
 getAvailableTemplatesDescriptions <- function() {
-    browser()
+    # browser()
     availableTemplates <- getAvaiableTemplates(TRUE)
     
     df <- data.frame(

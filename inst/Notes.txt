@@ -1,0 +1,11 @@
+Function hints
+GetOutputDataTable must format the content into a dataframe with one column.
+The API will call ocpu with csv url.
+
+API usage
+api url: use POST http://localhost:5656/ocpu/test/RstoxFramework/ and endpoint ../library/RstoxFramework/R/getModelNames/csv
+or json at end.
+
+
+install RstoxFramework 
+devtools::install_github("https://github.com/StoXProject/RstoxFramework", ref="create_framework")

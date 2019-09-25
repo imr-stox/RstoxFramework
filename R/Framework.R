@@ -58,19 +58,19 @@ initiateRstoxFramework <- function(){
     
     #### The folders, data sources, model types and data types in a StoX project: ####
     stoxFolders <- c(
-        input = "input", 
-        output = "output", 
-        process = "process"
+        Input = "Input", 
+        Output = "Output", 
+        Process = "Process"
     )
     stoxDataSources <- c(
-        acoustic = "acoustic", 
-        biotic = "biotic", 
-        landing = "landing"
+        Acoustic = "Acoustic", 
+        Biotic = "Biotic", 
+        Landing = "Landing"
     )
     stoxModelTypes <- c(
-        baseline = "baseline", 
-        analysis = "statistics", 
-        report = "report"
+        Baseline = "Baseline", 
+        Statistics = "Statistics", 
+        Report = "Report"
     )
     
     # Define the folder structure of StoX:
@@ -83,14 +83,14 @@ initiateRstoxFramework <- function(){
     stoxFolderStructure <- unname(unlist(mapply(file.path, names(stoxFolderStructure), stoxFolderStructure)))
     
     # Define the folders and paths used when a project is open:
-    projectSessionFolder <- file.path(stoxFolders["output"], "projectSession")
+    projectSessionFolder <- file.path(stoxFolders["Process"], "projectSession")
     dataFolder <- file.path(projectSessionFolder, "data")
     GUIFolder <- file.path(projectSessionFolder, "GUI")
     projectDescriptionFolder <- file.path(projectSessionFolder, "projectDescription")
     settingsFolder <- file.path(projectSessionFolder, "settings")
-    originalProjectDescription <- file.path(projectDescriptionFolder, "originalProjectDescription.rds")
-    pathToCurrentProjectDescription <- file.path(projectDescriptionFolder, "pathToCurrentProjectDescription.txt")
-    projectDescriptionIndex <- file.path(projectDescriptionFolder, "projectDescriptionIndex.txt")
+    originalProjectDescriptionFile <- file.path(projectDescriptionFolder, "originalProjectDescription.rds")
+    currentProjectDescriptionFile <- file.path(projectDescriptionFolder, "currentProjectDescription.rds")
+    projectDescriptionIndexFile <- file.path(projectDescriptionFolder, "projectDescriptionIndex.txt")
     
     
     
@@ -159,9 +159,9 @@ initiateRstoxFramework <- function(){
         GUIFolder = GUIFolder, 
         projectDescriptionFolder = projectDescriptionFolder, 
         settingsFolder = settingsFolder, 
-        originalProjectDescription = originalProjectDescription, 
-        pathToCurrentProjectDescription = pathToCurrentProjectDescription, 
-        projectDescriptionIndex = projectDescriptionIndex, 
+        originalProjectDescriptionFile = originalProjectDescriptionFile, 
+        currentProjectDescriptionFile = currentProjectDescriptionFile, 
+        projectDescriptionIndexFile = projectDescriptionIndexFile, 
         # 
         processParameters = processParameters, 
         stoxModelDataTypes = stoxModelDataTypes, 
@@ -313,22 +313,155 @@ getFunctionDefaults <- function(FunctionName) {
 }
 
 
-getCurrentProjectDescriptionFile <- function(ProjectPath) {
-    # Get the path to the current project description file:
-    readLines(getRstoxFrameworkDefinitions("pathToCurrentProjectDescription"))[1]
+#' 
+#' @export
+#' 
+getStoxFunctions <- function(ModelName) {
+    
+    # Finish this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    # Get the categories:
+    stoxModelTypes <- getRstoxFrameworkDefinitions("stoxModelTypes")
+    # Get the names of the available functions:
+    availableFunctions <- names(functionAttributes)
+    # Get the category of each funciton, and split by category:
+    functionCategories <- lapply(functionAttributes, "[[", "FunctionCategory")
+    functionAttributesByCategory <-split(functionAttributes, functionCategories)
+    # Keep only the valid categories:
+    functionAttributesByCategory <- functionAttributesByCategory[stoxModelTypes]
+    
+    
 }
 
 
+
+
+
+
+
+
+
+
+##### Manage (write, read, undo, redo) the project description: #####
+
+# 1. Funciton to get the path to a new project description file:
+#' 
+#' @export
+#' 
+getNewProjectDescriptionFilePath <- function(ProjectPath) {
+    # Get the folder holding the project descriptions:
+    projectDescriptionFolder <- getRstoxFrameworkDefinitions("projectDescriptionFolder")
+    # Define a string with time in ISO 8601 format:
+    timeString <- format(Sys.time(), tz = "UTC", format = "%y-%m-%dT%H:%M:%OS3Z")
+    # Define the file name including the time string, and build the path to the file:
+    fileName <- paste0("projectDescription", "_", timeString, ".rds")
+    filePath <- file.path(ProjectPath, projectDescriptionFolder, fileName)
+    filePath
+}
+
+
+# 5. Function to read the current project description:
+#' 
+#' @export
+#' 
 getCurrentProjectDescription <- function(ProjectPath) {
-    getCurrentProjectDescriptionFile(ProjectPath)
+    currentProjectDescriptionFile <- getRstoxFrameworkDefinitions("currentProjectDescriptionFile")
+    readRDS(currentProjectDescriptionFile)
 }
+
+# 6. Function to write the current project description:
+#' 
+#' @export
+#' 
+setCurrentProjectDescription <- function(ProjectPath, projectDescription) {
+    # Get the new project description file path and write the project description to this file:
+    newProjectDescriptionFilePath <- getNewProjectDescriptionFilePath(ProjectPath)
+    saveRDS(projectDescription, file = newProjectDescriptionFilePath)
+    
+    # Save also to the currentProjectDescriptionFile:
+    currentProjectDescriptionFile <- getRstoxFrameworkDefinitions("currentProjectDescriptionFile")
+    saveRDS(projectDescription, file = newProjectDescriptionFilePath)
+    
+    # Update the projectDescriptionIndexFile:
+    projectDescriptionIndex <- readProjectDescriptionIndexFile(ProjectPath)
+    # Delete any files with positive index:
+    hasPositiveIndex <- projectDescriptionIndex$Index > 0
+    if(any(hasPositiveIndex)) {
+        unlink(projectDescriptionIndex$Path[hasPositiveIndex])
+        projectDescriptionIndex <- projectDescriptionIndex[!hasPositiveIndex, ]
+    }
+    # Subtract 1 from the indices, and add the new project description file path:
+    projectDescriptionIndex$Index <- projectDescriptionIndex$Index - 1
+    projectDescriptionIndex <- rbind(
+        projectDescriptionIndex, 
+        c(0, newProjectDescriptionFilePath)
+    )
+    
+    # Write the projectDescriptionIndex to file:
+    writeProjectDescriptionIndexFile(ProjectPath, projectDescriptionIndex)
+}
+
+# 7. Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:
+#' 
+#' @export
+#' 
+unReDoProject <- function(ProjectPath, shift = 0) {
+    # Read the projectDescriptionIndexFile, and add the shift value to the index:
+    projectDescriptionIndex <- readProjectDescriptionIndexFile(ProjectPath)
+    projectDescriptionIndex$Index <- projectDescriptionIndex$Index + shift
+    
+    # Copy the current projectDescription (with index = 0) to the currentProjectDescriptionFile:
+    fileWithCurrentProjectDescription  <- projectDescriptionIndex$Path[projectDescriptionIndex$Index == 0]
+    file.copy(fileWithCurrentProjectDescription, getRstoxFrameworkDefinitions("currentProjectDescriptionFile"))
+}
+
+
+# 7.1 Function to read the projectDescriptionIndexFile:
+#' 
+#' @export
+#' 
+readProjectDescriptionIndexFile <- function(ProjectPath) {
+    # Read the projectDescriptionIndexFile:
+    projectDescriptionIndexFile <- file.path(ProjectPath, getRstoxFrameworkDefinitions("projectDescriptionIndexFile"))
+    projectDescriptionIndex <- data.table::fread(projectDescriptionIndexFile)
+    projectDescriptionIndex
+}
+
+# 7.2 Function to write the projectDescriptionIndexFile:
+#' 
+#' @export
+#' 
+writeProjectDescriptionIndexFile <- function(ProjectPath, projectDescriptionIndex) {
+    # Read the projectDescriptionIndexFile:
+    projectDescriptionIndexFile <- file.path(ProjectPath, getRstoxFrameworkDefinitions("projectDescriptionIndexFile"))
+    data.table::fwrite(projectDescriptionIndex, file =  projectDescriptionIndexFile)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ModifyFunctionName <- function(ProcessName, ModelName, ProjectName, NewFunctionName) {
     
+    # Get the project description:
+    projectDescription <- getCurrentProjectDescription(ProjectName)
+    
+    
     # Set the function name:
-    if(!identical(Process$FunctionName, FunctionName)) {
-        Process$FunctionName <- FunctionName
+    if(!identical(projectDescription[[ModelName]][[ProcessName]]$FunctionName, FunctionName)) {
+        projectDescription[[ModelName]][[ProcessName]]$FunctionName <- FunctionName
         
         # Get the parameters to display:
         parametersToShowInStoX <- getParametersToShowInStoX(FunctionName)
@@ -345,8 +478,8 @@ ModifyFunctionName <- function(ProcessName, ModelName, ProjectName, NewFunctionN
         FunctionInputs <- defaults[areInputs]
         
         # Change the function parameters and inputs:
-        Process$FunctionParameters <- FunctionParameters
-        Process$FunctionInputs <- FunctionInputs
+        projectDescription[[ModelName]][[ProcessName]]$FunctionParameters <- FunctionParameters
+        projectDescription[[ModelName]][[ProcessName]]$FunctionInputs <- FunctionInputs
     }
     
     Process
@@ -453,7 +586,9 @@ updateFunctionInputs <- function() {
 
 
 
-
+#' 
+#' @export
+#'
 getAvaiableTemplates <- function(list.out = FALSE) {
     # Get the templates:
     out <- getRstoxFrameworkDefinitions("stoxTemplates")
@@ -796,7 +931,6 @@ projectDescription <- list(
 #' 
 #' @export
 #' 
-#setStoxFunctionAttributes <- function(x, FunctionCategory, FunctionInputs, FunctionParametersInStoX, FunctionOutputDataType) {
 setStoxFunctionAttributes <- function(x, FunctionCategory, FunctionParameterParents, FunctionOutputDataType) {
         
     # Check that the given function category is valid:

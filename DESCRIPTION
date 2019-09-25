@@ -22,3 +22,5 @@ Imports:
     data.table (>= 1.10.4-3),
     jsonlite,
     RstoxData
+Suggests: 
+    testthat

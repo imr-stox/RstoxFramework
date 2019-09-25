@@ -56,7 +56,7 @@
 #' 
 initiateRstoxFramework <- function(){
     
-    #### The folders, data sources, model types and data types in a StoX project: ####
+    #### Fundamental settings of StoX: ####
     stoxFolders <- c(
         Input = "Input", 
         Output = "Output", 
@@ -72,8 +72,14 @@ initiateRstoxFramework <- function(){
         Statistics = "Statistics", 
         Report = "Report"
     )
+    # Define the process parameters with default values:
+    processParameters <- list(
+        Enabled = TRUE, 
+        BreakInGUI = FALSE, 
+        FileOutput = TRUE
+    )
     
-    # Define the folder structure of StoX:
+    #### Define the folder structure of StoX: ####
     stoxFolderStructure <- list(
         stoxDataSources, 
         stoxModelTypes, 
@@ -82,26 +88,31 @@ initiateRstoxFramework <- function(){
     names(stoxFolderStructure) <- stoxFolders
     stoxFolderStructure <- unname(unlist(mapply(file.path, names(stoxFolderStructure), stoxFolderStructure)))
     
-    # Define the folders and paths used when a project is open:
+    #### Define the folders and paths used when a project is open: ####
     projectSessionFolder <- file.path(stoxFolders["Process"], "projectSession")
+    # Sub folders:
     dataFolder <- file.path(projectSessionFolder, "data")
     GUIFolder <- file.path(projectSessionFolder, "GUI")
     projectDescriptionFolder <- file.path(projectSessionFolder, "projectDescription")
     settingsFolder <- file.path(projectSessionFolder, "settings")
+    # Return also a vector of all session folders, to generate the folder structure recursively:
+    projectSessionFolderStructure <- c(
+            dataFolder, 
+            GUIFolder, 
+            projectDescriptionFolder, 
+            settingsFolder
+    )
+    
+    #### Project description: ####
+    projectRDataFile = file.path(stoxFolders["Process"], "project.RData")
+    projectXMLFile = file.path(stoxFolders["Process"], "project.xml")
+    # Memory files:
     originalProjectDescriptionFile <- file.path(projectDescriptionFolder, "originalProjectDescription.rds")
     currentProjectDescriptionFile <- file.path(projectDescriptionFolder, "currentProjectDescription.rds")
     projectDescriptionIndexFile <- file.path(projectDescriptionFolder, "projectDescriptionIndex.txt")
     
     
-    
-    # Define the process parameters with default values:
-    processParameters <- list(
-        Enabled = TRUE, 
-        BreakInGUI = FALSE, 
-        FileOutput = TRUE
-    )
-    
-    # Do we need this???????:
+    #### Data types: ####
     stoxModelDataTypes <- c(
         "AcousticData", 
         "StoxAcousticData", 
@@ -145,32 +156,48 @@ initiateRstoxFramework <- function(){
         stoxProcessDataTypes
     )
     
-    
-    
-    #### Assign to RstoxEnv and return the definitions: ####
-    definitions <- list(
-        stoxFolders = stoxFolders, 
-        stoxDataSources = stoxDataSources, 
-        stoxModelTypes = stoxModelTypes, 
+    #### Define an object with all path objects for convenience in getProjectPaths(): ####
+    paths <- list(
+        # Folders:
         stoxFolderStructure = stoxFolderStructure, 
-        # 
+        
+        # Project session:
         projectSessionFolder = projectSessionFolder, 
         dataFolder = dataFolder, 
         GUIFolder = GUIFolder, 
         projectDescriptionFolder = projectDescriptionFolder, 
         settingsFolder = settingsFolder, 
+        projectSessionFolderStructure = projectSessionFolderStructure, 
+        
+        # Project description:
+        projectRDataFile = projectRDataFile, 
+        projectXMLFile = projectXMLFile, 
         originalProjectDescriptionFile = originalProjectDescriptionFile, 
         currentProjectDescriptionFile = currentProjectDescriptionFile, 
-        projectDescriptionIndexFile = projectDescriptionIndexFile, 
-        # 
-        processParameters = processParameters, 
-        stoxModelDataTypes = stoxModelDataTypes, 
-        stoxProcessDataTypes = stoxProcessDataTypes, 
-        stoxDataTypes = stoxDataTypes, 
-        # This is defined in the file Templates.R:
-        stoxTemplates = stoxTemplates, 
-        projectRData = "project.RData", 
-        projectXML = "project.xml"
+        projectDescriptionIndexFile = projectDescriptionIndexFile
+    )
+    
+    #### Assign to RstoxEnv and return the definitions: ####
+    definitions <- c(
+        list(
+            # Fundamental settings:
+            stoxFolders = stoxFolders, 
+            stoxDataSources = stoxDataSources, 
+            stoxModelTypes = stoxModelTypes, 
+            processParameters = processParameters
+        ), 
+        paths, 
+        list(# Parameters and data types:
+            stoxModelDataTypes = stoxModelDataTypes, 
+            stoxProcessDataTypes = stoxProcessDataTypes, 
+            stoxDataTypes = stoxDataTypes, 
+            
+            # This is defined in the file Templates.R:
+            stoxTemplates = stoxTemplates, 
+            
+            # Repeat the paths for convenience:
+            paths = paths
+        )
     )
     
     #### Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv: ####
@@ -183,6 +210,8 @@ initiateRstoxFramework <- function(){
     #### Return the definitions: ####
     definitions
 }
+
+
 
 
 ##################################################
@@ -221,6 +250,12 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
     definitions
 }
 
+getProjectPaths <- function(ProjectPath) {
+    # Paste the project path to the relevant folders:
+    paths <- getRstoxFrameworkDefinitions("paths")
+    # Add the project path to all paths:
+    lapply(paths, function(x) if(is.list(x)) lapply(x, function(y) file.path("~/workspace/stox/project/Test_Rstox", y)) else file.path("~/workspace/stox/project/Test_Rstox", x))
+}
 
 createProjectSkeleton <- function(ProjectPath) {
     
@@ -259,7 +294,39 @@ createProject <- function(ProjectPath, Template = "EmptyTemplate") {
     projectDescription <- createEmptyProjectDescription()
     
     # Fill inn the processes::::::::::::::::::::::
+    
 }
+
+openProject <- function(ProjectPath, showWarnings = FALSE) {
+    
+    # Create the project session folder structure:
+    projectSessionFolderStructure <- getRstoxFrameworkDefinitions("projectSessionFolderStructure")
+    lapply(projectSessionFolderStructure, dir.create, recursive = TRUE, showWarnings = showWarnings)
+    
+    # Read the project description file:
+    
+    
+    # Get the tempaltes:
+    templates <- getAvaiableTemplates()
+    thisTemplate <- templates[[Template]]
+    if(length(thisTemplate) == 0) {
+        stop("The requested template does not exist. See getAvaiableTemplates() for a list of the available templates (with list.out = TRUE if you wish to see what the dirrefent templates are.)")
+    }
+    
+    # Create an empty ProjectDescription:
+    projectDescription <- createEmptyProjectDescription()
+    
+    # Fill inn the processes::::::::::::::::::::::
+    
+}
+
+
+readProjectDescription <- function(ProjectPath) {
+    
+    # Get the path to the project description file:
+    
+}
+
 
 createEmptyProjectDescription <- function() {
     # Get the model types, and populate a list with these:

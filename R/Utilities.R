@@ -82,16 +82,22 @@ initiateRstox <- function() {
   Definitions
 }
 
-lat <- c(60, 65, 0.7267265, 0.7233676, 0.7232196, 0.7225059)
-lon <- c(-1.512977, -1.504216, -1.499622, -1.487970, -1.443160, -1.434848)
-xym <- cbind(lon, lat)
-
 # deg to rad function
 deg2rad <- function(deg) {
   deg * pi / 180
 }
 
-# polygon area
+##################################################
+#' PolygonArea
+#' 
+#' This function calculates the area of the polygon.
+#' 
+#' @return
+#' simple area.
+#' 
+#' @noRd
+#' @seealso 
+#' 
 polygonArea <- function(x, y = NULL) {
   xy <- xy.coords(x, y)
   xy <- data.frame(xy.x, xy.y)
@@ -107,5 +113,4 @@ polygonArea <- function(x, y = NULL) {
   r <- 6371000.0 * 0.000539956803;
   abs(area * r ^ 2 / 2.0);
 }
-
 

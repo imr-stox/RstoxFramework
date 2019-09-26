@@ -1,6 +1,8 @@
 Function hints
-GetOutputDataTable must format the content into a dataframe with one column.
-The API will call ocpu with csv url.
+  GetOutputDataTable must format the content into a dataframe with one column.
+    The API will call ocpu with csv url.
+  
+  use geojsonio and as.json with geojson_list and dataframe
 
 API usage
 api url: use POST http://localhost:5656/ocpu/test/RstoxFramework/ and endpoint ../library/RstoxFramework/R/getModelNames/csv
@@ -9,3 +11,32 @@ or json at end.
 
 install RstoxFramework 
 devtools::install_github("https://github.com/StoXProject/RstoxFramework", ref="create_framework")
+
+geojson_sp to convert from json to spatialpolygons
+and as.character(geojson_json) to convert from spatialpolygons to json
+
+# x is a string
+nchar.string <- function(x){
+    nchar(x)
+}
+
+# x is a numeric
+nchar.numeric <- function(x){
+    nchar.string(as.character(x))
+}
+
+# x is a numeric
+nchar.numeric <- function(x){
+    nchar.string(as.character(x))
+}
+
+library(geojsonio)
+x <- "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
+d <- geojson_read(x, method = "local", what = "sp")
+
+# polygon area
+# usage:
+# lat <- c(60, 65, 65, 60, 60)
+# lon <- c(10, 10, 0, 0, 10)
+# xym <- cbind(lon, lat)
+#polygonArea(xym)

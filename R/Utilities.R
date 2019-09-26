@@ -81,4 +81,3 @@ initiateRstox <- function() {
   # Return the definitions:
   Definitions
 }
-

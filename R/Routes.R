@@ -9,7 +9,7 @@
 getModelNames <- function() {
     # browser()
     out <- getRstoxFrameworkDefinitions("stoxModelTypes")
-    convertToJSON(out)
+    # convertToJSON(out)
 }
 
 #' 
@@ -47,7 +47,7 @@ getAvailableTemplatesDescriptions <- function() {
         description = unname(sapply(availableTemplates, "[[", "description"))
     )
     
-    convertToJSON(df)
+    # convertToJSON(df)
 } 
 
 

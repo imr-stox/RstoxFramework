@@ -1,3 +1,5 @@
+# Should we use "~" for the workspace folder? Tilde gives the Documents folder on Windows, whereas StoX 2.7 uses the user folder.
+#
 # The data types for communication with StoX: Boolean, String, Numeric, NULL, List of predefined values, FileName, FileNames
 # 
 # There is a hierarchy FuncitonName - FunctionParameters - FunctionInputs. This needs to be taken into account in the categories and items
@@ -265,21 +267,17 @@ getProjectPaths <- function(ProjectPath, name = NULL) {
 
 createProjectSkeleton <- function(ProjectPath, ow = FALSE) {
     
-    browser()
     # Check whether the project exists:
     if(dir.exists(ProjectPath)) {
         if(!ow) {
-            warning("The project '", ProjectPath, "' exists. Choose a different project path.")
-            stop(NULL) 
+            stop("The project '", ProjectPath, "' exists. Choose a different project path.")
         }
-        
     }
-    else {
-        # Get the paths of the root directory and StoX skeleton:
-        stoxFolderStructure <- getProjectPaths(ProjectPath, "stoxFolderStructure")
-        # Create the folders:
-        lapply(stoxFolderStructure, dir.create, showWarnings = FALSE, recursive = TRUE)
-    }
+    
+    # Get the paths of the root directory and StoX skeleton:
+    stoxFolderStructure <- getProjectPaths(ProjectPath, "stoxFolderStructure")
+    # Create the folders:
+    lapply(stoxFolderStructure, dir.create, showWarnings = FALSE, recursive = TRUE)
     
     # Return the paths:
     stoxFolderStructure
@@ -304,7 +302,8 @@ createProject <- function(ProjectPath, Template = "EmptyTemplate", ow = FALSE) {
     # Create an empty ProjectDescription:
     projectDescription <- createEmptyProjectDescription()
     
-    browser()
+    # Create the 
+    
     # Fill inn the processes:
     stoxModelTypes <- getRstoxFrameworkDefinitions("stoxModelTypes")
     for(ModelName in stoxModelTypes){
@@ -321,6 +320,13 @@ createProject <- function(ProjectPath, Template = "EmptyTemplate", ow = FALSE) {
     
     
 }
+
+createProjectSessionFolderStructure <- function(ProjectPath, showWarnings = FALSE) {
+    # Create the project session folder structure:
+    projectSessionFolderStructure <- getProjectPaths(ProjectPath, "projectSessionFolderStructure")
+    lapply(projectSessionFolderStructure, dir.create, recursive = TRUE, showWarnings = showWarnings)
+}
+
 
 #' 
 #' @export
@@ -422,8 +428,6 @@ getCurrentProjectDescription <- function(ProjectPath) {
 setProjectDescriptionAsCurrent <- function(ProjectPath, projectDescription, only.current = FALSE) {
     
     # Save to the currentProjectDescriptionFile:
-    print(only.current)
-    browser()
     currentProjectDescriptionFile <- getProjectPaths(ProjectPath, "currentProjectDescriptionFile")
     saveRDS(projectDescription, file = currentProjectDescriptionFile)
     
@@ -624,7 +628,7 @@ ModifyFunctionName <- function(ProcessName, ModelName, ProjectPath, NewFunctionN
     }
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
+    setProjectDescriptionAsCurrent(ProjectPath, projectDescription, only.current = only.current)
 }
 
 ModifyFunctionParameters <- function(ProcessName, ModelName, ProjectPath, NewFunctionParameters, only.current = FALSE) {
@@ -654,7 +658,7 @@ ModifyFunctionParameters <- function(ProcessName, ModelName, ProjectPath, NewFun
     }
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
+    setProjectDescriptionAsCurrent(ProjectPath, projectDescription, only.current = only.current)
 }
 
 ModifyFunctionInputs <- function(ProcessName, ModelName, ProjectPath, NewFunctionInputs, only.current = FALSE) {
@@ -681,7 +685,7 @@ ModifyFunctionInputs <- function(ProcessName, ModelName, ProjectPath, NewFunctio
     }
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
+    setProjectDescriptionAsCurrent(ProjectPath, projectDescription, only.current = only.current)
 }
 
 ModifyProcessName <- function(ProcessName, ModelName, ProjectPath, NewProcessName, only.current = FALSE) {
@@ -693,7 +697,7 @@ ModifyProcessName <- function(ProcessName, ModelName, ProjectPath, NewProcessNam
     projectDescription[[ModelName]][[ProcessName]]$ProcessName <- NewProcessName
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
+    setProjectDescriptionAsCurrent(ProjectPath, projectDescription, only.current = only.current)
 }
 
 ModifyProcessParameters <- function(ProcessName, ModelName, ProjectPath, NewProcessParameters, only.current = FALSE) {
@@ -714,7 +718,7 @@ ModifyProcessParameters <- function(ProcessName, ModelName, ProjectPath, NewProc
     }
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
+    setProjectDescriptionAsCurrent(ProjectPath, projectDescription, only.current = only.current)
 }
 
 ModifyProcess <- function(ProcessName, ModelName, ProjectPath, NewValues, only.current = FALSE) {
@@ -924,42 +928,6 @@ AddBaselineProcess <- function(
     )
 }
 
-
-
-
-
-
-
-# We will build up the following infrastrukture for RstoxFramework:
-
-# 1. Define an environment RstoxEnv as in the current Rstox
-# 2. Define the lists Definitons and Projects in RstoxEnv
-# 3. The function initiateRstox() defines the global settings of Rstox, such as folder structure, 
-
-
-
-
-# StoX GUI needs the following:
-
-# View output:
-# 1. getProcessOutputTableCount(projectName)
-# 2. getProcessOutputTableName(projectName, processName)
-# 3. getProcessOutputTable(projectName, processName, tableName)
-
-# List of processes:
-# getModelTypes(projectName)
-# getModelName(modelType)
-# getProcessesByModelType(projectName, modelType)
-
-# getFunctionsByModelType()
-# getFunctionParameterNames()
-# getFunctionParameterPossibleValues()
-# getFunctionParameterDefaultValue()
-
-# open
-# save
-# runModel(projectName, modelName, startProcess, endProcess)
-# 
 
 
 

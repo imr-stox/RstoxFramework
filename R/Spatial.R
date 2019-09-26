@@ -127,9 +127,9 @@ polygonAreaSP <- function(sp) {
         ishole = polygon@hole
         area <-polygonAreaPolygonXY(polygon@coords[, "x"], polygon@coords[, "y"])
         if(ishole) {
-            sumArea = sumArea + area
-        } else {
             sumHoles = sumHoles + area
+        } else {
+            sumArea = sumArea + area
         }
     }
     area <- sumArea - sumHoles
@@ -138,6 +138,8 @@ polygonAreaSP <- function(sp) {
   areaDF
 }
 
+
+polygonAreaSP(s)
 
 #polygonArea()
 

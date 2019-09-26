@@ -99,16 +99,13 @@ deg2rad <- function(deg) {
 #' @seealso 
 #' 
 polygonArea <- function(x, y = NULL) {
-  xy <- xy.coords(x, y)
-  xy <- data.frame(xy.x, xy.y)
-  area <- 0;
-  len <- length(xy$x);
+  xy <- as.data.frame(xy.coords(x, y)[c("x", "y")])
+  area <- 0
+  len <- nrow(xy)
   for (i in seq_len(len - 1)) {
     p1 <- xy[i,]
     p2 <- xy[i + 1,]
-    area <- area + deg2rad(p1$x - p2$x)
-     * (2 + sin(deg2rad(p1$y))
-     + sin(deg2rad(p2$y)))
+    area <- area + deg2rad(p1$x - p2$x) * (2 + sin(deg2rad(p1$y)) + sin(deg2rad(p2$y)))
   }
   r <- 6371000.0 * 0.000539956803;
   abs(area * r ^ 2 / 2.0);

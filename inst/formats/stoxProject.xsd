@@ -26,7 +26,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </imrd:imrDoc>
         </xs:documentation>
     </xs:annotation>
-                
+                                                
     <xs:element name="project" type="StoxProjectType">
         <xs:annotation>
             <xs:documentation>
@@ -50,7 +50,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:annotation>
 
         <xs:sequence>
-            <xs:element name="model" type="BaselineModelType" minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="baselinemodel" type="BaselineModelType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -224,7 +224,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
-            <xs:element name="process" type="BaelineProcessType" minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="process" type="BaselineProcessType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -383,7 +383,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
-        <xs:attribute name="dataparameter">
+        <xs:attribute name="dataparameter" type="xs:string">
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
@@ -897,7 +897,6 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
-
             </xs:element>
         </xs:sequence>
     </xs:complexType>

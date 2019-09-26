@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<project template="str1234" lastmodified="2012-12-13T12:12:12" rstoxversion="str1234" stoxversion="str1234" rversion="str1234">
+<project xmlns="http://www.imr.no/formats/stox/v3" template="str1234" lastmodified="2012-12-13T12:12:12" rstoxversion="str1234" stoxversion="str1234" rversion="str1234">
   <baselinemodel modelname="str1234">
     <process processname="str1234">
       <function>str1234</function>
@@ -8,7 +8,7 @@
       <respondingui>true</respondingui>
       <breakingui>true</breakingui>
       <fileoutput>true</fileoutput>
-      <inputdata dataparameter="???" sourcetype="NMDEchoSounderData1" inputprocessname="str1234" />
+      <inputdata dataparameter="str1234" sourcetype="NMDEchoSounderData1" inputprocessname="str1234" />
       <parameter name="str1234">str1234</parameter>
       <output>NMDEchoSounderData1</output>
       <processdata>
@@ -62,7 +62,7 @@
       <respondingui>true</respondingui>
       <breakingui>true</breakingui>
       <fileoutput>true</fileoutput>
-      <inputdata dataparameter="???" sourcetype="NMDEchoSounderData1" inputprocessname="str1234" />
+      <inputdata dataparameter="str1234" sourcetype="NMDEchoSounderData1" inputprocessname="str1234" />
       <parameter name="str1234">str1234</parameter>
       <output>NMDEchoSounderData1</output>
     </process>

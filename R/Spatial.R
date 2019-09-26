@@ -29,7 +29,55 @@ readStoxMultipolygonWKT <- function(x) {
     spatialPolygons
 }
 
-readStoxMultipolygonWKT("~/workspace/stox/reference/stratum/kolmule.txt")
+s <- readStoxMultipolygonWKT("~/workspace/stox/reference/stratum/kolmule.txt")
+
+
+
+# This shows that the sp package subtracts holes from holes:
+# Sr1 = Polygon(cbind(c(2,4,4,1,2),c(2,3,5,4,2)))
+# Sr2 = Polygon(cbind(c(5,4,2,5),c(2,3,2,2)))
+# Sr3 = Polygon(cbind(c(4,4,5,10,4),c(5,3,2,5,5)))
+# Sr4 = Polygon(cbind(c(5,6,6,5,5),c(4,4,3,3,4)), hole = TRUE)
+# Sr5 = Polygon(cbind(c(5.3,6,6,5.3,5.3),c(4,4,3,3,4)), hole = TRUE)
+# Srs1 = Polygons(list(Sr1), "s1")
+# 
+# Srs2 = Polygons(list(Sr2), "s2")
+# Srs3 = Polygons(list(Sr3, Sr4, Sr5), "s3/4/5")
+# SpP = SpatialPolygons(list(Srs1,Srs2,Srs3), 1:3)
+# plot(SpP, col = 1:3, pbg="white")
+
+
+
+
+lat <- c(60, 65, 0.7267265, 0.7233676, 0.7232196, 0.7225059)
+lon <- c(-1.512977, -1.504216, -1.499622, -1.487970, -1.443160, -1.434848)
+xym <- cbind(lon, lat)
+
+# deg to rad function
+deg2rad <- function(deg) {
+    deg * pi / 180
+}
+
+# polygon area
+polygonArea <- function(x, y = NULL) {
+    xy <- as.data.frame(xy.coords(x, y)[c("x", "y")])
+    area <- 0
+    len <- nrow(xy)
+    for (i in seq_len(len - 1)) {
+        p1 <- xy[i,]
+        p2 <- xy[i + 1,]
+        area <- area + deg2rad(p1$x - p2$x) * (2 + sin(deg2rad(p1$y)) + sin(deg2rad(p2$y)))
+    }
+    r <- 6371000.0 * 0.000539956803;
+    abs(area * r ^ 2 / 2.0);
+}
+
+
+
+polygonArea(s@polygons[[1]]@Polygons[[2]]@coords)
+
+
+
 
 
 

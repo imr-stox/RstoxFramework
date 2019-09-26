@@ -212,8 +212,6 @@ initiateRstoxFramework <- function(){
 }
 
 
-
-
 ##################################################
 ##################################################
 #' Get RstoxFramework definitions
@@ -250,41 +248,53 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
     definitions
 }
 
-getProjectPaths <- function(ProjectPath) {
+#' 
+#' @export
+#' 
+getProjectPaths <- function(ProjectPath, name = NULL) {
     # Paste the project path to the relevant folders:
     paths <- getRstoxFrameworkDefinitions("paths")
     # Add the project path to all paths:
-    lapply(paths, function(x) if(is.list(x)) lapply(x, function(y) file.path("~/workspace/stox/project/Test_Rstox", y)) else file.path("~/workspace/stox/project/Test_Rstox", x))
+    paths <- lapply(paths, function(x) if(is.list(x)) lapply(x, function(y) file.path(ProjectPath, y)) else file.path(ProjectPath, x))
+    if(length(name)) {
+        paths <- paths[[name]]
+    }
+    paths
 }
 
-createProjectSkeleton <- function(ProjectPath) {
-    
-    # Get the paths of the root directory and StoX skeleton:
-    stoxFolderStructure <- getRstoxFrameworkDefinitions("stoxFolderStructure")
+
+createProjectSkeleton <- function(ProjectPath, ow = FALSE) {
     
     # Check whether the project exists:
     if(dir.exists(ProjectPath)) {
-        warning("The project '", ProjectPath, "' exists. Choose a different project path.")
-        return(NULL)
+        if(!ow) {
+            warning("The project '", ProjectPath, "' exists. Choose a different project path.")
+            stop(NULL) 
+        }
+        
     }
     else {
-        ProjectSkeleton <- file.path(ProjectPath, stoxFolderStructure)
-        lapply(ProjectSkeleton, dir.create, showWarnings = FALSE, recursive = TRUE)
+        # Get the paths of the root directory and StoX skeleton:
+        stoxFolderStructure <- getProjectPaths(ProjectPath, "stoxFolderStructure")
+        # Create the folders:
+        lapply(stoxFolderStructure, dir.create, showWarnings = FALSE, recursive = TRUE)
     }
     
     # Return the paths:
-    ProjectSkeleton
+    stoxFolderStructure
 }
 
 
-
-createProject <- function(ProjectPath, Template = "EmptyTemplate") {
+#' 
+#' @export
+#' 
+createProject <- function(ProjectPath, Template = "EmptyTemplate", ow = FALSE) {
     
     # Create the project folder structure:
-    projectSkeleton <- createProjectSkeleton(ProjectPath)
+    projectSkeleton <- createProjectSkeleton(ProjectPath, ow = ow)
     
     # Get the tempaltes:
-    templates <- getAvaiableTemplates()
+    templates <- getAvaiableTemplates(TRUE)
     thisTemplate <- templates[[Template]]
     if(length(thisTemplate) == 0) {
         stop("The requested template does not exist. See getAvaiableTemplates() for a list of the available templates (with list.out = TRUE if you wish to see what the dirrefent templates are.)")
@@ -293,40 +303,71 @@ createProject <- function(ProjectPath, Template = "EmptyTemplate") {
     # Create an empty ProjectDescription:
     projectDescription <- createEmptyProjectDescription()
     
-    # Fill inn the processes::::::::::::::::::::::
+    browser()
+    # Fill inn the processes:
+    stoxModelTypes <- getRstoxFrameworkDefinitions("stoxModelTypes")
+    for(ModelName in stoxModelTypes){
+        for(ProcessName in names(thisTemplate[[ModelName]])){
+            ModifyProcess(
+                ProcessName = ProcessName, 
+                ModelName = ModelName, 
+                ProjectPath = ProjectPath, 
+                NewValues = thisTemplate[[ModelName]][[ProcessName]], 
+                only.current = TRUE
+            )
+        }
+    }
+    
     
 }
 
+#' 
+#' @export
+#' 
 openProject <- function(ProjectPath, showWarnings = FALSE) {
     
     # Create the project session folder structure:
-    projectSessionFolderStructure <- getRstoxFrameworkDefinitions("projectSessionFolderStructure")
+    projectSessionFolderStructure <- getProjectPaths(ProjectPath, "projectSessionFolderStructure")
     lapply(projectSessionFolderStructure, dir.create, recursive = TRUE, showWarnings = showWarnings)
     
     # Read the project description file:
+    projectDescription <- readProjectDescription(ProjectPath)
     
+    # Save the original and current projectDescription:
+    setOriginalProjectDescription(ProjectPath, projectDescription)
+    setProjectDescriptionAsCurrent(ProjectPath, projectDescription)
     
-    # Get the tempaltes:
-    templates <- getAvaiableTemplates()
-    thisTemplate <- templates[[Template]]
-    if(length(thisTemplate) == 0) {
-        stop("The requested template does not exist. See getAvaiableTemplates() for a list of the available templates (with list.out = TRUE if you wish to see what the dirrefent templates are.)")
-    }
-    
-    # Create an empty ProjectDescription:
-    projectDescription <- createEmptyProjectDescription()
-    
-    # Fill inn the processes::::::::::::::::::::::
-    
+    TRUE
 }
+
+#' 
+#' @export
+#' 
+closeProject <- function(ProjectPath) {
+    # Create the project session folder structure:
+    projectSessionFolderStructure <- getProjectPaths(ProjectPath, "projectSessionFolderStructure")
+    unlink(projectSessionFolderStructure, recursive = TRUE, force = TRUE)
+}
+
+
 
 
 readProjectDescription <- function(ProjectPath) {
-    
     # Get the path to the project description file:
+    projectRDataFile <- getProjectPaths(ProjectPath, "projectRDataFile")
+    load(projectRDataFile) # Creates the object
+    projectDescription
     
 }
 
+writeProjectDescription <- function(ProjectPath) {
+    # Get the current project description:
+    projectDescription <- getCurrentProjectDescription(ProjectPath)
+    
+    # Get the path to the project description file, and save the current project description:
+    projectRDataFile <- getProjectPaths(ProjectPath, "projectRDataFile")
+    save(projectDescription, file = projectRDataFile)
+}
 
 createEmptyProjectDescription <- function() {
     # Get the model types, and populate a list with these:
@@ -335,6 +376,136 @@ createEmptyProjectDescription <- function() {
     names(projectDescription) <- modelTypes
     projectDescription
 }
+
+
+##### Manage (write, read, undo, redo) the project description: #####
+
+# 1. Funciton to get the path to a new project description file:
+#' 
+#' @export
+#' 
+getNewProjectDescriptionFilePath <- function(ProjectPath) {
+    # Get the folder holding the project descriptions:
+    projectDescriptionFolder <- getProjectPaths(ProjectPath, "projectDescriptionFolder")
+    # Define a string with time in ISO 8601 format:
+    timeString <- format(Sys.time(), tz = "UTC", format = "%y-%m-%dT%H:%M:%OS3Z")
+    # Define the file name including the time string, and build the path to the file:
+    fileName <- paste0("projectDescription", "_", timeString, ".rds")
+    filePath <- file.path(projectDescriptionFolder, fileName)
+    filePath
+}
+
+# 4. Function to write the original project description:
+#' 
+#' @export
+#' 
+setOriginalProjectDescription <- function(ProjectPath, projectDescription) {
+    # Get the path to the originalProjectDescriptionFile, and write the input projectDescription to it:
+    originalProjectDescriptionFile <- getProjectPaths(ProjectPath, "originalProjectDescriptionFile")
+    saveRDS(projectDescription, file = originalProjectDescriptionFile)
+}
+
+# 5. Function to read the current project description:
+#' 
+#' @export
+#' 
+getCurrentProjectDescription <- function(ProjectPath) {
+    currentProjectDescriptionFile <- getProjectPaths(ProjectPath, "currentProjectDescriptionFile")
+    readRDS(currentProjectDescriptionFile)
+}
+
+# 6. Function to write the current project description:
+#' 
+#' @export
+#' 
+setProjectDescriptionAsCurrent <- function(ProjectPath, projectDescription, only.current = FALSE) {
+    
+    # Save to the currentProjectDescriptionFile:
+    print(only.current)
+    browser()
+    currentProjectDescriptionFile <- getProjectPaths(ProjectPath, "currentProjectDescriptionFile")
+    saveRDS(projectDescription, file = currentProjectDescriptionFile)
+    
+    if(!only.current) {
+        # Get the new project description file path and write the project description to this file:
+        newProjectDescriptionFilePath <- getNewProjectDescriptionFilePath(ProjectPath)
+        saveRDS(projectDescription, file = newProjectDescriptionFilePath)
+        
+        # Update the projectDescriptionIndexFile:
+        projectDescriptionIndex <- readProjectDescriptionIndexFile(ProjectPath)
+        # Delete any files with positive index:
+        hasPositiveIndex <- projectDescriptionIndex$Index > 0
+        if(any(hasPositiveIndex)) {
+            unlink(projectDescriptionIndex$Path[hasPositiveIndex])
+            projectDescriptionIndex <- projectDescriptionIndex[!hasPositiveIndex, ]
+        }
+        # Subtract 1 from the indices, and add the new project description file path:
+        projectDescriptionIndex$Index <- projectDescriptionIndex$Index - 1
+        projectDescriptionIndex <- rbind(
+            projectDescriptionIndex, 
+            data.frame(
+                Index = 0, 
+                Path = newProjectDescriptionFilePath
+            )
+        )
+        # Write the projectDescriptionIndex to file:
+        writeProjectDescriptionIndexFile(ProjectPath, projectDescriptionIndex)
+    }
+    
+}
+
+# 7. Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:
+#' 
+#' @export
+#' 
+unReDoProject <- function(ProjectPath, shift = 0) {
+    # Read the projectDescriptionIndexFile, and add the shift value to the index:
+    projectDescriptionIndex <- readProjectDescriptionIndexFile(ProjectPath)
+    projectDescriptionIndex$Index <- projectDescriptionIndex$Index + shift
+    
+    # Copy the current projectDescription (with index = 0) to the currentProjectDescriptionFile:
+    fileWithCurrentProjectDescription  <- projectDescriptionIndex$Path[projectDescriptionIndex$Index == 0]
+    file.copy(fileWithCurrentProjectDescription, getProjectPaths(ProjectPath, "currentProjectDescriptionFile"))
+}
+
+# 7.1 Function to read the projectDescriptionIndexFile:
+#' 
+#' @export
+#' 
+readProjectDescriptionIndexFile <- function(ProjectPath) {
+    # Read the projectDescriptionIndexFile:
+    projectDescriptionIndexFile <- getProjectPaths(ProjectPath, "projectDescriptionIndexFile")
+    
+    # If missing, create the file as an empty file:
+    if(!file.exists(projectDescriptionIndexFile)) {
+        NULL
+    }
+    else {
+        data.table::fread(projectDescriptionIndexFile, sep = "\t")
+    }
+}
+
+# 7.2 Function to write the projectDescriptionIndexFile:
+#' 
+#' @export
+#' 
+writeProjectDescriptionIndexFile <- function(ProjectPath, projectDescriptionIndex) {
+    # Read the projectDescriptionIndexFile:
+    projectDescriptionIndexFile <- getProjectPaths(ProjectPath, "projectDescriptionIndexFile")
+    data.table::fwrite(projectDescriptionIndex, file =  projectDescriptionIndexFile, sep = "\t")
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 createEmptyBaselineProcess <- function() {
@@ -397,111 +568,6 @@ getStoxFunctions <- function(ModelName) {
     # Keep only the valid categories:
     functionAttributesByCategory <- functionAttributesByCategory[stoxModelTypes]
     
-    
-}
-
-
-
-
-
-
-
-
-
-
-##### Manage (write, read, undo, redo) the project description: #####
-
-# 1. Funciton to get the path to a new project description file:
-#' 
-#' @export
-#' 
-getNewProjectDescriptionFilePath <- function(ProjectPath) {
-    # Get the folder holding the project descriptions:
-    projectDescriptionFolder <- getRstoxFrameworkDefinitions("projectDescriptionFolder")
-    # Define a string with time in ISO 8601 format:
-    timeString <- format(Sys.time(), tz = "UTC", format = "%y-%m-%dT%H:%M:%OS3Z")
-    # Define the file name including the time string, and build the path to the file:
-    fileName <- paste0("projectDescription", "_", timeString, ".rds")
-    filePath <- file.path(ProjectPath, projectDescriptionFolder, fileName)
-    filePath
-}
-
-
-# 5. Function to read the current project description:
-#' 
-#' @export
-#' 
-getCurrentProjectDescription <- function(ProjectPath) {
-    currentProjectDescriptionFile <- getRstoxFrameworkDefinitions("currentProjectDescriptionFile")
-    readRDS(currentProjectDescriptionFile)
-}
-
-# 6. Function to write the current project description:
-#' 
-#' @export
-#' 
-setCurrentProjectDescription <- function(ProjectPath, projectDescription) {
-    # Get the new project description file path and write the project description to this file:
-    newProjectDescriptionFilePath <- getNewProjectDescriptionFilePath(ProjectPath)
-    saveRDS(projectDescription, file = newProjectDescriptionFilePath)
-    
-    # Save also to the currentProjectDescriptionFile:
-    currentProjectDescriptionFile <- getRstoxFrameworkDefinitions("currentProjectDescriptionFile")
-    saveRDS(projectDescription, file = newProjectDescriptionFilePath)
-    
-    # Update the projectDescriptionIndexFile:
-    projectDescriptionIndex <- readProjectDescriptionIndexFile(ProjectPath)
-    # Delete any files with positive index:
-    hasPositiveIndex <- projectDescriptionIndex$Index > 0
-    if(any(hasPositiveIndex)) {
-        unlink(projectDescriptionIndex$Path[hasPositiveIndex])
-        projectDescriptionIndex <- projectDescriptionIndex[!hasPositiveIndex, ]
-    }
-    # Subtract 1 from the indices, and add the new project description file path:
-    projectDescriptionIndex$Index <- projectDescriptionIndex$Index - 1
-    projectDescriptionIndex <- rbind(
-        projectDescriptionIndex, 
-        c(0, newProjectDescriptionFilePath)
-    )
-    
-    # Write the projectDescriptionIndex to file:
-    writeProjectDescriptionIndexFile(ProjectPath, projectDescriptionIndex)
-}
-
-# 7. Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:
-#' 
-#' @export
-#' 
-unReDoProject <- function(ProjectPath, shift = 0) {
-    # Read the projectDescriptionIndexFile, and add the shift value to the index:
-    projectDescriptionIndex <- readProjectDescriptionIndexFile(ProjectPath)
-    projectDescriptionIndex$Index <- projectDescriptionIndex$Index + shift
-    
-    # Copy the current projectDescription (with index = 0) to the currentProjectDescriptionFile:
-    fileWithCurrentProjectDescription  <- projectDescriptionIndex$Path[projectDescriptionIndex$Index == 0]
-    file.copy(fileWithCurrentProjectDescription, getRstoxFrameworkDefinitions("currentProjectDescriptionFile"))
-}
-
-
-# 7.1 Function to read the projectDescriptionIndexFile:
-#' 
-#' @export
-#' 
-readProjectDescriptionIndexFile <- function(ProjectPath) {
-    # Read the projectDescriptionIndexFile:
-    projectDescriptionIndexFile <- file.path(ProjectPath, getRstoxFrameworkDefinitions("projectDescriptionIndexFile"))
-    projectDescriptionIndex <- data.table::fread(projectDescriptionIndexFile)
-    projectDescriptionIndex
-}
-
-# 7.2 Function to write the projectDescriptionIndexFile:
-#' 
-#' @export
-#' 
-writeProjectDescriptionIndexFile <- function(ProjectPath, projectDescriptionIndex) {
-    # Read the projectDescriptionIndexFile:
-    projectDescriptionIndexFile <- file.path(ProjectPath, getRstoxFrameworkDefinitions("projectDescriptionIndexFile"))
-    data.table::fwrite(projectDescriptionIndex, file =  projectDescriptionIndexFile)
 }
 
 
@@ -520,11 +586,18 @@ writeProjectDescriptionIndexFile <- function(ProjectPath, projectDescriptionInde
 
 
 
-ModifyFunctionName <- function(ProcessName, ModelName, ProjectName, NewFunctionName) {
+
+
+
+
+
+
+
+
+ModifyFunctionName <- function(ProcessName, ModelName, ProjectPath, NewFunctionName, only.current = FALSE) {
     
     # Get the project description:
-    projectDescription <- getCurrentProjectDescription(ProjectName)
-    
+    projectDescription <- getCurrentProjectDescription(ProjectPath)
     
     # Set the function name:
     if(!identical(projectDescription[[ModelName]][[ProcessName]]$FunctionName, FunctionName)) {
@@ -549,74 +622,170 @@ ModifyFunctionName <- function(ProcessName, ModelName, ProjectName, NewFunctionN
         projectDescription[[ModelName]][[ProcessName]]$FunctionInputs <- FunctionInputs
     }
     
-    Process
+    # Store the changes:
+    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
 }
 
-ModifyProcessName <- function(ProcessName, Model, NewProcessName) {
-    # Set the process name:
-    Process$ProcessName <- ProcessName
+ModifyFunctionParameters <- function(ProcessName, ModelName, ProjectPath, NewFunctionParameters, only.current = FALSE) {
     
-    Process
-}
-
-ModifyFunctionParameters <- function(Process, FunctionParameters) {
+    # Get the project description:
+    projectDescription <- getCurrentProjectDescription(ProjectPath)
     
     # Report a warning for function parameters not present in the process:
-    valid <- names(FunctionParameters) %in% names(Process$FunctionParameters)
+    valid <- names(NewFunctionParameters) %in% names(projectDescription[[ModelName]][[ProcessName]]$FunctionParameters)
     if(any(!valid)) {
-        warning("The following function parameters are not present for the function ", Process$FunctionName, " of the process ", Process$ProcessName, ": ", paste(names(FunctionParameters)[!valid], collapse = ", "))
-        FunctionParameters <- FunctionParameters[valid]
+        warning(
+            "The following function parameters are not present for the function ", 
+            projectDescription[[ModelName]][[ProcessName]]$FunctionName, 
+            " of the process ", 
+            projectDescription[[ModelName]][[ProcessName]]$ProcessName, 
+            ": ", 
+            paste(names(NewFunctionParameters)[!valid], collapse = ", ")
+        )
+        
+        # Keep only the NewFunctionParameters present in the existing FunctionParameters:
+        NewFunctionParameters <- NewFunctionParameters[valid]
     }
     
-    # Insert the function parameters:
-    for(ind in seq_along(FunctionParameters)) {
-        Process$FunctionParameters[[names(FunctionParameters[ind])]] <- FunctionParameters[[ind]]
+    # Insert the function parameters (one by one for safety):
+    for(ind in seq_along(NewFunctionParameters)) {
+        projectDescription[[ModelName]][[ProcessName]]$FunctionParameters[[names(NewFunctionParameters[ind])]] <- NewFunctionParameters[[ind]]
     }
     
-    Process
+    # Store the changes:
+    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
 }
 
-ModifyFunctionInputs <- function(Process, FunctionInputs) {
+ModifyFunctionInputs <- function(ProcessName, ModelName, ProjectPath, NewFunctionInputs, only.current = FALSE) {
     
     # Report a warning for function inputs not present in the process:
-    valid <- names(FunctionInputs) %in% names(Process$FunctionInputs)
+    valid <- names(NewFunctionInputs) %in% names(projectDescription[[ModelName]][[ProcessName]]$FunctionInputs)
     if(any(!valid)) {
-        warning("The following function inputs are not present for the function ", Process$FunctionName, " of the process ", Process$ProcessName, ": ", paste(names(FunctionInputs)[!valid], collapse = ", "))
-        FunctionInputs <- FunctionInputs[valid]
+        warning(
+            "The following function parameters are not present for the function ", 
+            projectDescription[[ModelName]][[ProcessName]]$FunctionName, 
+            " of the process ", 
+            projectDescription[[ModelName]][[ProcessName]]$ProcessName, 
+            ": ", 
+            paste(names(FunctionInputs)[!valid], collapse = ", ")
+        )
+        
+        # Keep only the NewFunctionParameters present in the existing FunctionParameters:
+        NewFunctionInputs <- NewFunctionInputs[valid]
     }
     
     # Insert the function inputs:
-    for(ind in seq_along(FunctionInputs)) {
-        Process$FunctionInputs[[names(FunctionInputs[ind])]] <- FunctionInputs[[ind]]
+    for(ind in seq_along(NewFunctionInputs)) {
+        projectDescription[[ModelName]][[ProcessName]]$FunctionInputs[[names(NewFunctionInputs[ind])]] <- NewFunctionInputs[[ind]]
     }
     
-    Process
+    # Store the changes:
+    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
 }
 
-ModifyProcessParameters <- function(Process, ProcessParameters) {
+ModifyProcessName <- function(ProcessName, ModelName, ProjectPath, NewProcessName, only.current = FALSE) {
+    
+    # Get the project description:
+    projectDescription <- getCurrentProjectDescription(ProjectPath)
+    
+    # Set the process name:
+    projectDescription[[ModelName]][[ProcessName]]$ProcessName <- NewProcessName
+    
+    # Store the changes:
+    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
+}
+
+ModifyProcessParameters <- function(ProcessName, ModelName, ProjectPath, NewProcessParameters, only.current = FALSE) {
     
     # Get names of the process parameters:
     validProcessParameterNames = names(getRstoxFrameworkDefinitions("processParameters"))
     
     # Report a warning for non-existing process parameters:
-    valid <- names(ProcessParameters) %in% validProcessParameterNames
+    valid <- names(NewProcessParameters) %in% validProcessParameterNames
     if(any(!valid)) {
-        warning("The following process parameters are not valid: ", paste(names(ProcessParameters)[!valid], collapse = ", "))
-        ProcessParameters <- ProcessParameters[valid]
+        warning("The following process parameters are not valid: ", paste(names(NewProcessParameters)[!valid], collapse = ", "))
+        NewProcessParameters <- NewProcessParameters[valid]
     }
     
     # Insert the process parameters:
-    for(ind in seq_along(ProcessParameters)) {
-        Process$ProcessParameters[[names(ProcessParameters[ind])]] <- ProcessParameters[[ind]]
+    for(ind in seq_along(NewProcessParameters)) {
+        projectDescription[[ModelName]][[ProcessName]]$ProcessParameters[[names(NewProcessParameters[ind])]] <- NewProcessParameters[[ind]]
     }
     
-    Process
+    # Store the changes:
+    setProjectDescriptionAsCurrent(ProcessName, projectDescription, only.current = only.current)
+}
+
+ModifyProcess <- function(ProcessName, ModelName, ProjectPath, NewValues, only.current = FALSE) {
+    
+    # The values of the process must be changed in the following order:
+    # 1. Function name
+    # 2. Function parameters
+    # 2. Function inputs
+    # 1. Process name
+    # 1. Process parameters
+    
+    # Process name:
+    if(length(NewValues$NewProcessName)) {
+        ModifyProcessName(
+            ProcessName = ProcessName, 
+            ModelName = ModelName, 
+            ProjectPath = ProjectPath, 
+            NewProcessName = NewValues$ProcessName, 
+            only.current = only.current
+        )
+    }
+    
+    # Process parameters:
+    if(length(NewValues$ProcessParameters)) {
+        ModifyProcessParameters(
+            ProcessName = ProcessName, 
+            ModelName = ModelName, 
+            ProjectPath = ProjectPath, 
+            NewProcessParameters = NewValues$ProcessParameters, 
+            only.current = only.current
+        )
+    }
+    
+    # Function name:
+    if(length(NewValues$FunctionName)) {
+        ModifyFunctionName(
+            ProcessName = ProcessName, 
+            ModelName = ModelName, 
+            ProjectPath = ProjectPath, 
+            NewFunctionName = NewValues$FunctionName, 
+            only.current = only.current
+        )
+    }
+    
+    # Function parameters:
+    if(length(NewValues$NewFunctionParameters)) {
+        ModifyFunctionParameters(
+            ProcessName = ProcessName, 
+            ModelName = ModelName, 
+            ProjectPath = ProjectPath, 
+            NewFunctionParameters = NewValues$FunctionParameters, 
+            only.current = only.current
+        )
+    }
+    
+    # Function inputs:
+    if(length(NewValues$NewFunctionInputs)) {
+        ModifyFunctionInputs(
+            ProcessName = ProcessName, 
+            ModelName = ModelName, 
+            ProjectPath = ProjectPath, 
+            NewFunctionInputs = NewValues$FunctionInputs, 
+            only.current = only.current
+        )
+    }
 }
 
 
 
+
 # This function checks that 
-checkModel <- function(ProjectName, ModelName) {
+checkModel <- function(ProjectPath, ModelName) {
     
     # Function to check that the function inputs of one process are all process names existing prior to that function:
     checkFunctionInputs <- function(ind, functionInputs, processNames) {
@@ -624,7 +793,7 @@ checkModel <- function(ProjectName, ModelName) {
     }
     
     # Get the processes of the model:
-    processes <- getProcesses(ProjectName, ModelName)
+    processes <- getProcesses(ProjectPath, ModelName)
     
     # (1) Check process names:
     processNames <- names(processes)
@@ -717,7 +886,7 @@ ModifyBaselineProcess <- function(
 
 
 
-GetProjectDescription <- function(ProjectName, position = 0) {
+GetProjectDescription <- function(ProjectPath, position = 0) {
     
 }
 
@@ -726,31 +895,11 @@ GetProjectDescription <- function(ProjectName, position = 0) {
 
 
 
-SaveProjectDescription <- function(ProjectName, ProjectDescription, mode = c("Memory", "File")) {
+SaveProjectDescription <- function(ProjectPath, ProjectDescription, mode = c("Memory", "File")) {
     
 }
     
-    
 
-#AppendProcess <- function(ProjectName, ModelName, Process) {
-#    
-#    # Get the project name:
-#    ProcessName <- Process$ProcessName
-#    
-#    # Get project description:
-#    ProjectDescription <- GetProjectDescription(ProjectName)
-#    
-#    # Check whether the process name is already present in the model:
-#    if(Process$ProcessName %in% names(ProjectDescription[[ModelName]])){
-#        stop(paste0("The process ", Process$ProcessName, " is already present in the model ", ModelName, #" of project ", ProjectName))
-#    }
-#    
-#    # Append the process:
-#    ProjectDescription[[ModelName]][[ProcessName]] <- Process
-#    
-#    # Save the project description:
-#    SaveProjectDescription <- 
-#}
 
 
 AddBaselineProcess <- function(
@@ -814,10 +963,10 @@ AddBaselineProcess <- function(
 
 
 # 
-getOutputFileNames <- function(processName, ProjectName, fileExt="txt") {
+getOutputFileNames <- function(processName, ProjectPath, fileExt="txt") {
     
     # Get the status of the project:
-    status <- getProjectStatus(ProjectName)
+    status <- getProjectStatus(ProjectPath)
     # Get the function name from the status:
     functionName <- status[[processName]]$functionName
     # Get the process index:
@@ -1143,83 +1292,6 @@ createStoxSkeleton <- function(ProjectDirectory = NULL) {
 	# Return the paths:
 	paths
 }
-
-
-### ##################################################
-### ##################################################
-### #' Get paths to the project directories and files
-### #' 
-### #' This function gets the paths to the top level, input and output folders, and the project recipe ### file.
-### #' 
-### #' @param ProjectName   The directory in which to put the "stox" folder, defaulted to the "workspace### " folder in the home directory.
-### #' @param ProjectDirectory   The directory in which to put the "stox" folder, defaulted to the ### "workspace" folder in the home directory.
-### #' 
-### #' @return
-### #' A list of paths to the "stox" folder and sub folders.
-### #' 
-### #' @examples
-### #' getProjectPaths()
-### #' 
-### #' @export
-### #' @seealso Use \code{\link{createStoxSkeleton}} to create the folders.
-### #' 
-### getProjectPaths <- function(ProjectName, ProjectDirectory = NULL) {
-###     
-###     # Small function to convert a vector to a list and use the basenames as names:
-###     addBasenameAsListNames <- function(x) {
-###         out <- as.list(x)
-###         names(out) <- basename(x)
-###         out
-###     }
-###     
-###     # Get the paths to StoX:
-###     stoxPaths <- getStoxSkeletonPaths(ProjectDirectory = ProjectDirectory)
-###     # Get the project path:
-###     projectPath <- file.path(stoxPaths$project, ProjectName)
-###     
-###     # Get project folder names:
-###     projectFolders <- getRstoxFrameworkDefinitions()
-###     
-###     # Define top level of the project:
-###     projectDirs <- file.path(
-###         projectPath, 
-###         projectFolders$stoxFolders
-###     )
-###     
-###     # Define input folders of the project:
-###     projectInputDirs <- file.path(
-###         projectPath, 
-###         projectFolders$stoxFolders["input"], 
-###         projectFolders$stoxDataSources
-###     )
-###     
-###     # Define output folders of the project:
-###     projectOutputDirs <- file.path(
-###         projectPath, 
-###         projectFolders$stoxFolders["output"], 
-###         projectFolders$stoxModelTypes
-###     )
-###     
-###     # Define project file:
-###     projectXML <- file.path(projectPath, projectFolders$projectXML)
-###     
-###     # Define list of all folder and file names of the project:
-###     projectDirsList <- c(
-###         addBasenameAsListNames(projectDirs), 
-###         addBasenameAsListNames(projectInputDirs), 
-###         addBasenameAsListNames(projectOutputDirs), 
-###         list(projectXML = projectXML)
-###     )
-###     
-###     # Return a vector of paths to the individual folders:
-###     list(
-###         projectDirs = projectDirs, 
-###         projectInputDirs = projectInputDirs, 
-###         projectOutputDirs = projectOutputDirs, 
-###         projectXML = projectXML, 
-###         projectDirsList = projectDirsList
-###     )
-### }
 
 
 

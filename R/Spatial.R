@@ -1,35 +1,81 @@
+# We will support three different polygon files formats:
+# 1. StoxWKT files, which are tables with two columns, one for the polygon names and one for the multipolygon WKT strings in a file with file extension "txt".
+# 2. Shape files, which are folders with files with the following file extensions: "shp", shx" and "dbf".
+# 3. GEOJSON files, which are text files with a GEOJSON string, with file extension "geojson".
+
+# StoX will detect file extension and apply the appropriate reading function, returning an object of class SpatialPolygons. (readShapeFiles(), readGSOJSON(), readStoxMultipolygonWKT())
+
+# We will also have a function converting from SpatialPolygons to GSOJSON string, and vice versa, for use when writing to the project.xml.
+
+
+
+readStoxMultipolygonWKT <- function(x) {
+    tab <- read.table(x, sep = "\t", header = FALSE, stringsAsFactors = FALSE)
+    polygonName <- as.character(tab[, 1])
+    multipolygon <- tab[, 2]
+   
+    # Convert each WKT strings to SpatialPolygons:
+    spatialPolygonsList <- lapply(multipolygon, rgeos::readWKT)
+    # Extract the Polygons objects to modify the IDs and merge to a SpatialPolygons:
+    polygonsList <- lapply(spatialPolygonsList, function(x) slot(x, "polygons")[[1]])
+    # Add the polygon names as IDs:
+    for(ind in seq_along(polygonsList)) {
+        polygonsList[[ind]]@ID <- polygonName[ind]
+    }
+    # Merge to a SpatialPolygons object:
+    spatialPolygons = SpatialPolygons(polygonsList)
+    #plot(SpP, col = 1:5, pbg="white")
+    
+    spatialPolygons
+}
+
+readStoxMultipolygonWKT("~/workspace/stox/reference/stratum/kolmule.txt")
+
+
+
+
+# Try this e.g. with the files downloaded from this link: https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/physical/ne_110m_land.zip:
+
+readShapeFiles <- function(x) {
+    shape <- rgdal::readOGR(dsn = x)
+    shape
+}
+
+
+
+# The following are attempts on using s3 methods for coverting between different objects holding multipolygons. This may not be used, since the comments above define that 
 # Small test of S3 method getSpatialPolygons
-getSpatialPolygons <- function (x, ...) {
-    UseMethod("getSpatialPolygons", x)
-}
-getJSON <- function (x, ...) {
-    UseMethod("getJSON", x)
-}
-getMatrixList <- function (x, ...) {
-    UseMethod("getMatrixList", x)
-}
-# No rush to implement these:
-getShape <- function (x, ...) {
-    UseMethod("getSpatialPolygons", x)
-}
-getStoxWKT <- function (x, ...) {
-    UseMethod("getSpatialPolygons", x)
-}
-
-
-
-
-
-getSpatialPolygons.StoxWKT <- function(x) readWKTSplit(x)
-
-getJSON.SpatialPolygons <- function(x) geojson_json(x)
-
-# Example_
-m <- "MULTIPOLYGON(((-100 40, -90 50, -85 45, -100 40)))"
-
-class(m) <- "StoxWKT"
-
-getSpatialPolygons(m)
+#getSpatialPolygons <- function (x, ...) {
+#    UseMethod("getSpatialPolygons", x)
+#}
+#getJSON <- function (x, ...) {
+#    UseMethod("getJSON", x)
+#}
+#getMatrixList <- function (x, ...) {
+#    UseMethod("getMatrixList", x)
+#}
+## No rush to implement these:
+#getShape <- function (x, ...) {
+#    UseMethod("getSpatialPolygons", x)
+#}
+#getStoxWKT <- function (x, ...) {
+#    UseMethod("getSpatialPolygons", x)
+#}
+#
+#
+#
+#
+#
+#getSpatialPolygons.StoxWKT <- function(x) readWKTSplit(x)
+#
+#getJSON.SpatialPolygons <- function(x) geojson_json(x)
+#
+## Example_
+#m <- "MULTIPOLYGON(((-100 40, -90 50, -85 45, -100 40)))"
+#
+#class(m) <- "StoxWKT"
+#
+#getSpatialPolygons(m)
 
 
 
@@ -226,6 +272,12 @@ readWKTSplit <- function(x, ...){
     x <- paste(x, collapse='\r')
     rgeos::readWKT(x)
 }
+
+
+g6 <- rgeos::readWKT("MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((6 3,9 2,9 4,6 3))), MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((6 3,9 2,9 4,6 3)))")
+
+
+
 #' 
 #' @export
 #' @importFrom rgeos gArea

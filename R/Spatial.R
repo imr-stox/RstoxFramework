@@ -9,11 +9,28 @@
 
 
 
-readStoxMultipolygonWKT <- function(x) {
-    tab <- read.table(x, sep = "\t", header = FALSE, stringsAsFactors = FALSE)
-    polygonName <- as.character(tab[, 1])
-    multipolygon <- tab[, 2]
-   
+
+
+readStoxMultipolygonWKTFromFile <- function(FilePath) {
+    
+    # If the input is an existing file path instead of a data.table from the project.xml:
+    if(file.exists(FilePath)) {
+        tab <- data.table::fread(FilePath, sep = "\t", header = FALSE, stringsAsFactors = FALSE)
+        names(tab) <- c("Stratum", "Polygon")
+    }
+    
+   tab
+}
+
+
+
+
+DT2SpatialPolygons <- function(DataTable) {
+    
+    # 
+    polygonName <- as.character(DataTable$Stratum)
+    multipolygon <- DataTable$Polygon
+    
     # Convert each WKT strings to SpatialPolygons:
     spatialPolygonsList <- lapply(multipolygon, rgeos::readWKT)
     # Extract the Polygons objects to modify the IDs and merge to a SpatialPolygons:
@@ -29,7 +46,27 @@ readStoxMultipolygonWKT <- function(x) {
     spatialPolygons
 }
 
-s <- readStoxMultipolygonWKT("~/workspace/stox/reference/stratum/kolmule.txt")
+
+
+StoxMultipolygonWKT2SpatialPolygons <- function(FilePath) {
+    
+    # Read the file as data.table:
+    DataTable <- readStoxMultipolygonWKTFromFile(FilePath)
+    # Convert to SpatialPolygons:
+    DT2SpatialPolygons(DataTable)
+}
+
+
+
+
+DataTable <- readStoxMultipolygonWKTFromFile("~/workspace/stox/reference/stratum/kolmule.txt")
+
+s <- DT2SpatialPolygons(DataTable)
+
+ss <- StoxMultipolygonWKT2SpatialPolygons("~/workspace/stox/reference/stratum/kolmule.txt")
+
+identical(s, ss)
+
 
 
 
@@ -49,9 +86,9 @@ s <- readStoxMultipolygonWKT("~/workspace/stox/reference/stratum/kolmule.txt")
 
 
 
-lat <- c(60, 65, 0.7267265, 0.7233676, 0.7232196, 0.7225059)
-lon <- c(-1.512977, -1.504216, -1.499622, -1.487970, -1.443160, -1.434848)
-xym <- cbind(lon, lat)
+#lat <- c(60, 65, 0.7267265, 0.7233676, 0.7232196, 0.7225059)
+#lon <- c(-1.512977, -1.504216, -1.499622, -1.487970, -1.443160, -1.434848)
+#xym <- cbind(lon, lat)
 
 # deg to rad function
 deg2rad <- function(deg) {
@@ -74,7 +111,7 @@ polygonArea <- function(x, y = NULL) {
 
 
 
-polygonArea(s@polygons[[1]]@Polygons[[2]]@coords)
+polygonArea(s@polygons[[1]]@Polygons[[1]]@coords)
 
 
 
@@ -84,8 +121,8 @@ polygonArea(s@polygons[[1]]@Polygons[[2]]@coords)
 
 # Try this e.g. with the files downloaded from this link: https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/physical/ne_110m_land.zip:
 
-readShapeFiles <- function(x) {
-    shape <- rgdal::readOGR(dsn = x)
+readShapeFilesToSpatialPolygons <- function(FilePath) {
+    shape <- rgdal::readOGR(dsn = FilePath)
     shape
 }
 

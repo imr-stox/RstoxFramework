@@ -265,6 +265,7 @@ getProjectPaths <- function(ProjectPath, name = NULL) {
 
 createProjectSkeleton <- function(ProjectPath, ow = FALSE) {
     
+    browser()
     # Check whether the project exists:
     if(dir.exists(ProjectPath)) {
         if(!ow) {

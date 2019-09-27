@@ -221,16 +221,6 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </xs:annotation>
             </xs:element>
         </xs:sequence>
-        <xs:attribute name="modelname" type="xs:string" use="required" >
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">Identifies the model, must be unique in the project.</imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-
-        </xs:attribute>
     </xs:complexType>
     
     <xs:complexType name="BaselineModelType">
@@ -252,15 +242,6 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </xs:annotation>
             </xs:element>
         </xs:sequence>
-        <xs:attribute name="modelname" type="xs:string" use="required" >
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">Identifies the model, must be unique in the project.</imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="ProcessType">

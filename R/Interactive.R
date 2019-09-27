@@ -1,0 +1,1 @@
+# StoX GUI will ask for interactive functions after every process has been run.

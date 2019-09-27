@@ -54,15 +54,21 @@ StoxMultipolygonWKT2SpatialPolygons <- function(FilePath) {
 }
 
 
+DefineStrata <- function(FileName, UseProcessData = FALSE) {
+    StoxMultipolygonWKT2SpatialPolygons(FileName)
+}
 
+StratumArea <- function(StratumPolygon, AreaMethod = "Simple") {
+    polygonAreaSP(StratumPolygon)
+}
 
-DataTable <- readStoxMultipolygonWKTFromFile("~/../workspace/stox/reference/stratum/kolmule.txt")
-
-s <- DT2SpatialPolygons(DataTable)
-
-ss <- StoxMultipolygonWKT2SpatialPolygons("~/../workspace/stox/reference/stratum/kolmule.txt")
-
-identical(s, ss)
+#DataTable <- readStoxMultipolygonWKTFromFile("~/../workspace/stox/reference/stratum/kolmule.txt")
+#
+#s <- DT2SpatialPolygons(DataTable)
+#
+#ss <- StoxMultipolygonWKT2SpatialPolygons("~/../workspace/stox/reference/stratum/kolmule.txt")
+#
+#identical(s, ss)
 
 
 
@@ -139,9 +145,7 @@ polygonAreaSP <- function(sp) {
 }
 
 
-polygonAreaSP(s)
-
-#polygonArea()
+#polygonAreaSP(s)
 
 
 

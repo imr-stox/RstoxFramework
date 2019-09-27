@@ -1493,5 +1493,26 @@ stoxTemplates <- list(
     #### UserDefinedTemplate: User defined (empty models)
     UserDefinedTemplate = list(
         description = "User defined (empty models)"
+    ), 
+    #### Test template for StoX 3.0: 
+    Test3.0 = list(
+        description = "Test template for StoX 3.0",
+        Baseline = list(
+            ReadBiotic = list(
+                ProcessName = "ReadBiotic",
+                FunctionName = "ReadBiotic"
+            ),
+            DefineStrata = list(
+                ProcessName = "DefineStrata",
+                FunctionName = "DefineStrata"
+            ),
+            StratumArea = list(
+                ProcessName = "StratumArea",
+                FunctionName = "StratumArea",
+                FunctionInputs = list(
+                    StratumPolygon = "DefineStrata"
+                )
+            )
+        )
     )
 )

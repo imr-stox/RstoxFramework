@@ -19,7 +19,7 @@
 <h1>namespace: http://www.imr.no/formats/stox/v3</h1>
                     Schema for StoX process models. Supports storing information necessary for reproducing a StoX-estimate given the same data files are provided. It also serves to save state for the StoX interface.
                     The specification of StoX models does not enforce self-containment. That is, data and resource files can be linked from external sources, which may be local resources inaccessible at run time.
-                    Constructs like 'processDataType' and 'prosessType/skip' are provided to support importing of resource data to xml, and storing of manual resource-manipulation.
+                    Constructs like 'processDataType' are provided to support importing of resource data to xml, and storing of manual resource-manipulation.
                 <h2>Top-level elements</h2>
 <ul>
 <li>project: StoxProjectType</li>
@@ -45,6 +45,9 @@
 </tr>
 <tr>
 <td></td><td>template</td><td>xs:string</td><td>NEED TO DEFINE</td><td></td>
+</tr>
+<tr>
+<td></td><td>description</td><td>xs:string</td><td>Custom description of project</td><td></td>
 </tr>
 <tr>
 <td></td><td>lastmodified</td><td>xs:dateTime</td><td>Timestamp of latest change to StoX project.</td><td></td>
@@ -83,7 +86,13 @@
 <tr>
 <td></td><td>
                                 &lt;
-                                model/&gt;
+                                statistics/&gt;
+                            </td><td>ModelType</td><td>Models in the project. Non-baseline models may not contain process data.</td><td></td>
+</tr>
+<tr>
+<td></td><td>
+                                &lt;
+                                report/&gt;
                             </td><td>ModelType</td><td>Models in the project. Non-baseline models may not contain process data.</td><td></td>
 </tr>
 <tr>
@@ -149,27 +158,10 @@
                         No children
                     <h3>Data type: ModelType</h3>
 <h4>Keys:</h4>
-<ul></ul>
-<h4>Attributes:</h4>
-<table>
-<tr>
-<th>
-                                    display name
-                                </th><th>
-                                    name
-                                </th><th>
-                                    type
-                                </th><th>
-                                    description
-                                </th><th>
-                                    reference table
-                                </th>
-</tr>
-<tr>
-<td></td><td>modelname</td><td>xs:string</td><td>Identifies the model, must be unique in the project.</td><td></td>
-</tr>
-</table>
-<h4>Children:</h4>
+                        No keys
+                    <h4>Attributes:</h4>
+                        No attributes
+                    <h4>Children:</h4>
 <table>
 <tr>
 <th>
@@ -193,27 +185,10 @@
 </table>
 <h3>Data type: BaselineModelType</h3>
 <h4>Keys:</h4>
-<ul></ul>
-<h4>Attributes:</h4>
-<table>
-<tr>
-<th>
-                                    display name
-                                </th><th>
-                                    name
-                                </th><th>
-                                    type
-                                </th><th>
-                                    description
-                                </th><th>
-                                    reference table
-                                </th>
-</tr>
-<tr>
-<td></td><td>modelname</td><td>xs:string</td><td>Identifies the model, must be unique in the project.</td><td></td>
-</tr>
-</table>
-<h4>Children:</h4>
+                        No keys
+                    <h4>Attributes:</h4>
+                        No attributes
+                    <h4>Children:</h4>
 <table>
 <tr>
 <th>
@@ -231,7 +206,7 @@
 <tr>
 <td></td><td>
                                 &lt;
-                                process/&gt;
+                                baselineprocess/&gt;
                             </td><td>BaselineProcessType</td><td>A StoX process.</td><td></td>
 </tr>
 </table>
@@ -275,26 +250,59 @@
 <tr>
 <td></td><td>
                                 &lt;
-                                function/&gt;
+                                functionname/&gt;
                             </td><td>xs:string</td><td>Identifies the StoX-function to be exectued in this process.</td><td></td>
+</tr>
+<tr>
+<td></td><td>
+                                &lt;
+                                processparameters/&gt;
+                            </td><td>ProcessParameterType</td><td>Parameters related to control of processes in the StoX models.</td><td></td>
+</tr>
+<tr>
+<td></td><td>
+                                &lt;
+                                functioninput/&gt;
+                            </td><td>inputDataType</td><td>Named inputdata to the function identified in &lt;function&gt;. Data should be assigned to the functions formal parameters by name, not order.</td><td></td>
+</tr>
+<tr>
+<td></td><td>
+                                &lt;
+                                functionparameter/&gt;
+                            </td><td>StringWithParamNameType</td><td>Named parameters to the function identified in &lt;function&gt;. Parameters should be assigned by name, not order.</td><td></td>
+</tr>
+<tr>
+<td></td><td>
+                                &lt;
+                                output/&gt;
+                            </td><td>DataFormatType</td><td>Identifies the data format of the output from this process, for identification of which other process can consume it. A Special case is the type ProcessData which indicate that output from the process is written to &lt;processsata&gt; </td><td></td>
+</tr>
+</table>
+<h3>Data type: ProcessParameterType</h3>
+<h4>Keys:</h4>
+                        No keys
+                    <h4>Attributes:</h4>
+                        No attributes
+                    <h4>Children:</h4>
+<table>
+<tr>
+<th>
+                                    display name
+                                </th><th>
+                                    name
+                                </th><th>
+                                    type
+                                </th><th>
+                                    description
+                                </th><th>
+                                    reference table
+                                </th>
 </tr>
 <tr>
 <td></td><td>
                                 &lt;
                                 enabled/&gt;
                             </td><td>xs:boolean</td><td>Declares whether the function should be executed. The output and processData from processes that are not enabled are not available to later processes.</td><td></td>
-</tr>
-<tr>
-<td></td><td>
-                                &lt;
-                                skip/&gt;
-                            </td><td>xs:boolean</td><td>Declares whether the function should be exectued. Any previously calculated processData from processes that have 'skip' set will be available for later processes</td><td></td>
-</tr>
-<tr>
-<td></td><td>
-                                &lt;
-                                respondingui/&gt;
-                            </td><td>xs:boolean</td><td>CHECK THIS. Signals that output from this model should be inspected for updates to the graphical user interfaces. For instance that parameters for map overlays, such as position or strata borders, have changed.</td><td></td>
 </tr>
 <tr>
 <td></td><td>
@@ -307,24 +315,6 @@
                                 &lt;
                                 fileoutput/&gt;
                             </td><td>xs:boolean</td><td>Declares whether output from this process is to be written to space for intermediate results.</td><td></td>
-</tr>
-<tr>
-<td></td><td>
-                                &lt;
-                                inputdata/&gt;
-                            </td><td>inputDataType</td><td>Named inputdata to the function identified in &lt;function&gt;. Data should be assigned to the functions formal parameters by name, not order.</td><td></td>
-</tr>
-<tr>
-<td></td><td>
-                                &lt;
-                                parameter/&gt;
-                            </td><td>StringWithParamNameType</td><td>Named parameters to the function identified in &lt;function&gt;. Parameters should be assigned by name, not order.</td><td></td>
-</tr>
-<tr>
-<td></td><td>
-                                &lt;
-                                output/&gt;
-                            </td><td>DataFormatType</td><td>Identifies the data format of the output from this process, for identification of which other process can consume it. A Special case is the type ProcessData which indicate that output from the process is written to &lt;processsata&gt; </td><td></td>
 </tr>
 </table>
 <h3>Data type: BaselineProcessType</h3>
@@ -375,9 +365,6 @@
 </tr>
 <tr>
 <td></td><td>dataparameter</td><td>xs:string</td><td>Name of the formal argument of the function to be executed that this data should be assigned to.</td><td></td>
-</tr>
-<tr>
-<td></td><td>sourcetype</td><td>DataFormatType</td><td>Identifies the data format of this input.</td><td></td>
 </tr>
 <tr>
 <td></td><td>inputprocessname</td><td>xs:string</td><td>Name of the process that input should be taken from (processType/processname). Must exist in the same model. The output of 'inputprocess' that matches the 'sourcetype' of this element will be bound to the 'dataparameter' of the executed function. The inputprocess can not occur later in the model than the process using its output, but a process may consume its own processdata from previous executions. </td><td></td>

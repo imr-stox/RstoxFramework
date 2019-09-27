@@ -42,7 +42,8 @@ projectDescription <- list(
         BreakInGUI = FALSE, 
         FileOutput = TRUE
       ), 
-      ProcessData = list("MUKLTIPOLYGIN((25)6(6)6rger)"), 
+      ProcessData = list(
+        StratumPolygon=list(stratum1=list(polygon="MUKLTIPOLYGIN((25)6(6)6rger)"))), 
       FunctionParameters = list(
         FileNames = c(
           "input/acoustic/Echosounder-1618.xml"

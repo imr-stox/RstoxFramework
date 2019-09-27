@@ -13,6 +13,15 @@ get_simple_content <- function(node){
   return(xml2::xml_text(node,trim=T))
 }
 
+#' Parses processdata from xml
+#'@keywords internal
+#'@noRd
+process_processdata <- function(node){
+  pd <- list()
+  warning("Not implemented")
+  return(pd)
+}
+
 #' Parses function inputs from xml
 #'@keywords internal
 #'@noRd
@@ -49,10 +58,12 @@ process_processparameters <- function(node){
   return(fi)
 }
 
-#'Parses nonbaseline process from xml
+#'Parses process from xml
+#'@param node
+#'@param baselineprocess indicate whether the process to parse is a baselineprocess (may contain processdata)
 #'@keywords internal
 #'@noRd
-parse_nonbaselineprocess <- function(node){
+parse_process <- function(node, baselineprocess=F){
   
   process <- list()
   process$processname <- NULL
@@ -72,6 +83,10 @@ parse_nonbaselineprocess <- function(node){
   process$FunctionParameters <- list()
   process$FunctionInputs <- list()
   process$output <- NULL
+  
+  if (baselineprocess){
+    process$ProcessData <- list()
+  }
   
   children <- xml2::xml_children(node)
   for (c in children){
@@ -104,6 +119,14 @@ parse_nonbaselineprocess <- function(node){
     else if (n == "output"){
       process$output <- get_simple_content(c)
     }
+    else if (n == "processdata"){
+      if (!baselineprocess){
+        stop("Processdata found when parsing without baselineprocessing options enabled")
+      }
+      else{
+        process$ProcessData <- process_processdata(c)
+      }
+    }
     
     else{
       stop(paste("Parsing of element", n, "not supported"))
@@ -122,10 +145,10 @@ process_rstoxdependencies <- function(node){
   return(list()) 
 }
 
-#'Parses non-baseline models from xml
+#'Parses models from xml
 #'@keywords internal
 #'@noRd
-process_nonbaselinemodel <- function(node){
+process_model <- function(node){
   attributes <- xml2::xml_attrs(node)
   
   for (n in names(attributes)){
@@ -141,7 +164,14 @@ process_nonbaselinemodel <- function(node){
       if (processname %in% names(model)){
         stop(paste("Recurring processname in model:",processname))
       }
-      model[[processname]] <- parse_nonbaselineprocess(c)
+      model[[processname]] <- parse_process(c, F)
+    }
+    else if (n=="baselineprocess"){
+      processname <- xml2::xml_attr(c, "processname")
+      if (processname %in% names(model)){
+        stop(paste("Recurring processname in model:",processname))
+      }
+      model[[processname]] <- parse_process(c, T)
     }
     else{
         stop(paste("Parsing of element", n, "not supported"))
@@ -149,15 +179,6 @@ process_nonbaselinemodel <- function(node){
   }
   
   return(model) 
-}
-
-#'Parses baseline from xml
-#'@keywords internal
-#'@noRd
-process_baseline <- function(node){
-  baseline <- list()
-  warning("Not implemented")
-  return(list()) 
 }
 
 #'Parses project from xml
@@ -230,13 +251,13 @@ process_project <- function(projectDescription, node){
   for (c in children){
     n <- xml_name(c)
     if (n=="baselinemodel"){
-      projectDescription$Baseline <- process_baseline(c)
+      projectDescription$Baseline <- process_model(c)
     }
     else if (n=="statistics"){
-      projectDescription$Statistics <- process_nonbaselinemodel(c)
+      projectDescription$Statistics <- process_model(c)
     }
     else if (n=="report"){
-      projectDescription$Report <- process_nonbaselinemodel(c)
+      projectDescription$Report <- process_model(c)
     }
     else if (n=="rstoxdependencies"){
       projectDescription$RstoxDependencies <- process_rstoxdependencies(c)

@@ -118,39 +118,33 @@ polygonAreaPolygonDF <- function(df) {
   abs(area * r ^ 2 / 2.0);
 }
 
+
 # polygonAreaSP calculates simple GCD polygon area taking SpatialPolygons
 polygonAreaSP <- function(sp) {
-  numStrata <- length(s@polygons)
-  areaDF <- NULL
-  for (iStrata in seq_len(numStrata)) {
-    strata <- s@polygons[[iStrata]]
-    numPolygonsAndHolesInStrata <- length(strata@Polygons)
-    #areaDF <- as.data.frame(array(NA, dim=c(numPolygonsAndHolesInStrata, 2)))
-    sumArea <- 0
-    sumHoles <-0
-    for (iPolygon in seq_len(numPolygonsAndHolesInStrata)) {
-        polygon <- strata@Polygons[[iPolygon]]
-        ishole = polygon@hole
-        area <-polygonAreaPolygonXY(polygon@coords[, "x"], polygon@coords[, "y"])
-        if(ishole) {
-            sumHoles = sumHoles + area
-        } else {
-            sumArea = sumArea + area
-        }
-    }
-    area <- sumArea - sumHoles
-    areaDF <- rbind(areaDF, data.frame(Stratum=strata@ID, Area=area))
+  polygon2AreaDF <- function(polygon, ID) {
+    data.frame(
+      Area = polygonAreaPolygonXY(polygon@coords[, "x"], polygon@coords[, "y"]),
+      IsHole = polygon@hole,
+      ID = ID
+    )
   }
-  areaDF
+  
+
+  stratumAreaDF <- function(stratum) {
+    data.table::rbindlist(lapply(stratum@Polygons, polygon2AreaDF, ID = stratum@ID))
+  }
+
+  stratumArea <- function(DF) {
+    areas <- as.list(by(DF$Area, DF$IsHole, sum))
+    data.frame(
+      Stratum = DF$ID,
+      Area = if (length(areas) == 2) areas$"FALSE" - areas$"TRUE" else unlist(areas)
+    )
+  }
+  d <- lapply(s@polygons, stratumAreaDF)
+  stratumAreas <- data.table::rbindlist(lapply(d, stratumArea))
+  stratumAreas
 }
-
-
-#polygonAreaSP(s)
-
-
-
-
-
 
 
 # Try this e.g. with the files downloaded from this link: https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/physical/ne_110m_land.zip:

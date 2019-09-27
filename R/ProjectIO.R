@@ -1,4 +1,5 @@
 library(xml2)
+library(data.table)
 
 #
 # parsing XML
@@ -17,6 +18,19 @@ get_simple_content <- function(node){
   return(xml2::xml_text(node,trim=T))
 }
 
+#' Parses covariate definitions from xml
+process_covardef <- function(node){
+  
+  table <- data.frame(covariatesourcetype=character(), covariate=character(), value=character())
+  for (cc in xml_children(node)){
+    sourcestype <- xml_attr(cc, "covariatesourcetype")
+    covariate <- xml_attr(cc, "covariate")
+    value <- xml_text(cc, T)
+    table <- rbind(table, data.frame(covariatesourcetype=c(sourcestype), covariate=c(covariate), value=c(value)))
+  }
+  return(table)
+}
+
 #' Parses processdata from xml
 #'@keywords internal
 #'@noRd
@@ -28,71 +42,110 @@ process_processdata <- function(node){
   }
 
   pd <- list()  
-  pd$BioticAssignment <- list()
-  pd$SuAssignment <- list()
+  pd$BioticAssignment <- data.table(assignmentid=character(), station=character(), stationweight=character())
+  pd$SuAssignment <- data.table(sampleunit=character(), estlayer=character(), assignmentid=character())
   pd$AssignmentResolution <- list()
   pd$EdsuPsu <- list()
   pd$PsuStratum <- list()
   pd$StratumPolygon <- list()
-  pd$Temporal <- list()
-  pd$Gearfactor <- list()
-  pd$Spatial <- list()
-  pd$Platformfactor <- list()
+  pd$Temporal <- data.frame(covariatesourcetype=character(), covariate=character(), value=character())
+  pd$Gearfactor <- data.frame(covariatesourcetype=character(), covariate=character(), value=character())
+  pd$Spatial <- data.frame(covariatesourcetype=character(), covariate=character(), value=character())
+  pd$Platformfactor <- data.frame(covariatesourcetype=character(), covariate=character(), value=character())
   pd$CovParam <- list()
-  pd$AgeError <- list()
+  pd$AgeError <-  data.frame(readage=character(), realage=character(), probability=character())
   pd$StratumNeighbour <- list()
-  
-  nonimplementedtouched <- F
   
   children <- xml2::xml_children(node)
   for (c in children){
     n <- xml2::xml_name(c)
     if (n=="bioticassignment"){
-      nonimplementedtouched<-T
+      for (cc in xml_children(c)){
+        pd$BioticAssignment <- rbind(pd$BioticAssignment, data.table(assignmentid=c(xml_attr(cc, "assignmentid")), station=c(xml_attr(cc, "station")), stationweight=c(xml_text(cc, T))))  
+      }
     }
     else if (n=="suassignment"){
-      nonimplementedtouched<-T
+      for (cc in xml_children(c)){
+        pd$SuAssignment <- rbind(pd$SuAssignment, data.table(sampleunit=c(xml_attr(cc, "sampleunit")), estlayer=c(xml_attr(cc, "estlayer")), assignmentid=c(xml_text(cc, T))))  
+      }
     }
     else if (n=="assignmentresolution"){
-      nonimplementedtouched<-T
+      for (cc in xml_children(c)){
+        var <- xml_attr(cc, "variable")
+        value <- xml_text(cc, T)
+        pd$AssignmentResolution[[var]]<-value
+      }
     }
     else if (n=="edsupsu"){
-      nonimplementedtouched<-T
+      for (cc in xml_children(c)){
+        edsu <- xml_attr(cc, "edsu")
+        value <- xml_text(cc, T)
+        pd$EdsuPsu[[edsu]]<-value
+      }
     }
     else if (n=="psustratum"){
-      nonimplementedtouched<-T
+      for (cc in xml_children(c)){
+        psu <- xml_attr(cc, "psu")
+        value <- xml_text(cc, T)
+        pd$PsuStratum[[psu]]<-value
+      }
     }
     else if (n=="stratumpolygon"){
-      nonimplementedtouched<-T
+      for (cc in xml_children(c)){
+        key <- xml_attr(cc, "polygonkey")
+        var <- xml_attr(cc, "polygonvariable")
+        value <- xml_text(cc, T)
+        if (is.null(pd$StratumPolygon[[key]])){
+          pd$StratumPolygon[[key]]<-list()          
+        }
+        pd$StratumPolygon[[key]][[var]]<-value
+      }
     }
     else if (n=="temporal"){
-      nonimplementedtouched<-T
+      pd$Temporal <- process_covardef(c)
     }
     else if (n=="gearfactor"){
-      nonimplementedtouched<-T
+      pd$Gearfactor <- process_covardef(c)
     }
     else if (n=="spatial"){
-      nonimplementedtouched<-T
+      pd$Spatial <- process_covardef(c)
     }
     else if (n=="platformfactor"){
-      nonimplementedtouched<-T
+      pd$Platformfactor <- process_covardef(c)
     }
     else if (n=="covparam"){
-      nonimplementedtouched<-T
+      for (cc in xml_children(c)){
+        covariatetable <- xml_attr(cc, "covariatetable")
+        parameter <- xml_attr(cc, "parameter")
+        value <- xml_text(cc, T)
+        if (is.null(pd$CovParam[[covariatetable]])){
+          pd$CovParam[[covariatetable]]<-list()          
+        }
+        pd$CovParam[[covariatetable]][[parameter]]<-value
+      }
     }
     else if (n=="ageerror"){
-      nonimplementedtouched<-T
+      for (cc in xml_children(c)){
+        readage <- xml_attr(cc, "readage")
+        realage <- xml_attr(cc, "realage")
+        value <- xml_text(cc, T)
+        pd$AgeError <-rbind(pd$AgeError, data.frame(readage=c(readage), realage=c(realage), probability=c(value)))
+      }
     }
     else if (n=="stratumneighbour"){
-      nonimplementedtouched<-T
+      for (cc in xml_children(c)){
+        stratum <- xml_attr(cc, "variable")
+        neighbour <- xml_text(cc, T)
+        if (!is.null(pd$StratumNeighbour[[stratum]])){
+          pd$StratumNeighbour[[stratum]] <- c(pd$StratumNeighbour[[stratum]], neighbour)
+        }else{
+          pd$StratumNeighbour[[stratum]] <- c(neighbour)
+        }
+      }
     }
     else{
       stop(paste("Parsing of element", n, "not supported"))
     }
-  }
-  
-  if (nonimplementedtouched){
-    warning("Attempting to use processdata not yet implemented")
   }
   
   return(pd)

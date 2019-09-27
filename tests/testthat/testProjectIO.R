@@ -4,6 +4,9 @@
 # Require all function parameters to be strings (allow repititon)
 # Require ProcessData to be stored in dedicated lists according to processdata type
 #
+# Questions:
+# - should breakingui only be on baseline
+#
 
 projectDescription <- list(
   Description = "fasdvabadf", 
@@ -143,3 +146,4 @@ context("read project")
 project <- readProject("../../inst/testresources/dummy_project.xml")
 expect_true(all(names(project) %in% c("Template", "Rversion", "Description", "Baseline", "Lastmodified", "Statistics", "Rstoxversion", "Report", "Stoxversion", "RstoxDependencies")))
 expect_true(all(c("StratumPolygon", "BioticAssignment") %in% names(project$Baseline[[1]]$ProcessData)))
+expect_equal(project$Baseline$str1234$ProcessData$StratumNeighbour$str1234, "str1234")

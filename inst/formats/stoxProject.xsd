@@ -50,7 +50,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:annotation>
 
         <xs:sequence>
-            <xs:element name="baselinemodel" type="BaselineModelType" minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="baselinemodel" type="BaselineModelType" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -59,7 +59,16 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="model" type="ModelType" minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="statistic" type="ModelType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Models in the project. Non-baseline models may not contain process data.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="report" type="ModelType" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -87,6 +96,15 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:documentation>
                     <imrd:imrDoc>
                         <imrd:description lang="en">NEED TO DEFINE</imrd:description>
+                    </imrd:imrDoc>
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+            <xs:attribute name="description" type="xs:string" use="optional" >
+            <xs:annotation>
+                <xs:documentation>
+                    <imrd:imrDoc>
+                        <imrd:description lang="en">Custom description of project</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>

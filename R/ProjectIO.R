@@ -457,14 +457,11 @@ getProcessParametersXml <- function(processparameters){
   xml_text(enabled) <- tolower(as.character(processparameters$Enabled))
   xml_add_child(node, enabled)
   
-  if (is.null(processparameters$BreakInGUI)){
-    processparameters$BreakInGUI <- ""
+  if (!is.null(processparameters$BreakInGUI)){
+    bi <- xml_new_root("breakingui")
+    xml_text(bi) <- tolower(as.character(processparameters$BreakInGUI))
+    xml_add_child(node, bi)
   }
-
-  bi <- xml_new_root("breakingui")
-  xml_text(bi) <- tolower(as.character(processparameters$BreakInGUI))
-  xml_add_child(node, bi)
-  
   
   fo <- xml_new_root("fileoutput")
   xml_text(fo) <- tolower(as.character(processparameters$FileOutput))
@@ -497,8 +494,8 @@ getCovarDefXml <- function(dataframe, rootname){
 getProcessDataXml <- function(processdata){
   node <- xml_new_root("processdata")
   
-  pd <- xml_new_root("bioticassignment")
   if (!is.null(processdata$BioticAssignment)){
+    pd <- xml_new_root("bioticassignment")
     for (i in 1:nrow(processdata$BioticAssignment)){
       assignment <- xml_new_root("stationweight")
       xml_attr(assignment, "assignmentid") <- processdata$BioticAssignment$assignmentid[i]
@@ -510,8 +507,8 @@ getProcessDataXml <- function(processdata){
   }
 
 
-  pd <- xml_new_root("suassignment")
   if (!is.null(processdata$SuAssignment)){
+    pd <- xml_new_root("suassignment")
     for (i in 1:nrow(processdata$SuAssignment)){
       assignment <- xml_new_root("assignmentid")
       xml_attr(assignment, "sampleunit") <- processdata$SuAssignment$sampleunit[i]
@@ -522,41 +519,41 @@ getProcessDataXml <- function(processdata){
     xml_add_child(node, pd)
   }
   
-  pd <- xml_new_root("assignmentresolution")
   if (!is.null(processdata$AssignmentResolution)){
+    pd <- xml_new_root("assignmentresolution")
     for (n in names(processdata$AssignmentResolution)){
       assignment <- xml_new_root("value")
       xml_attr(assignment, "variable") <- n
       xml_text(assignment) <- processdata$AssignmentResolution[[n]]
       xml_add_child(pd, assignment)
     }
+    xml_add_child(node, pd)
   }
-  xml_add_child(node, pd)
   
-  pd <- xml_new_root("edsupsu")
   if (!is.null(processdata$EdsuPsu)){
+    pd <- xml_new_root("edsupsu")
     for (n in names(processdata$EdsuPsu)){
       psu <- xml_new_root("psu")
       xml_attr(psu, "edsu") <- n
       xml_text(psu) <- processdata$EdsuPsu[[n]]
       xml_add_child(pd, psu)
     }
+    xml_add_child(node, pd)
   }
-  xml_add_child(node, pd)
   
-  pd <- xml_new_root("psustratum")
   if (!is.null(processdata$PsuStratum)){
+    pd <- xml_new_root("psustratum")
     for (n in names(processdata$PsuStratum)){
       stratum <- xml_new_root("stratum")
       xml_attr(stratum, "psu") <- n
       xml_text(stratum) <- processdata$PsuStratum[[n]]
       xml_add_child(pd, stratum)
     }
+    xml_add_child(node, pd)
   }
-  xml_add_child(node, pd)
 
-  pd <- xml_new_root("stratumpolygon")
   if (!is.null(processdata$StratumPolygon)){
+    pd <- xml_new_root("stratumpolygon")
     for (n in names(processdata$StratumPolygon)){
       for (entry in names(processdata$StratumPolygon[[n]])){
         value <- xml_new_root("value")
@@ -566,8 +563,8 @@ getProcessDataXml <- function(processdata){
         xml_add_child(pd, value)
       }
     }
+    xml_add_child(node, pd)
   }
-  xml_add_child(node, pd)
 
   if (!is.null(processdata$Temporal)){
     xml_add_child(node, getCovarDefXml(processdata$Temporal, "temporal"))  
@@ -585,8 +582,9 @@ getProcessDataXml <- function(processdata){
     xml_add_child(node, getCovarDefXml(processdata$Platformfactor, "platformfactor"))  
   }
   
-  pd <- xml_new_root("covparam")
+  
   if (!is.null(processdata$CovParam)){
+    pd <- xml_new_root("covparam")
     for (n in names(processdata$CovParam)){
       for (entry in names(processdata$CovParam[[n]])){
         value <- xml_new_root("value")
@@ -596,11 +594,11 @@ getProcessDataXml <- function(processdata){
         xml_add_child(pd, value)
       }
     }
+    xml_add_child(node, pd)
   }
-  xml_add_child(node, pd)
 
-  pd <- xml_new_root("ageerror")
   if (!is.null(processdata$AgeError)){
+    pd <- xml_new_root("ageerror")
     for (i in 1:nrow(processdata$AgeError)){
       ageerror <- xml_new_root("probability")
       xml_attr(ageerror, "readage") <- processdata$AgeError$readage[i]
@@ -611,8 +609,8 @@ getProcessDataXml <- function(processdata){
     xml_add_child(node, pd) 
   }
   
-  pd <- xml_new_root("stratumneighbour")
   if (!is.null(processdata$StratumNeighbour)){
+    pd <- xml_new_root("stratumneighbour")
     for (n in names(processdata$StratumNeighbour)){
       for (v in processdata$StratumNeighbour[[n]]){
         value <- xml_new_root("value")
@@ -621,8 +619,8 @@ getProcessDataXml <- function(processdata){
         xml_add_child(pd, value)
       }
     }
+    xml_add_child(node, pd)
   }
-  xml_add_child(node, pd)
   
   return(node)
 }
@@ -666,13 +664,11 @@ getProcessXml <- function(process, baselineprocess=F){
     }
   }
   
-  if (is.null(process$Output)){
-    process$Output <- ""
+  if (!is.null(process$Output)){
+    outputnode <- xml_new_root("output")
+    xml_text(outputnode) <- process$Output
+    xml_add_child(node, outputnode)
   }
-  
-  outputnode <- xml_new_root("output")
-  xml_text(outputnode) <- process$Output
-  xml_add_child(node, outputnode)
   
   if (baselineprocess){
     xml_add_child(node, getProcessDataXml(process$ProcessData))
@@ -752,10 +748,7 @@ saveProject <- function(projectDescription, filename){
   
   xml_attr(root, "template") <- projectDescription$Template
   xml_attr(root, "description") <- projectDescription$Description
-  if (is.null(projectDescription$Lastmodified)){
-    xml_attr(root, "lastmodified") <- ""
-  }
-  else{
+  if (!is.null(projectDescription$Lastmodified)){
     xml_attr(root, "lastmodified") <- gsub("\ ","T",as.character(projectDescription$Lastmodified))
   }
   xml_attr(root, "rstoxversion") <- projectDescription$Rstoxversion

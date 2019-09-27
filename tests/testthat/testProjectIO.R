@@ -3,9 +3,7 @@
 # Changes done to version from AJH
 # Require all function parameters to be strings (allow repititon)
 # Require ProcessData to be stored in dedicated lists according to processdata type
-#
-# Questions:
-# - should breakingui only be on baseline
+# Can not write all elements and attributes missing from templates as empty nodes. Some have restrictions on values.
 #
 
 projectDescription <- list(
@@ -124,6 +122,10 @@ context("save project")
 tempfile <- tempfile()
 # save
 saveProject(projectDescription, tempfile)
+# validate
+data <- read_xml(tempfile)
+schema <- read_xml("../../inst/formats/stoxProject.xsd")
+expect_true(xml_validate(data, schema))
 #read back in
 reread <- readProject(tempfile)
 file.remove(tempfile)
@@ -133,7 +135,7 @@ expect_equal(projectDescription$Baseline$ReadAcoustic$FunctionParameters$FileNam
 expect_gt(length(reread$Baseline$ReadAcoustic$ProcessData), length(projectDescription$Baseline$ReadAcoustic$ProcessData))
 
 
-# validate
+# validate dummy file
 tempfile <- tempfile()
 project <- readProject("../../inst/testresources/dummy_project.xml")
 saveProject(project, tempfile)

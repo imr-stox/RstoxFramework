@@ -21,7 +21,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <imrd:description lang="en">
                     Schema for StoX process models. Supports storing information necessary for reproducing a StoX-estimate given the same data files are provided. It also serves to save state for the StoX interface.
                     The specification of StoX models does not enforce self-containment. That is, data and resource files can be linked from external sources, which may be local resources inaccessible at run time.
-                    Constructs like 'processDataType' and 'prosessType/skip' are provided to support importing of resource data to xml, and storing of manual resource-manipulation.
+                    Constructs like 'processDataType' are provided to support importing of resource data to xml, and storing of manual resource-manipulation.
                 </imrd:description>
             </imrd:imrDoc>
         </xs:documentation>
@@ -59,7 +59,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="statistic" type="ModelType" minOccurs="0" maxOccurs="1">
+            <xs:element name="statistics" type="ModelType" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -253,7 +253,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
-            <xs:element name="function" type="xs:string" minOccurs="0">
+            <xs:element name="functionname" type="xs:string" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -262,52 +262,17 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="enabled" type="xs:boolean" minOccurs="0">
+            <xs:element name="processparameters" type="ProcessParameterType">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
-                            <imrd:description lang="en">Declares whether the function should be executed. The output and processData from processes that are not enabled are not available to later processes.</imrd:description>
+                            <imrd:description lang="en">Parameters related to control of processes in the StoX models.</imrd:description>
                         </imrd:imrDoc>
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="skip" type="xs:boolean" minOccurs="1" maxOccurs="1">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Declares whether the function should be exectued. Any previously calculated processData from processes that have 'skip' set will be available for later processes</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="respondingui" type="xs:boolean" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">CHECK THIS. Signals that output from this model should be inspected for updates to the graphical user interfaces. For instance that parameters for map overlays, such as position or strata borders, have changed.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="breakingui" type="xs:boolean" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">CHECK THIS. Signals that user interaction should be allowed during execution of this process. The details of this user interaction is specified in the function.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="fileoutput" type="xs:boolean" minOccurs="0" >
-                <xs:annotation>
-                    <xs:documentation>
-                        <imrd:imrDoc>
-                            <imrd:description lang="en">Declares whether output from this process is to be written to space for intermediate results.</imrd:description>
-                        </imrd:imrDoc>
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:element name="inputdata" type="inputDataType" minOccurs="0" maxOccurs="unbounded">
+
+            <xs:element name="functioninput" type="inputDataType" minOccurs="0" maxOccurs="unbounded">
                 <!-- Added to abstract input handling from the functions -->
                 <xs:annotation>
                     <xs:documentation>
@@ -317,7 +282,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="parameter" type="StringWithParamNameType" minOccurs="0" maxOccurs="unbounded" >
+            <xs:element name="functionparameter" type="StringWithParamNameType" minOccurs="0" maxOccurs="unbounded" >
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -347,6 +312,38 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         </xs:attribute>
     </xs:complexType>
     
+    <xs:complexType name="ProcessParameterType">
+        <xs:sequence>
+            <xs:element name="enabled" type="xs:boolean" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether the function should be executed. The output and processData from processes that are not enabled are not available to later processes.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="breakingui" type="xs:boolean" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">CHECK THIS. Signals that user interaction should be allowed during execution of this process. The details of this user interaction is specified in the function.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="fileoutput" type="xs:boolean" minOccurs="0" >
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">Declares whether output from this process is to be written to space for intermediate results.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+        
     <xs:complexType name="BaselineProcessType">
         <xs:annotation>
             <xs:documentation>
@@ -387,15 +384,6 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 <xs:documentation>
                     <imrd:imrDoc>
                         <imrd:description lang="en">Name of the formal argument of the function to be executed that this data should be assigned to.</imrd:description>
-                    </imrd:imrDoc>
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="sourcetype" type="DataFormatType">
-            <xs:annotation>
-                <xs:documentation>
-                    <imrd:imrDoc>
-                        <imrd:description lang="en">Identifies the data format of this input.</imrd:description>
                     </imrd:imrDoc>
                 </xs:documentation>
             </xs:annotation>
@@ -1142,7 +1130,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Rerpesents a mapping of spatial covariate to its neighbours. Content is a comma-separated list of neighbours (must all be valid values ofr the covariate spatial).</imrd:description>
+                    <imrd:description lang="en">Represents a mapping of spatial covariate to its neighbours. Content is a comma-separated list of neighbours (must all be valid values ofr the covariate spatial).</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>

@@ -1,3 +1,274 @@
+library(xml2)
+
+#' Extracts text value form node with n attributes
+#'@keywords internal
+#'@noRd
+get_simple_content <- function(node){
+  if (length(xml2::xml_attrs(node))>0){
+    stop("Attempting simple content extraction from node with attributes")
+  }
+  if (length(xml2::xml_children(node))>0){
+    stop("Attempting simple content extraction from node with attributes")
+  }
+  return(xml2::xml_text(node,trim=T))
+}
+
+#' Parses function inputs from xml
+#'@keywords internal
+#'@noRd
+process_processparameters <- function(node){
+  
+  attributes <- xml2::xml_attrs(node)
+  for (n in names(attributes)){
+      stop(paste("Parsing of attribute", n, "not supported"))
+  }
+  
+  
+  fi <- list()
+  fi$Enabled <- NULL
+  fi$FileOutput <- NULL 
+  fi$BreakInGUI <- NULL
+  
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n=="enabled"){
+      fi$Enabled <- as.logical(get_simple_content(c))
+    }
+    else if (n=="breakingui"){
+      fi$BreakInGUI <- as.logical(get_simple_content(c))
+    }
+    else if (n=="fileoutput"){
+      fi$FileOutput <- as.logical(get_simple_content(c))
+    }
+    else{
+      stop(paste("Parsing of element", n, "not supported"))
+    }
+  }
+
+  return(fi)
+}
+
+#'Parses nonbaseline process from xml
+#'@keywords internal
+#'@noRd
+parse_nonbaselineprocess <- function(node){
+  
+  process <- list()
+  process$processname <- NULL
+  
+  attributes <- xml2::xml_attrs(node)
+  for (n in names(attributes)){
+    if (n=="processname"){
+      process$ProcessName <- attributes[n]
+    }
+    else{
+      stop(paste("Parsing of attribute", n, "not supported"))
+    }
+  }
+  
+  process$FunctionName <- NULL
+  process$ProcessParameters <- list()
+  process$FunctionParameters <- list()
+  process$FunctionInputs <- list()
+  process$output <- NULL
+  
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n == "functionname"){
+      process$FunctionName <- get_simple_content(c)
+    }
+    else if (n == "processparameters"){
+      process$ProcessParameters <- process_processparameters(c)
+    }
+    else if (n == "functioninput"){
+      if (length(xml2::xml_attrs(c))!=2){
+        stop(paste("Unexpected number of attributes for element", n))
+      }
+      if (nchar(xml2::xml_text(c,trim=T))!=0){
+        stop(paste("Unexpected content for element", n))
+      }
+      inputname <- xml2::xml_attr(c, "dataparameter")
+      inputprocess <- xml2::xml_attr(c, "inputprocessname")
+      process$FunctionInputs[[inputname]] <- inputprocess
+    }
+    else if (n == "functionparameter"){
+      if (length(xml2::xml_attrs(c))!=1){
+        stop(paste("Unexpected number of attributes for element", n))
+      }
+      parname <-xml2::xml_attr(c, "name")
+      parvalue <- xml2::xml_text(c,trim=T)
+      process$FunctionParameters[[parname]] <- parvalue
+    }
+    else if (n == "output"){
+      process$output <- get_simple_content(c)
+    }
+    
+    else{
+      stop(paste("Parsing of element", n, "not supported"))
+    }
+  }
+  
+  return(process)
+}
+
+#'Parses rstoxdependencies from xml
+#'@keywords internal
+#'@noRd
+process_rstoxdependencies <- function(node){
+  deps <- list()
+  warning("Not implemented")
+  return(list()) 
+}
+
+#'Parses non-baseline models from xml
+#'@keywords internal
+#'@noRd
+process_nonbaselinemodel <- function(node){
+  attributes <- xml2::xml_attrs(node)
+  
+  for (n in names(attributes)){
+    stop(paste("Parsing of attribute", n, "not supported"))
+  }
+  
+  model <- list()
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n=="process"){
+      processname <- xml2::xml_attr(c, "processname")
+      if (processname %in% names(model)){
+        stop(paste("Recurring processname in model:",processname))
+      }
+      model[[processname]] <- parse_nonbaselineprocess(c)
+    }
+    else{
+        stop(paste("Parsing of element", n, "not supported"))
+    }
+  }
+  
+  return(model) 
+}
+
+#'Parses baseline from xml
+#'@keywords internal
+#'@noRd
+process_baseline <- function(node){
+  baseline <- list()
+  warning("Not implemented")
+  return(list()) 
+}
+
+#'Parses project from xml
+#'@keywords internal
+#'@noRd
+process_project <- function(projectDescription, node){
+  
+  attributes <- xml2::xml_attrs(node)
+  
+  #
+  # check that namespace is given
+  #
+  
+  if (!("xmlns" %in% names(attributes))){
+    stop("No default namespace provided. Namespace prefix not supported.")
+  }
+  
+  
+  #
+  # handle attributes
+  #
+  
+  projectDescription$Template <- NULL
+  projectDescription$Description <- NULL
+  projectDescription$Lastmodified <- NULL
+  projectDescription$Rstoxversion <- NULL
+  projectDescription$Stoxversion <- NULL
+  projectDescription$Rversion <- NULL
+
+  for(n in names(attributes)){
+    if (n=="template"){
+      projectDescription$Template <- attributes[[n]]
+    }
+    else if (n=="description"){
+      projectDescription$Description <- attributes[[n]]
+    }
+    else if (n=="lastmodified"){
+      projectDescription$Lastmodified <- attributes[[n]]
+    }
+    else if (n=="rstoxversion"){
+      projectDescription$Rstoxversion <- attributes[[n]]
+    }
+    else if (n=="stoxversion"){
+      projectDescription$Stoxversion <- attributes[[n]]
+    }
+    else if (n=="rversion"){
+      projectDescription$Rversion <- attributes[[n]]
+    }
+    else if (n=="xmlns"){
+      compatibleFormats = c("http://www.imr.no/formats/stox/v3")
+      if (!(attributes[n] %in% compatibleFormats)){
+        warning(paste("default xml namespace", attributes[n], "is not a compatible format"))
+      }
+    }
+    else{
+      stop(paste("Parsing of attribute", n, "not supported"))
+    }
+  }
+
+  #
+  #handle child elements
+  #
+  
+  projectDescription$Baseline <- list()
+  projectDescription$Statistics <- list()
+  projectDescription$Report <- list()
+  projectDescription$RstoxDependencies <- list()
+  
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml_name(c)
+    if (n=="baselinemodel"){
+      projectDescription$Baseline <- process_baseline(c)
+    }
+    else if (n=="statistics"){
+      projectDescription$Statistics <- process_nonbaselinemodel(c)
+    }
+    else if (n=="report"){
+      projectDescription$Report <- process_nonbaselinemodel(c)
+    }
+    else if (n=="rstoxdependencies"){
+      projectDescription$RstoxDependencies <- process_rstoxdependencies(c)
+    }
+    else{
+      stop(paste("Parsing of element", n, "not supported"))
+    }
+  }
+  return(projectDescription)
+}
+
+#' Inspects all elements and attributes and processes them.
+#'
+#' @keywords internal
+#' @noRd
+process_xml <- function(projectDescription, root){
+  return(process_project(projectDescription, root))
+}
+
+#' Read Stox porject from project xml
+#' @param projectxml xml filename
+#' @return Nested list representation of project
+#' @export
+readProject <- function(projectxml){
+  tree <- xml2::read_xml(projectxml)
+  
+  root <- xml2::xml_root(tree)
+  
+  projectDescription <- list()
+  return(process_xml(projectDescription, root))
+}
+
 projectDescription <- list(
   Description = "fasdvabadf", 
   Baseline = list(
@@ -108,183 +379,3 @@ projectDescription <- list(
   )
   
 )
-
-
-
-
-
-
-
-
-
-##############################################################
-##############################################################
-########## 2019-07-18, Creating the RstoxFramework: ##########
-##############################################################
-##############################################################
-
-
-
-
-##################################################
-##################################################
-#' Get RstoxFramework definitions
-#' 
-#' This function gets vital definitions from the RstoxFramework environment.
-#' 
-#' @param name  An optional string vector denoting which definitions to extract.
-#' @param ...   Values overriding the values of definitions.
-#' 
-#' @return
-#' A list of vital definitions in RstoxFramework.
-#' 
-#' @examples
-#' getRstoxFrameworkDefinitions()
-#' 
-#' @export
-#' 
-setStoxFunctionAttributes <- function(x, FunctionCategory, FunctionParameterParents, FunctionOutputDataType) {
-  
-  # Check that the given function category is valid:
-  checkFunctionCategory(FunctionCategory)
-  
-  ### # Check that FunctionInputs only contains required parameters:
-  ### checkFunctionInputs(FunctionInputs, fun = x)
-  
-  ### # Check also that the parameters to show in StoX are actual parameters:
-  ### checkFunctionParametersInStoX(FunctionParametersInStoX, fun = x)
-  
-  # Check that output is one of the allowed data types:
-  checkFunctionOutputDataType(FunctionOutputDataType)
-  
-  attr(x, "FunctionCategory") <- FunctionCategory
-  attr(x, "FunctionParameterParents") <- FunctionParameterParents
-  #attr(x, "FunctionInputs") <- FunctionInputs
-  #attr(x, "FunctionParametersInStoX") <- FunctionParametersInStoX
-  attr(x, "FunctionOutputDataType") <- FunctionOutputDataType
-  x
-}
-#' 
-#' @export
-#' 
-checkFunctionCategory <- function(FunctionCategory) {
-  # Get the defined model types and match the function category against these:
-  stoxModelTypes <- getRstoxFrameworkDefinitions("stoxModelTypes")
-  out <- FunctionCategory %in% stoxModelTypes
-  if(!out) {
-    stop(paste0("FunctionCategory must be one of ", paste(stoxModelTypes, collapse = ", "), ". Was ", FunctionCategory, "."))
-  }
-}
-
-checkFunctionInputs <- function(FunctionInputs, fun) {
-  # Get the arguments:
-  f <- formals(fun)
-  # Discard any "...":
-  f <- subset(f, names(f) != "...")
-  # Get the empty formals
-  empty <- sapply(f, is.name)
-  # Get the names of the inputs:
-  inputs <- names(empty)[empty]
-  # Check whether all given FunctionInputs are  actual inputs (non-default parameters):
-  valid <- FunctionInputs %in% inputs
-  if(!all(valid)) {
-    stop(paste0("FunctionInputs must all be required parameters: ", paste(inputs, collapse = ", "), ". Was ", paste(FunctionInputs, collapse = ", "), "."))
-  }
-}
-
-checkFunctionParametersInStoX <- function(FunctionParametersInStoX, fun) {
-  # Get the arguments:
-  f <- formals(fun)
-  # Discard any "...":
-  f <- setdiff(names(f), "...")
-  # Check whether all given FunctionInputs are  actual inputs (non-default parameters):
-  valid <- FunctionParametersInStoX %in% f
-  if(!all(valid)) {
-    stop(paste0("FunctionParametersInStoX must all be parameters: ", paste(f, collapse = ", "), ". Was ", paste(FunctionParametersInStoX, collapse = ", "), "."))
-  }
-}
-
-checkFunctionOutputDataType <- function(FunctionOutputDataType) {
-  # Get the defined model types and match the function category against these:
-  stoxDataTypes <- getRstoxFrameworkDefinitions("stoxDataTypes")
-  out <- FunctionOutputDataType %in% stoxDataTypes
-  
-  if(!out) {
-    stop("FunctionOutputDataType must be one of the valid data types. See getRstoxFrameworkDefinitions('stoxDataTypes')")
-  }
-}
-
-
-
-
-
-
-##################################################
-##################################################
-#' Get paths to the StoX directories
-#' 
-#' This function gets the paths to the "stox" folder and the "project" and "reference" sub folders.
-#' 
-#' @param ProjectDirectory   The directory in which to put the "stox" folder, defaulted to the "workspace" folder in the home directory.
-#' 
-#' @return
-#' A list of paths to the "stox" folder and sub folders.
-#' 
-#' @examples
-#' getStoxSkeletonPaths()
-#' 
-#' @noRd
-#' @seealso Use \code{\link{createStoxSkeleton}} to create the folders.
-#' 
-getStoxSkeletonPaths <- function(ProjectDirectory = NULL) {
-  
-  # If missing, set the path to the stox folder, which conatins the project folder and the reference folder:
-  if(length(ProjectDirectory) == 0) {
-    ProjectDirectory <- file.path(path.expand("~"), "workspace")
-  }
-  
-  # Get and return in a list the paths to the project folder and the reference folder:
-  stox <- file.path(ProjectDirectory, "stox")
-  project <- file.path(stox, "project")
-  reference <- file.path(stox, "reference")
-  
-  list(stox = ProjectDirectory, project = project, reference = reference)
-}
-
-##################################################
-##################################################
-#' Create the StoX directories
-#' 
-#' This function creates the "stox" folder and the "project" and "reference" sub folders.
-#' 
-#' @return
-#' A list of paths to the "stox" folder and sub folders.
-#' 
-#' @noRd
-#' @inheritParams getStoxSkeletonPaths
-#' @seealso Use \code{\link{getStoxSkeletonPaths}} to get the folder paths.
-#' 
-createStoxSkeleton <- function(ProjectDirectory = NULL) {
-  
-  # Get the paths of the StoX skeleton:
-  paths <- getStoxSkeletonPaths(ProjectDirectory = ProjectDirectory)
-  
-  # Create the "stox" folder if missing:
-  if(!file.exists()) {
-    message("Creating the 'stox' dirctory in the directory ", paths$stox)
-    dir.create(paths$stox, recursive = TRUE, showWarnings = FALSE)
-  }
-  
-  # Create the directories if the "stox" folder exists:
-  if(!file.exists()) {
-    message("Creation failed, possibly due to missing permission. Try setting the directory in which to put the stox folder, using the parameter 'ProjectDirectory'")
-  }
-  else{
-    # The directory paths$stox already exists:
-    paths$stox <- NULL
-    temp <- lapply(paths, dir.create, recursive = TRUE)
-  }
-  
-  # Return the paths:
-  paths
-}

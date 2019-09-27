@@ -2,14 +2,14 @@
 <project xmlns="http://www.imr.no/formats/stox/v3" template="str1234" description="str1234" lastmodified="2012-12-13T12:12:12" rstoxversion="str1234" stoxversion="str1234" rversion="str1234">
   <baselinemodel>
     <baselineprocess processname="str1234">
-      <function>str1234</function>
-      <enabled>true</enabled>
-      <skip>true</skip>
-      <respondingui>true</respondingui>
-      <breakingui>true</breakingui>
-      <fileoutput>true</fileoutput>
-      <inputdata dataparameter="str1234" sourcetype="NMDEchoSounderData1" inputprocessname="str1234" />
-      <parameter name="str1234">str1234</parameter>
+      <functionname>str1234</functionname>
+      <processparameters>
+        <enabled>true</enabled>
+        <breakingui>true</breakingui>
+        <fileoutput>true</fileoutput>
+      </processparameters>
+      <functioninput dataparameter="str1234" inputprocessname="str1234" />
+      <functionparameter name="str1234">str1234</functionparameter>
       <output>NMDEchoSounderData1</output>
       <processdata>
         <bioticassignment>
@@ -54,29 +54,29 @@
       </processdata>
     </baselineprocess>
   </baselinemodel>
-  <statistic>
+  <statistics>
     <process processname="str1234">
-      <function>str1234</function>
-      <enabled>true</enabled>
-      <skip>true</skip>
-      <respondingui>true</respondingui>
-      <breakingui>true</breakingui>
-      <fileoutput>true</fileoutput>
-      <inputdata dataparameter="str1234" sourcetype="NMDEchoSounderData1" inputprocessname="str1234" />
-      <parameter name="str1234">str1234</parameter>
+      <functionname>str1234</functionname>
+      <processparameters>
+        <enabled>true</enabled>
+        <breakingui>true</breakingui>
+        <fileoutput>true</fileoutput>
+      </processparameters>
+      <functioninput dataparameter="str1234" inputprocessname="str1234" />
+      <functionparameter name="str1234">str1234</functionparameter>
       <output>NMDEchoSounderData1</output>
     </process>
-  </statistic>
+  </statistics>
   <report>
     <process processname="str1234">
-      <function>str1234</function>
-      <enabled>true</enabled>
-      <skip>true</skip>
-      <respondingui>true</respondingui>
-      <breakingui>true</breakingui>
-      <fileoutput>true</fileoutput>
-      <inputdata dataparameter="str1234" sourcetype="NMDEchoSounderData1" inputprocessname="str1234" />
-      <parameter name="str1234">str1234</parameter>
+      <functionname>str1234</functionname>
+      <processparameters>
+        <enabled>true</enabled>
+        <breakingui>true</breakingui>
+        <fileoutput>true</fileoutput>
+      </processparameters>
+      <functioninput dataparameter="str1234" inputprocessname="str1234" />
+      <functionparameter name="str1234">str1234</functionparameter>
       <output>NMDEchoSounderData1</output>
     </process>
   </report>

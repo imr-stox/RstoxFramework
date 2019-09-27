@@ -47,6 +47,9 @@
 <td></td><td>template</td><td>xs:string</td><td>NEED TO DEFINE</td><td></td>
 </tr>
 <tr>
+<td></td><td>description</td><td>xs:string</td><td>Custom description of project</td><td></td>
+</tr>
+<tr>
 <td></td><td>lastmodified</td><td>xs:dateTime</td><td>Timestamp of latest change to StoX project.</td><td></td>
 </tr>
 <tr>
@@ -83,7 +86,13 @@
 <tr>
 <td></td><td>
                                 &lt;
-                                model/&gt;
+                                statistic/&gt;
+                            </td><td>ModelType</td><td>Models in the project. Non-baseline models may not contain process data.</td><td></td>
+</tr>
+<tr>
+<td></td><td>
+                                &lt;
+                                report/&gt;
                             </td><td>ModelType</td><td>Models in the project. Non-baseline models may not contain process data.</td><td></td>
 </tr>
 <tr>
@@ -231,7 +240,7 @@
 <tr>
 <td></td><td>
                                 &lt;
-                                process/&gt;
+                                baselineprocess/&gt;
                             </td><td>BaselineProcessType</td><td>A StoX process.</td><td></td>
 </tr>
 </table>

@@ -1,5 +1,9 @@
 library(xml2)
 
+#
+# parsing XML
+#
+
 #' Extracts text value form node with n attributes
 #'@keywords internal
 #'@noRd
@@ -17,8 +21,80 @@ get_simple_content <- function(node){
 #'@keywords internal
 #'@noRd
 process_processdata <- function(node){
-  pd <- list()
-  warning("Not implemented")
+  
+  attributes <- xml2::xml_attrs(node)
+  for (n in names(attributes)){
+    stop(paste("Parsing of attribute", n, "not supported"))
+  }
+
+  pd <- list()  
+  pd$BioticAssignment <- list()
+  pd$SuAssignment <- list()
+  pd$AssignmentResolution <- list()
+  pd$EdsuPsu <- list()
+  pd$PsuStratum <- list()
+  pd$StratumPolygon <- list()
+  pd$Temporal <- list()
+  pd$Gearfactor <- list()
+  pd$Spatial <- list()
+  pd$Platformfactor <- list()
+  pd$CovParam <- list()
+  pd$AgeError <- list()
+  pd$StratumNeighbour <- list()
+  
+  nonimplementedtouched <- F
+  
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n=="bioticassignment"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="suassignment"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="assignmentresolution"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="edsupsu"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="psustratum"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="stratumpolygon"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="temporal"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="gearfactor"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="spatial"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="platformfactor"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="covparam"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="ageerror"){
+      nonimplementedtouched<-T
+    }
+    else if (n=="stratumneighbour"){
+      nonimplementedtouched<-T
+    }
+    else{
+      stop(paste("Parsing of element", n, "not supported"))
+    }
+  }
+  
+  if (nonimplementedtouched){
+    warning("Attempting to use processdata not yet implemented")
+  }
+  
   return(pd)
 }
 
@@ -34,9 +110,9 @@ process_processparameters <- function(node){
   
   
   fi <- list()
-  fi$Enabled <- NULL
-  fi$FileOutput <- NULL 
-  fi$BreakInGUI <- NULL
+  fi$Enabled <- logical()
+  fi$FileOutput <- logical()
+  fi$BreakInGUI <- logical()
   
   children <- xml2::xml_children(node)
   for (c in children){
@@ -66,7 +142,7 @@ process_processparameters <- function(node){
 parse_process <- function(node, baselineprocess=F){
   
   process <- list()
-  process$processname <- NULL
+  process$ProcessName <- character()
   
   attributes <- xml2::xml_attrs(node)
   for (n in names(attributes)){
@@ -78,11 +154,11 @@ parse_process <- function(node, baselineprocess=F){
     }
   }
   
-  process$FunctionName <- NULL
+  process$FunctionName <- character()
   process$ProcessParameters <- list()
   process$FunctionParameters <- list()
   process$FunctionInputs <- list()
-  process$output <- NULL
+  process$Output <- character()
   
   if (baselineprocess){
     process$ProcessData <- list()
@@ -114,10 +190,15 @@ parse_process <- function(node, baselineprocess=F){
       }
       parname <-xml2::xml_attr(c, "name")
       parvalue <- xml2::xml_text(c,trim=T)
-      process$FunctionParameters[[parname]] <- parvalue
+      if (is.null(process$FunctionParameters[[parname]])){
+        process$FunctionParameters[[parname]] <- parvalue  
+      } else{
+        process$FunctionParameters[[parname]] <- c(process$FunctionParameters[[parname]], parvalue)
+      }
+      
     }
     else if (n == "output"){
-      process$output <- get_simple_content(c)
+      process$Output <- get_simple_content(c)
     }
     else if (n == "processdata"){
       if (!baselineprocess){
@@ -140,9 +221,33 @@ parse_process <- function(node, baselineprocess=F){
 #'@keywords internal
 #'@noRd
 process_rstoxdependencies <- function(node){
+  
+  attributes <- xml2::xml_attrs(node)
+  for (n in names(attributes)){
+    stop(paste("Parsing of attribute", n, "not supported"))
+  }
+  
   deps <- list()
-  warning("Not implemented")
-  return(list()) 
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n=="rlibrary"){
+      if (length(xml2::xml_attrs(c))!=2){
+        stop(paste("Unexpected number of attributes for element", n))
+      }
+      if (nchar(xml2::xml_text(c,trim=T))!=0){
+        stop(paste("Unexpected content for element", n))
+      }
+      libraryname <- xml2::xml_attr(c, "library")
+      version <- xml2::xml_attr(c, "version")
+      deps[[libraryname]] <- version
+    }
+    else{
+      stop(paste("Parsing of element", n, "not supported"))
+    }
+  }
+  
+  return(deps) 
 }
 
 #'Parses models from xml
@@ -184,8 +289,9 @@ process_model <- function(node){
 #'Parses project from xml
 #'@keywords internal
 #'@noRd
-process_project <- function(projectDescription, node){
+process_project <- function(node){
   
+  projectDescription <- list()
   attributes <- xml2::xml_attrs(node)
   
   #
@@ -201,12 +307,12 @@ process_project <- function(projectDescription, node){
   # handle attributes
   #
   
-  projectDescription$Template <- NULL
-  projectDescription$Description <- NULL
-  projectDescription$Lastmodified <- NULL
-  projectDescription$Rstoxversion <- NULL
-  projectDescription$Stoxversion <- NULL
-  projectDescription$Rversion <- NULL
+  projectDescription$Template <- character()
+  projectDescription$Description <- character()
+  projectDescription$Lastmodified <- .POSIXct(character(0))
+  projectDescription$Rstoxversion <- character()
+  projectDescription$Stoxversion <- character()
+  projectDescription$Rversion <- character()
 
   for(n in names(attributes)){
     if (n=="template"){
@@ -216,7 +322,9 @@ process_project <- function(projectDescription, node){
       projectDescription$Description <- attributes[[n]]
     }
     else if (n=="lastmodified"){
-      projectDescription$Lastmodified <- attributes[[n]]
+      if (nchar(attributes[[n]])>0){
+        projectDescription$Lastmodified <- as.POSIXct(gsub("T", " ", attributes[[n]]))  
+      }
     }
     else if (n=="rstoxversion"){
       projectDescription$Rstoxversion <- attributes[[n]]
@@ -273,11 +381,189 @@ process_project <- function(projectDescription, node){
 #'
 #' @keywords internal
 #' @noRd
-process_xml <- function(projectDescription, root){
-  return(process_project(projectDescription, root))
+process_xml <- function(root){
+  return(process_project(root))
 }
 
-#' Read Stox porject from project xml
+
+#
+# /parsing XML
+#
+
+#
+# writing XML
+#
+
+#' Create XML node for processparameters
+#' @keywords internal
+#' @noRd
+getProcessParametersXml <- function(processparameters){
+  node <- xml_new_root("processparameters")
+  
+  enabled <- xml_new_root("enabled")
+  xml_text(enabled) <- tolower(as.character(processparameters$Enabled))
+  xml_add_child(node, enabled)
+  
+  if (is.null(processparameters$BreakInGUI)){
+    processparameters$BreakInGUI <- ""
+  }
+
+  bi <- xml_new_root("breakingui")
+  xml_text(bi) <- tolower(as.character(processparameters$BreakInGUI))
+  xml_add_child(node, bi)
+  
+  
+  fo <- xml_new_root("fileoutput")
+  xml_text(fo) <- tolower(as.character(processparameters$FileOutput))
+  xml_add_child(node, fo)
+  
+  return(node)
+}
+
+#' Create XML node for processdata
+getProcessDataXml <- function(processdata){
+  node <- xml_new_root("processdata")
+  warning("Processdata export not implemented")
+  
+  pd <- xml_new_root("bioticassignment")
+  xml_add_child(node, pd)
+
+  pd <- xml_new_root("suassignment")
+  xml_add_child(node, pd)
+  
+  pd <- xml_new_root("assignmentresolution")
+  xml_add_child(node, pd)
+  
+  pd <- xml_new_root("edsupsu")
+  xml_add_child(node, pd)
+  
+  pd <- xml_new_root("psustratum")
+  xml_add_child(node, pd)
+
+  pd <- xml_new_root("stratumpolygon")
+  xml_add_child(node, pd)
+
+  pd <- xml_new_root("temporal")
+  xml_add_child(node, pd)
+
+  pd <- xml_new_root("gearfactor")
+  xml_add_child(node, pd)
+
+  pd <- xml_new_root("spatial")
+  xml_add_child(node, pd)
+  
+  pd <- xml_new_root("platformfactor")
+  xml_add_child(node, pd)
+
+  pd <- xml_new_root("covparam")
+  xml_add_child(node, pd)
+
+  pd <- xml_new_root("ageerror")
+  xml_add_child(node, pd)
+  
+  pd <- xml_new_root("stratumneighbour")
+  xml_add_child(node, pd)
+  
+  return(node)
+}
+
+#' Create XML node for process
+#' @param model nested list representation of model
+#' @param baselineprocess logical, whether to write baseline process (with processdata)
+#' @keywords internal
+#' @noRd
+getProcessXml <- function(process, baselineprocess=F){
+  
+  if (baselineprocess){
+    node <- xml_new_root("baselineprocess")
+  }
+  else{
+    node <- xml_new_root("process")  
+  }
+  
+  
+  functionnamenode <- xml_new_root("functionname")
+  xml_text(functionnamenode) <- process$FunctionName
+  xml_add_child(node, functionnamenode)
+  
+  xml_add_child(node, getProcessParametersXml(process$ProcessParameters))
+
+  for (n in names(process$FunctionInputs)){
+    finode <- xml_new_root("functioninput")
+    xml_attr(finode, "dataparameter") <- n
+    xml_attr(finode, "inputprocessname") <- process$FunctionInputs[[n]]
+    xml_add_child(node, finode)
+  }
+  
+    
+  for (n in names(process$FunctionParameters)){
+    
+    for (p in process$FunctionParameters[[n]]){
+      paramnode <- xml_new_root("functionparameter")
+      xml_attr(paramnode, "name") <- n  
+      xml_text(paramnode) <- as.character(p)
+      xml_add_child(node, paramnode)
+    }
+  }
+  
+  if (baselineprocess){
+    xml_add_child(node, getProcessDataXml(process$ProcessDate))
+  }
+  
+  if (is.null(process$Output)){
+    process$Output <- ""
+  }
+  
+  outputnode <- xml_new_root("output")
+  xml_text(outputnode) <- process$Output
+  xml_add_child(node, outputnode)
+  
+  return(node)
+}
+
+#' Create XML node for model
+#' @param model nested list representation of model
+#' @param baselinemodel logical, whether to write baselinemodel
+#' @param nodename name to use for node
+#' @keywords internal
+#' @noRd
+getModelXml <- function(model, baselinemodel, nodename){
+  node <- xml_new_root(nodename)
+  for (n in names(model)){
+    processnode <- getProcessXml(model[[n]], baselinemodel)
+    xml_attr(processnode, "processname") <- n 
+    xml_add_child(node, processnode)
+  }
+  return(node)
+}
+
+#' Create XML node for restox dependencies
+#' @param rstoxdependencies nested list representation of model
+#' @param baselinemodel logical, whether to write baselinemodel
+#' @param nodename name to use for node
+#' @keywords internal
+#' @noRd
+getRstoxDependenciesXml <- function(rstoxdependencies){
+  node <- xml_new_root("rstoxdependencies")
+  for (n in names(rstoxdependencies)){
+    depnode <- xml_new_root("rlibrary")
+    xml_attr(depnode, "library") <- n
+    xml_attr(depnode, "version") <- rstoxdependencies[[n]]
+    xml2::xml_add_child(node, depnode)
+  }
+  return(node)
+}
+
+#
+# /writing XML
+#
+
+
+#
+# public functions
+#
+
+#' Read Stox project from project xml
 #' @param projectxml xml filename
 #' @return Nested list representation of project
 #' @export
@@ -287,116 +573,37 @@ readProject <- function(projectxml){
   root <- xml2::xml_root(tree)
   
   projectDescription <- list()
-  return(process_xml(projectDescription, root))
+  return(process_xml(root))
 }
 
-projectDescription <- list(
-  Description = "fasdvabadf", 
-  Baseline = list(
-    ReadAcoustic = list(
-      ProcessName = "ReadAcoustic", 
-      FunctionName = "ReadAcoustic", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        BreakInGUI = FALSE, 
-        FileOutput = TRUE
-      ), 
-      ProcessData = list(), 
-      FunctionParameters = list(
-        FileNames = c(
-          "input/acoustic/Echosounder-1618.xml", 
-          "input/acoustic/Echosounder-201605.xml", 
-          "input/acoustic/Echosounder-2016205.xml", 
-          "input/acoustic/Echosounder-2016857.xml", 
-          "input/acoustic/Echosounder-A6-2016.xml"
-        )
-      ), 
-      FunctionInputs = list(
-        BioticData = "FilterBiotic", 
-        Density = "AcousticDensity"
-      )
-    ), 
-    DefineStrata = list(
-      ProcessName = "DefineStrata", 
-      FunctionName = "ReadAcoustic", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        BreakInGUI = FALSE, 
-        FileOutput = TRUE
-      ), 
-      ProcessData = list("MUKLTIPOLYGIN((25)6(6)6rger)"), 
-      FunctionParameters = list(
-        FileNames = c(
-          "input/acoustic/Echosounder-1618.xml"
-        ), 
-        UseProcessData = TRUE
-      ), 
-      FunctionInputs = list(
-        BioticData = "FilterBiotic", 
-        Density = "AcousticDensity", 
-        StoxAcousticData = NA
-      )
-    ), 
-    StoxAcoustic = list(
-      ProcessName = "StoxAcoustic", 
-      FunctionName = "StoxAcoustic", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        BreakInGUI = FALSE, 
-        FileOutput = TRUE
-      ), 
-      ProcessData = list(), 
-      FunctionParameters = list(
-        FileNames = c(
-          "input/acoustic/Echosounder-1618.xml", 
-          "input/acoustic/Echosounder-201605.xml", 
-          "input/acoustic/Echosounder-2016205.xml", 
-          "input/acoustic/Echosounder-2016857.xml", 
-          "input/acoustic/Echosounder-A6-2016.xml"
-        )
-      ), 
-      FunctionInputs = list(
-        BioticData = "FilterBiotic"
-      )
-    )
-  ),
+#' Save Stox project to project xml file using namespace http://www.imr.no/formats/stox/v3
+#' @param projectDescription nested list representation of StoX project
+#' @param filename to write to
+#' @export
+saveProject <- function(projectDescription, filename){
+  namespace = "http://www.imr.no/formats/stox/v3"
   
-  Statistics = list(
-    runBootstrap = list(
-      ProcessName = "runBootstrap", 
-      FunctionName = "runBootstrap", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        FileOutput = TRUE
-      ), 
-      FunctionParameters = list(
-        bootstrapMethod = "AcousticTrawl", 
-        acousticMethod = "PSU~Stratum", 
-        bioticMethod = "PSU~Stratum", 
-        startProcess = "TotalLengthDist", 
-        endProcess = "SuperIndAbundance", 
-        nboot = 50, 
-        seed = 1234, 
-        cores = 1
-      )
-    )
-  ),
+  doc <- xml_new_document()
+  xml_add_child(doc, "project")
+  root <- xml_root(doc)
+  xml_attr(root, "xmlns") <- namespace
   
+  xml_attr(root, "template") <- projectDescription$Template
+  xml_attr(root, "description") <- projectDescription$Description
+  if (is.null(projectDescription$Lastmodified)){
+    xml_attr(root, "lastmodified") <- ""
+  }
+  else{
+    xml_attr(root, "lastmodified") <- gsub("\ ","T",as.character(projectDescription$Lastmodified))
+  }
+  xml_attr(root, "rstoxversion") <- projectDescription$Rstoxversion
+  xml_attr(root, "stoxversion") <- projectDescription$Stoxversion
+  xml_attr(root, "rversion") <- projectDescription$Rversion
   
-  Reports = list(
-    reportAbundance = list(
-      ProcessName = "reportAbundance", 
-      FunctionName = "reportAbundance", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        FileOutput = TRUE
-      ), 
-      FunctionParameters = list(
-        var = "count", 
-        grp1 = "age",
-        grp2 = "sex"
-      )
-    )
-  )
+  xml_add_child(root, getModelXml(projectDescription$Baseline, T, "baselinemodel"))
+  xml_add_child(root, getModelXml(projectDescription$Statistics, F, "statistics"))
+  xml_add_child(root, getModelXml(projectDescription$Report, F, "report"))
+  xml_add_child(root, getRstoxDependenciesXml(projectDescription$RstoxDependencies))
   
-)
+  write_xml(doc, filename)
+}

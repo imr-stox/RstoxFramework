@@ -224,7 +224,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
-            <xs:element name="process" type="BaselineProcessType" minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="baselineprocess" type="BaselineProcessType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>

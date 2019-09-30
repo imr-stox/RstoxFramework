@@ -46,7 +46,7 @@ projectDescription <- list(
         FileNames = c(
           "input/acoustic/Echosounder-1618.xml"
         ), 
-        UseProcessData = "TRUE"
+        UseProcessData = TRUE
       ), 
       FunctionInputs = list(
         BioticData = "FilterBiotic", 
@@ -118,6 +118,10 @@ projectDescription <- list(
   
 )
 
+#
+# Tests for writing xml
+#
+
 context("save project")
 tempfile <- tempfile()
 # save
@@ -134,7 +138,6 @@ expect_equal(projectDescription$Description, reread$Description)
 expect_equal(projectDescription$Baseline$ReadAcoustic$FunctionParameters$FileNames, reread$Baseline$ReadAcoustic$FunctionParameters$FileNames)
 expect_gt(length(reread$Baseline$ReadAcoustic$ProcessData), length(projectDescription$Baseline$ReadAcoustic$ProcessData))
 
-
 # validate dummy file
 tempfile <- tempfile()
 project <- readProject("../../inst/testresources/dummy_project.xml")
@@ -144,9 +147,46 @@ schema <- read_xml("../../inst/formats/stoxProject.xsd")
 expect_true(xml_validate(data, schema))
 file.remove(tempfile)
 
+
+#
+# Tests for reading xml
+#
+
 context("read project")
 # path should be relative to testthat directory for working with devtools::test()
 project <- readProject("../../inst/testresources/dummy_project.xml")
 expect_true(all(names(project) %in% c("Template", "Rversion", "Description", "Baseline", "Lastmodified", "Statistics", "Rstoxversion", "Report", "Stoxversion", "RstoxDependencies")))
 expect_true(all(c("StratumPolygon", "BioticAssignment") %in% names(project$Baseline[[1]]$ProcessData)))
 expect_equal(project$Baseline$str1234$ProcessData$StratumNeighbour$str1234, "str1234")
+
+
+#
+# Tests for function parameter type handling
+#
+
+context("function parameter data types")
+
+tempfile <- tempfile()
+# save
+saveProject(projectDescription, tempfile)
+# validate
+data <- read_xml(tempfile)
+schema <- read_xml("../../inst/formats/stoxProject.xsd")
+expect_true(xml_validate(data, schema))
+#read back in
+reread <- readProject(tempfile)
+file.remove(tempfile)
+expect_equal(class(projectDescription$Baseline$DefineStrata$FunctionParameters$FileNames), class(reread$Baseline$DefineStrata$FunctionParameters$FileNames))
+expect_equal(class(projectDescription$Baseline$DefineStrata$FunctionParameters$UseProcessData), class(reread$Baseline$DefineStrata$FunctionParameters$UseProcessData))
+
+# expected errors writing
+tempfile <- tempfile()
+wrongobject <- projectDescription
+wrongobject$Baseline$DefineStrata$FunctionParameters$Area <- as.factor(c(1.2,2.1))
+expect_error(saveProject(wrongobject, tempfile))
+if (file.exists(tempfile)){
+  file.remove(tempfile)
+}
+
+# expected errors reading
+expect_error(project <- readProject("../../inst/testresources/dummy_project_functionparametererror.xml"))

@@ -187,6 +187,29 @@ process_processparameters <- function(node){
   return(fi)
 }
 
+#' Parses function parameter
+#' @parvalue string representation of value
+#' @typename type of value
+#' @keywords internal
+#' @noRd
+parse_function_parameter <- function(parvalue, typename){
+  if (typename=="character"){
+    return(parvalue)
+  }
+  else if (typename=="logical"){
+    return(as.logical(parvalue))
+  }
+  else if (typename=="integer"){
+    return(as.integer(parvalue))
+  }
+  else if (typename=="numeric"){
+    return(as.numeric(parvalue))
+  }
+  else{
+    stop("Parameter type", typename, "not supported.")
+  }
+}
+
 #'Parses process from xml
 #'@param node
 #'@param baselineprocess indicate whether the process to parse is a baselineprocess (may contain processdata)
@@ -238,15 +261,17 @@ parse_process <- function(node, baselineprocess=F){
       process$FunctionInputs[[inputname]] <- inputprocess
     }
     else if (n == "functionparameter"){
-      if (length(xml2::xml_attrs(c))!=1){
+      if (length(xml2::xml_attrs(c))!=2){
         stop(paste("Unexpected number of attributes for element", n))
       }
-      parname <-xml2::xml_attr(c, "name")
+      parname <- xml2::xml_attr(c, "name")
+      typename <- xml2::xml_attr(c, "paramtypename")
       parvalue <- xml2::xml_text(c,trim=T)
+      
       if (is.null(process$FunctionParameters[[parname]])){
-        process$FunctionParameters[[parname]] <- parvalue  
+        process$FunctionParameters[[parname]] <- parse_function_parameter(parvalue, typename)
       } else{
-        process$FunctionParameters[[parname]] <- c(process$FunctionParameters[[parname]], parvalue)
+        process$FunctionParameters[[parname]] <- c(process$FunctionParameters[[parname]], parse_function_parameter(parvalue, typename))
       }
       
     }
@@ -625,6 +650,36 @@ getProcessDataXml <- function(processdata){
   return(node)
 }
 
+#' Create XML node for function parameter
+#' @keywords internal
+#' @noRd
+getFunctionParameterXml <- function(name, paramvalue, paramclass){
+  paramnode <- xml_new_root("functionparameter")
+  xml_attr(paramnode, "name") <- name
+  
+  if (paramclass=="character"){
+    xml_attr(paramnode, "paramtypename") <- "character"
+    xml_text(paramnode) <- as.character(paramvalue)    
+  }
+  else if (paramclass=="integer"){
+    xml_attr(paramnode, "paramtypename") <- "integer"
+    xml_text(paramnode) <- as.character(paramvalue)    
+  }
+  else if (paramclass=="numeric"){
+    xml_attr(paramnode, "paramtypename") <- "numeric"
+    xml_text(paramnode) <- as.character(paramvalue)    
+  }
+  else if (paramclass=="logical"){
+    xml_attr(paramnode, "paramtypename") <- "logical"
+    xml_text(paramnode) <- as.character(paramvalue)    
+  }
+  else{
+    stop(paste("Function parameter of class", paramclass, "is not supported."))
+  }
+  
+  return(paramnode)
+}
+
 #' Create XML node for process
 #' @param model nested list representation of model
 #' @param baselineprocess logical, whether to write baseline process (with processdata)
@@ -657,10 +712,7 @@ getProcessXml <- function(process, baselineprocess=F){
   for (n in names(process$FunctionParameters)){
     
     for (p in process$FunctionParameters[[n]]){
-      paramnode <- xml_new_root("functionparameter")
-      xml_attr(paramnode, "name") <- n  
-      xml_text(paramnode) <- as.character(p)
-      xml_add_child(node, paramnode)
+      xml_add_child(node, getFunctionParameterXml(n, p, class(process$FunctionParameters[[n]])))
     }
   }
   

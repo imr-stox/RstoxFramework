@@ -100,7 +100,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-            <xs:attribute name="description" type="xs:string" use="optional" >
+        <xs:attribute name="description" type="xs:string" use="optional" >
             <xs:annotation>
                 <xs:documentation>
                     <imrd:imrDoc>
@@ -282,7 +282,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="functionparameter" type="StringWithParamNameType" minOccurs="0" maxOccurs="unbounded" >
+            <xs:element name="functionparameter" type="StringWithParamNameAndTypeNameType" minOccurs="0" maxOccurs="unbounded" >
                 <xs:annotation>
                     <xs:documentation>
                         <imrd:imrDoc>
@@ -501,7 +501,7 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
         <xs:annotation>
             <xs:documentation>
                 <imrd:imrDoc>
-                    <imrd:description lang="en">Rerpesents a string with an attribute called name.</imrd:description>
+                    <imrd:description lang="en">Represents a string with an attribute called name.</imrd:description>
                 </imrd:imrDoc>
             </xs:documentation>
         </xs:annotation>
@@ -520,6 +520,83 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
+    
+    <xs:complexType name="StringWithParamNameAndTypeNameType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">Represents a string with an attribute called name, and a type called paramtypename.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        
+        <xs:complexContent>
+            <xs:extension base="StringWithParamNameType">
+                <xs:attribute name="paramtypename" type="FunctionParameterType" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <imrd:imrDoc>
+                                <imrd:description lang="en">Data type attached to the string.</imrd:description>
+                            </imrd:imrDoc>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>                
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    
+    <xs:simpleType name="FunctionParameterType">
+        <xs:annotation>
+            <xs:documentation>
+                <imrd:imrDoc>
+                    <imrd:description lang="en">CHECK THIS. ADD ALL CURRENTLY DEFINED DATA TYPES. Represents data formats that are acceptable as output and input to StoX processes. The formats that are not detailed in this schema are internal to StoX, but named here for arranging data flow between processes. If not otherwise specified, the internal data formats specified minimal requirements. So StoX processes may add information to internal data types wihtout declaring a different ouput format.</imrd:description>
+                </imrd:imrDoc>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="character">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">String (character vector element). Allows character sequences and NA.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="logical">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">boolean (logical vector element). Allows boolean necoded as TRUE or FALSE, and NA</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="integer">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">integer (integer vector element). Allows integers and NA.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="numeric">
+                <xs:annotation>
+                    <xs:documentation>
+                        <imrd:imrDoc>
+                            <imrd:description lang="en">numeric () numeric vector element). Allows integers, '.' delimited reals and NA.</imrd:description>
+                        </imrd:imrDoc>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+        
+        
+    <!-- Add NASC, Lengthdistribution, split up processdata-->
+        
+        
   
     <xs:complexType name="ProcessdataType">
         <xs:annotation>
@@ -733,7 +810,6 @@ extracted commonly provided parameter useProcessdata (element 'skip') to abstrac
                     </xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
-
         </xs:restriction>
     </xs:simpleType>
 

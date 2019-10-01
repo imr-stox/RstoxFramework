@@ -519,7 +519,7 @@ getNewProjectDescriptionFilePath <- function(ProjectPath) {
     # Get the folder holding the project descriptions:
     projectDescriptionFolder <- getProjectPaths(ProjectPath, "projectDescriptionFolder")
     # Define a string with time in ISO 8601 format:
-    timeString <- format(Sys.time(), tz = "UTC", format = "%y-%m-%dT%H:%M:%OS3Z")
+    timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
     # Define the file name including the time string, and build the path to the file:
     fileName <- paste0("projectDescription", "_", timeString, ".rds")
     filePath <- file.path(projectDescriptionFolder, fileName)
@@ -1137,6 +1137,8 @@ writeProcessOutputTextFile <- function(processOutput, process, ProjectPath, Mode
     # Function for writing one element of the function output list:
     reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
         
+        browser()
+        
         if("SpatialPolygons" %in% class(processOutputOne)) {
             # Add file extension:
             filePath <- paste(filePathSansExt, "geojson", sep = ".")
@@ -1154,6 +1156,7 @@ writeProcessOutputTextFile <- function(processOutput, process, ProjectPath, Mode
         }
     }
     
+    browser()
     # Flatten the list and add names from the levels of the list:
     processOutput <- unlist(processOutput)
     names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)

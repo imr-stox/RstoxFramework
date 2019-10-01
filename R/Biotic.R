@@ -21,6 +21,8 @@
 #' @import data.table
 #' 
 ReadBiotic <- function(FileNames) {
+    # NOTE: Fix the xsdobjects problem and remove the following line:
+    library(RstoxData)
     lapply(FileNames, RstoxData::readXmlFile)
 }
 

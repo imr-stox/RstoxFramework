@@ -59,6 +59,13 @@
 initiateRstoxFramework <- function(){
     
     #### Fundamental settings of StoX: ####
+    # Define the valid output data classes:
+    validOutputDataClasses <- c(
+        "data.table", 
+        "json", 
+        "geojson"
+    )
+    
     stoxFolders <- c(
         Input = "Input", 
         Output = "Output", 
@@ -69,10 +76,25 @@ initiateRstoxFramework <- function(){
         Biotic = "Biotic", 
         Landing = "Landing"
     )
-    stoxModelTypes <- c(
+    stoxModelNames <- c(
         Baseline = "Baseline", 
         Statistics = "Statistics", 
         Report = "Report"
+    )
+    stoxModelDisplayNames <- c(
+        Baseline = "Baseline", 
+        Statistics = "Statistics", 
+        Report = "Report"
+    )
+    stoxModelDescriptions <- c(
+        Baseline = "Baseline: The estimation model", 
+        Statistics = "Statistics: Processes that run Baseline to generate statistcs such as estimates of variation", 
+        Report = "Report: Processes that run Baseline or Statistics processes to generate reports"
+    )
+    stoxModelInfo <- data.frame(
+        Name = stoxModelNames, 
+        DisplayName = stoxModelDisplayNames, 
+        Description = stoxModelDescriptions
     )
     # Define the process parameters with default values:
     processParameters <- list(
@@ -99,7 +121,7 @@ initiateRstoxFramework <- function(){
     #### Define the folder structure of StoX: ####
     stoxFolderStructure <- list(
         stoxDataSources, 
-        stoxModelTypes, 
+        stoxModelNames, 
         ""
     )
     #names(stoxFolderStructure) <- stoxFolders
@@ -210,9 +232,13 @@ initiateRstoxFramework <- function(){
     definitions <- c(
         list(
             # Fundamental settings:
+            validOutputDataClasses = validOutputDataClasses, 
             stoxFolders = stoxFolders, 
             stoxDataSources = stoxDataSources, 
-            stoxModelTypes = stoxModelTypes, 
+            stoxModelNames = stoxModelNames, 
+            stoxModelDisplayNames = stoxModelDisplayNames, 
+            stoxModelDescriptions = stoxModelDescriptions, 
+            stoxModelInfo = stoxModelInfo,
             processParameters = processParameters, 
             processDefaultFull = processDefaultFull, 
             processDefaultSansProcessData = processDefaultSansProcessData, 
@@ -369,8 +395,8 @@ createProject <- function(ProjectPath, Template = "EmptyTemplate", ow = FALSE, s
     projectDescription <- createEmptyProjectDescription(ProjectPath)
     
     # Fill inn the processes:
-    stoxModelTypes <- getRstoxFrameworkDefinitions("stoxModelTypes")
-    for(ModelName in stoxModelTypes){
+    stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
+    for(ModelName in stoxModelNames){
         for(ProcessName in names(thisTemplate[[ModelName]])){
             addProcess(
                 ProjectPath = ProjectPath, 
@@ -501,7 +527,7 @@ writeProjectDescription <- function(ProjectPath) {
 
 createEmptyProjectDescription <- function(ProjectPath) {
     # Get the model types, and populate a list with these:
-    modelTypes <- getRstoxFrameworkDefinitions("stoxModelTypes")
+    modelTypes <- getRstoxFrameworkDefinitions("stoxModelNames")
     projectDescription <- vector("list", length(modelTypes))
     names(projectDescription) <- modelTypes
     setProjectDescriptionAsCurrent(ProjectPath, projectDescription = projectDescription, only.current = TRUE)
@@ -689,14 +715,14 @@ getFunctionDefaults <- function(FunctionName) {
                 # Finish this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 
                 # Get the categories:
-                stoxModelTypes <- getRstoxFrameworkDefinitions("stoxModelTypes")
+                stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
                 # Get the names of the available functions:
                 availableFunctions <- names(functionAttributes)
                 # Get the category of each funciton, and split by category:
                 functionCategories <- lapply(functionAttributes, "[[", "FunctionCategory")
                 functionAttributesByCategory <-split(functionAttributes, functionCategories)
                 # Keep only the valid categories:
-                functionAttributesByCategory <- functionAttributesByCategory[stoxModelTypes]
+                functionAttributesByCategory <- functionAttributesByCategory[stoxModelNames]
                 
             }
 
@@ -1042,6 +1068,9 @@ addProcess <- function(ProjectPath, ModelName, ProcessName, Values, only.current
 
 
 #### Functions to run models: ####
+
+
+
 #' 
 #' @export
 #' 
@@ -1176,7 +1205,32 @@ writeProcessOutputTextFile <- function(processOutput, process, ProjectPath, Mode
     }
     
     # Flatten the list and add names from the levels of the list:
-    processOutput <- unlist(processOutput)
+    unlistToDataType <- function(processOutput) {
+        
+        areAllValidOutputDataClasses <- function(processOutput) {
+            validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
+            classes <- lapply(processOutput, class)
+            classes <- unlist(lapply(classes, "[[", 1))
+            all(classes %in% validOutputDataClasses)
+        }
+        
+        
+        unlistOne <- function(processOutput) {
+            if(!areAllValidOutputDataClasses(processOutput)){
+                processOutput <- unlist(processOutput, recursive = FALSE)
+            }
+            processOutput
+        }
+        
+        for(i in seq_len(2)) {
+            processOutput <- unlistOne(processOutput)
+        }
+
+                
+        processOutput
+    }
+    
+    processOutput <- unlistToDataType(processOutput)
     names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)
     
     folderName <- getProjectPaths(ProjectPath, paste("Output", ModelName, sep = "_"))
@@ -1200,14 +1254,21 @@ writeProcessOutputMemoryFile <- function(processOutput, process, ProjectPath, Mo
     filePath <- file.path(folderName, fileName)
     
     # Create the folder and save the process output as one file containing a list of DataType, ans possible sublists specified by the function producing the output:
-    dir.create(dirname(filePath), recursive = TRUE, showWarnings = TRUE)
+    dir.create(dirname(filePath), recursive = TRUE, showWarnings = FALSE)
     # Drop the top level, since this is the data type, and this is known in runProcess:
     saveRDS(processOutput[[1]], filePath)
 }
 
 
-
-
+#' 
+#' @export
+#' 
+runModel <- function(ProjectPath, ModelName, startProcess = 1, endProcess = 3) {
+    processNames <- getProcessList(ProjectPath, ModelName)[seq(startProcess, endProcess)]
+    for(processName in processNames) {
+        temp <- runProcess(ProjectPath = ProjectPath, ModelName = ModelName, ProcessName = processName)
+    }
+}
 
 
 

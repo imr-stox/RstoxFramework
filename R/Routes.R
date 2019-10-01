@@ -7,10 +7,15 @@
 #' 
 #' @export
 getModelNames <- function() {
-    # browser()
     getRstoxFrameworkDefinitions("stoxModelTypes")
     # convertToJSON(out)
 }
+#' 
+#' @export
+getModeInfo <- function() {
+    getRstoxFrameworkDefinitions("stoxModelInfo")
+}
+
 
 #' 
 #' @export
@@ -52,11 +57,35 @@ getAvailableTemplatesDescriptions <- function() {
 
 
 
+# Reads a table of the following columns:
+# 1. Process name
+# 4. CanShowInMap
+# 5. CanModify
+# 6. ShowInMap
 
-
-getProcessNames <- function(ProjectPath, ModelName) {
+getProcessList <- function(ProjectPath, ModelName) {
+    projectDescription <- getCurrentProjectDescription(ProjectPath)
+    names(projectDescription[[ModelName]])
+    
+    # Reads a table of the following columns:
+    # 1. Process name
+    # 4. CanShowInMap
+    # 5. CanModify
+    # 6. ShowInMap
+    
+    # 2. HasBeenRun
+    # 3. HasError
+    
+    # 
+    # There are two different types of actions, changing processes and changing parameters. Changing processes iduces reset of current process, whereas changing parameters do not. This will be added to the projectDescriptionIndex.txt. Errors given by HasError only occur when there are missing inputs, that is that the processes requersted in funciton inputs do not exist BEFORE the actual function. This will be a check to run in the route-funcitons Add-, Delete- and MoreProcess, which call the corresponding add-, delete- and moreProcess in Framework.R, and then calls getProjectList.
     
 }
+
+
+
+
+
+
 
 
 
@@ -66,27 +95,16 @@ getProcessStatus <- function(ProjectPath, ModelName, ProcessName) {
     # 1. Process name
     # 2. HasBeenRun
     # 3. HasError
-    # 4. CanBePlotted
-    # 5. ToBePlotted
+    # 4. CanShowInMap
+    # 5. CanModify
+    # 6. ShowInMap
 
 }
 
 # To be run after each process. This is the actual geojson object to plot:
-getPlottingLayerFeatures <- function(ProjectPath, ModelName, ProcessName) {
+getPlottingProcessFeatures <- function(ProjectPath, ModelName, ProcessName) {
     
 }
 
-
-
-
-# Define whether a plotting layer shoud be visible in the map:
-setToBePlotted <- function(ProjectPath, ModelName, ProcessName, ToBePlotted = FALSE) {
-    
-}
-
-# Get whether a plotting layer shoud be visible in the map:
-getToBePlotted <- function(ProjectPath, ModelName, ProcessName) {
-    
-}
 
 

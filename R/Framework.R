@@ -731,10 +731,12 @@ createEmptyProcess <- function(ModelName = "Baseline") {
 #' 
 #' @export
 #' 
-ModifyFunctionName <- function(ProjectPath, ModelName, ProcessName, NewFunctionName, only.current = FALSE) {
+modifyFunctionName <- function(ProjectPath, ModelName, ProcessName, NewFunctionName, only.current = FALSE) {
     
     # Get the project description:
     projectDescription <- getCurrentProjectDescription(ProjectPath)
+    # Convert form possible JSON input:
+    NewFunctionName <- parseParameter(NewFunctionName)
     
     # Set the function name:
     if(!identical(projectDescription[[ModelName]][[ProcessName]]$FunctionName, NewFunctionName)) {
@@ -766,10 +768,12 @@ ModifyFunctionName <- function(ProjectPath, ModelName, ProcessName, NewFunctionN
 #' 
 #' @export
 #' 
-ModifyFunctionParameters <- function(ProjectPath, ModelName, ProcessName, NewFunctionParameters, only.current = FALSE) {
+modifyFunctionParameters <- function(ProjectPath, ModelName, ProcessName, NewFunctionParameters, only.current = FALSE) {
     
     # Get the project description:
     projectDescription <- getCurrentProjectDescription(ProjectPath)
+    # Convert form possible JSON input:
+    NewFunctionParameters <- parseParameter(NewFunctionParameters)
     
     # Report a warning for function parameters not present in the process:
     valid <- names(NewFunctionParameters) %in% names(projectDescription[[ModelName]][[ProcessName]]$FunctionParameters)
@@ -798,10 +802,12 @@ ModifyFunctionParameters <- function(ProjectPath, ModelName, ProcessName, NewFun
 #' 
 #' @export
 #' 
-ModifyFunctionInputs <- function(ProjectPath, ModelName, ProcessName, NewFunctionInputs, only.current = FALSE) {
+modifyFunctionInputs <- function(ProjectPath, ModelName, ProcessName, NewFunctionInputs, only.current = FALSE) {
     
     # Get the project description:
     projectDescription <- getCurrentProjectDescription(ProjectPath)
+    # Convert form possible JSON input:
+    NewFunctionInputs <- parseParameter(NewFunctionInputs)
     
     # Report a warning for function inputs not present in the process:
     valid <- names(NewFunctionInputs) %in% names(projectDescription[[ModelName]][[ProcessName]]$FunctionInputs)
@@ -831,10 +837,12 @@ ModifyFunctionInputs <- function(ProjectPath, ModelName, ProcessName, NewFunctio
 #' 
 #' @export
 #' 
-ModifyProcessName <- function(ProjectPath, ModelName, ProcessName, NewProcessName, only.current = FALSE) {
+modifyProcessName <- function(ProjectPath, ModelName, ProcessName, NewProcessName, only.current = FALSE) {
     
     # Get the project description:
     projectDescription <- getCurrentProjectDescription(ProjectPath)
+    # Convert form possible JSON input:
+    NewProcessName <- parseParameter(NewProcessName)
     
     # Set the process name:
     projectDescription[[ModelName]][[ProcessName]]$ProcessName <- NewProcessName
@@ -847,10 +855,12 @@ ModifyProcessName <- function(ProjectPath, ModelName, ProcessName, NewProcessNam
 #' 
 #' @export
 #' 
-ModifyProcessParameters <- function(ProjectPath, ModelName, ProcessName, NewProcessParameters, only.current = FALSE) {
+modifyProcessParameters <- function(ProjectPath, ModelName, ProcessName, NewProcessParameters, only.current = FALSE) {
     
     # Get the project description:
     projectDescription <- getCurrentProjectDescription(ProjectPath)
+    # Convert form possible JSON input:
+    NewProcessParameters <- parseParameter(NewProcessParameters)
     
     # Get names of the process parameters:
     validProcessParameterNames = names(getRstoxFrameworkDefinitions("processParameters"))
@@ -874,7 +884,7 @@ ModifyProcessParameters <- function(ProjectPath, ModelName, ProcessName, NewProc
 #' 
 #' @export
 #' 
-ModifyProcess <- function(ProjectPath, ModelName, ProcessName, NewValues, only.current = FALSE) {
+modifyProcess <- function(ProjectPath, ModelName, ProcessName, NewValues, only.current = FALSE) {
     
     # The values of the process must be changed in the following order:
     # 1. Function name
@@ -883,9 +893,12 @@ ModifyProcess <- function(ProjectPath, ModelName, ProcessName, NewValues, only.c
     # 1. Process name
     # 1. Process parameters
     
+    # Convert form possible JSON input:
+    NewValues <- parseParameter(NewValues)
+    
     # Process name:
     if(length(NewValues$ProcessName)) {
-        ModifyProcessName(
+        modifyProcessName(
             ProjectPath = ProjectPath, 
             ModelName = ModelName, 
             ProcessName = ProcessName, 
@@ -896,7 +909,7 @@ ModifyProcess <- function(ProjectPath, ModelName, ProcessName, NewValues, only.c
     
     # Process parameters:
     if(length(NewValues$ProcessParameters)) {
-        ModifyProcessParameters(
+        modifyProcessParameters(
             ProjectPath = ProjectPath, 
             ModelName = ModelName, 
             ProcessName = ProcessName, 
@@ -907,7 +920,7 @@ ModifyProcess <- function(ProjectPath, ModelName, ProcessName, NewValues, only.c
     
     # Function name:
     if(length(NewValues$FunctionName)) {
-        ModifyFunctionName(
+        modifyFunctionName(
             ProjectPath = ProjectPath, 
             ModelName = ModelName, 
             ProcessName = ProcessName, 
@@ -918,7 +931,7 @@ ModifyProcess <- function(ProjectPath, ModelName, ProcessName, NewValues, only.c
     
     # Function parameters:
     if(length(NewValues$FunctionParameters)) {
-        ModifyFunctionParameters(
+        modifyFunctionParameters(
             ProjectPath = ProjectPath, 
             ModelName = ModelName, 
             ProcessName = ProcessName, 
@@ -929,7 +942,7 @@ ModifyProcess <- function(ProjectPath, ModelName, ProcessName, NewValues, only.c
     
     # Function inputs:
     if(length(NewValues$FunctionInputs)) {
-        ModifyFunctionInputs(
+        modifyFunctionInputs(
             ProjectPath = ProjectPath, 
             ModelName = ModelName, 
             ProcessName = ProcessName, 
@@ -941,7 +954,14 @@ ModifyProcess <- function(ProjectPath, ModelName, ProcessName, NewValues, only.c
     # Set the status as not saved (saving is done when running a process):
     setSavedStatus(ProjectPath, status = FALSE)
 }
-
+# Convert JSON input to list:
+parseParameter <- function(parameter) {
+    # If the parameter is JSON, convert to list:
+    if("json" %in% class(parameter)) {
+        parameter <- jsonlite::fromJSON(parameter)
+    }
+    parameter
+}
 
 
 
@@ -987,8 +1007,8 @@ addEmptyProcess <- function(ProjectPath, ModelName, ProcessName = NULL, only.cur
     # Store the changes:
     setProjectDescriptionAsCurrent(ProjectPath, projectDescription, only.current = only.current)
     
-    # Set also the process name (must be done after saving the project description, as the function ModifyProcessName reads and writes the currentProjectDescription.rds file):
-    ModifyProcessName(ProjectPath, ModelName, ProcessName, ProcessName, only.current = FALSE)
+    # Set also the process name (must be done after saving the project description, as the function modifyProcessName reads and writes the currentProjectDescription.rds file):
+    modifyProcessName(ProjectPath, ModelName, ProcessName, ProcessName, only.current = FALSE)
 }
 
 
@@ -1002,7 +1022,7 @@ addProcess <- function(ProjectPath, ModelName, ProcessName, Values, only.current
     addEmptyProcess(ProjectPath = ProjectPath, ModelName = ModelName, ProcessName = ProcessName, only.current = only.current)
     
     # Apply the arguments:
-    ModifyProcess(ProjectPath = ProjectPath, ModelName = ModelName, ProcessName = ProcessName, NewValues = Values, only.current = only.current)
+    modifyProcess(ProjectPath = ProjectPath, ModelName = ModelName, ProcessName = ProcessName, NewValues = Values, only.current = only.current)
 }
 
 
@@ -1137,7 +1157,6 @@ writeProcessOutputTextFile <- function(processOutput, process, ProjectPath, Mode
     # Function for writing one element of the function output list:
     reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
         
-        browser()
         
         if("SpatialPolygons" %in% class(processOutputOne)) {
             # Add file extension:
@@ -1156,7 +1175,6 @@ writeProcessOutputTextFile <- function(processOutput, process, ProjectPath, Mode
         }
     }
     
-    browser()
     # Flatten the list and add names from the levels of the list:
     processOutput <- unlist(processOutput)
     names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)

@@ -8,7 +8,7 @@
 #' @export
 getModelNames <- function() {
     # browser()
-    out <- getRstoxFrameworkDefinitions("stoxModelTypes")
+    getRstoxFrameworkDefinitions("stoxModelTypes")
     # convertToJSON(out)
 }
 
@@ -49,5 +49,44 @@ getAvailableTemplatesDescriptions <- function() {
     
     # convertToJSON(df)
 } 
+
+
+
+
+
+getProcessNames <- function(ProjectPath, ModelName) {
+    
+}
+
+
+
+getProcessStatus <- function(ProjectPath, ModelName, ProcessName) {
+    
+    # Reads a table of the following columns:
+    # 1. Process name
+    # 2. HasBeenRun
+    # 3. HasError
+    # 4. CanBePlotted
+    # 5. ToBePlotted
+
+}
+
+# To be run after each process. This is the actual geojson object to plot:
+getPlottingLayerFeatures <- function(ProjectPath, ModelName, ProcessName) {
+    
+}
+
+
+
+
+# Define whether a plotting layer shoud be visible in the map:
+setToBePlotted <- function(ProjectPath, ModelName, ProcessName, ToBePlotted = FALSE) {
+    
+}
+
+# Get whether a plotting layer shoud be visible in the map:
+getToBePlotted <- function(ProjectPath, ModelName, ProcessName) {
+    
+}
 
 

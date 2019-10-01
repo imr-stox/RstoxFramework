@@ -4,7 +4,7 @@
 \alias{DefineStrata}
 \title{Some title}
 \usage{
-DefineStrata(FileName, UseProcessData = FALSE)
+DefineStrata(ProcessData, FileName, UseProcessData = FALSE)
 }
 \arguments{
 \item{parameterName}{Parameter descrption.}

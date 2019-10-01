@@ -102,8 +102,13 @@ initiateRstoxFramework <- function(){
         stoxModelTypes, 
         ""
     )
-    names(stoxFolderStructure) <- stoxFolders
-    stoxFolderStructure <- unname(unlist(mapply(file.path, names(stoxFolderStructure), stoxFolderStructure)))
+    #names(stoxFolderStructure) <- stoxFolders
+    stoxFolderStructureNames <- unname(unlist(mapply(paste, stoxFolders, stoxFolderStructure, sep = "_")))
+    stoxFolderStructure <- unname(unlist(mapply(file.path, stoxFolders, stoxFolderStructure)))
+    stoxFolderStructure <- gsub('\\/$', '', stoxFolderStructure)
+    names(stoxFolderStructure) <- stoxFolderStructureNames
+    stoxFolderStructureList <- as.list(stoxFolderStructure)
+    
     
     #### Define the folders and paths used when a project is open: ####
     projectSessionFolder <- file.path(stoxFolders["Process"], "projectSession")
@@ -123,8 +128,8 @@ initiateRstoxFramework <- function(){
     #### Project description: ####
     projectRDataFile = file.path(stoxFolders["Process"], "project.RData")
     projectXMLFile = file.path(stoxFolders["Process"], "project.xml")
-    projectSavedStatusFile = file.path(statusFolder, "projectSavedStatus.RData")
-    projectStatusFile = file.path(statusFolder, "projectStatus.RData")
+    projectSavedStatusFile = file.path(statusFolder, "projectSavedStatus.txt")
+    projectStatusFile = file.path(statusFolder, "projectStatus.txt")
     
     # Memory files:
     originalProjectDescriptionFile <- file.path(projectDescriptionFolder, "originalProjectDescription.rds")
@@ -176,26 +181,29 @@ initiateRstoxFramework <- function(){
     )
     
     #### Define an object with all path objects for convenience in getProjectPaths(): ####
-    paths <- list(
-        # Folders:
-        stoxFolderStructure = stoxFolderStructure, 
-        
-        # Project session:
-        projectSessionFolder = projectSessionFolder, 
-        dataFolder = dataFolder, 
-        GUIFolder = GUIFolder, 
-        projectDescriptionFolder = projectDescriptionFolder, 
-        statusFolder = statusFolder, 
-        projectSessionFolderStructure = projectSessionFolderStructure, 
-        
-        # Project description:
-        projectRDataFile = projectRDataFile, 
-        projectXMLFile = projectXMLFile, 
-        projectSavedStatusFile = projectSavedStatusFile, 
-        projectStatusFile = projectStatusFile, 
-        originalProjectDescriptionFile = originalProjectDescriptionFile, 
-        currentProjectDescriptionFile = currentProjectDescriptionFile, 
-        projectDescriptionIndexFile = projectDescriptionIndexFile
+    paths <- c(
+        stoxFolderStructureList, 
+        list(
+            # Folders:
+            stoxFolderStructure = stoxFolderStructure, 
+            
+            # Project session:
+            projectSessionFolder = projectSessionFolder, 
+            dataFolder = dataFolder, 
+            GUIFolder = GUIFolder, 
+            projectDescriptionFolder = projectDescriptionFolder, 
+            statusFolder = statusFolder, 
+            projectSessionFolderStructure = projectSessionFolderStructure, 
+            
+            # Project description:
+            projectRDataFile = projectRDataFile, 
+            projectXMLFile = projectXMLFile, 
+            projectSavedStatusFile = projectSavedStatusFile, 
+            projectStatusFile = projectStatusFile, 
+            originalProjectDescriptionFile = originalProjectDescriptionFile, 
+            currentProjectDescriptionFile = currentProjectDescriptionFile, 
+            projectDescriptionIndexFile = projectDescriptionIndexFile
+        )
     )
     
     #### Assign to RstoxEnv and return the definitions: ####
@@ -395,6 +403,9 @@ openProject <- function(ProjectPath, showWarnings = FALSE) {
     setOriginalProjectDescription(ProjectPath, projectDescription)
     setProjectDescriptionAsCurrent(ProjectPath, projectDescription)
     
+    # Set the status of the projcet as saved:
+    setSavedStatus(ProjectPath, status = TRUE)
+    
     TRUE
 }
 #' 
@@ -425,14 +436,16 @@ closeProject <- function(ProjectPath, save = NULL) {
 saveProject <- function(ProjectPath) {
     # Get the current project description and save it to the project.RData file:
     writeProjectDescription(ProjectPath)
+    # Set the status of the projcet as saved:
+    setSavedStatus(ProjectPath, status = TRUE)
 }
 #' 
 #' @export
 #' 
-saveAsProject <- function(ProjectPath, NewProjectPath) {
+saveAsProject <- function(ProjectPath, NewProjectPath, ow = FALSE) {
     
     # Copy the current project and save it:
-    copyProject(ProjectPath, NewProjectPath)
+    copyProject(ProjectPath, NewProjectPath, ow = ow)
     saveProject(NewProjectPath)
     
     # Close the current project without saving
@@ -440,10 +453,16 @@ saveAsProject <- function(ProjectPath, NewProjectPath) {
     
     NewProjectPath
 }
-# 
-copyProject <- function(ProjectPath, NewProjectPath) {
+#' 
+#' @export
+#' 
+copyProject <- function(ProjectPath, NewProjectPath, ow = FALSE) {
+    if(ow) {
+        unlink(NewProjectPath, force = TRUE, recursive = TRUE)
+    }
     dir.create(NewProjectPath)
-    file.copy(ProjectPath, NewProjectPath, recursive=TRUE)
+    lapply(list.dirs(ProjectPath, recursive = FALSE), file.copy, NewProjectPath, recursive = TRUE)
+    #file.copy(ProjectPath, NewProjectPath, recursive=TRUE)
 }
 
 
@@ -453,7 +472,14 @@ setSavedStatus <- function(ProjectPath, status) {
 
 
 isSaved <- function(ProjectPath) {
-    as.logical(readLines(getProjectPaths(ProjectPath, "projectSavedStatusFile")))
+    as.logical(readLines(getProjectPaths(ProjectPath, "projectSavedStatusFile"))[1])
+}
+
+#' 
+#' @export
+#' 
+isOpenProject <- function(ProjectPath) {
+    all(sapply(getProjectPaths(ProjectPath, "projectSessionFolderStructure"), file.exists))
 }
 
 readProjectDescription <- function(ProjectPath) {
@@ -620,6 +646,11 @@ writeProjectDescriptionIndexFile <- function(ProjectPath, projectDescriptionInde
 
 getFunctionOutputDataType <- function(FunctionName) {
     stoxFunctionAttributes[[FunctionName]]$FunctionOutputDataType
+}
+
+isProcessDataFunction <- function(FunctionName) {
+    functionOutputDataType <- getFunctionOutputDataType(FunctionName)
+    functionOutputDataType %in% getRstoxFrameworkDefinitions("stoxProcessDataTypes")
 }
 
 getFunctionCategory <- function(FunctionName) {
@@ -990,10 +1021,168 @@ addProcess <- function(ProjectPath, ModelName, ProcessName, Values, only.current
 
 
 
+#### Functions to run models: ####
+#' 
+#' @export
+#' 
+getProcess <- function(ProjectPath, ModelName, ProcessName) {
+    projectDescription <- getCurrentProjectDescription(ProjectPath)
+    process <- projectDescription[[ModelName]][[ProcessName]]
+    process$processIndex <- match(ProcessName, names(projectDescription[[ModelName]]))
+    process
+}
+#' 
+#' @export
+#' 
+runProcess <- function(ProjectPath, ModelName, ProcessName) {
+    
+    # Get the process:
+    process <- getProcess(ProjectPath, ModelName, ProcessName)
+    
+    # If not not Enabled, return immediately:
+    if(!process$ProcessParameters$Enabled) {
+        return(NULL)
+    }
+    
+    # Build a list of the arguments to the function:
+    functionArguments <- list()
+    # Add the ProcessData if a ProcessData function:
+    if(isProcessDataFunction(process$FunctionName)) {
+        functionArguments$ProcessData <- process$ProcessData
+    }
+    
+    # Get the function input as output from the previously run processes:
+    functionInputs <- lapply(process$FunctionInputs, getProcessOutput, ProjectPath = ProjectPath, ModelName = ModelName)
+    #names(functionInputs) <- names(process$FunctionInputs)
+    # Warning, the data type is included in the process output files as the top level of the list, so we need to unlist to get the functionInputs (non-recursively):
+    #functionInputs <- unlist(lapply(process$FunctionInputs, getProcessOutput, ProjectPath = ProjectPath, ModelName = ModelName), recursive = FALSE, use.names = FALSE)
+    
+    
+    # Add FunctionInputs and FunctionParameters:
+    functionArguments <- c(
+        functionArguments, 
+        functionInputs, 
+        process$FunctionParameters
+    )
+    
+    # Run the function:
+    processOutput <- do.call(
+        process$FunctionName, 
+        functionArguments
+    )
+    # Wrap the function output to a list named with the data type:
+    processOutput <- list(processOutput)
+    names(processOutput) <- getFunctionOutputDataType(process$FunctionName)
+    
+    ## Wrap the function output to a list (for functions returning only one output):
+    #processOutput <- wrapProcessOutputToList(processOutput)
+    
+    ## Define the names of the function outputs as ProcessName + name of the function output as taken directly from the function:
+    #processOutput <- setProcessOutputNames(processOutput, ProcessName)
+    
+    # Store the ProcessData (this must be a named list of only one data table):
+    if(isProcessDataFunction(process$FunctionName)) {
+        process$ProcessData <- processOutput
+    }
+    
+    # Write to memory files:
+    writeProcessOutputMemoryFile(processOutput = processOutput, process = process, ProjectPath = ProjectPath, ModelName = ModelName)
+    
+    # Write to text files:
+    if(process$ProcessParameters$FileOutput) {
+        writeProcessOutputTextFile(processOutput = processOutput, process = process, ProjectPath = ProjectPath, ModelName = ModelName)
+    }
+    
+    invisible(processOutput)
+}
+
+
+#wrapProcessOutputToList <- function(processOutput) {
+#    if(is.data.frame(processOutput) || "SpatialPolygons" %in% class(processOutput)) {
+#        processOutput <- list(processOutput)
+#    }
+#    processOutput
+#}
+
+#setProcessOutputNames <- function(processOutput, ProcessName) {
+#    processOutputNames <- paste(ProcessName, names(processOutput), sep = "_")
+#    processOutputNames <- gsub('\\_$', '', processOutputNames)
+#    names(processOutput) <- processOutputNames
+#    processOutput
+#}
+
+#' 
+#' @export
+#' 
+getProcessOutput <- function(ProjectPath, ModelName, ProcessName) {
+    folderName <- getProcessOutputFolder(ProjectPath = ProjectPath, ModelName = ModelName, ProcessName = ProcessName)
+    # There will always be only one file in each folder of process data, so we pick the first element:
+    filePath <- list.files(folderName, full.names = TRUE, pattern = "\\.rds$")[1]
+    readRDS(filePath)
+}
+
+
+getProcessOutputFolder <- function(ProjectPath, ModelName, ProcessName) {
+    file.path(getProjectPaths(ProjectPath, "dataFolder"), ModelName, ProcessName)
+}
 
 
 
 
+#' 
+#' @export
+#' 
+writeProcessOutputTextFile <- function(processOutput, process, ProjectPath, ModelName) {
+    
+    # Function for writing one element of the function output list:
+    reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
+        
+        if("SpatialPolygons" %in% class(processOutputOne)) {
+            # Add file extension:
+            filePath <- paste(filePathSansExt, "geojson", sep = ".")
+            # Write the file:
+            jsonlite::write_json(geojsonio::geojson_json(processOutputOne), path = filePath)
+        }
+        else if("data.table" %in% class(processOutputOne)) {
+            # Add file extension:
+            filePath <- paste(filePathSansExt, "txt", sep = ".")
+            # Write the file:
+            data.table::fwrite(processOutputOne, filePath, sep = "\t")
+        }
+        else {
+            stop("Unknown function output")
+        }
+    }
+    
+    # Flatten the list and add names from the levels of the list:
+    processOutput <- unlist(processOutput)
+    names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)
+    
+    folderName <- getProjectPaths(ProjectPath, paste("Output", ModelName, sep = "_"))
+    fileNamesSansExt <- paste(process$processIndex, names(processOutput), sep = "_")
+    filePathsSansExt <- file.path(folderName, paste(fileNamesSansExt))
+    
+    # Set the file name:
+    mapply(reportFunctionOutputOne, processOutput, filePathsSansExt)
+    # lapply(processOutput, reportFunctionOutputOne)
+}
+
+#' 
+#' @export
+#' 
+writeProcessOutputMemoryFile <- function(processOutput, process, ProjectPath, ModelName) {
+    
+    # Set the file name:
+    folderName <- getProcessOutputFolder(ProjectPath = ProjectPath, ModelName = ModelName, ProcessName = process$ProcessName)
+    fileNameSansExt <- paste(process$processIndex, names(processOutput), sep = "_")
+    fileName <- paste(fileNameSansExt, "rds", sep = ".")
+    filePath <- file.path(folderName, fileName)
+    
+    # Create the folder and save the process output as one file containing a list of DataType, ans possible sublists specified by the function producing the output:
+    dir.create(dirname(filePath), recursive = TRUE, showWarnings = TRUE)
+    # Drop the top level, since this is the data type, and this is known in runProcess:
+    saveRDS(processOutput[[1]], filePath)
+}
 
 
 
@@ -1049,42 +1238,3 @@ addProcess <- function(ProjectPath, ModelName, ProcessName, Values, only.current
                 
             }
 
-
-
-    
-
-
-
-
-
-
-
-            # 
-            getOutputFileNames <- function(processName, ProjectPath, fileExt="txt") {
-                
-                # Get the status of the project:
-                status <- getProjectStatus(ProjectPath)
-                # Get the function name from the status:
-                functionName <- status[[processName]]$functionName
-                # Get the process index:
-                processIndex <- status[[processName]]$processIndex
-                
-                # Get meta information about of function:
-                meta <- do.call(functionName, list())
-                # Get the table names of the data type of the function:
-                dataType <- meta$outputDataType
-                # Get the output table names:
-                outputTableNames <- "***********************************************"
-                    
-                    # Concatinate the index of the process, the process name, the data type, and the output tables:
-                    outputFileNames <- paste(processIndex, processName, dataType, outputTableNames, sep="_")
-                
-                # Append file extension:
-                outputFileNames <- paste(outputFileNames, fileExt, sep=".")
-                
-                outputFileNames
-            }
-
-
-
-    

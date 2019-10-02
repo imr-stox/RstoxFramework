@@ -6,12 +6,14 @@
 
 #' 
 #' @export
+#' 
 getModelNames <- function() {
     getRstoxFrameworkDefinitions("stoxModelTypes")
     # convertToJSON(out)
 }
 #' 
 #' @export
+#' 
 getModeInfo <- function() {
     getRstoxFrameworkDefinitions("stoxModelInfo")
 }
@@ -19,7 +21,7 @@ getModeInfo <- function() {
 
 #' 
 #' @export
-#' @importFrom jsonlite toJSON fromJSON
+#' 
 convertToJSON <- function(x) {
     # browser()
     jsonlite::toJSON(x)
@@ -81,7 +83,9 @@ getProcessList <- function(ProjectPath, ModelName) {
     
 }
 
-
+getCanShowInMap <- function() {
+    
+}
 
 
 

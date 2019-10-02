@@ -18,7 +18,6 @@
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
 #' @export
-#' @import data.table
 #' 
 DATRASConvert <- function() {
 	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
@@ -45,7 +44,6 @@ DATRASConvert <- function() {
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
 #' @export
-#' @import data.table
 #' 
 FilterAcoustic <- function() {
 	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
@@ -72,7 +70,6 @@ FilterAcoustic <- function() {
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
 #' @export
-#' @import data.table
 #' 
 FilterBiotic <- function() {
 	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
@@ -99,7 +96,6 @@ FilterBiotic <- function() {
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
 #' @export
-#' @import data.table
 #' 
 FilterLanding <- function() {
 	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.
@@ -139,6 +135,41 @@ ReadAcousticXML <- function(
     # Return the acoustic data:
     out
 }
+
+
+##################################################
+##################################################
+#' Some title
+#' 
+#' Some description
+#' 
+#' @param FileNames One or more file paths given either as (1) a vector, (2) a JSON string representing a vector, or (3) a comma or semicolon separated string of file paths.
+#' 
+#' @details
+#' This function is awesome and does excellent stuff.
+#' 
+#' @return
+#' A data.table is returned with awesome stuff.
+#' 
+#' @examples
+#' x <- 1
+#' 
+#' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
+#' 
+#' @export
+#' 
+ReadBiotic <- function(FileNames) {
+    # NOTE: Fix the xsdobjects problem and remove the following line:
+    library(RstoxData)
+    lapply(FileNames, RstoxData::readXmlFile)
+}
+
+
+getFileName <- function(FileName) {
+    
+}
+
+
 
 
 ##################################################
@@ -257,7 +288,6 @@ ReadLandingXML <- function(
 #' @seealso \code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
 #' 
 #' @export
-#' @import data.table
 #' 
 WriteAcousticDataToXML <- function() {
 	# Use @noRd to prevent rd-files, and @inheritParams runBaseline to inherit parameters (those in common that are not documented) from e.g. getBaseline. Use @section to start a section in e.g. the details. Use @inheritParams runBaseline to inherit parameters from e.g. runBaseline(). Remove the @import data.table for functions that do not use the data.table package, and add @importFrom packageName functionName anotherFunctionName for importing specific functions from packages. Also use the packageName::functionName convention for the specifically imported functions.

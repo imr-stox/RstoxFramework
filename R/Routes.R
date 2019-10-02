@@ -85,11 +85,24 @@ getProcessList <- function(ProjectPath, ModelName) {
 
 getCanShowInMap <- function() {
     
+    
+    # Data types containing data which can be shown in the map:
+    - StoxBioticData
+    - StoxAcousticData
+    - StratumPolygon
+    - Assignment
+    - AcousticPSU
+    - SweptAreaPSU
+    
+    
+    
 }
 
 
-
-
+# Add stop position of eht EDSUs for plotting in the map:
+getStopLongitudeLatitude <- function() {
+    
+}
 
 
 

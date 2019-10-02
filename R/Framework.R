@@ -92,10 +92,28 @@ initiateRstoxFramework <- function(){
         Report = "Report: Processes that run Baseline or Statistics processes to generate reports"
     )
     stoxModelInfo <- data.frame(
-        Name = stoxModelNames, 
+        ModelName = stoxModelNames, 
         DisplayName = stoxModelDisplayNames, 
         Description = stoxModelDescriptions
     )
+    
+    # Define data types which can be plotted in the map (includes also changing colour etc, such as assigned stations of an acoustic PSU):
+    dataTypesToShowInMap <- c(
+        StoxBioticData = "StoxBioticData", 
+        StoxAcousticData = "StoxAcousticData", 
+        StratumPolygon = "StratumPolygon", 
+        Assignment = "Assignment", 
+        AcousticPSU = "AcousticPSU", 
+        SweptAreaPSU = "SweptAreaPSU"
+    )
+    
+    
+    
+    
+    
+    
+    
+    
     # Define the process parameters with default values:
     processParameters <- list(
         Enabled = TRUE, 

@@ -94,7 +94,7 @@ initiateRstoxFramework <- function(){
         Statistics = "Statistics: Processes that run Baseline to generate statistcs such as estimates of variation", 
         Report = "Report: Processes that run Baseline or Statistics processes to generate reports"
     )
-    stoxModelInfo <- data.frame(
+    stoxModelInfo <- data.table::data.table(
         modelName = stoxModelNames, 
         displayName = stoxModelDisplayNames, 
         description = stoxModelDescriptions
@@ -612,7 +612,7 @@ setProjectDescriptionAsCurrent <- function(projectPath, projectDescription, only
         projectDescriptionIndex$Index <- projectDescriptionIndex$Index - 1
         projectDescriptionIndex <- rbind(
             projectDescriptionIndex, 
-            data.frame(
+            data.table::data.table(
                 Index = 0, 
                 Path = newProjectDescriptionFilePath
             )
@@ -685,7 +685,7 @@ writeProjectDescriptionIndexFile <- function(projectPath, projectDescriptionInde
 
 
 getFunctionOutputDataType <- function(functionName) {
-    stoxFunctionAttributes[[functionName]]$FunctionOutputDataType
+    stoxFunctionAttributes[[functionName]]$functionOutputDataType
 }
 
 isProcessDataFunction <- function(functionName) {
@@ -694,11 +694,11 @@ isProcessDataFunction <- function(functionName) {
 }
 
 getFunctionCategory <- function(functionName) {
-    stoxFunctionAttributes[[functionName]]$FunctionCategory
+    stoxFunctionAttributes[[functionName]]$functionCategory
 }
 
 getFunctionParameterHierarchy <- function(functionName) {
-    stoxFunctionAttributes[[functionName]]$FunctionParameterHierarchy
+    stoxFunctionAttributes[[functionName]]$functionParameterHierarchy
 }
 
 getParametersToShowInStoX <- function(functionName) {
@@ -732,8 +732,8 @@ getFunctionDefaults <- function(functionName) {
                 stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
                 # Get the names of the available functions:
                 availableFunctions <- names(functionAttributes)
-                # Get the category of each funciton, and split by category:
-                functionCategories <- lapply(functionAttributes, "[[", "FunctionCategory")
+                # Get the category of each function, and split by category:
+                functionCategories <- lapply(functionAttributes, "[[", "processNameCategory")
                 functionAttributesByCategory <-split(functionAttributes, functionCategories)
                 # Keep only the valid categories:
                 functionAttributesByCategory <- functionAttributesByCategory[stoxModelNames]
@@ -762,7 +762,7 @@ isFunctionInput <- function(parameter) {
 
 
 createEmptyProcess <- function(modelName = "Baseline") {
-    # Get the default process with empty fields for project and funciton name, process data, and function parameters and inputs:
+    # Get the default process with empty fields for project and function name, process data, and function parameters and inputs:
     getRstoxFrameworkDefinitions("processDefault")[[modelName]]
 }
 
@@ -858,7 +858,7 @@ modifyFunctionInputs <- function(projectPath, modelName, processName, newFunctio
             " of the process ", 
             projectDescription[[modelName]][[processName]]$processName, 
             ": ", 
-            paste(names(functionInputs)[!valid], collapse = ", ")
+            paste(names(newFunctionInputs)[!valid], collapse = ", ")
         )
         
         # Keep only the newFunctionParameters present in the existing functionParameters:
@@ -942,7 +942,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, only.c
             projectPath = projectPath, 
             modelName = modelName, 
             processName = processName, 
-            newProcessName = newValues$ProcessName, 
+            newProcessName = newValues$processName, 
             only.current = only.current
         )
     }
@@ -1152,7 +1152,7 @@ runProcess <- function(projectPath, modelName, processName) {
     writeProcessOutputMemoryFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
     
     # Write to text files:
-    if(process$processParameters$FileOutput) {
+    if(process$processParameters$fileOutput) {
         writeProcessOutputTextFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
     }
     
@@ -1161,7 +1161,7 @@ runProcess <- function(projectPath, modelName, processName) {
 
 
 #wrapProcessOutputToList <- function(processOutput) {
-#    if(is.data.frame(processOutput) || "SpatialPolygons" %in% class(processOutput)) {
+#    if(is.data.table::data.table(processOutput) || "SpatialPolygons" %in% class(processOutput)) {
 #        processOutput <- list(processOutput)
 #    }
 #    processOutput
@@ -1199,22 +1199,22 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
     
     # Function for writing one element of the function output list:
     reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
-        
-        
-        if("SpatialPolygons" %in% class(processOutputOne)) {
-            # Add file extension:
-            filePath <- paste(filePathSansExt, "geojson", sep = ".")
-            # Write the file:
-            jsonlite::write_json(geojsonio::geojson_json(processOutputOne), path = filePath)
-        }
-        else if("data.table" %in% class(processOutputOne)) {
-            # Add file extension:
-            filePath <- paste(filePathSansExt, "txt", sep = ".")
-            # Write the file:
-            data.table::fwrite(processOutputOne, filePath, sep = "\t")
-        }
-        else {
-            stop("Unknown function output")
+        if(length(processOutputOne)){
+            if("SpatialPolygons" %in% class(processOutputOne)) {
+                # Add file extension:
+                filePath <- paste(filePathSansExt, "geojson", sep = ".")
+                # Write the file:
+                jsonlite::write_json(geojsonio::geojson_json(processOutputOne), path = filePath)
+            }
+            else if("data.table" %in% class(processOutputOne)) {
+                # Add file extension:
+                filePath <- paste(filePathSansExt, "txt", sep = ".")
+                # Write the file:
+                data.table::fwrite(processOutputOne, filePath, sep = "\t")
+            }
+            else {
+                stop("Unknown function output")
+            }
         }
     }
     
@@ -1277,10 +1277,15 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
 #' 
 #' @export
 #' 
-runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3) {
-    processNames <- getProcessList(projectPath, modelName)[seq(startProcess, endProcess)]
+runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3, save = TRUE) {
+    processNames <- getProcessTable(projectPath, modelName)[seq(startProcess, endProcess)]$processName
     for(processName in processNames) {
         temp <- runProcess(projectPath = projectPath, modelName = modelName, processName = processName)
+    }
+    
+    # Save the project after each run:
+    if(save) {
+        saveProject(projectPath)
     }
 }
 

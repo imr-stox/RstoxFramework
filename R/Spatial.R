@@ -53,9 +53,9 @@ stoxMultipolygonWKT2SpatialPolygons <- function(FilePath) {
 }
 
 
-DefineStrata <- function(ProcessData, FileName, UseProcessData = FALSE) {
+DefineStrata <- function(processData, FileName, UseProcessData = FALSE) {
     if(UseProcessData) {
-        return(ProcessData)
+        return(processData)
     }
     stoxMultipolygonWKT2SpatialPolygons(FileName)
 }

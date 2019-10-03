@@ -2,17 +2,17 @@
 stoxFunctionAttributes <- list(
     # Read input biotic data:
     ReadBiotic = list(
-        FunctionCategory = "Baseline", 
-        FunctionOutputDataType = "BioticData", 
-        FunctionParameterHierarchy = list(
+        functionCategory = "Baseline", 
+        functionOutputDataType = "BioticData", 
+        functionParameterHierarchy = list(
             FileNames = list()
         )
     ), 
     # Read strata polygons:
     DefineStrata = list(
-        FunctionCategory = "Baseline", 
-        FunctionOutputDataType = "StratumPolygon", 
-        FunctionParameterHierarchy = list(
+        functionCategory = "Baseline", 
+        functionOutputDataType = "StratumPolygon", 
+        functionParameterHierarchy = list(
             FileName = list(
                 UseProcessData = FALSE
             ), 
@@ -21,9 +21,9 @@ stoxFunctionAttributes <- list(
     ), 
     # Calculate areas of strata polygons:
     StratumArea = list(
-        FunctionCategory = "Baseline", 
-        FunctionOutputDataType = "StratumArea", 
-        FunctionParameterHierarchy = list(
+        functionCategory = "Baseline", 
+        functionOutputDataType = "StratumArea", 
+        functionParameterHierarchy = list(
             StratumPolygon = list(), 
             AreaMethod = list()
         )

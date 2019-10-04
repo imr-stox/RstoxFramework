@@ -14,7 +14,7 @@ getModelNames <- function() {
 #' 
 #' @export
 #' 
-getModeInfo <- function() {
+getModelInfo <- function() {
     getRstoxFrameworkDefinitions("stoxModelInfo")
 }
 

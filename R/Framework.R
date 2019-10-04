@@ -393,6 +393,7 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, showWarnings = FALSE, open = TRUE) {
     
     # Create the project folder structure:
+    browser()
     projectSkeleton <- createProjectSkeleton(projectPath, ow = ow)
     
     # Get the tempaltes:
@@ -504,6 +505,14 @@ copyProject <- function(projectPath, newProjectPath, ow = FALSE) {
     lapply(list.dirs(projectPath, recursive = FALSE), file.copy, newProjectPath, recursive = TRUE)
     #file.copy(projectPath, newProjectPath, recursive=TRUE)
 }
+#' 
+#' @export
+#' 
+resetProject <- function(projectPath) {
+    originalProjectDescription <- getOriginalProjectDescription(projectPath)
+    setProjectDescriptionAsCurrent(projectPath, projectDescription = originalProjectDescription, only.current = TRUE)
+    saveProject(projectPath)
+}
 
 
 setSavedStatus <- function(projectPath, status) {
@@ -576,6 +585,16 @@ setOriginalProjectDescription <- function(projectPath, projectDescription) {
     saveRDS(projectDescription, file = originalProjectDescriptionFile)
 }
 
+# 4b. Function to get the original project description:
+#' 
+#' @export
+#' 
+getOriginalProjectDescription <- function(projectPath) {
+    # Get the path to the originalProjectDescriptionFile, and write the input projectDescription to it:
+    originalProjectDescriptionFile <- getProjectPaths(projectPath, "originalProjectDescriptionFile")
+    readRDS(file = originalProjectDescriptionFile)
+}
+
 # 5. Function to read the current project description:
 #' 
 #' @export
@@ -592,6 +611,7 @@ getCurrentProjectDescription <- function(projectPath) {
 setProjectDescriptionAsCurrent <- function(projectPath, projectDescription, only.current = FALSE) {
     
     # Save to the currentProjectDescriptionFile:
+    browser()
     currentProjectDescriptionFile <- getProjectPaths(projectPath, "currentProjectDescriptionFile")
     saveRDS(projectDescription, file = currentProjectDescriptionFile)
     

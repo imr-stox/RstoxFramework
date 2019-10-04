@@ -869,7 +869,8 @@ modifyFunctionParameters <- function(projectPath, modelName, processName, newFun
     newFunctionParameters <- parseParameter(newFunctionParameters)
     
     # Report a warning for function parameters not present in the process:
-    valid <- names(newFunctionParameters) %in% names(projectDescription[[modelName]][[processName]]$functionParameters)
+    presentParameters <- names(projectDescription[[modelName]][[processName]]$functionParameters)
+    valid <- names(newFunctionParameters) %in% presentParameters
     if(any(!valid)) {
         warning(
             "The following function parameters are not present for the function ", 
@@ -877,7 +878,10 @@ modifyFunctionParameters <- function(projectPath, modelName, processName, newFun
             " of the process ", 
             projectDescription[[modelName]][[processName]]$processName, 
             ": ", 
-            paste(names(newFunctionParameters)[!valid], collapse = ", ")
+            paste(names(newFunctionParameters)[!valid], collapse = ", "), 
+            ". ", 
+            "Present parameters are ", 
+            if(length(presentParameters)) paste(presentParameters, sep = ", ") else "(No inputs)"
         )
         
         # Keep only the newFunctionParameters present in the existing functionParameters:
@@ -903,15 +907,19 @@ modifyFunctionInputs <- function(projectPath, modelName, processName, newFunctio
     newFunctionInputs <- parseParameter(newFunctionInputs)
     
     # Report a warning for function inputs not present in the process:
-    valid <- names(newFunctionInputs) %in% names(projectDescription[[modelName]][[processName]]$functionInputs)
+    presentInputs <- names(projectDescription[[modelName]][[processName]]$functionInputs)
+    valid <- names(newFunctionInputs) %in% presentInputs
     if(any(!valid)) {
         warning(
-            "The following function parameters are not present for the function ", 
+            "The following function inputs are not present for the function ", 
             projectDescription[[modelName]][[processName]]$functionName, 
             " of the process ", 
             projectDescription[[modelName]][[processName]]$processName, 
             ": ", 
-            paste(names(newFunctionInputs)[!valid], collapse = ", ")
+            paste(names(newFunctionInputs)[!valid], collapse = ", "), 
+            ". ", 
+            "Present inputs are ", 
+            if(length(presentInputs)) paste(presentInputs, sep = ", ") else "(No inputs)"
         )
         
         # Keep only the newFunctionParameters present in the existing functionParameters:

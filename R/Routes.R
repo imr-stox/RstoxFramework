@@ -73,11 +73,13 @@ getProcessTable <- function(projectPath, modelName) {
         # Get names of processes prior to the current process:
         priorProcesses <- processTable$processName[seq_len(ind - 1)]
         # Get the names of the processes from which funciton intpu is requested:
-        requestedProcessNames <- functionInputs[[ind]]
+        requestedProcessNames <- unlist(functionInputs[[ind]])
         requestedFunctionInputDataTypes <- names(requestedProcessNames)
         
         # Are all of the function inputs present in the prior processes?:
         requestedProcessesExist <- all(requestedProcessNames %in% priorProcesses)
+        correctDataTypeRequested <- FALSE
+        
         if(!requestedProcessesExist) {
             warning(
                 "The following requested processes do not exist prior to the process", 
@@ -86,25 +88,24 @@ getProcessTable <- function(projectPath, modelName) {
                 paste(setdiff(requestedProcessNames, priorProcesses), collapse = ", ")
             )
         }
-        
         #### Check also that the processes given by the function inputs acutally return the desired data type: ####
-        
-        
-        # Get the indices of these processes in the processTable:
-        indexOfRelevantPriorProcesses <- match(requestedProcessNames, priorProcesses)
-        # Match the output data types of the relevant prior processes:
-        correctDataTypeRequested <- processTable$dataType[indexOfRelevantPriorProcesses] == requestedFunctionInputDataTypes
-        
-        
-        if(!all(correctDataTypeRequested)) {
-            warning(
-                "The following processes do not have the requested data type output: ", 
-                paste(processTable$dataType[indexOfRelevantPriorProcesses][requestedProcessNames], collapse = ", ")
-            )
+        else {
+            # Get the indices of these processes in the processTable:
+            indexOfRelevantPriorProcesses <- match(requestedProcessNames, priorProcesses)
+            # Match the output data types of the relevant prior processes:
+            correctDataTypeRequested <- processTable$dataType[indexOfRelevantPriorProcesses] == requestedFunctionInputDataTypes
+            
+            
+            if(!all(correctDataTypeRequested)) {
+                warning(
+                    "The following processes do not have the requested data type output: ", 
+                    paste(processTable$dataType[indexOfRelevantPriorProcesses][requestedProcessNames], collapse = ", ")
+                )
+            }
         }
         
-        
-        requestedProcessesExist && all(correctDataTypeRequested)
+        # Return TRUE if error:
+        !(requestedProcessesExist && all(correctDataTypeRequested))
     }
     
     # Get the current project description:
@@ -118,7 +119,7 @@ getProcessTable <- function(projectPath, modelName) {
     # Check whether the data type can be shown in the map:
     canShowInMap <- getCanShowInMap(dataTypes)
     # ... and whether the user hat defined that the data from the process should be shown in the map:
-    showInMap <- sapply(projectDescription[[modelName]], function(process) process$processParameters$showInMap)
+    doShowInMap <- sapply(projectDescription[[modelName]], function(process) process$processParameters$showInMap)
     # Check whether the process returns process data:
     hasProcessData <- sapply(functionNames, isProcessDataFunction)
     
@@ -128,7 +129,7 @@ getProcessTable <- function(projectPath, modelName) {
         functionName = functionNames, 
         dataType = dataTypes, 
         canShowInMap = canShowInMap, 
-        showInMap = showInMap, 
+        doShowInMap = doShowInMap, 
         hasProcessData = hasProcessData
     )
     
@@ -154,7 +155,7 @@ getProcessTable <- function(projectPath, modelName) {
     # 1. processName
     # 4. canShowInMap
     # 5. hasProcessData
-    # 6. showInMap
+    # 6. doShowInMap
     
     # 2. hasBeenRun
     # 3. hasError

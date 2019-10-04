@@ -9,3 +9,6 @@ src/symbols.rds
 .DS_Store
 RstoxFramework.Rproj
 .vscode
+NAMESPACE
+README
+DESCRIPTION

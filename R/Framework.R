@@ -221,6 +221,7 @@ initiateRstoxFramework <- function(){
         stoxFolderStructureList, 
         list(
             # Folders:
+            stoxFolders = stoxFolders, 
             stoxFolderStructure = stoxFolderStructure, 
             
             # Project session:
@@ -393,7 +394,6 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, showWarnings = FALSE, open = TRUE) {
     
     # Create the project folder structure:
-    browser()
     projectSkeleton <- createProjectSkeleton(projectPath, ow = ow)
     
     # Get the tempaltes:
@@ -434,6 +434,12 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' 
 openProject <- function(projectPath, showWarnings = FALSE) {
     
+    projectPath <- resolveProjectPath(projectPath)
+    if(length(projectPath) == 0) {
+        warning("The selected projectPath is not a StoX project or a folder/file inside a StoX project.")
+        return(NULL)
+    }
+    
     # Create the project session folder structure:
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
@@ -447,7 +453,7 @@ openProject <- function(projectPath, showWarnings = FALSE) {
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     
-    TRUE
+    projectPath
 }
 #' 
 #' @export
@@ -528,7 +534,34 @@ isSaved <- function(projectPath) {
 #' @export
 #' 
 isOpenProject <- function(projectPath) {
-    all(sapply(getProjectPaths(projectPath, "projectSessionFolderStructure"), file.exists))
+    existsFolders <- sapply(getProjectPaths(projectPath, "projectSessionFolderStructure"), file.exists)
+    length(existsFolders) && all(existsFolders)
+}
+
+#' 
+#' @export
+#' 
+isProject <- function(projectPath) {
+    existsFolders <- sapply(getProjectPaths(projectPath, "stoxFolders"), file.exists)
+    length(existsFolders) && all(existsFolders)
+}
+
+#' 
+#' @export
+#' 
+resolveProjectPath <- function(filePath) {
+    # Move up the folder hierarchy and find the project path:
+    projectPath <- filePath
+    while(!isProject(projectPath)) {
+        up <- dirname(projectPath)
+        if(up == projectPath) {
+            return(NULL)
+        }
+        else {
+            projectPath <- up
+        }
+    }
+    projectPath
 }
 
 readProjectDescription <- function(projectPath) {
@@ -611,7 +644,6 @@ getCurrentProjectDescription <- function(projectPath) {
 setProjectDescriptionAsCurrent <- function(projectPath, projectDescription, only.current = FALSE) {
     
     # Save to the currentProjectDescriptionFile:
-    browser()
     currentProjectDescriptionFile <- getProjectPaths(projectPath, "currentProjectDescriptionFile")
     saveRDS(projectDescription, file = currentProjectDescriptionFile)
     
@@ -635,7 +667,8 @@ setProjectDescriptionAsCurrent <- function(projectPath, projectDescription, only
             data.table::data.table(
                 Index = 0, 
                 Path = newProjectDescriptionFilePath
-            )
+            ), 
+            fill = TRUE
         )
         # Write the projectDescriptionIndex to file:
         writeProjectDescriptionIndexFile(projectPath, projectDescriptionIndex)

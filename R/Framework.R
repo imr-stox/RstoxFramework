@@ -9,41 +9,10 @@
 # 
 # What to do with boolean, integer, numeric, string?
 #
-# - We will use functionInputs and functionParameters.
-#
-# - We skip the test Tobis project created by StoX (assuming this is never used)
-# 
-# 
-# 
-# 
-# 
-# 
 # Things to do in RstoxFramework:
 #
 # StoX
 # - Define the stox folder in the user home directory, since this avoids any global setting of StoX
-#
-# Project
-# - Create project
-# - Open project
-# - Save project
-# - SaveAs project: Creates a new project as a copy of the current status of the old project, and # keeps the old project open, but shifts focus to the new.
-# - Close project (1. Ask the user)
-# - Reset project
-#
-# Process
-# 
-# 
-# 
-# # Functions for an isolated project object:
-# createEmptyBaselineProcess
-# 
-# modifyBaselineProcessName
-# modifyBaselineFunctionName
-#     modifyBaselineFunctionInputs
-#     modifyBaselineFunctionParameters
-# modifyBaselineProcessParameters
-# modifyBaselineProcessData
 
 
 
@@ -151,13 +120,13 @@ initiateRstoxFramework <- function(){
     # Sub folders:
     dataFolder <- file.path(projectSessionFolder, "data")
     GUIFolder <- file.path(projectSessionFolder, "GUI")
-    projectDescriptionFolder <- file.path(projectSessionFolder, "projectDescription")
+    projectMemoryFolder <- file.path(projectSessionFolder, "projectMemory")
     statusFolder <- file.path(projectSessionFolder, "status")
     # Return also a vector of all session folders, to generate the folder structure recursively:
     projectSessionFolderStructure <- c(
             dataFolder, 
             GUIFolder, 
-            projectDescriptionFolder, 
+            projectMemoryFolder, 
             statusFolder
     )
     
@@ -168,9 +137,9 @@ initiateRstoxFramework <- function(){
     projectStatusFile = file.path(statusFolder, "projectStatus.txt")
     
     # Memory files:
-    originalProjectDescriptionFile <- file.path(projectDescriptionFolder, "originalProjectDescription.rds")
-    currentProjectDescriptionFile <- file.path(projectDescriptionFolder, "currentProjectDescription.rds")
-    projectDescriptionIndexFile <- file.path(projectDescriptionFolder, "projectDescriptionIndex.txt")
+    originalProjectMemoryFile <- file.path(projectMemoryFolder, "originalProjectMemory.rds")
+    currentProjectMemoryFile <- file.path(projectMemoryFolder, "currentProjectMemory.rds")
+    projectMemoryIndexFile <- file.path(projectMemoryFolder, "projectMemoryIndex.txt")
     
     #### Data types: ####
     stoxModelDataTypes <- c(
@@ -228,7 +197,7 @@ initiateRstoxFramework <- function(){
             projectSessionFolder = projectSessionFolder, 
             dataFolder = dataFolder, 
             GUIFolder = GUIFolder, 
-            projectDescriptionFolder = projectDescriptionFolder, 
+            projectMemoryFolder = projectMemoryFolder, 
             statusFolder = statusFolder, 
             projectSessionFolderStructure = projectSessionFolderStructure, 
             
@@ -237,9 +206,9 @@ initiateRstoxFramework <- function(){
             projectXMLFile = projectXMLFile, 
             projectSavedStatusFile = projectSavedStatusFile, 
             projectStatusFile = projectStatusFile, 
-            originalProjectDescriptionFile = originalProjectDescriptionFile, 
-            currentProjectDescriptionFile = currentProjectDescriptionFile, 
-            projectDescriptionIndexFile = projectDescriptionIndexFile
+            originalProjectMemoryFile = originalProjectMemoryFile, 
+            currentProjectMemoryFile = currentProjectMemoryFile, 
+            projectMemoryIndexFile = projectMemoryIndexFile
         )
     )
     
@@ -368,6 +337,9 @@ createProjectSkeleton <- function(projectPath, ow = FALSE) {
         if(!ow) {
             stop("The project '", projectPath, "' exists. Choose a different project path.")
         }
+        else {
+            unlink(projectPath, recursive = TRUE, force = TRUE)
+        }
     }
     
     # Get the paths of the root directory and StoX skeleton:
@@ -393,9 +365,6 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' 
 createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, showWarnings = FALSE, open = TRUE) {
     
-    # Create the project folder structure:
-    projectSkeleton <- createProjectSkeleton(projectPath, ow = ow)
-    
     # Get the tempaltes:
     templates <- getAvaiableTemplates(TRUE)
     thisTemplate <- templates[[template]]
@@ -403,25 +372,14 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
         stop("The requested template does not exist. See getAvaiableTemplates() for a list of the available templates (with list.out = TRUE if you wish to see what the dirrefent templates are.)")
     }
     
+    # Create the project folder structure:
+    projectSkeleton <- createProjectSkeleton(projectPath, ow = ow)
+    
     # Create the project session folder structure:
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
-    # Create an empty ProjectDescription:
-    projectDescription <- createEmptyProjectDescription(projectPath)
-    
-    # Fill inn the processes:
-    stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
-    for(modelName in stoxModelNames){
-        for(processName in names(thisTemplate[[modelName]])){
-            addProcess(
-                projectPath = projectPath, 
-                modelName = modelName, 
-                processName = processName, 
-                values = thisTemplate[[modelName]][[processName]], 
-                only.current = TRUE
-            )
-        }
-    }
+    # Set the project memory to the template:
+    setProjectMemory(projectPath = projectPath, projectMemory = thisTemplate)
     
     # Save the project, close it, and open:
     closeProject(projectPath, save = TRUE)
@@ -434,6 +392,11 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' 
 openProject <- function(projectPath, showWarnings = FALSE) {
     
+    if(isOpenProject(projectPath)) {
+        message("Project ", projectPath, "is already open.")
+        return(projectPath)
+    }
+    
     projectPath <- resolveProjectPath(projectPath)
     if(length(projectPath) == 0) {
         warning("The selected projectPath is not a StoX project or a folder/file inside a StoX project.")
@@ -444,11 +407,11 @@ openProject <- function(projectPath, showWarnings = FALSE) {
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
     # Read the project description file:
-    projectDescription <- readProjectDescription(projectPath)
+    projectMemory <- readProjectDescription(projectPath)
     
     # Save the original and current projectDescription:
-    setOriginalProjectDescription(projectPath, projectDescription)
-    setProjectDescriptionAsCurrent(projectPath, projectDescription)
+    setProjectMemory(projectPath = projectPath, projectMemory = projectMemory)
+    #setOriginalProjectMemory(projectPath = projectPath, thisTemplate = thisTemplate)
     
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
@@ -474,7 +437,7 @@ closeProject <- function(projectPath, save = NULL) {
     }
     
     # Delete the project session folder structure:
-    projectSessionFolderStructure <- getProjectPaths(projectPath, "projectSessionFolderStructure")
+    projectSessionFolderStructure <- getProjectPaths(projectPath, "projectSessionFolder")
     unlink(projectSessionFolderStructure, recursive = TRUE, force = TRUE)
 }
 #' 
@@ -511,23 +474,34 @@ copyProject <- function(projectPath, newProjectPath, ow = FALSE) {
     lapply(list.dirs(projectPath, recursive = FALSE), file.copy, newProjectPath, recursive = TRUE)
     #file.copy(projectPath, newProjectPath, recursive=TRUE)
 }
-#' 
-#' @export
-#' 
-resetProject <- function(projectPath) {
-    originalProjectDescription <- getOriginalProjectDescription(projectPath)
-    setProjectDescriptionAsCurrent(projectPath, projectDescription = originalProjectDescription, only.current = TRUE)
-    saveProject(projectPath)
-}
+### #' 
+### #' @export
+### #' 
+### resetProject <- function(projectPath) {
+###     originalProjectDescription <- getOriginalProjectDescription(projectPath)
+###     setCurrentProjectDescription(projectPath, projectDescription = originalProjectDescription, only.current = TRUE)
+###     saveProject(projectPath)
+### }
 
 
 setSavedStatus <- function(projectPath, status) {
-    writeLines(as.character(status), getProjectPaths(projectPath, "projectSavedStatusFile"))
+    # Get the path to the projectSavedStatusFile:
+    projectSavedStatusFile <- getProjectPaths(projectPath, "projectSavedStatusFile")
+    # Write the status to the file:
+    writeLines(as.character(status), projectSavedStatusFile)
 }
 
 
 isSaved <- function(projectPath) {
-    as.logical(readLines(getProjectPaths(projectPath, "projectSavedStatusFile"))[1])
+    # Get the path to the projectSavedStatusFile:
+    projectSavedStatusFile <- getProjectPaths(projectPath, "projectSavedStatusFile")
+    # Missing file implies not saved:
+    if(!file.exists(projectSavedStatusFile)) {
+        FALSE
+    }
+    else {
+        as.logical(readLines(projectSavedStatusFile)[1])
+    }
 }
 
 #' 
@@ -546,9 +520,6 @@ isProject <- function(projectPath) {
     length(existsFolders) && all(existsFolders)
 }
 
-#' 
-#' @export
-#' 
 resolveProjectPath <- function(filePath) {
     # Move up the folder hierarchy and find the project path:
     projectPath <- filePath
@@ -564,6 +535,23 @@ resolveProjectPath <- function(filePath) {
     projectPath
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 readProjectDescription <- function(projectPath) {
     # Get the path to the project description file:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
@@ -574,142 +562,364 @@ readProjectDescription <- function(projectPath) {
 
 writeProjectDescription <- function(projectPath) {
     # Get the current project description:
-    projectDescription <- getCurrentProjectDescription(projectPath)
+    projectDescription <- getCurrentProjectMemoryData(projectPath, drop1 = FALSE)
     
     # Get the path to the project description file, and save the current project description:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
     save(projectDescription, file = projectRDataFile)
 }
 
-createEmptyProjectDescription <- function(projectPath) {
-    # Get the model types, and populate a list with these:
-    modelTypes <- getRstoxFrameworkDefinitions("stoxModelNames")
-    projectDescription <- vector("list", length(modelTypes))
-    names(projectDescription) <- modelTypes
-    setProjectDescriptionAsCurrent(projectPath, projectDescription = projectDescription, only.current = TRUE)
-    projectDescription
-}
 
 
-##### Manage (write, read, undo, redo) the project description: #####
 
-# 1. Funciton to get the path to a new project description file:
+
+
+# (1a) argumentFile:
+# Every process argument (one of processName, functionName, processParameters, processData, functionInputs and functionParameters) is written as an argumentFile.
+#
+# (1b) argumentValue:
+# The data stored in an argumentFile.
+#
+# (2) projectMemory:
+# A vector of the file paths of the argumentFile comprising the projectMemory
+#
+# (3) projectMemoryFile:
+# The file holding the argumentFileList. There is one argumentFileListFile for each change, which can involve multiple individal changes.
+#
+# (4) projectMemoryFilePath:
+# The path to the file holding the argumentFileList. There are two special files named originalArgumentFileList and currentArgumentFileList. 
+# 
+# (5) originalProjectMemory:
+# The file holding the original projectMemory as a list of files.
+# 
+# (5) currentProjectMemory:
+# The file holding the current projectMemory as a list of files.
+
+# (6) projectMemoryData:
+# A nested list of the individual argument values with levels modelName, processID, argumentName and argumentValue
+
+
+
+
+
+# Use getCurrentProjectMemoryData() in the modify-functions.
+
+
+
+
+
+
+
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
+# 5. Function to read the current project memory, or parts of it (e.g., argumentName = NULL indicate all arguments of the specified process(es)):
 #' 
 #' @export
 #' 
-getNewProjectDescriptionFilePath <- function(projectPath) {
+getCurrentProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = TRUE) {
+    
+    # Get a data.table of process argument file paths split into modelName, processID, argumentName and argumentFilePath:
+    argumentFileTable <- getArgumentFileTable(projectPath, type = "current")
+    
+    # Apply the selected model, process and argument, where NULL indicates all elements:
+    requestedModelNames    <- if(length(modelName))    argumentFileTable$modelName    %in% modelName    else TRUE
+    requestedprocessIDs    <- if(length(processID))    argumentFileTable$processID    %in% processID    else TRUE
+    requestedArgumentNames <- if(length(argumentName)) argumentFileTable$argumentName %in% argumentName else TRUE
+    requested              <- requestedModelNames & requestedprocessIDs & requestedArgumentNames
+    
+    # Get the requested files:
+    argumentFileTable <- argumentFileTable[requested, ]
+    
+    # Create an empty projectDescription and read and insert the files:
+    projectMemory <- list()
+    for(ind in seq_len(nrow(argumentFileTable))) {
+        # Using the "[[" operator does not generate the lists recursively like the "$" operator does, so we need to generate the neste structure when needed:
+        if(length(projectMemory[argumentFileTable$modelName[ind]]) == 0) {
+            projectMemory[[argumentFileTable$modelName[ind]]] <- list()
+        }
+        if(length(projectMemory[[argumentFileTable$modelName[ind]]] [argumentFileTable$processID[ind]]) == 0) {
+            projectMemory[[argumentFileTable$modelName[ind]]] [[argumentFileTable$processID[ind]]] <- list()
+        }
+        # Insert the argumentValue:
+        projectMemory[[argumentFileTable$modelName[ind]]] [[argumentFileTable$processID[ind]]] [[argumentFileTable$argumentName[ind]]] <- readRDS(argumentFileTable$argumentFile[[ind]])
+    }
+    
+    # Drop the levels with only one elements if requested:
+    if(drop1) {
+        projectMemory <- unlist1(projectMemory)
+    }
+    
+    # Return the list containing the requested project memory objects:
+    projectMemory
+}
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
+# Funciton to drop list levels with only one element:
+unlist1 <- function(x) {
+    while(length(x) == 1) {
+        x <- unlist(x, recursive = FALSE)
+    }
+    names(x) <- sub('.*\\.', '', names(x))
+    x
+}
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
+# Read the process argument files to a list of the elements modelName, processName, argumentName, argumentValue:
+getArgumentFileTable <- function(projectPath, type = c("current", "original")) {
+    
+    # Read the current project memory file, which contains the list of files holding the current process arguments:
+    projectMemoryFile <- getProjectPaths(projectPath, paste0(type[1], "ProjectMemoryFile"))
+    
+    # If the projectMemoryFile does not exist, return an empty data.table:
+    if(file.exists(projectMemoryFile)) {
+        readRDS(projectMemoryFile)
+    }
+    else {
+        data.table()
+    }
+    
+    
+    
+    # Parse (split by file separator) the file paths and extract the modelName, processID and argumentName
+    #argumentFilesSplit <- strsplit(argumentFiles, .Platform$file.sep, fixed = TRUE)
+    #argumentFilesSplit <- lapply(argumentFilesSplit, rev)
+    #modelName    <- sapply(argumentFilesSplit, "[[", 4)
+    #processID    <- sapply(argumentFilesSplit, "[[", 3)
+    #argumentName <- sapply(argumentFilesSplit, "[[", 2)
+    
+    # Create a data.table of the splitted file paths:
+    #data.table::data.table(
+    #    modelName = modelName, 
+    #    processID = processID, 
+    #    argumentName = argumentName, 
+    #    argumentFile = argumentFiles
+    #)
+}
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
+
+
+
+
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
+# Function for getting the file path of one specific process argument rds file:
+getNewArgumentFile <- function(projectPath, modelName, processID, argumentName) {
+    
     # Get the folder holding the project descriptions:
-    projectDescriptionFolder <- getProjectPaths(projectPath, "projectDescriptionFolder")
+    projectMemoryFolder <- getProjectPaths(projectPath, "projectMemoryFolder")
+    argumentFolder <- file.path(projectMemoryFolder, modelName, processID, argumentName)
+    
     # Define a string with time in ISO 8601 format:
     timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
     # Define the file name including the time string, and build the path to the file:
-    fileName <- paste0("projectDescription", "_", timeString, ".rds")
-    filePath <- file.path(projectDescriptionFolder, fileName)
+    fileName <- paste0(argumentName, "_", timeString, ".rds")
+    filePath <- file.path(argumentFolder, fileName)
     filePath
 }
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
 
-# 4. Function to write the original project description:
-#' 
-#' @export
-#' 
-setOriginalProjectDescription <- function(projectPath, projectDescription) {
-    # Get the path to the originalProjectDescriptionFile, and write the input projectDescription to it:
-    originalProjectDescriptionFile <- getProjectPaths(projectPath, "originalProjectDescriptionFile")
-    saveRDS(projectDescription, file = originalProjectDescriptionFile)
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
+# Function for getting the file path of a new project memory file:
+getNewProjectMemoryFile <- function(projectPath) {
+    # Get the folder holding the project descriptions:
+    projectMemoryFolder <- getProjectPaths(projectPath, "projectMemoryFolder")
+    
+    # Define a string with time in ISO 8601 format:
+    timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
+    # Define the file name including the time string, and build the path to the file:
+    fileName <- paste0("projectMemory", "_", timeString, ".rds")
+    filePath <- file.path(projectMemoryFolder, fileName)
+    filePath
 }
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
 
-# 4b. Function to get the original project description:
-#' 
-#' @export
-#' 
-getOriginalProjectDescription <- function(projectPath) {
-    # Get the path to the originalProjectDescriptionFile, and write the input projectDescription to it:
-    originalProjectDescriptionFile <- getProjectPaths(projectPath, "originalProjectDescriptionFile")
-    readRDS(file = originalProjectDescriptionFile)
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
+# Function for getting the file path of a current project memory file:
+getCurrentProjectMemoryFile <- function(projectPath) {
+    getProjectPaths(projectPath, "currentProjectMemoryFile")
 }
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
 
-# 5. Function to read the current project description:
-#' 
-#' @export
-#' 
-getCurrentProjectDescription <- function(projectPath) {
-    currentProjectDescriptionFile <- getProjectPaths(projectPath, "currentProjectDescriptionFile")
-    readRDS(currentProjectDescriptionFile)
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
+# Function for getting the file path of a original project memory file:
+getOriginalProjectMemoryFile <- function(projectPath) {
+    getProjectPaths(projectPath, "originalProjectMemoryFile")
 }
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
+
+
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
+# Function for saving an argument value to one process argument rds file:
+saveArgument <- function(projectPath, modelName, processID, argumentName, argumentValue) {
+    
+    # Get the path to the new argument file:
+    argumentFile <- getNewArgumentFile(projectPath, modelName, processID, argumentName)
+    if(!file.exists(dirname(argumentFile))) {
+        dir.create(dirname(argumentFile), showWarnings = FALSE, recursive = TRUE)
+    }
+    # Save the argument to the file, and return the file path:
+    saveRDS(argumentValue, file = argumentFile)
+    
+    # Return a list with the modelName, processID, argumentName and argumentFile:
+    # data.table::data.table(
+    #     modelName = modelName, 
+    #     processID = processID, 
+    #     argumentName = argumentName, 
+    #     argumentFile = argumentFile
+    # )
+    argumentFile
+}
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
 
 # 6. Function to write the current project description:
 #' 
 #' @export
 #' 
-setProjectDescriptionAsCurrent <- function(projectPath, projectDescription, only.current = FALSE) {
-    
-    # Save to the currentProjectDescriptionFile:
-    currentProjectDescriptionFile <- getProjectPaths(projectPath, "currentProjectDescriptionFile")
-    saveRDS(projectDescription, file = currentProjectDescriptionFile)
-    
-    if(!only.current) {
-        # Get the new project description file path and write the project description to this file:
-        newProjectDescriptionFilePath <- getNewProjectDescriptionFilePath(projectPath)
-        saveRDS(projectDescription, file = newProjectDescriptionFilePath)
-        
-        # Update the projectDescriptionIndexFile:
-        projectDescriptionIndex <- readProjectDescriptionIndexFile(projectPath)
-        # Delete any files with positive index:
-        hasPositiveIndex <- projectDescriptionIndex$Index > 0
-        if(any(hasPositiveIndex)) {
-            unlink(projectDescriptionIndex$Path[hasPositiveIndex])
-            projectDescriptionIndex <- projectDescriptionIndex[!hasPositiveIndex, ]
-        }
-        # Subtract 1 from the indices, and add the new project description file path:
-        projectDescriptionIndex$Index <- projectDescriptionIndex$Index - 1
-        projectDescriptionIndex <- rbind(
-            projectDescriptionIndex, 
-            data.table::data.table(
-                Index = 0, 
-                Path = newProjectDescriptionFilePath
-            ), 
-            fill = TRUE
-        )
-        # Write the projectDescriptionIndex to file:
-        writeProjectDescriptionIndexFile(projectPath, projectDescriptionIndex)
+setProjectMemory <- function(projectPath, modelName, processID, argumentName, argumentValue, projectMemoryData = NULL) {
+
+    # Accept a list of project memory:
+    if(length(projectMemoryData)) {
+        projectMemoryList <- splitProjectMemoryList(projectMemoryData)
+        modelName = projectMemoryList$modelName
+        processID = projectMemoryList$processID
+        argumentName = projectMemoryList$argumentName
+        argumentValue = projectMemoryList$argumentValue
     }
     
-}
-
-# 7. Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:
-#' 
-#' @export
-#' 
-unReDoProject <- function(projectPath, shift = 0) {
-    # Read the projectDescriptionIndexFile, and add the shift value to the index:
-    projectDescriptionIndex <- readProjectDescriptionIndexFile(projectPath)
-    projectDescriptionIndex$Index <- projectDescriptionIndex$Index - shift
-    writeProjectDescriptionIndexFile(projectPath, projectDescriptionIndex)
+    # Save all project arguments to files (shorter repeated to the longest):
+    newArgumentFiles <- mapply(saveArgument, projectPath, modelName, processID, argumentName, argumentValue)
     
-    # Copy the current projectDescription (with index = 0) to the currentProjectDescriptionFile:
-    fileWithCurrentProjectDescription  <- projectDescriptionIndex$Path[projectDescriptionIndex$Index == 0]
-    file.copy(
-        from = fileWithCurrentProjectDescription, 
-        to = getProjectPaths(projectPath, "currentProjectDescriptionFile"), 
-        overwrite = TRUE, 
-        copy.date = TRUE
+    # Get the current table of process argument files:
+    argumentFileTable <- getArgumentFileTable(projectPath)
+    
+    # Insert all changed files to the list of files defining the current project description:
+    insertArgumentFileTable <- data.table::data.table(
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = argumentName, 
+        argumentFile = newArgumentFiles
     )
+    argumentFileTable <- modifyArgumentFileTable(
+        argumentFileTable = argumentFileTable, 
+        insertArgumentFileTable = insertArgumentFileTable
+    )
+    
+    #for(ind in seq_len(nrow(newArgumentFileTable))) {
+    #    argumentFileTable [[newArgumentFileTable$modelName]] [[newArgumentFileTable$processID]] [[ne#wArgumentFileTable$argumentName]] <- newArgumentFileTable$argumentFile
+    #}
+    
+    # Save the list of project argument files to the current project description file  and to the new project description file:
+    currentProjectMemoryFile <- getCurrentProjectMemoryFile(projectPath)
+    newProjectMemoryFile     <- getNewProjectMemoryFile(projectPath)
+    saveRDS(argumentFileTable, file = currentProjectMemoryFile)
+    saveRDS(argumentFileTable, file = newProjectMemoryFile)
+    
+    
+    # Update the projectDescriptionIndexFile:
+    projectMemoryIndex <- readProjectMemoryIndex(projectPath)
+    
+    # Delete any files with positive index:
+    hasPositiveIndex <- projectMemoryIndex$Index > 0
+    if(any(hasPositiveIndex)) {
+        unlink(projectMemoryIndex$Path[hasPositiveIndex])
+        projectMemoryIndex <- projectMemoryIndex[!hasPositiveIndex, ]
+    }
+    # Subtract 1 from the indices, and add the new project description file path:
+    projectMemoryIndex$Index <- projectMemoryIndex$Index - 1
+    projectMemoryIndex <- rbind(
+        projectMemoryIndex, 
+        data.table::data.table(
+            Index = 0, 
+            Path = newProjectMemoryFile
+        ), 
+        fill = TRUE
+    )
+    # Write the projectDescriptionIndex to file:
+    writeProjectMemoryIndex(projectPath, projectMemoryIndex)
+    
+    # Return the new project description file path:
+    newProjectMemoryFile
+}
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
+# Split a projectMemoryData object to a list of the elements modelName, processName, argumentName, argumentValue:
+splitProjectMemoryList <- function(projectMemoryData) {
+    
+    # Unlist the projectMemory twice to reach the process argument level, then extract the names splitting by dot (as unlist concatenates the names with dot as separator):
+    projectMemoryData <- unlist(unlist(projectMemoryData, recursive = FALSE), recursive = FALSE)
+    model_process_argument <- names(projectMemoryData)
+    model_process_argument <- strsplit(model_process_argument, ".", fixed = TRUE)
+    # Extract the modelName, processID and argumentName
+    modelName <- sapply(model_process_argument, "[[", 1)
+    processID <- sapply(model_process_argument, "[[", 2)
+    argumentName <- sapply(model_process_argument, "[[", 3)
+    
+    # Create a data.table with the modelName, processID, argumentName and argumentValue (the latter may be a list):
+    data.table::data.table(
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = argumentName, 
+        argumentValue = unname(projectMemoryData)
+    )
+}
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
+modifyArgumentFileTable <- function(argumentFileTable, insertArgumentFileTable) {
+    
+    # Function to get the row index of a combination of values of the columns of argumentFileTable:
+    getRowIndex <- function(ind, insertArgumentFileTable, argumentFileTable) {
+        # Get the indices at which to insert the row of insertArgumentFileTable:
+        atModelName    <- insertArgumentFileTable$modelName[ind]    == argumentFileTable$modelName
+        atProcessID    <- insertArgumentFileTable$processID[ind]    == argumentFileTable$processID
+        atArgumentName <- insertArgumentFileTable$argumentName[ind] == argumentFileTable$argumentName
+        index <- which(atModelName & atProcessID & atArgumentName)
+        # Return NA for missing indices:
+        if(length(index) == 0) {
+            index <- NA
+        }
+        index
+    }
+    
+    # Identify the row which are not present in the current argumentFileTable:
+    index <- sapply(
+        seq_len(nrow(insertArgumentFileTable)), 
+        getRowIndex, 
+        insertArgumentFileTable = insertArgumentFileTable, 
+        argumentFileTable = argumentFileTable
+    )
+    
+    # Detect the new files:
+    additions <- is.na(index)
+    
+    # Replace the argument files:
+    argumentFileTable[index[!additions], "argumentFile"] <- insertArgumentFileTable[!additions, "argumentFile"]
+    
+    # Append the new argument files:
+    argumentFileTable <- rbind(
+        argumentFileTable, 
+        insertArgumentFileTable[additions, ], 
+        fill = TRUE
+    )
+    
+    # Return the modified table:
+    argumentFileTable
 }
 
 # 7.1 Function to read the projectDescriptionIndexFile:
 #' 
 #' @export
 #' 
-readProjectDescriptionIndexFile <- function(projectPath) {
+readProjectMemoryIndex <- function(projectPath) {
     # Read the projectDescriptionIndexFile:
-    projectDescriptionIndexFile <- getProjectPaths(projectPath, "projectDescriptionIndexFile")
+    projectMemoryIndexFile <- getProjectPaths(projectPath, "projectMemoryIndexFile")
     
     # If missing, create the file as an empty file:
-    if(!file.exists(projectDescriptionIndexFile)) {
+    if(!file.exists(projectMemoryIndexFile)) {
         NULL
     }
     else {
-        data.table::fread(projectDescriptionIndexFile, sep = "\t")
+        data.table::fread(projectMemoryIndexFile, sep = "\t")
     }
 }
 
@@ -717,11 +927,36 @@ readProjectDescriptionIndexFile <- function(projectPath) {
 #' 
 #' @export
 #' 
-writeProjectDescriptionIndexFile <- function(projectPath, projectDescriptionIndex) {
+writeProjectMemoryIndex <- function(projectPath, projectMemoryIndex) {
     # Read the projectDescriptionIndexFile:
-    projectDescriptionIndexFile <- getProjectPaths(projectPath, "projectDescriptionIndexFile")
-    data.table::fwrite(projectDescriptionIndex, file =  projectDescriptionIndexFile, sep = "\t")
+    projectMemoryIndexFile <- getProjectPaths(projectPath, "projectMemoryIndexFile")
+    data.table::fwrite(projectMemoryIndex, file =  projectMemoryIndexFile, sep = "\t")
 }
+
+
+
+# 7. Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:
+#' 
+#' @export
+#' 
+unReDoProject <- function(projectPath, shift = 0) {
+    # Read the projectDescriptionIndexFile, and add the shift value to the index:
+    projectMemoryIndex <- readProjectMemoryIndex(projectPath)
+    projectMemoryIndex$Index <- projectMemoryIndex$Index - shift
+    writeProjectMemoryIndex(projectPath, projectMemoryIndex)
+    
+    # Copy the projectMemory with index = 0 to the currentProjectMemoryFile:
+    fileWithCurrentProjectMemory  <- projectMemoryIndex$Path[projectMemoryIndex$Index == 0]
+    file.copy(
+        from = fileWithCurrentProjectMemory, 
+        to = getProjectPaths(projectPath, "currentProjectMemoryFile"), 
+        overwrite = TRUE, 
+        copy.date = TRUE
+    )
+}
+
+
+
 
 
 
@@ -774,24 +1009,22 @@ getFunctionDefaults <- function(functionName) {
 }
 
 
-            #' 
-            #' @export
-            #' 
-            getStoxFunctions <- function(modelName) {
-                
-                # Finish this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                
-                # Get the categories:
-                stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
-                # Get the names of the available functions:
-                availableFunctions <- names(functionAttributes)
-                # Get the category of each function, and split by category:
-                functionCategories <- lapply(functionAttributes, "[[", "processNameCategory")
-                functionAttributesByCategory <-split(functionAttributes, functionCategories)
-                # Keep only the valid categories:
-                functionAttributesByCategory <- functionAttributesByCategory[stoxModelNames]
-                
-            }
+#' 
+#' @export
+#' 
+getStoxFunctions <- function(modelName) {
+    
+    # Get the categories:
+    stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
+    # Get the names of the available functions:
+    availableFunctions <- names(stoxFunctionAttributes)
+    # Get the category of each function, and split by category:
+    functionCategories <- sapply(stoxFunctionAttributes, "[[", "functionCategory")
+    functionAttributesByCategory <-split(stoxFunctionAttributes, functionCategories)
+    
+    # Keep only the valid category:
+    functionAttributesByCategory[modelName]
+}
 
 
 
@@ -827,14 +1060,15 @@ createEmptyProcess <- function(modelName = "Baseline") {
 modifyFunctionName <- function(projectPath, modelName, processName, newFunctionName, only.current = FALSE) {
     
     # Get the project description:
-    projectDescription <- getCurrentProjectDescription(projectPath)
+    functionName <- getCurrentProjectDescription(projectPath, modelName, processName, "functionName")
     # Convert form possible JSON input:
     newFunctionName <- parseParameter(newFunctionName)
     
-    # Set the function name:
-    if(!identical(projectDescription[[modelName]][[processName]]$functionName, newFunctionName)) {
+    # If the new function name is different from the current:
+    if(!identical(functionName, newFunctionName)) {
         
-        projectDescription[[modelName]][[processName]]$functionName <- newFunctionName
+        # Set the function name:
+        functionName <- newFunctionName
         
         # Get the parameters to display:
         parametersToShowInStoX <- getParametersToShowInStoX(newFunctionName)
@@ -856,7 +1090,7 @@ modifyFunctionName <- function(projectPath, modelName, processName, newFunctionN
     }
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(projectPath, projectDescription, only.current = only.current)
+    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
 }
 #' 
 #' @export
@@ -894,7 +1128,7 @@ modifyFunctionParameters <- function(projectPath, modelName, processName, newFun
     }
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(projectPath, projectDescription, only.current = only.current)
+    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
 }
 #' 
 #' @export
@@ -933,7 +1167,7 @@ modifyFunctionInputs <- function(projectPath, modelName, processName, newFunctio
     
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(projectPath, projectDescription, only.current = only.current)
+    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
 }
 #' 
 #' @export
@@ -951,7 +1185,7 @@ modifyProcessName <- function(projectPath, modelName, processName, newProcessNam
     names(projectDescription[[modelName]])[names(projectDescription[[modelName]]) == processName] <- newProcessName
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(projectPath, projectDescription, only.current = only.current)
+    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
 }
 #' 
 #' @export
@@ -980,7 +1214,7 @@ modifyProcessParameters <- function(projectPath, modelName, processName, newProc
     
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(projectPath, projectDescription, only.current = only.current)
+    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
 }
 #' 
 #' @export
@@ -1106,7 +1340,7 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL, only.cur
     projectDescription[[modelName]][[processName]] <- createEmptyProcess()
     
     # Store the changes:
-    setProjectDescriptionAsCurrent(projectPath, projectDescription, only.current = only.current)
+    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
     
     # Set also the process name (must be done after saving the project description, as the function modifyProcessName reads and writes the currentProjectDescription.rds file):
     modifyProcessName(projectPath, modelName, processName, processName, only.current = FALSE)
@@ -1353,50 +1587,5 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3, s
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-            # This function checks that 
-            checkModel <- function(projectPath, modelName) {
-    
-                # Function to check that the function inputs of one process are all process names existing prior to that function:
-                checkFunctionInputs <- function(ind, functionInputs, processNames) {
-                    all(functionInputs %in% processNames[seq_len(ind - 1)])
-                }
-                
-                # Get the processes of the model:
-                processes <- getProcesses(projectPath, modelName)
-                
-                # (1) Check process names:
-                processNames <- names(processes)
-                duplicatedProcessNames <- processNames[duplicated(processNames)]
-                if(length(duplicatedProcessNames)) {
-                    message("The following process names are not unique: ", paste(duplicatedProcessNames))
-                    return(FALSE)
-                }
-                
-                # (2) Check that all function inputs are existing process names prior to the current process:
-                functionInputs <- lapply(processes, "[[", "functionInputs")
-                areValidFunctionInputs <- sapply(seq_along(functionInputs), checkFunctionInputs, functionInputs = functionInputs,           processNames = processNames)
-                processesWithInvalidFunctionInputs <- processNames[!areValidFunctionInputs]
-                if(length(processesWithInvalidFunctionInputs)) {
-                    message("The following processes have function inputs that are not the name of a prior process: ", paste         (processesWithInvalidFunctionInputs))
-                    return(FALSE)
-                }
-            }
-            
-            
-            # Function to update all relevant function inputs of a model to the new process name when a process has changed name:
-            updateFunctionInputs <- function() {
-                
-            }
+# Creating the memory folder structure:
 

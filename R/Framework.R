@@ -31,6 +31,10 @@
 initiateRstoxFramework <- function(){
     
     #### Fundamental settings of StoX: ####
+    
+    # Define the regular expression listing lower and upper characters, integers, underscore and dot:
+    validProcessNameSet <- "[[:alnum:]_.]"
+    
     # Define the valid output data classes:
     validOutputDataClasses <- c(
         "data.table", 
@@ -77,6 +81,18 @@ initiateRstoxFramework <- function(){
         Assignment = "Assignment", 
         AcousticPSU = "AcousticPSU", 
         SweptAreaPSU = "SweptAreaPSU"
+    )
+    
+    # Define the data types for the map modes "stratum", "assignment" and "PSU"
+    strataDataTypes <- c(
+        StratumPolygon = "StratumPolygon"
+    )
+    assignmentDataTypes <- c(
+        AcousticPSU = "AcousticPSU", 
+        SweptAreaPSU = "SweptAreaPSU"
+    )
+    PSUDataTypes <- c(
+        Assignment = "Assignment"
     )
     
     # Define the process parameters with default values:
@@ -134,7 +150,7 @@ initiateRstoxFramework <- function(){
     projectRDataFile = file.path(stoxFolders["Process"], "project.RData")
     projectXMLFile = file.path(stoxFolders["Process"], "project.xml")
     projectSavedStatusFile = file.path(statusFolder, "projectSavedStatus.txt")
-    projectStatusFile = file.path(statusFolder, "projectStatus.txt")
+    #currentProcessFile = file.path(statusFolder, "currentProcess.txt")
     
     # Memory files:
     originalProjectMemoryFile <- file.path(projectMemoryFolder, "originalProjectMemory.rds")
@@ -205,7 +221,7 @@ initiateRstoxFramework <- function(){
             projectRDataFile = projectRDataFile, 
             projectXMLFile = projectXMLFile, 
             projectSavedStatusFile = projectSavedStatusFile, 
-            projectStatusFile = projectStatusFile, 
+            #currentProcessFile = currentProcessFile, 
             originalProjectMemoryFile = originalProjectMemoryFile, 
             currentProjectMemoryFile = currentProjectMemoryFile, 
             projectMemoryIndexFile = projectMemoryIndexFile
@@ -378,7 +394,8 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     # Create the project session folder structure:
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
-    # Set the project memory to the template:
+    # Set the project memory as the selected template:
+    browser()
     setProjectMemory(projectPath = projectPath, projectMemory = thisTemplate)
     
     # Save the project, close it, and open:
@@ -562,7 +579,7 @@ readProjectDescription <- function(projectPath) {
 
 writeProjectDescription <- function(projectPath) {
     # Get the current project description:
-    projectDescription <- getCurrentProjectMemoryData(projectPath, drop1 = FALSE)
+    projectDescription <- getCurrentProjectMemoryData(projectPath)
     
     # Get the path to the project description file, and save the current project description:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
@@ -616,15 +633,16 @@ writeProjectDescription <- function(projectPath) {
 #' 
 #' @export
 #' 
-getCurrentProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = TRUE) {
+getCurrentProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE) {
     
     # Get a data.table of process argument file paths split into modelName, processID, argumentName and argumentFilePath:
-    argumentFileTable <- getArgumentFileTable(projectPath, type = "current")
+    argumentFileTable <- getArgumentFileTable(projectPath)
     
     # Apply the selected model, process and argument, where NULL indicates all elements:
-    requestedModelNames    <- if(length(modelName))    argumentFileTable$modelName    %in% modelName    else TRUE
-    requestedprocessIDs    <- if(length(processID))    argumentFileTable$processID    %in% processID    else TRUE
-    requestedArgumentNames <- if(length(argumentName)) argumentFileTable$argumentName %in% argumentName else TRUE
+    TRUEvector <- !logical(nrow(argumentFileTable))
+    requestedModelNames    <- if(length(modelName))    argumentFileTable$modelName    %in% modelName    else TRUEvector
+    requestedprocessIDs    <- if(length(processID))    argumentFileTable$processID    %in% processID    else TRUEvector
+    requestedArgumentNames <- if(length(argumentName)) argumentFileTable$argumentName %in% argumentName else TRUEvector
     requested              <- requestedModelNames & requestedprocessIDs & requestedArgumentNames
     
     # Get the requested files:
@@ -633,20 +651,62 @@ getCurrentProjectMemoryData <- function(projectPath, modelName = NULL, processID
     # Create an empty projectDescription and read and insert the files:
     projectMemory <- list()
     for(ind in seq_len(nrow(argumentFileTable))) {
+        
+        # For convenience get the current modelName, processID, argumentName and argument:
+        thisModelName <- argumentFileTable$modelName[ind]
+        thisProcessID <- argumentFileTable$processID[ind]
+        thisArgumentName <- argumentFileTable$argumentName[ind]
+        thisArgumentValue <- readRDS(argumentFileTable$argumentFile[[ind]])
+        
+        # Append the missing list elements down to the argument:
+        if(!thisModelName %in% names(projectMemory)) {
+            projectMemory <- append(
+                projectMemory, 
+                structure(list(NULL), names = thisModelName)
+            )
+        }
+        if(!thisProcessID %in% names(projectMemory [[thisModelName]])) {
+            projectMemory [[thisModelName]] <- append(
+                projectMemory[[thisModelName]], 
+                structure(list(NULL), names = thisProcessID)
+            )
+        }
+        # If missing, append the argument, and if not replace it:
+        if(!thisArgumentName %in% names(projectMemory [[thisModelName]] [[thisProcessID]])) {
+            projectMemory [[thisModelName]] [[thisProcessID]] <- append(
+                projectMemory [[thisModelName]] [[thisProcessID]], 
+                structure(list(thisArgumentValue), names = thisArgumentName)
+            )
+        }
+        else {
+            projectMemory [[thisModelName]] [[thisProcessID]] [[thisArgumentName]] <- thisArgumentValue
+        }
+        
+        
+        
         # Using the "[[" operator does not generate the lists recursively like the "$" operator does, so we need to generate the neste structure when needed:
-        if(length(projectMemory[argumentFileTable$modelName[ind]]) == 0) {
-            projectMemory[[argumentFileTable$modelName[ind]]] <- list()
-        }
-        if(length(projectMemory[[argumentFileTable$modelName[ind]]] [argumentFileTable$processID[ind]]) == 0) {
-            projectMemory[[argumentFileTable$modelName[ind]]] [[argumentFileTable$processID[ind]]] <- list()
-        }
-        # Insert the argumentValue:
-        projectMemory[[argumentFileTable$modelName[ind]]] [[argumentFileTable$processID[ind]]] [[argumentFileTable$argumentName[ind]]] <- readRDS(argumentFileTable$argumentFile[[ind]])
+        #if(length(projectMemory[argumentFileTable$modelName[ind]]) == 0) {
+        #    projectMemory[[argumentFileTable$modelName[ind]]] <- list()
+        #}
+        #if(length(projectMemory[[argumentFileTable$modelName[ind]]] [argumentFileTable$processID[ind]]) == 0) {
+        #    projectMemory[[argumentFileTable$modelName[ind]]] [[argumentFileTable$processID[ind]]] <- list()
+        #}
+        ## Insert the argumentValue:
+        #projectMemory[[argumentFileTable$modelName[ind]]] [[argumentFileTable$processID[ind]]] [[argumentFileTable$argumentName[ind]]] <- readRDS(argumentFileTable$argumentFile[[ind]])
     }
     
     # Drop the levels with only one elements if requested:
     if(drop1) {
-        projectMemory <- unlist1(projectMemory)
+        if(length(modelName) == 1) {
+            projectMemory <- projectMemory[[modelName]]
+        }
+        if(length(processID) == 1) {
+            projectMemory <- projectMemory[[processID]]
+        }
+        if(length(argumentName) == 1) {
+            projectMemory <- projectMemory[[argumentName]]
+        }
+        #projectMemory <- unlist1(projectMemory)
     }
     
     # Return the list containing the requested project memory objects:
@@ -656,46 +716,40 @@ getCurrentProjectMemoryData <- function(projectPath, modelName = NULL, processID
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
 # Funciton to drop list levels with only one element:
-unlist1 <- function(x) {
-    while(length(x) == 1) {
-        x <- unlist(x, recursive = FALSE)
-    }
-    names(x) <- sub('.*\\.', '', names(x))
-    x
-}
+#unlist1 <- function(x) {
+#    browser()
+#    while(length(x) == 1) {
+#        x <- unlist(x, recursive = FALSE)
+#    }
+#    names(x) <- sub('.*\\.', '', names(x))
+#    x
+#}
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
-# Read the process argument files to a list of the elements modelName, processName, argumentName, argumentValue:
-getArgumentFileTable <- function(projectPath, type = c("current", "original")) {
+# Read the process argument files to a list of the elements modelName, processID, argumentName, argumentValue:
+getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL, type = c("current", "original")) {
     
     # Read the current project memory file, which contains the list of files holding the current process arguments:
     projectMemoryFile <- getProjectPaths(projectPath, paste0(type[1], "ProjectMemoryFile"))
     
     # If the projectMemoryFile does not exist, return an empty data.table:
     if(file.exists(projectMemoryFile)) {
-        readRDS(projectMemoryFile)
+        # Read the projectMemoryFile:
+        argumentFileTable <- readRDS(projectMemoryFile)
+        # Subset out the model if requested:
+        if(length(modelName)) {
+            argumentFileTable <- subset(argumentFileTable, modelName == modelName)
+        }
+        if(length(processID)) {
+            argumentFileTable <- subset(argumentFileTable, processID == processID)
+        }
     }
     else {
-        data.table()
+        argumentFileTable <- data.table()
     }
     
-    
-    
-    # Parse (split by file separator) the file paths and extract the modelName, processID and argumentName
-    #argumentFilesSplit <- strsplit(argumentFiles, .Platform$file.sep, fixed = TRUE)
-    #argumentFilesSplit <- lapply(argumentFilesSplit, rev)
-    #modelName    <- sapply(argumentFilesSplit, "[[", 4)
-    #processID    <- sapply(argumentFilesSplit, "[[", 3)
-    #argumentName <- sapply(argumentFilesSplit, "[[", 2)
-    
-    # Create a data.table of the splitted file paths:
-    #data.table::data.table(
-    #    modelName = modelName, 
-    #    processID = processID, 
-    #    argumentName = argumentName, 
-    #    argumentFile = argumentFiles
-    #)
+    argumentFileTable
 }
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
 
@@ -774,6 +828,19 @@ saveArgument <- function(projectPath, modelName, processID, argumentName, argume
 }
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE
 
+
+# 6. Function to create (write for the first time) the project memory, typically from a tempalte of from a project description or potentially from a user defined list:
+#' 
+#' @export
+#' 
+createProjectMemory <- function(projectPath, projectMemoryData) {
+    
+    # For each process insert the defult function parameters, and then overwrite with any given function parameters:
+    
+    
+    # For each process insert the defult process parameters, and then overwrite with any given process parameters:
+    
+}
 # 6. Function to write the current project description:
 #' 
 #' @export
@@ -844,7 +911,7 @@ setProjectMemory <- function(projectPath, modelName, processID, argumentName, ar
     newProjectMemoryFile
 }
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<< DONE
-# Split a projectMemoryData object to a list of the elements modelName, processName, argumentName, argumentValue:
+# Split a projectMemoryData object to a list of the elements modelName, processID, argumentName, argumentValue:
 splitProjectMemoryList <- function(projectMemoryData) {
     
     # Unlist the projectMemory twice to reach the process argument level, then extract the names splitting by dot (as unlist concatenates the names with dot as separator):
@@ -1035,7 +1102,204 @@ getStoxFunctions <- function(modelName) {
 
 
 
+getFunctionName <- function(projectPath, modelName, processID) {
+    getCurrentProjectMemoryData(
+        projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "functionName", 
+        drop1 = TRUE
+    )
+}
 
+getFunctionInputs <- function(projectPath, modelName, processID) {
+    getCurrentProjectMemoryData(
+        projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "functionInputs", 
+        drop1 = TRUE
+    )
+}
+
+getFunctionParameters <- function(projectPath, modelName, processID) {
+    getCurrentProjectMemoryData(
+        projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "functionParameters", 
+        drop1 = TRUE
+    )
+}
+
+getProcessName <- function(projectPath, modelName, processID) {
+    getCurrentProjectMemoryData(
+        projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processName", 
+        drop1 = TRUE
+    )
+}
+
+getProcessParameters <- function(projectPath, modelName, processID) {
+    getCurrentProjectMemoryData(
+        projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processParameters", 
+        drop1 = TRUE
+    )
+}
+
+getProcessData <- function(projectPath, modelName, processID) {
+    getCurrentProjectMemoryData(
+        projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        drop1 = TRUE
+    )
+}
+
+getDataType <- function(projectPath, modelName, processID) {
+    # Get the function name:
+    functionName <- getFunctionName(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    # Get the data type from the function name:
+    getFunctionOutputDataType(functionName)
+}
+    
+
+
+
+getProcessNameIDTable <- function(projectPath, modelName) {
+    
+    # Read the argumentFileTable:
+    argumentFileTable <- getArgumentFileTable(projectPath, modelName = modelName)
+    
+    # Extract the unique process IDs:
+    processIDs <- unique(argumentFileTable$processID)
+    
+    # Get the process names:
+    processNames <- mapply(
+        getProcessName, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processIDs
+    )
+    
+    # Return a data.table of the process names and IDs:
+    data.table::data.table(
+        processName = processNames, 
+        processID = processIDs
+    )
+}
+
+
+getProcessID <- function(processName) {
+    # Get the table linking process names and IDs:
+    processNameIDTable <- getProcessNameIDTable(projectPath, modelName)
+    # Extract the requested process ID:
+    unlist(processNameIDTable[processName == processName, "processID"])
+}
+
+
+#' 
+#' @export
+#' 
+getProcessTable <- function(projectPath, modelName) {
+    
+    # Get a table of process name and ID:
+    processNameIDTable <- getProcessNameIDTable(projectPath, modelName)
+        
+    ###     
+    ### # Get the current table of process argument files:
+    ### argumentFileTable <- getArgumentFileTable(projectPath, modelName == modelName)
+    ### 
+    ### # Get processID and then processName:
+    ### processIDs <- unique(argumentFileTable$processID)
+    ### processNames <- mapply(
+    ###     getProcessName, 
+    ###     projectPath = projectPath, 
+    ###     modelName = modelName, 
+    ###     processID = processIDs
+    ### )
+    
+    # Get the function names for use when determining the 'canShowInMap' and 'hasProcessData'
+    functionNames <- mapply(
+        getFunctionName, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processNameIDTable$processIDs
+    )
+    
+    # Check whether the data type can be shown in the map:
+    canShowInMap <- getCanShowInMap(functionNames)
+    
+    # Check whether the user has defined that the data from the process should be shown in the map:
+    processParameters <- mapply(
+        getProcessParameters, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processNameIDTable$processIDs
+    )
+    # Extract the "showInMap" parameter:
+    doShowInMap <- sapply(processParameters, "[[", "showInMap")
+    
+    # Check whether the process returns process data:
+    hasProcessData <- sapply(functionNames, isProcessDataFunction)
+    
+    # Group the info to a table for now:
+    processTable <- rbind(
+        processNameIDTable, # Contains processName and processID
+        data.table::data.table(
+            functionName = functionNames, 
+            canShowInMap = canShowInMap, 
+            doShowInMap = doShowInMap, 
+            hasProcessData = hasProcessData
+        )
+    )
+        
+    # Get the funciton inputs (as a list):
+    functionInputs <- mapply(
+        getFunctionInputs, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processIDs
+    )
+    # Get the processes that has errors:
+    hasError <- sapply(
+        seq_along(processNames), 
+        getFunctionInputErrors, 
+        processTable = processTable, 
+        functionInputs = functionInputs
+    )
+    processTable$hasError <- hasError
+    
+    # Get also the current process, and define the column 'hasBeenRun':
+    #currentProcess <- getCurrentProcess(projectPath, modelName)
+    #hasBeenRun <- seq_along(processNames) <= which(processNames == currentProcess)
+    #processTable$hasError <- hasBeenRun
+    
+    
+    # Reads a table of the following columns:
+    # 1. processName
+    # 4. canShowInMap
+    # 5. hasProcessData
+    # 6. doShowInMap
+    
+    # 2. hasBeenRun
+    # 3. hasError
+    
+    # 
+    # There are two different types of actions, changing processes and changing parameters. Changing processes iduces reset of current process, whereas changing parameters do not. This will be added to the projectDescriptionIndex.txt. Errors given by HasError only occur when there are missing inputs, that is that the processes requersted in funciton inputs do not exist BEFORE the actual function. This will be a check to run in the route-funcitons Add-, Delete- and MoreProcess, which call the corresponding add-, delete- and moreProcess in Framework.R, and then calls getProjectList.
+    
+    processTable
+}
 
 
 
@@ -1053,147 +1317,304 @@ createEmptyProcess <- function(modelName = "Baseline") {
 }
 
 
-
-#' 
-#' @export
-#' 
-modifyFunctionName <- function(projectPath, modelName, processName, newFunctionName, only.current = FALSE) {
+# Function to detect which of the process parameters to include/exclude:
+getValidProcessParameterNames <- function(functionName) {
+    # Get the possible process parameters:
+    processParameters <- getRstoxFrameworkDefinitions("processParameters")
+    possibleProcessParameters <- names(processParameters)
     
-    # Get the project description:
-    functionName <- getCurrentProjectDescription(projectPath, modelName, processName, "functionName")
-    # Convert form possible JSON input:
-    newFunctionName <- parseParameter(newFunctionName)
+    # Remove "showInMap" if relevant:
+    if(!getCanShowInMap(functionName)) {
+        possibleProcessParameters <- setdiff(possibleProcessParameters, "showInMap")
+    }
+    
+    # Return the vector of process parameters names:
+    possibleProcessParameters
+}
+
+
+
+
+
+
+
+
+
+setFunctionName <- function(process, newFunctionName) {
     
     # If the new function name is different from the current:
-    if(!identical(functionName, newFunctionName)) {
+    if(!identical(process$functionName, newFunctionName)) {
         
-        # Set the function name:
-        functionName <- newFunctionName
+        # Insert the function name:
+        process$functionName <- newFunctionName
         
-        # Get the parameters to display:
-        parametersToShowInStoX <- getParametersToShowInStoX(newFunctionName)
+        # Remove any process parameters which should not be shown:
+        possibleProcessParameters <- getValidProcessParameterNames(functionName)
+        process$processParameters <- process$processParameters[possibleProcessParameters]
+        
+        # Get the parameters to display, and their defaults:
+        parametersToShowInStoX <- getParametersToShowInStoX(process$functionName)
+        defaults <- getFunctionDefaults(process$functionName)[parametersToShowInStoX]
         
         # Detect which parameters are data types, which identifies them as function inputs (outputs from other processes):
         areInputs <- isFunctionInput(parametersToShowInStoX)
         
-        # Get the default values:
-        defaults <- getFunctionDefaults(newFunctionName)
-        defaults <- defaults[parametersToShowInStoX]
-        
         # Split the defaults into function parameters and function inputs:
-        functionParameters <- defaults[!areInputs]
-        functionInputs <- defaults[areInputs]
+        process$functionParameters <- defaults[!areInputs]
+        process$functionInputs <- defaults[areInputs]
         
-        # Change the function parameters and inputs:
-        projectDescription[[modelName]][[processName]]$functionParameters <- functionParameters
-        projectDescription[[modelName]][[processName]]$functionInputs <- functionInputs
+        # Delete the processData, since these are no longer valid for the new function:
+        process$processData <- list()
     }
     
+    # Return the process:
+    process
+}
+
+onlyValidCharactersInProcessnName <- function(newProcessnName) {
+    # Check for invalid characters:
+    indValidCharacters <- gregexpr(validProcessNameSet, newProcessnName)
+    indInvalidCharacters <- setdiff(seq_len(newProcessnName), indValidCharacters)
+    if(length(indInvalidCharacters)) {
+        warning("Process names can only contain lower and upper letters, numbers, dot and underscore. Contained ", paste(strsplit(newProcessnName, "")[indInvalidCharacters], collapse = ", "))
+        FALSE
+    }
+    else {
+        TRUE
+    }
+}
+
+checkProcessNameAgainstExisting <- function(projectPath, modelName, newProcessnName) {
+    # Check the process names of the model:
+    processNameIDTable <- getProcessNameIDTable(projectPath = projectPath, modelName = modelName)
+    if(newProcessnName %in% processNameIDTable$processName) {
+        warning("The new process cannot be identical to the name of an existing process within the same model")
+        FALSE
+    }
+    else {
+        TRUE
+    }
+}
+
+validateProcessnName <- function(projectPath, modelName, newProcessnName) {
+    onlyValidCharactersInProcessnName(newProcessnName) & checkProcessNameAgainstExisting(projectPath = projectPath, modelName = modelName, newProcessnName = newProcessnName)
+}
+
+
+
+#' 
+#' @export
+#' 
+modifyFunctionName <- function(projectPath, modelName, processID, newFunctionName) {
+    
+    # Get the project description:
+    process <- getFunctionName(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
+    # Convert from possible JSON input:
+    newFunctionName <- parseParameter(newFunctionName)
+    
+    # Set the function name, and the corresponding default function inputs and parameters, as well as removing any process parameters that should not be included (showImMap):
+    process <- setFunctionName(process, newFunctionName)
+        
     # Store the changes:
-    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
+    setProjectMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = c(
+            "functionName", 
+            "functionParameters", 
+            "functionInputs", 
+            "processParameters", 
+            "processData"
+        ), 
+        argumentValue = list(
+            functionName = process$functionName, 
+            functionParameters = process$functionParameters, 
+            functionInputs = process$functionInputs, 
+            functionParameters = process$functionParameters, 
+            processData = process$processData
+        )
+    )
 }
 #' 
 #' @export
 #' 
-modifyFunctionParameters <- function(projectPath, modelName, processName, newFunctionParameters, only.current = FALSE) {
+modifyProcessName <- function(projectPath, modelName, processID, newProcessName) {
     
-    # Get the project description:
-    projectDescription <- getCurrentProjectDescription(projectPath)
+    # Get the current process name:
+    processName <- getProcessName(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
+    # Convert from possible JSON input:
+    newProcessName <- parseParameter(newProcessName)
+    
+    if(! identical(processName, newProcessName)) {
+        # Validate the new process name (for invalid characters):
+        if(validateProcessnName(projectPath = projectPath, modelName = modelName, newProcessnName = newProcessnName)) {
+            setProjectMemory(
+                projectPath = projectPath, 
+                modelName = modelName, 
+                processID = processID, 
+                argumentName = "processName", 
+                argumentValue = newProcessnName
+            )
+        }
+    }
+}
+#' 
+#' @export
+#' 
+modifyFunctionParameters <- function(projectPath, modelName, processID, newFunctionParameters) {
+    
+    # Get the function parameters:
+    functionParameters <- getFunctionParameters(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
     # Convert form possible JSON input:
     newFunctionParameters <- parseParameter(newFunctionParameters)
     
     # Report a warning for function parameters not present in the process:
-    presentParameters <- names(projectDescription[[modelName]][[processName]]$functionParameters)
-    valid <- names(newFunctionParameters) %in% presentParameters
+    newParameterNames <- names(newFunctionParameters)
+    presentParameterNames <- names(functionParameters)
+    valid <- newParameterNames %in% presentParameterNames
+    
     if(any(!valid)) {
+        # Get the function and process name to report in a warning to the user:
+        functionName <- getFunctionName(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+        processName <- getProcessName(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+        # Warn the user that there are invalid function parameters:
         warning(
             "The following function parameters are not present for the function ", 
-            projectDescription[[modelName]][[processName]]$functionName, 
+            functionName, 
             " of the process ", 
-            projectDescription[[modelName]][[processName]]$processName, 
+            processName, 
             ": ", 
-            paste(names(newFunctionParameters)[!valid], collapse = ", "), 
+            paste(newParameterNames[!valid], collapse = ", "), 
             ". ", 
             "Present parameters are ", 
-            if(length(presentParameters)) paste(presentParameters, sep = ", ") else "(No inputs)"
+            if(length(presentParameterNames)) paste(presentParameterNames, sep = ", ") else "(No parameters)"
         )
         
-        # Keep only the newFunctionParameters present in the existing functionParameters:
+        # Keep only the new function parameters that present in the existing function parameters:
         newFunctionParameters <- newFunctionParameters[valid]
     }
     
     # Insert the function parameters (one by one for safety):
-    for(ind in seq_along(newFunctionParameters)) {
-        projectDescription[[modelName]][[processName]]$functionParameters[[names(newFunctionParameters[ind])]] <- newFunctionParameters[[ind]]
+    if(length(newFunctionParameters)) {
+        for(ind in seq_along(newFunctionParameters)) {
+            thisNewFunctionParameter <-  newFunctionParameters[[ind]]
+            thisNewFunctionParameterName <- names(thisNewFunctionParameter)
+            functionParameters[[thisNewFunctionParameterName]] <- thisNewFunctionParameter
+        }
+        
+        # Store the changes:
+        setProjectMemory(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            argumentName = "functionParameters", 
+            argumentValue = functionParameters
+        )
     }
-    
-    # Store the changes:
-    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
 }
 #' 
 #' @export
 #' 
-modifyFunctionInputs <- function(projectPath, modelName, processName, newFunctionInputs, only.current = FALSE) {
+modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionInputs, only.current = FALSE) {
     
-    # Get the project description:
-    projectDescription <- getCurrentProjectDescription(projectPath)
+    # Get the function inputs:
+    functionInputs <- getFunctionInputs(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
     # Convert form possible JSON input:
     newFunctionInputs <- parseParameter(newFunctionInputs)
     
     # Report a warning for function inputs not present in the process:
-    presentInputs <- names(projectDescription[[modelName]][[processName]]$functionInputs)
-    valid <- names(newFunctionInputs) %in% presentInputs
+    newInputNames <- names(newFunctionInputs)
+    presentInputNames <- names(functionInput)
+    valid <- newInputNames %in% presentInputNames
+    
     if(any(!valid)) {
+        # Get the function and process name to report in a warning to the user:
+        functionName <- getFunctionName(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+        processName <- getProcessName(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+        # Warn the user that there are invalid function inputs:
         warning(
             "The following function inputs are not present for the function ", 
-            projectDescription[[modelName]][[processName]]$functionName, 
+            functionName, 
             " of the process ", 
-            projectDescription[[modelName]][[processName]]$processName, 
+            processName, 
             ": ", 
-            paste(names(newFunctionInputs)[!valid], collapse = ", "), 
+            paste(newInputNames[!valid], collapse = ", "), 
             ". ", 
-            "Present inputs are ", 
-            if(length(presentInputs)) paste(presentInputs, sep = ", ") else "(No inputs)"
+            "Present parameters are ", 
+            if(length(presentInputNames)) paste(presentInputNames, sep = ", ") else "(No inputs)"
         )
         
-        # Keep only the newFunctionParameters present in the existing functionParameters:
+        # Keep only the new function parameters that present in the existing function parameters:
         newFunctionInputs <- newFunctionInputs[valid]
     }
     
-    # Insert the function inputs:
-    for(ind in seq_along(newFunctionInputs)) {
-        projectDescription[[modelName]][[processName]]$functionInputs[[names(newFunctionInputs[ind])]] <- newFunctionInputs[[ind]]
+    # Insert the function inputs (one by one for safety):
+    if(length(newFunctionInputs)) {
+        for(ind in seq_along(newFunctionInputs)) {
+            thisNewFunctionInput <-  newFunctionInputs[[ind]]
+            thisNewFunctionInputName <- names(thisNewFunctionInput)
+            functionInputs[[thisNewFunctionInputName]] <- thisNewFunctionInput
+        }
+        
+        # Store the changes:
+        setProjectMemory(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            argumentName = "functionInputs", 
+            argumentValue = functionInputs
+        )
     }
-    
-    
-    # Store the changes:
-    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
 }
 #' 
 #' @export
 #' 
-modifyProcessName <- function(projectPath, modelName, processName, newProcessName, only.current = FALSE) {
+modifyProcessParameters <- function(projectPath, modelName, processID, newProcessParameters) {
     
-    # Get the project description:
-    projectDescription <- getCurrentProjectDescription(projectPath)
-    # Convert form possible JSON input:
-    newProcessName <- parseParameter(newProcessName)
+    # Get the function inputs:
+    processParameters <- getProcessParameters(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
     
-    # Set the process name:
-    projectDescription[[modelName]][[processName]]$processName <- newProcessName
-    # Rename the process in the list of processes of the model:
-    names(projectDescription[[modelName]])[names(projectDescription[[modelName]]) == processName] <- newProcessName
-    
-    # Store the changes:
-    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
-}
-#' 
-#' @export
-#' 
-modifyProcessParameters <- function(projectPath, modelName, processName, newProcessParameters, only.current = FALSE) {
-    
-    # Get the project description:
-    projectDescription <- getCurrentProjectDescription(projectPath)
     # Convert form possible JSON input:
     newProcessParameters <- parseParameter(newProcessParameters)
     
@@ -1209,17 +1630,23 @@ modifyProcessParameters <- function(projectPath, modelName, processName, newProc
     
     # Insert the process parameters:
     for(ind in seq_along(newProcessParameters)) {
-        projectDescription[[modelName]][[processName]]$processParameters[[names(newProcessParameters[ind])]] <- newProcessParameters[[ind]]
+        processParameters[[names(newProcessParameters[ind])]] <- newProcessParameters[[ind]]
     }
     
     
     # Store the changes:
-    setCurrentProjectDescription(projectPath, projectDescription, only.current = only.current)
+    setProjectMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processParameters", 
+        argumentValue = processParameters
+    )
 }
 #' 
 #' @export
 #' 
-modifyProcess <- function(projectPath, modelName, processName, newValues, only.current = FALSE) {
+modifyProcess <- function(projectPath, modelName, processID, newValues, only.current = FALSE) {
     
     # The values of the process must be changed in the following order:
     # 1. Function name
@@ -1231,36 +1658,13 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, only.c
     # Convert form possible JSON input:
     newValues <- parseParameter(newValues)
     
-    # Process name:
-    if(length(newValues$processName)) {
-        modifyProcessName(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processName = processName, 
-            newProcessName = newValues$processName, 
-            only.current = only.current
-        )
-    }
-    
-    # Process parameters:
-    if(length(newValues$processParameters)) {
-        modifyProcessParameters(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processName = processName, 
-            newProcessParameters = newValues$processParameters, 
-            only.current = only.current
-        )
-    }
-    
     # Function name:
     if(length(newValues$functionName)) {
         modifyFunctionName(
             projectPath = projectPath, 
             modelName = modelName, 
-            processName = processName, 
-            newFunctionName = newValues$functionName, 
-            only.current = only.current
+            processID = processID, 
+            newFunctionName = newValues$functionName
         )
     }
     
@@ -1269,9 +1673,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, only.c
         modifyFunctionParameters(
             projectPath = projectPath, 
             modelName = modelName, 
-            processName = processName, 
-            newFunctionParameters = newValues$functionParameters, 
-            only.current = only.current
+            processID = processID, 
+            newFunctionParameters = newValues$functionParameters
         )
     }
     
@@ -1280,9 +1683,27 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, only.c
         modifyFunctionInputs(
             projectPath = projectPath, 
             modelName = modelName, 
-            processName = processName, 
-            newFunctionInputs = newValues$functionInputs, 
-            only.current = only.current
+            processID = processID, 
+            newFunctionInputs = newValues$functionInputs
+        )
+    }
+    # Process name:
+    if(length(newValues$processName)) {
+        modifyProcessName(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            newProcessName = newValues$processName
+        )
+    }
+    
+    # Process parameters:
+    if(length(newValues$processParameters)) {
+        modifyProcessParameters(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            newProcessParameters = newValues$processParameters
         )
     }
     
@@ -1472,11 +1893,25 @@ runProcess <- function(projectPath, modelName, processName) {
 #' 
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processName) {
-    folderName <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processName = processName)
-    # There will always be only one file in each folder of process data, so we pick the first element:
-    filePath <- list.files(folderName, full.names = TRUE, pattern = "\\.rds$")[1]
-    readRDS(filePath)
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL) {
+    
+    # Get the directory holding the output files:
+    folderName <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID)
+    
+    # The tables are saved by individual files named by the table name:
+    if(length(tableName)) {
+        filePahts <- file.path(folderName, paste(tableName, "rds$", sep = "."))
+        if(!all(file.exists(filePahts))) {
+            warning("The requested output (", paste(tableName, collapse = ", "), ") does not exist for the process ", getProcessName(projectPath = projectPath, modelName = modelName, processID = processID))
+        }
+    }
+    else {
+        filePahts <- list.files(folderName, full.names = TRUE, pattern = "\\.rds$")
+    }
+    
+    # Read the files to a list:
+    processOutput <- lapply(filePahts, readRDS)
+    unlist(processOutput, recursive = FALSE)
 }
 
 

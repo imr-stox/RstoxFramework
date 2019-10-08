@@ -62,118 +62,341 @@ getAvailableTemplatesDescriptions <- function() {
 # 5. CanModify
 # 6. ShowInMap
 
-#' 
-#' @export
-#' 
-getProcessTable <- function(projectPath, modelName) {
+
+# Function to get whether the process has input data error:
+getFunctionInputErrors <- function(ind, processTable, functionInputs) {
     
-    getFunctionInputErrors <- function(ind, processTable, functionInputs) {
+    #### Check wheter the processes from which process output is requested as funciton input exist prior to the current process: ####
+    # Get names of processes prior to the current process:
+    priorProcesses <- processTable$processName[seq_len(ind - 1)]
+    # Get the names of the processes from which funciton intpu is requested:
+    requestedProcessNames <- unlist(functionInputs[[ind]])
+    requestedFunctionInputDataTypes <- names(requestedProcessNames)
+    
+    # Are all of the function inputs present in the prior processes?:
+    requestedProcessesExist <- all(requestedProcessNames %in% priorProcesses)
+    correctDataTypeRequested <- FALSE
+    
+    if(!requestedProcessesExist) {
+        warning(
+            "The following requested processes do not exist prior to the process", 
+            processTable$processName[ind], 
+            ": ", 
+            paste(setdiff(requestedProcessNames, priorProcesses), collapse = ", ")
+        )
+    }
+    #### Check also that the processes given by the function inputs acutally return the desired data type: ####
+    else {
+        # Get the indices of these processes in the processTable:
+        indexOfRelevantPriorProcesses <- match(requestedProcessNames, priorProcesses)
+        # Match the output data types of the relevant prior processes:
+        correctDataTypeRequested <- processTable$dataType[indexOfRelevantPriorProcesses] == requestedFunctionInputDataTypes
         
-        #### Check wheter the processes from which process output is requested as funciton input exist prior to the current process: ####
-        # Get names of processes prior to the current process:
-        priorProcesses <- processTable$processName[seq_len(ind - 1)]
-        # Get the names of the processes from which funciton intpu is requested:
-        requestedProcessNames <- unlist(functionInputs[[ind]])
-        requestedFunctionInputDataTypes <- names(requestedProcessNames)
         
-        # Are all of the function inputs present in the prior processes?:
-        requestedProcessesExist <- all(requestedProcessNames %in% priorProcesses)
-        correctDataTypeRequested <- FALSE
-        
-        if(!requestedProcessesExist) {
+        if(!all(correctDataTypeRequested)) {
             warning(
-                "The following requested processes do not exist prior to the process", 
-                processTable$processName[ind], 
-                ": ", 
-                paste(setdiff(requestedProcessNames, priorProcesses), collapse = ", ")
+                "The following processes do not have the requested data type output: ", 
+                paste(processTable$dataType[indexOfRelevantPriorProcesses][requestedProcessNames], collapse = ", ")
             )
         }
-        #### Check also that the processes given by the function inputs acutally return the desired data type: ####
-        else {
-            # Get the indices of these processes in the processTable:
-            indexOfRelevantPriorProcesses <- match(requestedProcessNames, priorProcesses)
-            # Match the output data types of the relevant prior processes:
-            correctDataTypeRequested <- processTable$dataType[indexOfRelevantPriorProcesses] == requestedFunctionInputDataTypes
-            
-            
-            if(!all(correctDataTypeRequested)) {
-                warning(
-                    "The following processes do not have the requested data type output: ", 
-                    paste(processTable$dataType[indexOfRelevantPriorProcesses][requestedProcessNames], collapse = ", ")
-                )
-            }
-        }
-        
-        # Return TRUE if error:
-        !(requestedProcessesExist && all(correctDataTypeRequested))
     }
     
-    # Get the current project description:
-    projectDescription <- getCurrentProjectDescription(projectPath)
-    
-    # Get project name and function name:
-    processNames <- sapply(projectDescription[[modelName]], "[[", "processName")
-    functionNames <- sapply(projectDescription[[modelName]], "[[", "functionName")
+    # Return TRUE if error:
+    !(requestedProcessesExist && all(correctDataTypeRequested))
+}
+
+
+
+
+getCurrentProcessID <- function(projectPath, modelName) {
+    # Get the path to the currentProcessFile:
+    currentProcessFile <- getProjectPaths(projectPath, "currentProcessFile")
+    # Missing file implies not saved:
+    if(!file.exists(currentProcessFile)) {
+        FALSE
+    }
+    else {
+        as.logical(readLines(currentProcessFile)[1])
+    }
+}
+
+
+getCanShowInMap <- function(functionNames) {
     # Get the data types returned by the functions of the processes:
     dataTypes <- sapply(functionNames, getFunctionOutputDataType)
-    # Check whether the data type can be shown in the map:
-    canShowInMap <- getCanShowInMap(dataTypes)
-    # ... and whether the user hat defined that the data from the process should be shown in the map:
-    doShowInMap <- sapply(projectDescription[[modelName]], function(process) process$processParameters$showInMap)
-    # Check whether the process returns process data:
-    hasProcessData <- sapply(functionNames, isProcessDataFunction)
-    
-    # Group the info to a table for now:
-    processTable <- data.table::data.table(
-        processName = processNames, 
-        functionName = functionNames, 
-        dataType = dataTypes, 
-        canShowInMap = canShowInMap, 
-        doShowInMap = doShowInMap, 
-        hasProcessData = hasProcessData
-    )
-    
-    # Get the funciton inputs (as a list):
-    functionInputs <- lapply(projectDescription[[modelName]], "[[", "functionInputs")
-    
-    # Get the processes that has errors:
-    hasError <- sapply(
-        seq_along(processNames), 
-        getFunctionInputErrors, 
-        processTable = processTable, 
-        functionInputs = functionInputs
-        )
-    processTable$hasError <- hasError
-    
-    # Get also the current process, and define the column 'hasBeenRun':
-    #currentProcess <- getCurrentProcess(projectPath, modelName)
-    #hasBeenRun <- seq_along(processNames) <= which(processNames == currentProcess)
-    #processTable$hasError <- hasBeenRun
-
-    
-    # Reads a table of the following columns:
-    # 1. processName
-    # 4. canShowInMap
-    # 5. hasProcessData
-    # 6. doShowInMap
-    
-    # 2. hasBeenRun
-    # 3. hasError
-    
-    # 
-    # There are two different types of actions, changing processes and changing parameters. Changing processes iduces reset of current process, whereas changing parameters do not. This will be added to the projectDescriptionIndex.txt. Errors given by HasError only occur when there are missing inputs, that is that the processes requersted in funciton inputs do not exist BEFORE the actual function. This will be a check to run in the route-funcitons Add-, Delete- and MoreProcess, which call the corresponding add-, delete- and moreProcess in Framework.R, and then calls getProjectList.
-    
-    processTable
-}
-
-getCurrentProcess <- function(projectPath, modelName) {
-    
-}
-
-
-getCanShowInMap <- function(dataTypes) {
+    # Are the datatypes of the dataTypesToShowInMap?:
     dataTypes %in% getRstoxFrameworkDefinitions("dataTypesToShowInMap")
 }
+
+
+
+
+
+# RunProcess In the GUI
+
+# In a for loop:
+# 1. runProcess()
+# If success:
+#   1.2. getMapMode()
+#   1.3. getMapData()
+#   1.4. getInteractiveMode()
+#   1.5. getInteractiveData()
+#   1.6. getLog
+# 
+
+
+
+
+
+
+# Function for getting the interactive mode of the process:
+getInteractiveMode <- function(projectPath, modelName, processID) {
+    
+    # Get the data type of the process:
+    dataType <- getDataType(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
+    # Select the type if interactive mode depending on the output data type from the process:
+    if(dataType %in% getRstoxFrameworkDefinitions("stratumDataTypes")) {
+        "stratum"
+    }
+    else if(dataType %in% getRstoxFrameworkDefinitions("asouticPSUDataType")) {
+        "asouticPSU"
+    }
+    else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaPSUDataType")) {
+        "sweptAreaPSU"
+    }
+    else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataTypes")) {
+        "assignment"
+    }
+    else {
+        stop("Invalid dataType")
+    }
+}
+
+# Function for getting the map mode of the process:
+getMapMode <- function(projectPath, modelName, processID) {
+    # Get the data type of the process:
+    dataType <- getDataType(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
+    # Select the type of interactive mode depending on the output data type from the process:
+    if(dataType %in% getRstoxFrameworkDefinitions("strataDataTypes")) {
+        "stratum"
+    }
+    else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataTypes")) {
+        "station"
+    }
+    else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType")) {
+        "EDSU"
+    }
+    else {
+        stop("Invalid dataType")
+    }
+}
+
+
+# Functions for getting the appropriate process data from the process, called depending on the interactive mode:
+getInteractiveData  <- function(projectPath, modelName, processID) {
+    
+    # Get the interactive mode:
+    interactiveMode <- getInteractiveMode(projectPath, modelName, processID)
+    
+    # Call the appropriate function depending on the interactive mode:
+    if(interactiveMode == "stratum") {
+        getStratumData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else if(interactiveMode == "assignment") {
+        getAssignmentPSUData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else if(interactiveMode == "asouticPSU") {
+        getAcousticPSUData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else if(interactiveMode == "sweptAreaPSU") {
+        getSweptAreaPSUData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else {
+        stop("Invalid interactiveMode")
+    }
+}
+
+# Functions for getting the appropriate map data from the process, called depending on the map mode:
+getMapData  <- function(projectPath, modelName, processID) {
+    
+    # Get the interactive mode:
+    mapMode <- getInteractiveMode(projectPath, modelName, processID)
+    
+    # Call the appropriate function depending on the interactive mode:
+    if(mapMode == "stratum") {
+        getStratumData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else if(mapMode == "station") {
+        getStationData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else if(mapMode == "EDSU") {
+        getSweptAreaPSUData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else {
+        stop("Invalid mapMode")
+    }
+}
+
+
+# Individual get data functions:
+getStratumData <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Issue an error of the process data are not of StratumPolygon type:
+    if(names(processData) != "StratumPolygon"){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("The process ", processName, " does not return process data of type StratumPolygon")
+        return(NULL)
+    }
+    
+    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    stratumPolygon <- geojsonio::geojson_json(processData)
+    #stratum <- data.table::data.table(
+    #    stratum = names(processData), 
+    #    includeInTotal = 
+    #)
+    
+    stratumPolygon
+}
+
+getAcousticPSUData <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Issue an error of the process data are not of AcousticPSU type:
+    if(names(processData) != "AcousticPSU"){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("The process ", processName, " does not return process data of type AcousticPSU")
+        return(NULL)
+    }
+    
+    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    EDSU_PSU <- processData$AcousticPSU[, c("EDSU", "PSU")]
+    PSU_Stratum <- unique(processData$AcousticPSU[, c("PSU", "Stratum")])
+    Stratum = unique(processData$AcousticPSU$Stratum)
+    
+    # Return the list of data.tables:
+    list(
+        EDSU_PSU = EDSU_PSU, 
+        PSU_Stratum = PSU_Stratum, 
+        Stratum = Stratum
+    )
+}
+
+getSweptAreaPSUData <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Issue an error of the process data are not of SweptAreaPSU type:
+    if(names(processData) != "SweptAreaPSU"){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("The process ", processName, " does not return process data of type SweptAreaPSU")
+        return(NULL)
+    }
+    
+    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    Station_PSU <- processData$SweptAreaPSU[, c("Station", "PSU")]
+    PSU_Stratum <- unique(processData$SweptAreaPSU[, c("PSU", "Stratum")])
+    Stratum = unique(processData$SweptAreaPSU$Stratum)
+    
+    # Return the list of data.tables:
+    list(
+        Station_PSU = Station_PSU, 
+        PSU_Stratum = PSU_Stratum, 
+        Stratum = Stratum
+    )
+}
+
+getAssignmentData <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Issue an error of the process data are not of Assignment type:
+    if(names(processData) != "Assignment"){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("The process ", processName, " does not return process data of type Assignment")
+        return(NULL)
+    }
+    
+    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    PSU_Layer_AssignmentID <- unique(processData$Assignment[, c("PSU", "Layer", "AssignmentID")])
+    AssignmentID_Station_StationWeight <- unique(processData$Assignment[, c("AssignmentID", "Station", "StationWeight")])
+    
+    # Return the list of data.tables:
+    list(
+        PSU_Layer_AssignmentID = PSU_Layer_AssignmentID, 
+        AssignmentID_Station_StationWeight = AssignmentID_Station_StationWeight
+    )
+}
+
+getStationData <- function(projectPath, modelName, processID) {
+    # Get the station data:
+    getProcessOutput(projectPath, modelName, processID, tableName = "Station")$Station
+}
+
+getEDSUData <- function(projectPath, modelName, processID) {
+    # Get the EDSU data:
+    getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Add stop position of eht EDSUs for plotting in the map:

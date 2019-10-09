@@ -232,6 +232,7 @@ initiateRstoxFramework <- function(){
     definitions <- c(
         list(
             # Fundamental settings:
+            validProcessNameSet = validProcessNameSet, 
             validOutputDataClasses = validOutputDataClasses, 
             stoxFolders = stoxFolders, 
             stoxDataSources = stoxDataSources, 
@@ -395,7 +396,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
     # Set the project memory as the selected template:
-    browser()
+    thisTemplate <- expandProjectMemory(thisTemplate)
     setProjectMemory(projectPath = projectPath, projectMemory = thisTemplate)
     
     # Save the project, close it, and open:
@@ -427,13 +428,17 @@ openProject <- function(projectPath, showWarnings = FALSE) {
     projectMemory <- readProjectDescription(projectPath)
     
     # Save the original and current projectDescription:
+    projectMemory <- expandProjectMemory(projectMemory)
     setProjectMemory(projectPath = projectPath, projectMemory = projectMemory)
     #setOriginalProjectMemory(projectPath = projectPath, thisTemplate = thisTemplate)
     
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     
-    projectPath
+    list(
+        projectPath = projectPath, 
+        projectName = basename(projectName)
+    )
 }
 #' 
 #' @export
@@ -1333,23 +1338,89 @@ getValidProcessParameterNames <- function(functionName) {
 }
 
 
+expandProjectMemory <- function(projectMemory) {
+    lapply(projectMemory, expandModel, modelName = modelName)
+}
 
 
+expandModel <- function(model, modelName) {
+    # Check that the process names are unique and containing only valid characters:
+    processNames <- sapply(model, "[[", "processName")
+    
+    anyMissingProcessNames <- is.list(processNames)
+    invalidProcessNames <- !sapply(processNames, onlyValidCharactersInProcessnName)
+    duplicatedProcessNames <- duplicated(processNames)
+    
+    if(anyMissingProcessNames) {
+        stop("The model contains missing process names (process nr ", paste(which(lengths(processNames) == 0), collapse = ", "), ")")
+    }
+    if(any(invalidProcessNames)) {
+        stop("The model contains invalid process names (process ", paste(processNames[invalidProcessNames], collapse = ", "), ")")
+    }
+    if(any(duplicatedProcessNames)) {
+        stop("The model contains duplicated process names (process ", paste(processNames[invalidProcessNames], collapse = ", "), ")")
+    }
+    
+    # If everything went well above, expand each process:
+    lapply(model, expandProcess, modelName = modelName)
+}
 
+
+expandProcess <- function(process, modelName) {
+    
+    # Declare the output:
+    expandedProcess <- createEmptyProcess(modelName)
+    
+    # First change function name, then function parameters and inputs, then process parameters, which are everything that is changed when changing function:
+    browser()
+    # (1) Change funciton name, which also changed default values of funciton inputs and parameters and process parameters:
+    if(length(process$functionName)) {
+        expandedProcess <- setFunctionName(expandedProcess, process$functionName)
+    }
+    else {
+        stop("Function name must be present")
+    }
+    
+    # (2) Change funciton inputs:
+    if(length(process$functionInputs)) {
+        expandedProcess$functionInputs <- setListElements(expandedProcess$functionInputs, process$functionInputs)
+    }
+    else {
+        stop("Function inputs must be present")
+    }
+    
+    # (3) Change funciton parameters:
+    if(length(process$functionParameters)) {
+        expandedProcess$functionParameters <- setListElements(expandedProcess$functionParameters, process$functionParameters)
+    }
+    else {
+        stop("Function parameters must be present")
+    }
+    
+    # (4) Change process parameters:
+    if(length(process$processParameters)) {
+        expandedProcess$processParameters <- setListElements(expandedProcess$processParameters, process$processParameters)
+    }
+    else {
+        stop("Process name must be present")
+    }
+    
+    expandedProcess
+}
 
 
 
 
 setFunctionName <- function(process, newFunctionName) {
     
-    # If the new function name is different from the current:
-    if(!identical(process$functionName, newFunctionName)) {
+    # # If the new function name is different from the current:
+    # if(!identical(process$functionName, newFunctionName)) {
         
         # Insert the function name:
         process$functionName <- newFunctionName
         
         # Remove any process parameters which should not be shown:
-        possibleProcessParameters <- getValidProcessParameterNames(functionName)
+        possibleProcessParameters <- getValidProcessParameterNames(process$functionName)
         process$processParameters <- process$processParameters[possibleProcessParameters]
         
         # Get the parameters to display, and their defaults:
@@ -1365,7 +1436,7 @@ setFunctionName <- function(process, newFunctionName) {
         
         # Delete the processData, since these are no longer valid for the new function:
         process$processData <- list()
-    }
+        # }
     
     # Return the process:
     process
@@ -1373,8 +1444,8 @@ setFunctionName <- function(process, newFunctionName) {
 
 onlyValidCharactersInProcessnName <- function(newProcessnName) {
     # Check for invalid characters:
-    indValidCharacters <- gregexpr(validProcessNameSet, newProcessnName)
-    indInvalidCharacters <- setdiff(seq_len(newProcessnName), indValidCharacters)
+    indValidCharacters <- gregexpr(getRstoxFrameworkDefinitions("validProcessNameSet"), newProcessnName)[[1]]
+    indInvalidCharacters <- setdiff(seq_len(nchar(newProcessnName)), indValidCharacters)
     if(length(indInvalidCharacters)) {
         warning("Process names can only contain lower and upper letters, numbers, dot and underscore. Contained ", paste(strsplit(newProcessnName, "")[indInvalidCharacters], collapse = ", "))
         FALSE
@@ -1400,6 +1471,36 @@ validateProcessnName <- function(projectPath, modelName, newProcessnName) {
     onlyValidCharactersInProcessnName(newProcessnName) & checkProcessNameAgainstExisting(projectPath = projectPath, modelName = modelName, newProcessnName = newProcessnName)
 }
 
+
+
+setListElements <- function(list, insertList) {
+    # Report a warning for function parameters not present in the process:
+    insertNames <- names(insertList)
+    presentNames <- names(list)
+    valid <- insertNames %in% presentNames
+    
+    if(any(!valid)) {
+        # Warn the user that there are invalid function parameters:
+        warning(
+            "Removed the following unrecognized parameters: ", 
+            paste(insertNames[!valid], collapse = ", "),
+            if(length(presentParameterNames)) paste0(" (Valid parameters: ", paste(presentNames, sep = ", "), ")")
+        )
+        # Keep only the new function parameters that present in the existing function parameters:
+        insertNames <- insertNames[valid]
+    }
+    
+    # Insert the function parameters (one by one for safety):
+    if(length(insertNames)) {
+        for(ind in seq_along(insertList)) {
+            thisInsertList <-  insertList[[ind]]
+            thisInsertListName <- names(thisInsertList)
+            list[[thisInsertListName]] <- thisInsertList
+        }
+    }
+    
+    list
+}
 
 
 #' 
@@ -1456,7 +1557,7 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName)
     # Convert from possible JSON input:
     newProcessName <- parseParameter(newProcessName)
     
-    if(! identical(processName, newProcessName)) {
+    if(!identical(processName, newProcessName)) {
         # Validate the new process name (for invalid characters):
         if(validateProcessnName(projectPath = projectPath, modelName = modelName, newProcessnName = newProcessnName)) {
             setProjectMemory(
@@ -1481,60 +1582,24 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         processID = processID
     )
     
-    # Convert form possible JSON input:
+    # Convert from possible JSON input:
     newFunctionParameters <- parseParameter(newFunctionParameters)
     
-    # Report a warning for function parameters not present in the process:
-    newParameterNames <- names(newFunctionParameters)
-    presentParameterNames <- names(functionParameters)
-    valid <- newParameterNames %in% presentParameterNames
+    # Modify the funciton parameters:
+    modifiedFunctionParameters <- setListElements(functionParameters, newFunctionParameters)
     
-    if(any(!valid)) {
-        # Get the function and process name to report in a warning to the user:
-        functionName <- getFunctionName(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = processID
-        )
-        processName <- getProcessName(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = processID
-        )
-        # Warn the user that there are invalid function parameters:
-        warning(
-            "The following function parameters are not present for the function ", 
-            functionName, 
-            " of the process ", 
-            processName, 
-            ": ", 
-            paste(newParameterNames[!valid], collapse = ", "), 
-            ". ", 
-            "Present parameters are ", 
-            if(length(presentParameterNames)) paste(presentParameterNames, sep = ", ") else "(No parameters)"
-        )
-        
-        # Keep only the new function parameters that present in the existing function parameters:
-        newFunctionParameters <- newFunctionParameters[valid]
-    }
-    
-    # Insert the function parameters (one by one for safety):
-    if(length(newFunctionParameters)) {
-        for(ind in seq_along(newFunctionParameters)) {
-            thisNewFunctionParameter <-  newFunctionParameters[[ind]]
-            thisNewFunctionParameterName <- names(thisNewFunctionParameter)
-            functionParameters[[thisNewFunctionParameterName]] <- thisNewFunctionParameter
-        }
-        
-        # Store the changes:
+    # Store the changes:
+    if(!identical(functionParameters, modifiedFunctionParameters)) {
         setProjectMemory(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
             argumentName = "functionParameters", 
-            argumentValue = functionParameters
+            argumentValue = modifiedFunctionParameters
         )
     }
+    
+    modifiedFunctionParameters
 }
 #' 
 #' @export
@@ -1548,60 +1613,24 @@ modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionI
         processID = processID
     )
     
-    # Convert form possible JSON input:
+    # Convert from possible JSON input:
     newFunctionInputs <- parseParameter(newFunctionInputs)
     
-    # Report a warning for function inputs not present in the process:
-    newInputNames <- names(newFunctionInputs)
-    presentInputNames <- names(functionInput)
-    valid <- newInputNames %in% presentInputNames
+    # Modify the funciton parameters:
+    modifiedFunctionInputs <- setListElements(functionInputs, newFunctionInputs)
     
-    if(any(!valid)) {
-        # Get the function and process name to report in a warning to the user:
-        functionName <- getFunctionName(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = processID
-        )
-        processName <- getProcessName(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = processID
-        )
-        # Warn the user that there are invalid function inputs:
-        warning(
-            "The following function inputs are not present for the function ", 
-            functionName, 
-            " of the process ", 
-            processName, 
-            ": ", 
-            paste(newInputNames[!valid], collapse = ", "), 
-            ". ", 
-            "Present parameters are ", 
-            if(length(presentInputNames)) paste(presentInputNames, sep = ", ") else "(No inputs)"
-        )
-        
-        # Keep only the new function parameters that present in the existing function parameters:
-        newFunctionInputs <- newFunctionInputs[valid]
-    }
-    
-    # Insert the function inputs (one by one for safety):
-    if(length(newFunctionInputs)) {
-        for(ind in seq_along(newFunctionInputs)) {
-            thisNewFunctionInput <-  newFunctionInputs[[ind]]
-            thisNewFunctionInputName <- names(thisNewFunctionInput)
-            functionInputs[[thisNewFunctionInputName]] <- thisNewFunctionInput
-        }
-        
-        # Store the changes:
+    # Store the changes:
+    if(!identical(functionInputs, modifiedFunctionInputs)) {
         setProjectMemory(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
             argumentName = "functionInputs", 
-            argumentValue = functionInputs
+            argumentValue = modifiedFunctionInputs
         )
     }
+    
+    modifiedFunctionInputs
 }
 #' 
 #' @export
@@ -1615,33 +1644,24 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
         processID = processID
     )
     
-    # Convert form possible JSON input:
+    # Convert from possible JSON input:
     newProcessParameters <- parseParameter(newProcessParameters)
     
-    # Get names of the process parameters:
-    validProcessParameterNames = names(getRstoxFrameworkDefinitions("processParameters"))
-    
-    # Report a warning for non-existing process parameters:
-    valid <- names(newProcessParameters) %in% validProcessParameterNames
-    if(any(!valid)) {
-        warning("The following process parameters are not valid: ", paste(names(newProcessParameters)[!valid], collapse = ", "))
-        newProcessParameters <- newProcessParameters[valid]
-    }
-    
-    # Insert the process parameters:
-    for(ind in seq_along(newProcessParameters)) {
-        processParameters[[names(newProcessParameters[ind])]] <- newProcessParameters[[ind]]
-    }
-    
+    # Modify the funciton parameters:
+    modifiedProcessParameters <- setListElements(processParameters, newProcessParameters)
     
     # Store the changes:
-    setProjectMemory(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        argumentName = "processParameters", 
-        argumentValue = processParameters
-    )
+    if(!identical(processParameters, modifiedProcessParameters)) {
+        setProjectMemory(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            argumentName = "processParameters", 
+            argumentValue = modifiedProcessParameters
+        )
+    }
+    
+    modifiedProcessParameters
 }
 #' 
 #' @export
@@ -1655,7 +1675,7 @@ modifyProcess <- function(projectPath, modelName, processID, newValues, only.cur
     # 1. Process name
     # 1. Process parameters
     
-    # Convert form possible JSON input:
+    # Convert from possible JSON input:
     newValues <- parseParameter(newValues)
     
     # Function name:

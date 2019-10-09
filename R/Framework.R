@@ -158,8 +158,11 @@ initiateRstoxFramework <- function(){
     originalProjectMemoryFile <- file.path(projectMemoryFolder, "originalProjectMemory.rds")
     currentProjectMemoryFile <- file.path(projectMemoryFolder, "currentProjectMemory.rds")
     projectMemoryIndexFile <- file.path(projectMemoryFolder, "projectMemoryIndex.txt")
+    # The file containing a table of modelName, processID and processName, where the rows are ordered by the processIndex:
     processIndexFile <- file.path(projectMemoryFolder, "processIndex.txt")
+    # The file containing a table of one row holding the index of the active process for each model (columns named by the model names):
     activeProcessIndexFile <- file.path(projectMemoryFolder, "activeProcessIndex.txt")
+    # The file containing a table of one row holding the maximum process ID (sequential integer starting from 1 at the firstly generated process) for each model (columns named by the model names):
     maxProcessIDFile <- file.path(projectMemoryFolder, "maxProcessID.txt")
     
     
@@ -406,8 +409,11 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
     # Set the project memory as the selected template:
-    thisTemplate <- expandProjectMemory(thisTemplate)
-    setProjectMemory(projectPath = projectPath, projectMemory = thisTemplate)
+    
+    # RATHER DO A FOR LOOP OVER MODELS AND PROCESSES AND addProcess()
+    
+    #thisTemplate <- expandProjectMemory(thisTemplate)
+    #setProjectMemory(projectPath = projectPath, projectMemory = thisTemplate)
     
     # Save the project, close it, and open:
     closeProject(projectPath, save = TRUE)
@@ -438,8 +444,11 @@ openProject <- function(projectPath, showWarnings = FALSE) {
     projectMemory <- readProjectDescription(projectPath)
     
     # Save the original and current projectDescription:
-    projectMemory <- expandProjectMemory(projectMemory)
-    setProjectMemory(projectPath = projectPath, projectMemory = projectMemory)
+    
+    # RATHER DO A FOR LOOP OVER MODELS AND PROCESSES AND addProcess()
+    
+    #projectMemory <- expandProjectMemory(projectMemory)
+    #setProjectMemory(projectPath = projectPath, projectMemory = projectMemory)
     #setOriginalProjectMemory(projectPath = projectPath, thisTemplate = thisTemplate)
     
     # Set the status of the projcet as saved:
@@ -568,8 +577,11 @@ resolveProjectPath <- function(filePath) {
 }
 
 
-getActiveProcessIndex <- function() {
-    activeProcessIndexFile <- 
+getActiveProcessIndex <- function(projectPath, modelName) {
+    # Read the active process index for the model:
+    activeProcessIndexFile <- getProjectPaths(projectPath, "activeProcessIndexFile")
+    activeProcessIndexTable <- data.table::fread(activeProcessIndexFile, sep = "\t")
+    activeProcessIndexTable[[modelName]][1]
 }
 
 
@@ -863,6 +875,68 @@ createProjectMemory <- function(projectPath, projectMemoryData) {
 #' 
 #' @export
 #' 
+setProcessMemory <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL) {
+    
+    # Get the arguments and argument names from the process:
+    if(length(projectMemoryData)) {
+        argumentName <- names(process)
+        argumentValue <- process
+    }
+    
+    # Save all project arguments to files (shorter repeated to the longest):
+    newArgumentFiles <- mapply(saveArgument, projectPath, modelName, processID, argumentName, argumentValue)
+    
+    # Get the current table of process argument files:
+    argumentFileTable <- getArgumentFileTable(projectPath)
+    
+    # Insert all changed files to the list of files defining the current project description:
+    insertArgumentFileTable <- data.table::data.table(
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = argumentName, 
+        argumentFile = newArgumentFiles
+    )
+    argumentFileTable <- modifyArgumentFileTable(
+        argumentFileTable = argumentFileTable, 
+        insertArgumentFileTable = insertArgumentFileTable
+    )
+    
+    #for(ind in seq_len(nrow(newArgumentFileTable))) {
+    #    argumentFileTable [[newArgumentFileTable$modelName]] [[newArgumentFileTable$processID]] [[ne#wArgumentFileTable$argumentName]] <- newArgumentFileTable$argumentFile
+    #}
+    
+    # Save the list of project argument files to the current project description file  and to the new project description file:
+    currentProjectMemoryFile <- getCurrentProjectMemoryFile(projectPath)
+    newProjectMemoryFile     <- getNewProjectMemoryFile(projectPath)
+    saveRDS(argumentFileTable, file = currentProjectMemoryFile)
+    saveRDS(argumentFileTable, file = newProjectMemoryFile)
+    
+    
+    # Update the projectDescriptionIndexFile:
+    projectMemoryIndex <- readProjectMemoryIndex(projectPath)
+    
+    # Delete any files with positive index:
+    hasPositiveIndex <- projectMemoryIndex$Index > 0
+    if(any(hasPositiveIndex)) {
+        unlink(projectMemoryIndex$Path[hasPositiveIndex])
+        projectMemoryIndex <- projectMemoryIndex[!hasPositiveIndex, ]
+    }
+    # Subtract 1 from the indices, and add the new project description file path:
+    projectMemoryIndex$Index <- projectMemoryIndex$Index - 1
+    projectMemoryIndex <- rbind(
+        projectMemoryIndex, 
+        data.table::data.table(
+            Index = 0, 
+            Path = newProjectMemoryFile
+        ), 
+        fill = TRUE
+    )
+    # Write the projectDescriptionIndex to file:
+    writeProjectMemoryIndex(projectPath, projectMemoryIndex)
+    
+    # Return the new project description file path:
+    newProjectMemoryFile
+}
 setProjectMemory <- function(projectPath, modelName, processID, argumentName, argumentValue, projectMemoryData = NULL) {
 
     # Accept a list of project memory:
@@ -1550,24 +1624,11 @@ modifyFunctionName <- function(projectPath, modelName, processID, newFunctionNam
     process <- setFunctionName(process, newFunctionName)
         
     # Store the changes:
-    setProjectMemory(
+    setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
-        argumentName = c(
-            "functionName", 
-            "functionParameters", 
-            "functionInputs", 
-            "processParameters", 
-            "processData"
-        ), 
-        argumentValue = list(
-            functionName = process$functionName, 
-            functionParameters = process$functionParameters, 
-            functionInputs = process$functionInputs, 
-            functionParameters = process$functionParameters, 
-            processData = process$processData
-        )
+        process = process
     )
 }
 #' 
@@ -1795,13 +1856,18 @@ getNewDefaultProcessName <- function(projectPath, modelName) {
 }
 
 createNewProcessID <- function(projectPath, modelName) {
+    # Get the maximum process ID:
     
+    maxProcessIDFile <- getProjectPaths(projectPath, "maxProcessIDFile")
+    maxProcessIDTable <- data.table::fread(maxProcessIDFile, sep = "\t")
+    maxProcessIDTable[[modelName]] <- maxProcessIDTable[[modelName]] + 1
     
-    maxProcessID <- as.numeric(readLines(getProjectPaths("maxProcessIDFile"), 1))
-    
-    processIndex <- getProcessIndex(projectPath, modelName)
-    newProcessID <- max()
+    # Write and return the new maximum process ID:
+    data.table::fwrite(maxProcessIDTable, maxProcessIDFile, sep = "\t")
+    maxProcessIDTable[[modelName]]
 }
+
+
 
 #' 
 #' @export
@@ -1828,6 +1894,8 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL) {
     
     # Create an empty process:
     process <- createEmptyProcess(modelName = modelName, processName = processName)
+    
+    processID <- createNewProcessID(projectPath, modelName)
     
     # Store the changes:
     setProjectMemory(

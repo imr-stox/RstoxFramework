@@ -103,7 +103,7 @@ deg2rad <- function(deg) {
 # polygonAreaPolygonXY wraps x and y to dataframe and calls Polygon
 # this is a helper function
 polygonAreaPolygonXY <- function(x, y = NULL) {
-    polygonAreaPolygonDF(as.data.frame(xy.coords(x, y)[c("x", "y")]))
+    polygonAreaPolygonDF(as.data.frame(xy.coords(x, y)[c("x", "y")], stringsAsFactors = FALSE))
 }
 
 # polygonAreaPolygonDF calculates simple GCD (great circle distance) polygon area 

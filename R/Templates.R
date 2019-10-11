@@ -1521,7 +1521,10 @@ stoxTemplates <- list(
 				),
 				DefineStrata = list(
 					processName = "DefineStrata",
-					functionName = "DefineStrata"
+					functionName = "DefineStrata", 
+					processParameters = list(
+					    showInMap = TRUE
+					)
 				),
 				StratumArea = list(
 					processName = "StratumArea",

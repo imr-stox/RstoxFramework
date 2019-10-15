@@ -1468,9 +1468,13 @@ getProcessIDFromProcessName <- function(projectPath, modelName, processName) {
 #' 
 getProcessTable <- function(projectPath, modelName) {
     
-    browser()
     # Get a table of process name and ID:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    
+    # Return an empry data.table if the processIndexTable is empty:
+    if(nrow(processIndexTable) == 0) {
+        return(data.table::data.table())
+    }
         
     # Get the function names for use when determining the 'canShowInMap' and 'hasProcessData'
     functionNames <- mapply(

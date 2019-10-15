@@ -121,7 +121,6 @@ getCurrentProcessID <- function(projectPath, modelName) {
 
 
 getCanShowInMap <- function(functionNames) {
-    browser()
     # Get the data types returned by the functions of the processes:
     dataTypes <- sapply(functionNames, getFunctionOutputDataType)
     # Are the datatypes of the dataTypesToShowInMap?:

@@ -518,7 +518,11 @@ openProject <- function(projectPath, showWarnings = FALSE) {
     
     if(isOpenProject(projectPath)) {
         message("Project ", projectPath, "is already open.")
-        return(projectPath)
+        out <- list(
+            projectPath = projectPath, 
+            projectName = basename(projectPath)
+        )
+        return(out)
     }
     
     projectPath <- resolveProjectPath(projectPath)
@@ -1357,7 +1361,8 @@ readProcessIndexTable <- function(projectPath, modelName) {
     }
     else {
         processIndexTable <- data.table::fread(processIndexTableFile, sep = "\t")
-        processIndexTable[modelName == modelName, c("processID", "processName")]
+        validRows <- processIndexTable$modelName %in% modelName
+        subset(processIndexTable, validRows)
     }
 }
 
@@ -1384,7 +1389,8 @@ addToProcessIndexTable <- function(projectPath, modelName, processID, processNam
     before <- processIndexTable[seq_len(afterIndex), ]
     new <- data.table::data.table(
         processID = processID, 
-        processName = processName
+        processName = processName, 
+        modelName = modelName
     )
     if(afterIndex < nrowProcessIndexTable) {
         after <- processIndexTable[seq(afterIndex + 1, nrowProcessIndexTable), ]
@@ -1462,6 +1468,7 @@ getProcessIDFromProcessName <- function(projectPath, modelName, processName) {
 #' 
 getProcessTable <- function(projectPath, modelName) {
     
+    browser()
     # Get a table of process name and ID:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
         

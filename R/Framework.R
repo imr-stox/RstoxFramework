@@ -120,6 +120,33 @@ initiateRstoxFramework <- function(){
         showInMap = FALSE, 
         fileOutput = TRUE
     )
+    processParametersDisplayNames <- list(
+        enabled = "Enabled", 
+        showInMap = "Show in map", 
+        fileOutput = "write to output"
+    )
+    # Define process properties:
+    processProperties <- data.table::data.table(
+        name = c("process", "functionInputs", "functionParameters"), 
+        displayName = c("Process", "Function inputs", "Function parameters")
+    )
+    
+    processArguments <- list(
+        process = list(
+            name = c("processName", "functionName", names(processParameters)), 
+            displayName = c("Process name", "Function", unname(unlist(processParametersDisplayNames))), 
+            defaultValue = c("", "", unname(unlist(processParameters))), 
+            type = c("character", "character", sapply(processParameters, class)), 
+            possibleValues = NA
+        ), 
+        functionInputs = list(
+            
+        ), 
+        functionParameters = list(
+            
+        )
+    )
+    
     # Process arguments:
     processDefaultFull <- list(
         processName = NULL, 
@@ -1171,6 +1198,10 @@ unReDoProject <- function(projectPath, shift = 0) {
 
 
 
+getAvailableFunctions <- function(functionName) {
+    names(stoxFunctionAttributes)
+}
+
 getFunctionOutputDataType <- function(functionName) {
     stoxFunctionAttributes[[functionName]]$functionOutputDataType
 }
@@ -1517,7 +1548,7 @@ createEmptyProcess <- function(modelName = "Baseline", processName = NULL) {
     # Get the default process with empty fields for project and function name, process data, and function parameters and inputs:
     process <- getRstoxFrameworkDefinitions("processDefault")[[modelName]]
     # Possibly add the given process name (this is done here since creating a default process name is not always needed or wanted):
-    if(length(processName)) {
+    if(length(processName) || is.na(processName) || nchar(processName) == 0) {
         process$processName <- processName
     }
     process

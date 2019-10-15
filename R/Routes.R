@@ -44,14 +44,13 @@ setProcessPropertyItem<- function(process, propertyItem, value) {
 #' @export
 #' 
 getAvailableTemplatesDescriptions <- function() {
+    # Get the evailable templates:
     availableTemplates <- getAvaiableTemplates(TRUE)
-    
-    df <- data.table::data.table(
+    # Return the tempates as a data frame of name and description:
+    data.table::data.table(
         name = names(availableTemplates), 
-        description = unname(sapply(availableTemplates, "[[", "description"))
+        description = sapply(availableTemplates, attr, "description")
     )
-    
-    # convertToJSON(df)
 } 
 
 
@@ -422,6 +421,63 @@ getProcessStatus <- function(projectPath, modelName, processName) {
 getPlottingProcessFeatures <- function(projectPath, modelName, processName) {
     
 }
+
+
+#getFunctionPDFPath <- function(functionName) {
+#    system.file("inst", "PDF", paste0(functionName, ".pdf"),  package = "RstoxFramework")
+#    
+#    
+#}
+
+
+
+writeFunctionPDF <- function(functionName, packageName, pdfDir) {
+    # We need to load the package to get the Rd database:
+    library(packageName, character.only = TRUE)
+    # Get the Rd database:
+    db <- tools::Rd_db(packageName)
+    # Define a temporary file to write the Rd to
+    tmp <- tempfile()
+    # Paste the Rd to one string and write to the temporary file:
+    thisRd <- as.character(db[[paste0(functionName, ".Rd")]])
+    thisRd <- paste(thisRd, collapse = "")
+    write(thisRd, tmp)
+    # Define the output PDF file_
+    pdfFile <- path.expand(file.path(pdfDir , paste0(functionName, ".pdf")))
+    # Build the PDF
+    msg <- callr::rcmd(
+        "Rd2pdf", 
+        cmdargs = c(
+            "--force", 
+            "--no-index", 
+            paste0("--title=", packageName, "::", functionName), 
+            paste0("--output=", pdfFile), 
+            tmp
+        )
+    )
+    # Return the path to the PDF file:
+    pdfFile
+}
+
+# system.time(writeFunctionPDF("BioStationWeighting.Rd", "RstoxTempdoc", "~/Code/Github/RstoxFramework"))
+
+
+
+##### Create the process properties: #####
+
+getProcessPropertyNames <- function() {
+    
+    
+    
+    #ellipsisMode: 
+    #    filter, 
+    #    fileSelector, 
+    #    directorySelector, 
+    #    length2tsAcousticCategory, 
+    #    length2tsLayerPSU, 
+    #    functionSelector (select dataType or package and then select funciton from the list),  
+}
+
 
 
 

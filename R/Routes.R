@@ -1,15 +1,10 @@
-#getModelNames
-#getProcessPropertyCategories
-#getProcessPropertyCategoriesItems
-#setProcessPropertyItem
-
+##### Models: #####
 
 #' 
 #' @export
 #' 
 getModelNames <- function() {
     getRstoxFrameworkDefinitions("stoxModelTypes")
-    # convertToJSON(out)
 }
 #' 
 #' @export
@@ -18,27 +13,10 @@ getModelInfo <- function() {
     getRstoxFrameworkDefinitions("stoxModelInfo")
 }
 
+##########
 
-#' 
-#' @export
-#' 
-convertToJSON <- function(x) {
-    jsonlite::toJSON(x)
-}
 
-getProcessPropertyCategories <- function(process) {
-    out <- names(process)
-    convertToJSON(out)
-}
-
-getProcessPropertyCategoriesItems <- function(process, category) {
-    out <- process$category
-    convertToJSON(out)
-}
-
-setProcessPropertyItem<- function(process, propertyItem, value) {
-    process$propertyItem <- value
-}
+##### Templates: #####
 
 #' 
 #' @export
@@ -52,15 +30,10 @@ getAvailableTemplatesDescriptions <- function() {
         description = sapply(availableTemplates, attr, "description")
     )
 } 
+##########
 
 
-
-# Reads a table of the following columns:
-# 1. Process name
-# 4. CanShowInMap
-# 5. CanModify
-# 6. ShowInMap
-
+##### Processes: #####
 
 # Function to get whether the process has input data error:
 getFunctionInputErrors <- function(ind, processTable, functionInputs) {
@@ -105,8 +78,6 @@ getFunctionInputErrors <- function(ind, processTable, functionInputs) {
 }
 
 
-
-
 getCurrentProcessID <- function(projectPath, modelName) {
     # Get the path to the currentProcessFile:
     currentProcessFile <- getProjectPaths(projectPath, "currentProcessFile")
@@ -124,12 +95,13 @@ getCanShowInMap <- function(functionNames) {
     # Get the data types returned by the functions of the processes:
     dataTypes <- sapply(functionNames, getFunctionOutputDataType)
     # Are the datatypes of the dataTypesToShowInMap?:
-    dataTypes %in% getRstoxFrameworkDefinitions("dataTypesToShowInMap")
+    isTRUE(dataTypes %in% getRstoxFrameworkDefinitions("dataTypesToShowInMap"))
 }
 
+##########
 
 
-
+##### Interactive: #####
 
 # RunProcess In the GUI
 
@@ -142,11 +114,6 @@ getCanShowInMap <- function(functionNames) {
 #   1.5. getInteractiveData()
 #   1.6. getLog
 # 
-
-
-
-
-
 
 # Function for getting the interactive mode of the process:
 getInteractiveMode <- function(projectPath, modelName, processID) {
@@ -374,61 +341,158 @@ getStationData <- function(projectPath, modelName, processID) {
 
 getEDSUData <- function(projectPath, modelName, processID) {
     # Get the EDSU data:
-    getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
+    Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
+    extrapolateEDSU(Log)
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Add stop position of eht EDSUs for plotting in the map:
-getStopLongitudeLatitude <- function() {
+# Add stop position of the EDSUs for plotting in the map:
+extrapolateLongitudeLatitude <- function(StartLongitude, StartLatitude) {
     
-}
-
-
-
-getProcessStatus <- function(projectPath, modelName, processName) {
+    # Add stop longitude and latitude:
+    stopLongitude <- StartLongitude[-1]
+    stopLatitude <- StartLatitude[-1]
+    # Get the vector of the last segment:
+    lastLongitude <- diff(utils::tail(StartLongitude, 2))
+    lastLatitude <- diff(utils::tail(StartLatitude, 2))
+    # Add this vector to the last stop point to get the extrapolated final stop point:
+    stopLongitudeFinal <- utils::tail(stopLongitude, 1) + lastLongitude
+    stopLatitudeFinal <- utils::tail(stopLatitude, 1) + lastLatitude
     
-    # Reads a table of the following columns:
-    # 1. Process name
-    # 2. HasBeenRun
-    # 3. HasError
-    # 4. CanShowInMap
-    # 5. HasProcessData
-    # 6. ShowInMap
-
-}
-
-# To be run after each process. This is the actual geojson object to plot:
-getPlottingProcessFeatures <- function(projectPath, modelName, processName) {
+    StopLongitude <- c(stopLongitude, lastLongitude)
+    StopLatitude <- c(stopLatitude, lastLatitude)
     
+    # Add mid longitude and latitude:
+    MidLongitude <- (StartLongitude + StopLongitude) / 2
+    MidLatitude <- (StartLatitude + StopLatitude) / 2
+    
+    StoxAcousticData <- data.table::data.table(
+        StopLongitude = StopLongitude,
+        StopLatitude = StopLatitude,
+        MidLongitude = MidLongitude, 
+        MidLatitude = MidLatitude
+    )
+    
+    # Add a tag for extrapolated mid and stop positions:
+    StoxAcousticData$Extrapolated <- c(
+        logical(length(StartLongitude) - 1), 
+        TRUE
+    )
+    
+    # Return the StoxAcousticData:
+    StoxAcousticData
+}
+
+extrapolateEDSU <- function(Log) {
+    # Run the extrapolation function on each Paltform, effectively ordering the data by platform:
+    Log[, extrapolateLongitudeLatitude(StartLongitude, StartLatitude), by = Platform]
+}
+
+##########
+
+
+
+##### Process properties: #####
+
+getProcessPropertyNames <- function() {
+    
+    
+    
+    #ellipsisMode: 
+    #    filter, 
+    #    fileSelector, 
+    #    directorySelector, 
+    #    length2tsAcousticCategory, 
+    #    length2tsLayerPSU, 
+    #    functionSelector (select dataType or package and then select funciton from the list),  
+}
+
+getProcessProperties <- function(process) {
+    
+    # Get the process properties depending on the processPropertyName:
+    processParameters <- getRstoxFrameworkDefinitions("processParameters")
+    processParametersDisplayNames <- getRstoxFrameworkDefinitions("processParametersDisplayNames")
+    processParametersDescriptions <- getRstoxFrameworkDefinitions("processParametersDescriptions")
+    
+    ##### Define the process name, the function name and the process parameters as the process property "process": #####
+    processArguments <- list(
+        name = c("processName", "functionName", names(processParameters)), 
+        displayName = c("Process name", "Function", unname(unlist(processParametersDisplayNames))), 
+        defaultValue = c("", "", unname(unlist(processParameters))), 
+        type = c("character", "character", sapply(processParameters, class)), 
+        possibleValues = list(
+            NULL, 
+            NULL, 
+            c(FALSE, TRUE), 
+            c(FALSE, TRUE), 
+            c(FALSE, TRUE)
+        ), 
+        description = c(
+            "The name of the process, which must be unique within each model", 
+            "The name of the function called by the process", 
+            processParametersDescriptions
+        )
+    )
+    # Add the values:
+    processArguments$value <- process[processArguments$name]
+    
+    # Remove the showInMap argument if not relevant:
+    if(!getCanShowInMap(process$functionName)) {
+        keep <- process$name != "showInMap"
+        process <- lapply(process, subset, keep)
+    }
+    
+    
+    ##### Define the funciton inputs: #####
+    functionInputs <- list()
+    if(length(process$functionName)) {
+        functionInputNames <- names(process$functionInputs)
+        name = functionInputNames
+        displayName = functionInputNames
+        possibleValues = getFunctionDefaults(process$functionName)[functionInputNames]
+        defaultValue = sapply(possibleValues, "[[", 1)
+        type = getParameterDataTypes(process$functionName)[functionInputNames]
+        description = getFunctionArgumentDescriptions(process$functionName)
+    }
+    
+    
+    # functionParameters
+        
+        
 }
 
 
-#getFunctionPDFPath <- function(functionName) {
-#    system.file("inst", "PDF", paste0(functionName, ".pdf"),  package = "RstoxFramework")
-#    
-#    
-#}
 
+
+
+
+getFunctionArgumentDescriptions <- function(functionName, packageName) {
+    
+    # The package needs to be loaded to get the documentatino database:
+    library(packageName, character.only = TRUE)
+    # Get the Rd database:
+    db <- tools::Rd_db(packageName)
+    # Define a temporary file to write the Rd to
+    tmp <- tempfile()
+    # Paste the Rd to one string and write to the temporary file:
+    thisRd <- as.character(db[[paste0(functionName, ".Rd")]])
+    thisRd <- paste(thisRd, collapse = "")
+    write(thisRd, tmp)
+    # Read the file back in:
+    p <- tools::parse_Rd(tmp)
+    
+    # Detect the arguments, and get the valid arguments as those which are not line breaks:
+    atArguments <- sapply(p, attr, "Rd_tag") == "\\arguments"
+    argumentNames <- unlist(lapply(p[atArguments][[1]], head, 1))
+    validArgumentNames <- argumentNames != "\n"
+    
+    # Get and return the argument names and the descriptions:
+    argumentNames <- subset(argumentNames, validArgumentNames)
+    descriptions <- sapply(p[atArguments][[1]][validArgumentNames], function(x) paste0(unlist(x)[-1], collapse = " "))
+    list(
+        argumentNames = argumentNames, 
+        descriptions = descriptions
+    )
+}
 
 
 writeFunctionPDF <- function(functionName, packageName, pdfDir) {
@@ -462,22 +526,6 @@ writeFunctionPDF <- function(functionName, packageName, pdfDir) {
 # system.time(writeFunctionPDF("BioStationWeighting.Rd", "RstoxTempdoc", "~/Code/Github/RstoxFramework"))
 
 
-
-##### Create the process properties: #####
-
-getProcessPropertyNames <- function() {
-    
-    
-    
-    #ellipsisMode: 
-    #    filter, 
-    #    fileSelector, 
-    #    directorySelector, 
-    #    length2tsAcousticCategory, 
-    #    length2tsLayerPSU, 
-    #    functionSelector (select dataType or package and then select funciton from the list),  
-}
-
-
+##########
 
 

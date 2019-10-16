@@ -6,6 +6,9 @@ stoxFunctionAttributes <- list(
         functionOutputDataType = "BioticData", 
         functionParameterHierarchy = list(
             FileNames = list()
+        ), 
+        parameterDataType = list(
+            FileNames = "filePath"
         )
     ), 
     # Read strata polygons:
@@ -17,6 +20,10 @@ stoxFunctionAttributes <- list(
                 UseProcessData = FALSE
             ), 
             UseProcessData = list()
+        ), 
+        parameterDataType = list(
+            FileName = "filePath", 
+            UseProcessData = "logical"
         )
     ), 
     # Calculate areas of strata polygons:
@@ -26,8 +33,16 @@ stoxFunctionAttributes <- list(
         functionParameterHierarchy = list(
             StratumPolygon = list(), 
             AreaMethod = list()
+        ), 
+        parameterDataType = list(
+            AreaMethod = "character"
         )
     )
 )
 
 
+
+
+# functionAlias
+# parameterAlias
+# parameterValueAilas

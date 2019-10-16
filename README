@@ -1,4 +1,4 @@
-# RstoxFramework version: 1.0 (latest beta, 2019-10-15)
+# RstoxFramework version: 1.0 (latest beta, 2019-10-16)
 # R version: 3.5
 
 
@@ -10,8 +10,7 @@ devtools::install_github("StoXProject/RstoxFramework")
 
 
 # Release notes for RstoxFramework_1.0:
-# 1.  Added all RstoxFramework functions as empty functions.
-# 2.  Added DefineIndividualWeightGram(), DefineLengthCentimeter(), MergeAgeDeterminationToIndividual(), StationLengthDist(), and preliminary ReadBioticXML(), ReadAcousticXML() and ReadLandingXML().
+# 1.  First stable version of the RstoxFramework.
 
 # For historical release notes see https://github.com/StoXProject/RstoxFramework/blob/master/NEWS
 

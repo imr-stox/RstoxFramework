@@ -3,6 +3,4 @@ RstoxFramework v1.0 (Release date: 2019-06-11)
 
 Changes:
 
-* Added all RstoxFramework functions as empty functions.
-
-* Added DefineIndividualWeightGram(), DefineLengthCentimeter(), MergeAgeDeterminationToIndividual(), StationLengthDist(), and preliminary ReadBioticXML(), ReadAcousticXML() and ReadLandingXML().
+* First stable version of the RstoxFramework.

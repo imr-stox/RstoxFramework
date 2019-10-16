@@ -61,6 +61,7 @@ initiateRstoxFramework <- function(){
         "geojson"
     )
     
+    # Define the StoX folders, data sources, model names, model display names, model descriptions, and the latter three grouped as model info:
     stoxFolders <- c(
         Input = "Input", 
         Output = "Output", 
@@ -92,6 +93,18 @@ initiateRstoxFramework <- function(){
         description = stoxModelDescriptions
     )
     
+    # Define the folder structure of StoX:
+    stoxFolderStructure <- list(
+        stoxDataSources, 
+        stoxModelNames, 
+        ""
+    )
+    stoxFolderStructureNames <- unname(unlist(mapply(paste, stoxFolders, stoxFolderStructure, sep = "_")))
+    stoxFolderStructure <- unname(unlist(mapply(file.path, stoxFolders, stoxFolderStructure)))
+    stoxFolderStructure <- gsub('\\/$', '', stoxFolderStructure)
+    names(stoxFolderStructure) <- stoxFolderStructureNames
+    stoxFolderStructureList <- as.list(stoxFolderStructure)
+    
     # Define data types which can be plotted in the map (includes also changing colour etc, such as assigned stations of an acoustic PSU):
     dataTypesToShowInMap <- c(
         StoxBioticData = "StoxBioticData", 
@@ -114,7 +127,7 @@ initiateRstoxFramework <- function(){
         Assignment = "Assignment"
     )
     
-    # Define the process parameters with default values:
+    # Define the process parameters with default values, display names and descriptions:
     processParameters <- list(
         enabled = TRUE, 
         showInMap = FALSE, 
@@ -125,29 +138,19 @@ initiateRstoxFramework <- function(){
         showInMap = "Show in map", 
         fileOutput = "write to output"
     )
-    # Define process properties:
-    processProperties <- data.table::data.table(
+    processParametersDescriptions <- list(
+        enabled = "Whether to execute the process or not", 
+        showInMap = "Whether to show specific data from the process in the map, such as stations, EDSUs, strata, or assignment shown as colors on stations and EDSUs", 
+        fileOutput = "Whether to write tab separated text files of the output data from the process"
+    )
+    
+    # Define process property names:
+    processPropertyNames <- data.table::data.table(
         name = c("process", "functionInputs", "functionParameters"), 
         displayName = c("Process", "Function inputs", "Function parameters")
     )
     
-    processArguments <- list(
-        process = list(
-            name = c("processName", "functionName", names(processParameters)), 
-            displayName = c("Process name", "Function", unname(unlist(processParametersDisplayNames))), 
-            defaultValue = c("", "", unname(unlist(processParameters))), 
-            type = c("character", "character", sapply(processParameters, class)), 
-            possibleValues = NA
-        ), 
-        functionInputs = list(
-            
-        ), 
-        functionParameters = list(
-            
-        )
-    )
-    
-    # Process arguments:
+    # Define the process arguments, which define a process:
     processDefaultFull <- list(
         processName = NULL, 
         functionName = NULL, 
@@ -162,19 +165,6 @@ initiateRstoxFramework <- function(){
         Statistics = processDefaultSansProcessData, 
         Report = processDefaultSansProcessData
     )
-    
-    #### Define the folder structure of StoX: ####
-    stoxFolderStructure <- list(
-        stoxDataSources, 
-        stoxModelNames, 
-        ""
-    )
-    #names(stoxFolderStructure) <- stoxFolders
-    stoxFolderStructureNames <- unname(unlist(mapply(paste, stoxFolders, stoxFolderStructure, sep = "_")))
-    stoxFolderStructure <- unname(unlist(mapply(file.path, stoxFolders, stoxFolderStructure)))
-    stoxFolderStructure <- gsub('\\/$', '', stoxFolderStructure)
-    names(stoxFolderStructure) <- stoxFolderStructureNames
-    stoxFolderStructureList <- as.list(stoxFolderStructure)
     
     
     #### Define the folders and paths used when a project is open: ####
@@ -191,6 +181,7 @@ initiateRstoxFramework <- function(){
             projectMemoryFolder, 
             statusFolder
     )
+    
     
     #### Project description: ####
     projectRDataFile = file.path(stoxFolders["Process"], "project.RData")
@@ -254,6 +245,7 @@ initiateRstoxFramework <- function(){
         stoxProcessDataTypes
     )
     
+    
     #### Define an object with all path objects for convenience in getProjectPaths(): ####
     paths <- c(
         stoxFolderStructureList, 
@@ -285,39 +277,9 @@ initiateRstoxFramework <- function(){
     )
     
     #### Assign to RstoxEnv and return the definitions: ####
-    definitions <- c(
-        list(
-            # Fundamental settings:
-            validProcessNameSet = validProcessNameSet, 
-            process_Prefix = process_Prefix, 
-            numDigitsOfProcessIntegerID = numDigitsOfProcessIntegerID, 
-            
-            validOutputDataClasses = validOutputDataClasses, 
-            stoxFolders = stoxFolders, 
-            stoxDataSources = stoxDataSources, 
-            stoxModelNames = stoxModelNames, 
-            stoxModelDisplayNames = stoxModelDisplayNames, 
-            stoxModelDescriptions = stoxModelDescriptions, 
-            stoxModelInfo = stoxModelInfo,
-            dataTypesToShowInMap = dataTypesToShowInMap, 
-            processParameters = processParameters, 
-            processDefaultFull = processDefaultFull, 
-            processDefaultSansProcessData = processDefaultSansProcessData, 
-            processDefault = processDefault
-        ), 
-        paths, 
-        list(# Parameters and data types:
-            stoxModelDataTypes = stoxModelDataTypes, 
-            stoxProcessDataTypes = stoxProcessDataTypes, 
-            stoxDataTypes = stoxDataTypes, 
-            
-            # This is defined in the file Templates.R:
-            stoxTemplates = stoxTemplates, 
-            
-            # Repeat the paths for convenience:
-            paths = paths
-        )
-    )
+    definitionsNames <- ls()
+    definitionsNames <- setdiff(definitionsNames, names(paths))
+    definitions <- lapply(definitionsNames, get, pos = environment())
     
     #### Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv: ####
     utils::globalVariables("RstoxFrameworkEnv")
@@ -1200,15 +1162,24 @@ unReDoProject <- function(projectPath, shift = 0) {
 
 
 
-
-
-getAvailableFunctions <- function(functionName) {
-    names(stoxFunctionAttributes)
+getStoxFunctionAttributes <- function(packageName) {
+    package <- paste0("package", packageName)
+    get("stoxFunctionAttributes", pos = package)
 }
 
-getFunctionOutputDataType <- function(functionName) {
+getAvailableFunctionNames <- function(packageName) {
+    names(getStoxFunctionAttributes(packageName))
+}
+
+getFunctionOutputDataType <- function(functionName, packageName) {
     stoxFunctionAttributes[[functionName]]$functionOutputDataType
 }
+
+getParameterDataTypes <- function(functionName) {
+    stoxFunctionAttributes[[functionName]]$parameterDataType
+}
+
+
 
 isProcessDataFunction <- function(functionName) {
     functionOutputDataType <- getFunctionOutputDataType(functionName)
@@ -1529,6 +1500,8 @@ getProcessTable <- function(projectPath, modelName) {
         functionInputs = functionInputs
     )
     processTable$hasError <- hasError
+    
+    processTable$functionExists <- functionExists(functionNames)
     
     # Reads a table of the following columns:
     # 1. processName

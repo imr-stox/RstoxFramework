@@ -2,18 +2,18 @@
 % Please edit documentation in R/Data.R
 \name{ReadBiotic}
 \alias{ReadBiotic}
-\title{Some title}
+\title{Read biotic XML files}
 \usage{
 ReadBiotic(FileNames)
 }
 \arguments{
-\item{FileNames}{One or more file paths given either as (1) a vector, (2) a JSON string representing a vector, or (3) a comma or semicolon separated string of file paths.}
+\item{FileNames}{The paths of the biotic files.}
 }
 \value{
-A data.table is returned with awesome stuff.
+An object of StoX data type BioticData: A list of a list of data.tables of the different levels of the input biotic files.
 }
 \description{
-Some description
+This function reads multiple biotic file to a list with a list of tables for each file.
 }
 \details{
 This function is awesome and does excellent stuff.
@@ -23,5 +23,5 @@ x <- 1
 
 }
 \seealso{
-\code{\link[roxygen2]{roxygenize}} is used to generate the documentation.
+\code{\link[RstoxData]{readXmlFile}}.
 }

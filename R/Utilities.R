@@ -1,83 +1,42 @@
-initiateRstox <- function() {
-
-  # NMD and Stox defines different data types (Stox has the more general category "acoustic"):
-  NMD_data_sources <- c(acoustic = "echosounder", biotic = "biotic", landing = "landing")
-  # The implemented NMD APIs for the NMD_data_sources:
-  NMD_API_versions <- list(
-        biotic = c(1, 2, 3),
-        echosounder = 1,
-        reference = c(1, 2),
-        landing = NULL
-    )
-
-  # The format used by NMD for shapshot time:
-  dateTimeNMDAPIFormat <- "%Y-%m-%dT%H.%M.%OSZ"
-
-  # The current API and datasource formats:
-  ver <- list(
-        API = list(
-            biotic = "3",
-            echosounder = "1",
-            reference = "2",
-            landing = NA
-        ),
-        reference = "2.0",
-        biotic = "3.0",
-        echosounder = NA,
-        landing = NA
-    )
-
-  # Define project types:
-  project_types <- c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal")
-
-  # Define the process levels for the presicion estimate:
-  processLevels <- c("bootstrap", "bootstrapImpute")
-
-  # Define ECA covariates ******************** THIS SHOULD PROBABLY BE MOVED TO THE RstoxECA package:
-  ECACovariates <- data.frame(
-        Name = c(
-            "temporal",
-            "gearfactor",
-            "spatial",
-            "platformfactor"
-        ),
-        Processe = c(
-            "DefineTemporalLanding",
-            "DefineGearLanding",
-            "DefineSpatialLanding",
-            "DefinePlatformLanding"
-        ),
-        Description = c(
-            "The temporal covariate",
-            "The gear covariate given as groups of gear codes",
-            "The spatial covariate giving polygons or locations",
-            "The platform covariate (vessels)"
-        ),
-        stringsAsFactors = FALSE
-    )
-
-  # Define the dependencies to include in the version names of the automated testing:
-  internal_dependencies <- c("Reca")
-
-  # Assign to RstoxEnv and return the definitions:
-  Definitions <- list(
-        Stox_reading_processes = Stox_reading_processes,
-        dateTimeNMDAPIFormat = dateTimeNMDAPIFormat,
-        NMD_data_sources = NMD_data_sources,
-        ver = ver,
-        project_types = project_types,
-        processLevels = processLevels,
-        ECACovariates = ECACovariates,
-        internal_dependencies = internal_dependencies
-    )
-
-  # Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv:
-  utils::globalVariables("RstoxEnv")
-  assign("RstoxEnv", new.env(), parent.env(environment()))
-
-  assign("Definitions", Definitions, envir = get("RstoxEnv"))
-  assign("Projects", list(), envir = get("RstoxEnv"))
-
-  # Return the definitions:
-  Definitions
+#*********************************************
+#*********************************************
+#' Merge two data tables with all=TRUE and the specified columns and keys.
+#' 
+#' Merges two data tables (see \code{\link[data.table]{data.table}}) with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
+#' 
+#' @param x,y		Two data tables to be merged.
+#' @param var		A character vector of names of the columns to keep while merging.
+#' @param keys		A character vector of names of the columns to merge by (see the \code{by} argument in \code{\link[data.table]{merge}}).
+#' @param keys.out	Logical: If TRUE return a list with the keys used and the merged data.
+#'
+#' @return A merged data table.
+#' 
+#' @noRd
+#'
+#' @import data.table
+#' 
+merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "length", "lengthresolution"), keys=c("cruise", "serialnumber", "samplenumber", "SpecCat"), keys.out=FALSE) {
+    # Get the keys common for the two data tables:
+    commonVar <- intersect(names(x), names(y))
+    thisKeys <- intersect(keys, commonVar)
+    # Get the variables requested for x and y:
+    xvar <- intersect(names(x), c(var, keys))
+    yvar <- intersect(names(y), c(var, keys))
+    # Remove variables named identically ('weight' in biotic v1.4):
+    yvar <- setdiff(yvar, xvar)
+    # Add the keys:
+    xvar <- unique(c(thisKeys, xvar))
+    yvar <- unique(c(thisKeys, yvar))
+    
+    # Merge the data.tables:
+    out <- merge(x[,xvar, with=FALSE], y[,yvar, with=FALSE], all=TRUE, by=thisKeys)
+    
+    if(keys.out) {
+        list(data=out, keys=thisKeys)
+    }
+    else {
+        out
+    }
 }
+
+

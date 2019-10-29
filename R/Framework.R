@@ -211,9 +211,10 @@ initiateRstoxFramework <- function(){
     
     
     #### Project description: ####
-    projectRDataFile = file.path(stoxFolders["Process"], "project.RData")
-    projectXMLFile = file.path(stoxFolders["Process"], "project.xml")
-    projectSavedStatusFile = file.path(statusFolder, "projectSavedStatus.txt")
+    projectRDataFile <- file.path(stoxFolders["Process"], "project.RData")
+    projectXMLFile <- file.path(stoxFolders["Process"], "project.xml")
+    projectSavedStatusFile <- file.path(statusFolder, "projectSavedStatus.txt")
+    projectIsRunningFile <- file.path(statusFolder, "projectIsRunning.txt")
     #currentProcessFile = file.path(statusFolder, "currentProcess.txt")
     
     # Memory files:
@@ -293,6 +294,7 @@ initiateRstoxFramework <- function(){
             projectRDataFile = projectRDataFile, 
             projectXMLFile = projectXMLFile, 
             projectSavedStatusFile = projectSavedStatusFile, 
+            projectIsRunningFile = projectIsRunningFile, 
             #currentProcessFile = currentProcessFile, 
             originalProjectMemoryFile = originalProjectMemoryFile, 
             currentProjectMemoryFile = currentProjectMemoryFile, 
@@ -2686,6 +2688,15 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
 #' 
 runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3, save = TRUE) {
     
+    # Chech that none of the models of the project are running:
+    if(isRunning(projectPath)) {
+        warning("The project is running (", projectPath, ")")
+        return(FALSE)
+    }
+    else {
+        setRunning(projectPath)
+    }
+    
     # Get the processIDs:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
@@ -2699,5 +2710,30 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3, s
     if(save) {
         saveProject(projectPath)
     }
+    
+    # Set the state as not running (deleting the isRunning file):
+    setNotRunning(projectPath)
+    
+    TRUE
 }
+
+
+isRunning <- function(projectPath) {
+    projectIsRunningFile <- getProjectPaths(projectPath, "projectIsRunningFile")
+    file.exists(projectIsRunningFile)
+}
+
+
+setRunning <- function(projectPath) {
+    projectIsRunningFile <- getProjectPaths(projectPath, "projectIsRunningFile")
+    write("", projectIsRunningFile)
+}
+
+
+
+setNotRunning <- function(projectPath) {
+    projectIsRunningFile <- getProjectPaths(projectPath, "projectIsRunningFile")
+    unlink(projectIsRunningFile, force = TRUE)
+}
+
 

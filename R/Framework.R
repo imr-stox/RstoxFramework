@@ -20,7 +20,7 @@
 #
 # The data types for communication with StoX: Boolean, String, Numeric, NULL, List of predefined values, FileName, FileNames
 # 
-# There is a hierarchy FuncitonName - functionParameters - functionInputs. This needs to be taken into account in the categories and items
+# There is a hierarchy functionName - functionParameters - functionInputs. This needs to be taken into account in the categories and items
 # 
 # What to do with boolean, integer, numeric, string?
 #
@@ -44,6 +44,33 @@
 #' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
 #' 
 initiateRstoxFramework <- function(){
+    
+    ##### Packages: #####
+    officialStoxLibraryPackages <- c(
+        "RstoxBase", 
+        "RstoxData"
+        #"RstoxECA", 
+        #"RstoxStatistics", 
+        #"RstoxReport"
+    )
+    
+    ##### Data: #####
+    speciesVariables <- list(
+        NMDBiotic1.4 = c(
+            "commonname", 
+            "catchcategory", 
+            "aphia", 
+            "scientificname"
+        ), 
+        NMDBiotic3.0 = c(
+            "species", 
+            "noname", 
+            "aphia"
+        ), 
+        ICESBiotic1 = c(
+            "SpeciesCode"
+        )
+    )
     
     #### Fundamental settings of StoX: ####
     
@@ -280,6 +307,10 @@ initiateRstoxFramework <- function(){
     definitionsNames <- ls()
     definitionsNames <- setdiff(definitionsNames, names(paths))
     definitions <- lapply(definitionsNames, get, pos = environment())
+    names(definitions) <- definitionsNames
+    
+    # Add the stoxTemplates: 
+    definitions$stoxTemplates <- stoxTemplates
     
     #### Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv: ####
     utils::globalVariables("RstoxFrameworkEnv")
@@ -287,6 +318,9 @@ initiateRstoxFramework <- function(){
     
     assign("definitions", definitions, envir=get("RstoxFrameworkEnv"))
     assign("projects", list(), envir=get("RstoxFrameworkEnv"))
+    
+    # Load the required packages to enable searching for formals and documentation:
+    lapply(officialStoxLibraryPackages, library, character.only = TRUE)
     
     #### Return the definitions: ####
     definitions
@@ -328,6 +362,228 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
     
     definitions
 }
+
+
+#' 
+#' @export
+#'
+getStoxLibrary <- function() {
+    
+    # Get the names of the official StoX library packages:
+    stoxLibraryPackages <- getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
+    # Validate the pakcages:
+    validStoxLibraryPackages <- sapply(stoxLibraryPackages, validateStoxLibraryPackage)
+    stoxLibraryPackages <- stoxLibraryPackages[validStoxLibraryPackages]
+    # Get a list of the 'stoxFunctionAttributes' from each package:
+    stoxFunctionAttributeLists <- lapply(stoxLibraryPackages, getStoxFunctionAttributes)
+    
+    # Collapse to one list:
+    stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
+    
+    # Check for duplicaetd function names:
+    functionNames <- names(stoxFunctionAttributes)
+    packageNames <- sapply(stoxFunctionAttributes, "[[", "packageName")
+    areDuplicatedFunctionNames <- duplicated(functionNames)
+    
+    # If there are any duplicated function names, report a warning stating which function names and from which packages:
+    if(any(areDuplicatedFunctionNames)) {
+        # Get the package strings as concatenations of the packages with common function names:
+        packageNamesString <- as.character(
+            by(
+                functionNames[areDuplicatedFunctionNames], 
+                packageNames[areDuplicatedFunctionNames], 
+                paste, 
+                collapse = ", "
+            )
+        )
+        # Get the unique duplicated function names, and paste the packageNamesString to these:
+        uniqueDuplicatedFunctionNames <- unique(functionNames[areDuplicatedFunctionNames])
+        functionNamePackageNamesString <- paste0(
+            uniqueDuplicatedFunctionNames, 
+            "(", 
+            packageNamesString, 
+            ")"
+        )
+        
+        warning("The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
+    }
+    
+    # Return the non-duplicated functions: 
+    stoxFunctionAttributes[!areDuplicatedFunctionNames]
+}
+
+### #' 
+### #' @export
+### #'
+### getStoxFunctionTable <- function() {
+###     # Get the list of all StoX functions with attributes:
+###     stoxFunctionList <- getStoxLibrary()
+###     # extract a table of 
+###     stoxFunctionTable <- data.table::data.table(
+###         functionName = sapply(stoxFunctionList, "[[", "functionName"), 
+###         packageFunctionName = sapply(stoxFunctionList, "[[", "packageName")
+###     )
+###     
+###     stoxFunctionTable
+### }
+### 
+### expandFunctionName <- function(functionName) {
+###     
+###     # Check first whether the function names are already expanded:
+###     expanded <- grepl("::", functionName)
+###     
+###     # Match the non-expanded with the stoxFunctionTable:
+###     stoxFunctionTable <- getStoxFunctionTable()
+###     matches <- match(functionName[!expanded], stoxFunctionTable$functionName)
+###     
+###     # report a warning for the functions that were not recognized:
+###     if(any(is.na(matches))) {
+###         warning(
+###             "The following funciton names were not expanded: ", 
+###             paste(functionName[!expanded][is.na(matches)], collapse = ", ")
+###         )
+###     }
+###     
+###     # Expand the recognized functions:
+###     toExpand <- which(!expanded)[!is.na(matches)]
+###     cleanMatches <- matches[!is.na(matches)]
+###     if(length(toExpand)) {
+###         functionName[toExpand] <- paste(
+###             stoxFunctionTable$packageFunctionName[cleanMatches], 
+###             sep ="::"
+###         )
+###     }
+###     
+###     functionName
+### }
+
+# Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each elements (function) of the list:
+getStoxFunctionAttributes <- function(packageName) {
+    stoxFunctionAttributes <- tryCatch(
+        getExportedValue(packageName, "stoxFunctionAttributes"), 
+        error = function(err) NULL
+    )
+    # Add function and package name:
+    stoxFunctionAttributes <- lapply(stoxFunctionAttributes, append, list(packageName = packageName))
+    stoxFunctionAttributes <- mapply(
+        append, 
+        stoxFunctionAttributes, 
+        lapply(names(stoxFunctionAttributes), function(x) list(functionName = paste(packageName, x, sep = "::"))), 
+        SIMPLIFY = FALSE
+    )
+    
+    stoxFunctionAttributes
+}
+
+
+validateStoxLibraryPackage <- function(packageName) {
+    
+    # Get the StoX function attributes:
+    stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
+    
+    # Return FALSE if the stox funciton attributes list does not exist:
+    if(length(stoxFunctionAttributes) == 0) {
+        warning("The package ", packageName, " does not export the required object 'stoxFunctionAttributes'.")
+        return(FALSE)
+    }
+    
+    # Check that all of the StoX functions are exported:
+    exports <- getNamespaceExports(getNamespace(packageName))
+    stoxFunctionNames <- names(stoxFunctionAttributes)
+    stoxFunctionNamesPresent <- stoxFunctionNames %in% exports
+    if(!all(stoxFunctionNamesPresent)) {
+        warning("The package ", packageName, " specifies functions in the 'stoxFunctionAttributes' object that are not exported:\n", paste(stoxFunctionNames[!stoxFunctionNamesPresent], collapse = ", "))
+        return(FALSE)
+    }
+    
+    ### # Get the StoX functions:
+    ### stoxFunctionNames <- names(stoxFunctionAttributes)
+    ### # Get the paths to the required single function PDFs:
+    ### pathToSingleFunctionPDF <- getPathToSingleFunctionPDF(packageName, stoxFunctionNames)
+    ### existsSingleFunctionPDF <- file.exists(pathToSingleFunctionPDF)
+    ### # Return FALSE if not all single function PDFs exists:
+    ### if(!all(existsSingleFunctionPDF)) {
+    ###     warning("The package ", packageName, " does not contain PDF of the documentation of each of its exported StoX functions.")
+    ###     return(FALSE)
+    ### }
+    ### 
+    ### # Look also for the single function argument descriptions:
+    ### pathToSingleFunctionArgumentRDS <- getPathToSingleFunctionArgumentRDS(packageName, stoxFunctionNames)
+    ### existsSingleFunctionArgumentRDS <- file.exists(pathToSingleFunctionArgumentRDS)
+    ### # Return FALSE if not all single function PDFs exists:
+    ### if(!all(existsSingleFunctionArgumentRDS)) {
+    ###     warning("The package ", packageName, " does not contain RDS of the documentation of each of its exported StoX functions.")
+    ###     return(FALSE)
+    ### }
+    
+    TRUE
+}
+
+
+getPackageNameFromPackageFunctionName <- function(functionName) {
+    sub("\\::.*", "", functionName)
+}
+
+getFunctionNameFromPackageFunctionName <- function(functionName) {
+    substring(functionName, regexpr("::", functionName) + 2)
+}
+
+
+getPathToSingleFunctionPDF <- function(functionName) {
+    # Extract the package name:
+    packageName <- getPackageNameFromPackageFunctionName(functionName)
+    # Build the path to the function PDF:
+    pathToSingleFunctionPDF <- file.path(
+        system.file("extdata", "singleFunctionPDFs", package = packageName), 
+        paste(functionName, "pdf", sep = ".")
+    )
+    pathToSingleFunctionPDF
+}
+
+getPathToSingleFunctionArgumentRDS <- function(functionName) {
+    # Extract the package name:
+    packageName <- getPackageNameFromPackageFunctionName(functionName)
+    # Build the path to the function RDS:
+    pathToSingleFunctionArgumentRDS <- file.path(
+        system.file("extdata", "singleFunctionPDFs", package = packageName), 
+        paste(functionName, "rds", sep = ".")
+    )
+    pathToSingleFunctionArgumentRDS
+}
+
+
+
+
+
+# Function to check that the functionName refers to a valid funciton, i.e., that the function is exported from a valid package (see validateStoxLibraryPackage()), and that it is represented in the associated stoxFunctionAttributes list of that package:
+validateFunction <- function(functionName) {
+    
+    # Expand the funciton name:
+    #functionName <- expandFunctionName(functionName)
+    
+    # 1. Check first that the function name contains a double colon, which is the first requirement for a process:
+    if(!grepl("::", functionName, fixed = TRUE)) {
+        stop("The function \"", functionName, "\" does not appear to be a string of the form PACKAGENAME::FUNCTIONNAME, where PACKAGENAME is the package exporting the function with name FUNCTIONNAME.")
+    }
+    
+    # Extract the packageName:
+    packageName <- getPackageNameFromPackageFunctionName(functionName)
+    
+    # 2. Validate the package for use in the process:
+    if(validateStoxLibraryPackage(packageName)) {
+        functionName
+    }
+    else {
+        stop("Invalid function ", functionName)
+    }
+}
+
+
+
+
+
+
+
 
 #' 
 #' @export
@@ -1162,47 +1418,100 @@ unReDoProject <- function(projectPath, shift = 0) {
 
 
 
-getStoxFunctionAttributes <- function(packageName) {
-    package <- paste0("package", packageName)
-    get("stoxFunctionAttributes", pos = package)
+#getStoxFunctionAttributes <- function(packageName) {
+#    package <- paste0("package", packageName)
+#    get("stoxFunctionAttributes", pos = package)
+#}
+
+getAvailableFunctionNames <- function(packageName = NULL) {
+    if(length(packageName)) {
+        # List packages:
+        
+    }
+    stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
+    names(stoxFunctionAttributes)
 }
 
-getAvailableFunctionNames <- function(packageName) {
-    names(getStoxFunctionAttributes(packageName))
-}
-
-getFunctionOutputDataType <- function(functionName, packageName) {
-    stoxFunctionAttributes[[functionName]]$functionOutputDataType
+getFunctionOutputDataType <- function(functionName) {
+    # Get the function name (without package name ::):
+    functionName <- getFunctionNameFromPackageFunctionName(functionName)
+    
+    # Get the list of all StoX funcitons with attributes:
+    stoxLibrary <- getStoxLibrary()
+    # Extract the function output data type:
+    stoxLibrary[[functionName]]$functionOutputDataType
+    #stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
+    #stoxFunctionAttributes[[functionName]]$functionOutputDataType
 }
 
 getParameterDataTypes <- function(functionName) {
-    stoxFunctionAttributes[[functionName]]$parameterDataType
+    # Get the function name (without package name ::):
+    functionName <- getFunctionNameFromPackageFunctionName(functionName)
+    
+    # Get the list of all StoX funcitons with attributes:
+    stoxLibrary <- getStoxLibrary()
+    # Extract the function output data type:
+    stoxLibrary[[functionName]]$parameterDataType
+    #stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
+    #stoxFunctionAttributes[[functionName]]$parameterDataType
 }
 
 
 
 isProcessDataFunction <- function(functionName) {
+    # Get the function output data type and match against the defined process data types:
     functionOutputDataType <- getFunctionOutputDataType(functionName)
     functionOutputDataType %in% getRstoxFrameworkDefinitions("stoxProcessDataTypes")
 }
 
 getFunctionCategory <- function(functionName) {
-    stoxFunctionAttributes[[functionName]]$functionCategory
+    # Get the function name (without package name ::):
+    functionName <- getFunctionNameFromPackageFunctionName(functionName)
+    
+    # Get the list of all StoX funcitons with attributes:
+    stoxLibrary <- getStoxLibrary()
+    # Extract the function output data type:
+    stoxLibrary[[functionName]]$functionCategory
+    # stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
+    # stoxFunctionAttributes[[functionName]]$functionCategory
 }
 
 getFunctionParameterHierarchy <- function(functionName) {
-    stoxFunctionAttributes[[functionName]]$functionParameterHierarchy
+    # Get the function name (without package name ::):
+    functionName <- getFunctionNameFromPackageFunctionName(functionName)
+    
+    # Get the list of all StoX funcitons with attributes:
+    stoxLibrary <- getStoxLibrary()
+    # Extract the function output data type:
+    stoxLibrary[[functionName]]$functionParameterHierarchy
+    
+    #stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
+    #stoxFunctionAttributes[[functionName]]$functionParameterHierarchy
 }
 
-getParametersToShowInStoX <- function(functionName) {
+getParametersToUseInStoX <- function(functionName) {
+    # Get the funciton parameter hierarchy:
     functionParameterHierarchy <- getFunctionParameterHierarchy(functionName)
+    # ... the names of which are the parameters to use in StoX:
     names(functionParameterHierarchy)
+    
+    #stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
+    #functionParameterHierarchy <- getFunctionParameterHierarchy(functionName)
+    #names(functionParameterHierarchy)
 }
 
 getFunctionDefaults <- function(functionName) {
     
-    # Get the formals:
-    f <- formals(functionName)
+    # Split the function name into function name and package name, and get the formals in the package environment:
+    packageFunctionName <- strsplit(functionName, "::")[[1]]
+    if(length(packageFunctionName) == 1) {
+        f <- formals(functionName)
+    }
+    else {
+        packageName <- packageFunctionName[1]
+        functionName <- packageFunctionName[2]
+        f <- formals(functionName, envir = as.environment(paste("package", packageName, sep = ":")))
+    }
     
     # Convert missing inputs to NULL, to preserve the name-value-pair convention, and to allow evaluating the calls returned by formals():
     areMissing <- sapply(f, class) == "name" & sapply(f, function(x) length(x) > 0 & sum(nchar(x)) == 0)
@@ -1501,7 +1810,7 @@ getProcessTable <- function(projectPath, modelName) {
     )
     processTable$hasError <- hasError
     
-    processTable$functionExists <- functionExists(functionNames)
+    ### processTable$functionExists <- functionExists(functionNames)
     
     # Reads a table of the following columns:
     # 1. processName
@@ -1540,7 +1849,10 @@ createEmptyProcess <- function(modelName = "Baseline", processName = NULL) {
 
 
 # Function to detect which of the process parameters to include/exclude:
-getValidProcessParameterNames <- function(functionName) {
+getPossibleProcessParameterNames <- function() {
+    # Before this funciton was functionName specific, but all process parameters are included for all processes, and then irrelevant ones are hidden in process properies in StoX.
+    # getPossibleProcessParameterNames <- function(functionName) {
+        
     # Get the possible process parameters:
     processParameters <- getRstoxFrameworkDefinitions("processParameters")
     possibleProcessParameters <- names(processParameters)
@@ -1561,31 +1873,30 @@ getValidProcessParameterNames <- function(functionName) {
 
 setFunctionName <- function(process, newFunctionName) {
     
-    # # If the new function name is different from the current:
-    # if(!identical(process$functionName, newFunctionName)) {
-        
-        # Insert the function name:
-        process$functionName <- newFunctionName
-        
-        # Remove any process parameters which should not be shown:
-        possibleProcessParameters <- getValidProcessParameterNames(process$functionName)
-        process$processParameters <- process$processParameters[possibleProcessParameters]
-        
-        # Get the parameters to display, and their defaults:
-        parametersToShowInStoX <- getParametersToShowInStoX(process$functionName)
-        defaults <- getFunctionDefaults(process$functionName)[parametersToShowInStoX]
-        
-        # Detect which parameters are data types, which identifies them as function inputs (outputs from other processes):
-        areInputs <- isFunctionInput(parametersToShowInStoX)
-        
-        # Split the defaults into function parameters and function inputs:
-        process$functionParameters <- defaults[!areInputs]
-        process$functionInputs <- defaults[areInputs]
-        
-        # Delete the processData, since these are no longer valid for the new function:
-        process$processData <- list()
-        # }
+    # Validate functionName:
+    newFunctionName <- validateFunction(newFunctionName)
     
+    # Insert the function name:
+    process$functionName <- newFunctionName
+    
+    # Remove any invalid process parameters:
+    #possibleProcessParameters <- getPossibleProcessParameterNames(process$functionName)
+    #process$processParameters <- process$processParameters[possibleProcessParameters]
+    
+    # Get the parameters to display, and their defaults:
+    parametersToUseInStoX <- getParametersToUseInStoX(process$functionName)
+    defaults <- getFunctionDefaults(process$functionName)[parametersToUseInStoX]
+    
+    # Detect which parameters are data types, which identifies them as function inputs (outputs from other processes):
+    areInputs <- isFunctionInput(parametersToUseInStoX)
+    
+    # Split the defaults into function parameters and function inputs:
+    process$functionParameters <- defaults[!areInputs]
+    process$functionInputs <- defaults[areInputs]
+    
+    # Delete the processData, since these are no longer valid for the new function:
+    process$processData <- list()
+        
     # Return the process:
     process
 }
@@ -1621,6 +1932,7 @@ validateProcessnName <- function(projectPath, modelName, newProcessName) {
 
 
 setListElements <- function(list, insertList, projectPath, modelName, processID) {
+    
     # Report a warning for function parameters not present in the process:
     insertNames <- names(insertList)
     presentNames <- names(list)
@@ -2203,8 +2515,9 @@ runProcess <- function(projectPath, modelName, processID) {
     
     # Run the function:
     processOutput <- do.call(
-        process$functionName, 
-        functionArguments
+        getFunctionNameFromPackageFunctionName(process$functionName), 
+        functionArguments, 
+        envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))
     )
     # Wrap the function output to a list named with the data type:
     processOutput <- list(processOutput)

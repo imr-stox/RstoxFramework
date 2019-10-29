@@ -1517,18 +1517,18 @@ stoxTemplates <- list(
 			Baseline = list(
 				ReadBiotic = list(
 					processName = "ReadBiotic",
-					functionName = "ReadBiotic"
+					functionName = "RstoxBase::ReadBiotic"
 				),
 				DefineStrata = list(
 					processName = "DefineStrata",
-					functionName = "DefineStrata", 
+					functionName = "RstoxBase::DefineStrata", 
 					processParameters = list(
 					    showInMap = TRUE
 					)
 				),
 				StratumArea = list(
 					processName = "StratumArea",
-					functionName = "StratumArea",
+					functionName = "RstoxBase::StratumArea",
 					functionInputs = list(
 						StratumPolygon = "DefineStrata"
 					)

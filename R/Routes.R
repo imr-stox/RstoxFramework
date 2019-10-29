@@ -461,6 +461,12 @@ getProcessProperties <- function(process) {
 }
 
 
+# getFunctionOutputDataType
+# getCanShowInMap
+# getFunctionDefaults
+# getParameterDataTypes
+# getFunctionArgumentDescriptions
+
 
 
 

@@ -34,6 +34,66 @@ getAvailableTemplatesDescriptions <- function() {
 
 
 ##### Processes: #####
+getProcessTable <- function(projectPath, modelName) {
+    
+    # Get the current project description:
+    projectDescription <- getProjectMemoryData(projectPath)
+    
+    # Get project name and function name:
+    processNames <- sapply(projectDescription[[modelName]], "[[", "processName")
+    functionNames <- sapply(projectDescription[[modelName]], "[[", "functionName")
+    # Get the data types returned by the functions of the processes:
+    dataTypes <- sapply(functionNames, getFunctionOutputDataType)
+    # Check whether the data type can be shown in the map:
+    canShowInMap <- getCanShowInMap(dataTypes)
+    # ... and whether the user hat defined that the data from the process should be shown in the map:
+    doShowInMap <- sapply(projectDescription[[modelName]], function(process) process$processParameters$showInMap)
+    # Check whether the process returns process data:
+    hasProcessData <- sapply(functionNames, isProcessDataFunction)
+    
+    # Group the info to a table for now:
+    processTable <- data.table::data.table(
+        processName = processNames, 
+        functionName = functionNames, 
+        dataType = dataTypes, 
+        canShowInMap = canShowInMap, 
+        doShowInMap = doShowInMap, 
+        hasProcessData = hasProcessData
+    )
+    
+    # Get the funciton inputs (as a list):
+    functionInputs <- lapply(projectDescription[[modelName]], "[[", "functionInputs")
+    
+    # Get the processes that has errors:
+    hasError <- sapply(
+        seq_along(processNames), 
+        getFunctionInputErrors, 
+        processTable = processTable, 
+        functionInputs = functionInputs
+    )
+    processTable$hasError <- hasError
+    
+    # Get also the current process, and define the column 'hasBeenRun':
+    #currentProcess <- getCurrentProcess(projectPath, modelName)
+    #hasBeenRun <- seq_along(processNames) <= which(processNames == currentProcess)
+    #processTable$hasError <- hasBeenRun
+    
+    
+    # Reads a table of the following columns:
+    # 1. processName
+    # 4. canShowInMap
+    # 5. hasProcessData
+    # 6. doShowInMap
+    
+    # 2. hasBeenRun
+    # 3. hasError
+    
+    # 
+    # There are two different types of actions, changing processes and changing parameters. Changing processes iduces reset of current process, whereas changing parameters do not. This will be added to the projectDescriptionIndex.txt. Errors given by HasError only occur when there are missing inputs, that is that the processes requersted in funciton inputs do not exist BEFORE the actual function. This will be a check to run in the route-funcitons Add-, Delete- and MoreProcess, which call the corresponding add-, delete- and moreProcess in Framework.R, and then calls getProjectList.
+    
+    processTable
+}
+
 
 # Function to get whether the process has input data error:
 getFunctionInputErrors <- function(ind, processTable, functionInputs) {
@@ -143,29 +203,29 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     }
 }
 
-# Function for getting the map mode of the process:
-getMapMode <- function(projectPath, modelName, processID) {
-    # Get the data type of the process:
-    dataType <- getDataType(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID
-    )
-    
-    # Select the type of interactive mode depending on the output data type from the process:
-    if(dataType %in% getRstoxFrameworkDefinitions("strataDataTypes")) {
-        "stratum"
-    }
-    else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataTypes")) {
-        "station"
-    }
-    else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType")) {
-        "EDSU"
-    }
-    else {
-        stop("Invalid dataType")
-    }
-}
+### # Function for getting the map mode of the process:
+### getMapMode <- function(projectPath, modelName, processID) {
+###     # Get the data type of the process:
+###     dataType <- getDataType(
+###         projectPath = projectPath, 
+###         modelName = modelName, 
+###         processID = processID
+###     )
+###     
+###     # Select the type of interactive mode depending on the output data type from the process:
+###     if(dataType %in% getRstoxFrameworkDefinitions("strataDataTypes")) {
+###         "stratum"
+###     }
+###     else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataTypes")) {
+###         "station"
+###     }
+###     else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType")) {
+###         "EDSU"
+###     }
+###     else {
+###         stop("Invalid dataType")
+###     }
+### }
 
 
 # Functions for getting the appropriate process data from the process, called depending on the interactive mode:
@@ -395,18 +455,57 @@ extrapolateEDSU <- function(Log) {
 
 getProcessPropertyNames <- function() {
     
+    # Parameter data types, default (null) value, test:
+    # logical: file(x), inherits(x, "connection")
+    # character: "", is.character()
+    # integer
+    # double
+    # filePath
+    # directoryPath
+    # 
+    
+    # We separate the primitive data types of parameters and the parameterformat which is a GUI specific tag indicating which action the GUI should take to aid the user to create the parameter value, such as selecting a file or building a table.
     
     
-    #ellipsisMode: 
+    # parameterformat: 
     #    filter, 
-    #    fileSelector, 
-    #    directorySelector, 
-    #    length2tsAcousticCategory, 
+    #    fileSelector, directorySelector
+    #    splitNASC, length2tsAcousticCategory, 
+    #    catchability
     #    length2tsLayerPSU, 
-    #    functionSelector (select dataType or package and then select funciton from the list),  
+    
+    
+    
+    # Datatypes in the project.xml
+    # String
+    # Ingeger
+    # Double
+    # Boolean
+    
+    
 }
 
 getProcessProperties <- function(process) {
+    
+    # The project properties contains the following elements:
+    # 1. name
+    # 2. displayName
+    # 3. description
+    # 4. type
+    # 5. format
+    # 6. defaultValue
+    # 7. possibleValues
+    # 8. value
+    
+    
+    #######################
+    ##### 1. Process: #####
+    #######################
+    
+    transposeList <- function(l) {
+        lapply(seq_along(l[[1]]), function(i) lapply(l, "[[", i))
+    }
+    
     
     # Get the process properties depending on the processPropertyName:
     processParameters <- getRstoxFrameworkDefinitions("processParameters")
@@ -415,45 +514,89 @@ getProcessProperties <- function(process) {
     
     ##### Define the process name, the function name and the process parameters as the process property "process": #####
     processArguments <- list(
-        name = c("processName", "functionName", names(processParameters)), 
-        displayName = c("Process name", "Function", unname(unlist(processParametersDisplayNames))), 
-        defaultValue = c("", "", unname(unlist(processParameters))), 
-        type = c("character", "character", sapply(processParameters, class)), 
-        possibleValues = list(
-            NULL, 
-            NULL, 
-            c(FALSE, TRUE), 
-            c(FALSE, TRUE), 
-            c(FALSE, TRUE)
-        ), 
-        description = c(
+        # 1. name:
+        name = list("processName", "functionName", names(processParameters)), 
+        # 2. displayName:
+        displayName = list("Process name", "Function", unname(unlist(processParametersDisplayNames))), 
+        # 3. description:
+        description = list(
             "The name of the process, which must be unique within each model", 
             "The name of the function called by the process", 
             processParametersDescriptions
+        ), 
+        # 4. type:
+        type = list("character", "character", sapply(processParameters, class)), 
+        # 5. format:
+        format = c("character", "character", rep("logical", length(processParameters))), 
+        # 6. default:
+        default = c("", "", unname(unlist(processParameters))), 
+        # 7. possibleValues:
+        possibleValues = list(
+            character(1), 
+            
+            as.list(character(2)), 
+            rep(list(c(FALSE, TRUE)), length(processParameters))
         )
     )
-    # Add the values:
+    # 8. value:
     processArguments$value <- process[processArguments$name]
     
     # Remove the showInMap argument if not relevant:
     if(!getCanShowInMap(process$functionName)) {
-        keep <- process$name != "showInMap"
-        process <- lapply(process, subset, keep)
+        keep <- processArguments$name != "showInMap"
+        processArguments <- lapply(processArguments, subset, keep)
     }
     
+    processArguments <- transposeList(processArguments)
+    #######################
     
-    ##### Define the funciton inputs: #####
+    
+    ##############################
+    ##### 2. FunctionInputs: #####
+    ##############################
+    
     functionInputs <- list()
     if(length(process$functionName)) {
+        
         functionInputNames <- names(process$functionInputs)
-        name = functionInputNames
-        displayName = functionInputNames
+        
+        functionInputs <- data.table::data.table(
+            # 1. name:
+            name = functionInputNames, 
+            # 2. displayName:
+            displayName = functionInputNames, 
+            # 3. description:
+            description = getFunctionArgumentDescriptions(process$functionName)[[name]], 
+            # 4. type:
+            type = unlist(getFunctionParameterPrimitiveTypes(process$functionName)[functionInputNames]),
+            # 5. format:
+            # 6. default:
+            default = unlist(getFunctionParameterDefaults(process$functionName)[functionInputNames]),
+            # 7. possibleValues:
+            possibleValues = getFunctionParameterPossibleValues(process$functionName)[functionInputNames],
+            # 8. value:
+            value <- process$functionInputs[functionInputNames]
+            
+        )
+        
+        
         possibleValues = getFunctionDefaults(process$functionName)[functionInputNames]
         defaultValue = sapply(possibleValues, "[[", 1)
-        type = getParameterDataTypes(process$functionName)[functionInputNames]
-        description = getFunctionArgumentDescriptions(process$functionName)
+        
+        
     }
+    ##############################
     
+    
+    ##################################
+    ##### 3. FunctionParameters: #####
+    ##################################
+    
+    functionParameters <- data.table::data.table()
+    if(length(process$functionName)) {
+        
+    }
+    ##################################
     
     # functionParameters
         
@@ -469,67 +612,6 @@ getProcessProperties <- function(process) {
 
 
 
-
-
-getFunctionArgumentDescriptions <- function(functionName, packageName) {
-    
-    # The package needs to be loaded to get the documentatino database:
-    library(packageName, character.only = TRUE)
-    # Get the Rd database:
-    db <- tools::Rd_db(packageName)
-    # Define a temporary file to write the Rd to
-    tmp <- tempfile()
-    # Paste the Rd to one string and write to the temporary file:
-    thisRd <- as.character(db[[paste0(functionName, ".Rd")]])
-    thisRd <- paste(thisRd, collapse = "")
-    write(thisRd, tmp)
-    # Read the file back in:
-    p <- tools::parse_Rd(tmp)
-    
-    # Detect the arguments, and get the valid arguments as those which are not line breaks:
-    atArguments <- sapply(p, attr, "Rd_tag") == "\\arguments"
-    argumentNames <- unlist(lapply(p[atArguments][[1]], head, 1))
-    validArgumentNames <- argumentNames != "\n"
-    
-    # Get and return the argument names and the descriptions:
-    argumentNames <- subset(argumentNames, validArgumentNames)
-    descriptions <- sapply(p[atArguments][[1]][validArgumentNames], function(x) paste0(unlist(x)[-1], collapse = " "))
-    list(
-        argumentNames = argumentNames, 
-        descriptions = descriptions
-    )
-}
-
-
-writeFunctionPDF <- function(functionName, packageName, pdfDir) {
-    # We need to load the package to get the Rd database:
-    library(packageName, character.only = TRUE)
-    # Get the Rd database:
-    db <- tools::Rd_db(packageName)
-    # Define a temporary file to write the Rd to
-    tmp <- tempfile()
-    # Paste the Rd to one string and write to the temporary file:
-    thisRd <- as.character(db[[paste0(functionName, ".Rd")]])
-    thisRd <- paste(thisRd, collapse = "")
-    write(thisRd, tmp)
-    # Define the output PDF file_
-    pdfFile <- path.expand(file.path(pdfDir , paste0(functionName, ".pdf")))
-    # Build the PDF
-    msg <- callr::rcmd(
-        "Rd2pdf", 
-        cmdargs = c(
-            "--force", 
-            "--no-index", 
-            paste0("--title=", packageName, "::", functionName), 
-            paste0("--output=", pdfFile), 
-            tmp
-        )
-    )
-    # Return the path to the PDF file:
-    pdfFile
-}
-
-# system.time(writeFunctionPDF("BioStationWeighting.Rd", "RstoxTempdoc", "~/Code/Github/RstoxFramework"))
 
 
 ##########

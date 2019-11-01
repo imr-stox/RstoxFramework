@@ -53,6 +53,7 @@ initiateRstoxFramework <- function(){
         #"RstoxStatistics", 
         #"RstoxReport"
     )
+    stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages)
     
     ##### Data: #####
     speciesVariables <- list(
@@ -369,15 +370,12 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
 #' 
 #' @export
 #'
-getStoxLibrary <- function() {
+getStoxLibrary <- function(packageNames) {
     
-    # Get the names of the official StoX library packages:
-    stoxLibraryPackages <- getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
     # Validate the pakcages:
-    validStoxLibraryPackages <- sapply(stoxLibraryPackages, validateStoxLibraryPackage)
-    stoxLibraryPackages <- stoxLibraryPackages[validStoxLibraryPackages]
+    packageNames <- packageNames[sapply(packageNames, validateStoxLibraryPackage)]
     # Get a list of the 'stoxFunctionAttributes' from each package:
-    stoxFunctionAttributeLists <- lapply(stoxLibraryPackages, getStoxFunctionAttributes)
+    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes)
     
     # Collapse to one list:
     stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
@@ -1425,7 +1423,7 @@ unReDoProject <- function(projectPath, shift = 0) {
 #    get("stoxFunctionAttributes", pos = package)
 #}
 
-getAvailableFunctionNames <- function(packageName = NULL) {
+getAvailableFunctions <- function(modelName) {
     if(length(packageName)) {
         # List packages:
         
@@ -1437,25 +1435,17 @@ getAvailableFunctionNames <- function(packageName = NULL) {
 getFunctionOutputDataType <- function(functionName) {
     # Get the function name (without package name ::):
     functionName <- getFunctionNameFromPackageFunctionName(functionName)
-    
-    # Get the list of all StoX funcitons with attributes:
-    stoxLibrary <- getStoxLibrary()
     # Extract the function output data type:
+    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
     stoxLibrary[[functionName]]$functionOutputDataType
-    #stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
-    #stoxFunctionAttributes[[functionName]]$functionOutputDataType
 }
 
-getParameterDataTypes <- function(functionName) {
+getFunctionParameterDataTypes <- function(functionName) {
     # Get the function name (without package name ::):
     functionName <- getFunctionNameFromPackageFunctionName(functionName)
-    
-    # Get the list of all StoX funcitons with attributes:
-    stoxLibrary <- getStoxLibrary()
     # Extract the function output data type:
-    stoxLibrary[[functionName]]$parameterDataType
-    #stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
-    #stoxFunctionAttributes[[functionName]]$parameterDataType
+    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
+    stoxLibrary[[functionName]]$functionParameterDataType
 }
 
 
@@ -1469,26 +1459,17 @@ isProcessDataFunction <- function(functionName) {
 getFunctionCategory <- function(functionName) {
     # Get the function name (without package name ::):
     functionName <- getFunctionNameFromPackageFunctionName(functionName)
-    
-    # Get the list of all StoX funcitons with attributes:
-    stoxLibrary <- getStoxLibrary()
     # Extract the function output data type:
+    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
     stoxLibrary[[functionName]]$functionCategory
-    # stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
-    # stoxFunctionAttributes[[functionName]]$functionCategory
 }
 
 getFunctionParameterHierarchy <- function(functionName) {
     # Get the function name (without package name ::):
     functionName <- getFunctionNameFromPackageFunctionName(functionName)
-    
-    # Get the list of all StoX funcitons with attributes:
-    stoxLibrary <- getStoxLibrary()
     # Extract the function output data type:
+    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
     stoxLibrary[[functionName]]$functionParameterHierarchy
-    
-    #stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
-    #stoxFunctionAttributes[[functionName]]$functionParameterHierarchy
 }
 
 getParametersToUseInStoX <- function(functionName) {
@@ -1496,13 +1477,10 @@ getParametersToUseInStoX <- function(functionName) {
     functionParameterHierarchy <- getFunctionParameterHierarchy(functionName)
     # ... the names of which are the parameters to use in StoX:
     names(functionParameterHierarchy)
-    
-    #stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
-    #functionParameterHierarchy <- getFunctionParameterHierarchy(functionName)
-    #names(functionParameterHierarchy)
 }
 
-getFunctionDefaults <- function(functionName) {
+# Function which gets the values defined for the parameters in the definition of a function:
+getFunctionParameterPossibleValues <- function(functionName) {
     
     # Split the function name into function name and package name, and get the formals in the package environment:
     packageFunctionName <- strsplit(functionName, "::")[[1]]
@@ -1522,6 +1500,24 @@ getFunctionDefaults <- function(functionName) {
     # Evaluate and return:
     f <- lapply(f, eval)
     f
+}
+
+# Function which gets the default values of a function:
+getFunctionParameterDefaults <- function(functionName) {
+    # Get the possible values of the parameters of a function:
+    functionParameterPossibleValues <- getFunctionParameterPossibleValues(functionName)
+    # The default is the first value:
+    defaults <- lapply(functionParameterPossibleValues, utils::head, 1)
+    defaults
+}
+
+# Function which gets the primitive types of the parameters of a function:
+getFunctionParameterPrimitiveTypes <- function(functionName) {
+    # Get the possible values of the parameters of a function:
+    functionParameterPossibleValues <- getFunctionParameterPossibleValues(functionName)
+    # The default is the first value:
+    primitiveType <- lapply(functionParameterPossibleValues, class)
+    primitiveType
 }
 
 
@@ -1887,7 +1883,7 @@ setFunctionName <- function(process, newFunctionName) {
     
     # Get the parameters to display, and their defaults:
     parametersToUseInStoX <- getParametersToUseInStoX(process$functionName)
-    defaults <- getFunctionDefaults(process$functionName)[parametersToUseInStoX]
+    defaults <- getFunctionParameterDefaults(process$functionName)[parametersToUseInStoX]
     
     # Detect which parameters are data types, which identifies them as function inputs (outputs from other processes):
     areInputs <- isFunctionInput(parametersToUseInStoX)

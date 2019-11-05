@@ -709,7 +709,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
         closeProject(projectPath, save = TRUE)
     }
     else {
-        # Set the active process ID:
+        # Set the active process ID to 0 for all models:
         initiateActiveProcessID(projectPath)
     }
     
@@ -754,7 +754,7 @@ openProject <- function(projectPath, showWarnings = FALSE) {
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     
-    # Set the active process ID:
+    # Set the active process ID to 0 for all models:
     initiateActiveProcessID(projectPath)
     
     list(
@@ -893,12 +893,12 @@ getActiveProcessID <- function(projectPath, modelName) {
 writeActiveProcessID <- function(projectPath, modelName, activeProcessID) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
-    if(!file.exists(initiateActiveProcessID)) {
+    if(!file.exists(activeProcessIDFile)) {
         warning("The active process ID file has not been initiated.")
     }
     activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
     activeProcessIDTable[[modelName]] <- activeProcessID
-    data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t")
+    data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
     activeProcessIDFile
 }
 
@@ -907,9 +907,9 @@ initiateActiveProcessID <- function(projectPath) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     # Initiate with all zeros:
-    activeProcessIDTable <- data.table::as.data.table(matrix(0, nrow = 1, ncol = 3))
+    activeProcessIDTable <- data.table::as.data.table(matrix(NA, nrow = 1, ncol = 3))
     colnames(activeProcessIDTable) <-getRstoxFrameworkDefinitions("stoxModelNames")
-    data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t")
+    data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
     activeProcessIDFile
 }
 
@@ -2069,7 +2069,15 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
     )
     
     # Convert from possible JSON input:
-    newFunctionParameters <- parseParameter(newFunctionParameters)
+    newFunctionParameters <- lapply(newFunctionParameters, parseParameter)
+    
+    # Modify any file or directory paths to relative paths if possible, and issue a warning if the projectPath is not in the path:
+    newFunctionParameters <- getRelativePaths(
+        functionParameters = newFunctionParameters, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
     
     # Modify the funciton parameters:
     modifiedFunctionParameters <- setListElements(
@@ -2103,7 +2111,7 @@ modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionI
     )
     
     # Convert from possible JSON input:
-    newFunctionInputs <- parseParameter(newFunctionInputs)
+    newFunctionInputs <- lapply(newFunctionInputs, parseParameter)
     
     # Modify the funciton inputs:
     modifiedFunctionInputs <- setListElements(
@@ -2137,7 +2145,7 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
     )
     
     # Convert from possible JSON input:
-    newProcessParameters <- parseParameter(newProcessParameters)
+    newProcessParameters <- lapply(newProcessParameters, parseParameter)
     
     # Modify the funciton parameters:
     modifiedProcessParameters <- setListElements(
@@ -2171,7 +2179,7 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData)
     )
     
     # Convert from possible JSON input:
-    newProcessData <- parseParameter(newProcessData)
+    newProcessData <- lapply(newProcessData, parseParameter)
     
     # Modify the funciton parameters:
     modifiedProcessData <- setListElements(
@@ -2196,6 +2204,99 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData)
     modifiedProcessData
 }
 
+
+# Function returning a logical vector with TRUE for function parameters which are file paths as per the format attribute:
+detectFilePaths <- function(functionParameters, projectPath, modelName, processID) {
+    # Get the function name and the function parameter formats:
+    functionName <- getFunctionName(projectPath, modelName, processID)
+    functionParameterFormats <- getStoxFunctionMetaData(functionName, "functionParameterFormats")
+    
+    # Detect file path formats:
+    areFilePathsAndNonEmpty <- functionParameterFormats[names(functionParameters)] %in% c("filePath", "filePaths", "directoryPath") & lengths(functionParameters) > 0
+    areFilePathsAndNonEmpty
+}
+
+# Function to detect function parameter format filePath, filePaths or directoryPath, and convert to relative paths if the projectPath is present in the paths:
+getRelativePaths <- function(functionParameters, projectPath, modelName, processID) {
+    
+    # Function to attempt to convert to relative path:
+    getRelativePath <- function(filePath, projectPath) {
+        
+        # Expand the paths:
+        projectPath <- path.expand(projectPath)
+        filePath <- path.expand(filePath)
+        
+        # If the projectPath is in the filePath, convert to a relative file path:
+        if(grepl(projectPath, filePath)) {
+            filePath <- sub(projectPath, "", filePath, fixed = TRUE)
+        }
+        else {
+            warning("The specified file ", filePath, " is not present in the project folder (", projectPath, ")")
+        }
+        filePath
+    }
+    
+    # Detect the file paths:
+    areFilePathsAndNonEmpty <- detectFilePaths(
+        functionParameters = functionParameters, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
+    # Get relative paths:
+    if(any(areFilePathsAndNonEmpty)) {
+        functionParameters[areFilePathsAndNonEmpty] <- lapply(
+            functionParameters[areFilePathsAndNonEmpty], 
+            getRelativePath, 
+            projectPath = projectPath
+        )
+    }
+    
+    functionParameters
+}
+
+# Function to detect function parameter format filePath, filePaths or directoryPath, and convert to abolute paths for use in functions:
+getAbsolutePaths <- function(functionParameters, projectPath, modelName, processID) {
+    
+    # Function to attempt to convert to relative path:
+    getAbsolutePath <- function(filePath, projectPath) {
+        # Check first whether the file exists as a relative path:
+        absolutePath <- file.path(projectPath, filePath)
+        if(file.exists(absolutePath)) {
+            absolutePath
+        }
+        else if(file.exists(filePath)) {
+            filePath
+        }
+        else {
+            warning("The file ", filePath, " does not exist.")
+            filePath
+        }
+    }
+    
+    # Detect the file paths:
+    areFilePathsAndNonEmpty <- detectFilePaths(
+        functionParameters = functionParameters, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
+    # Get absolute paths:
+    if(any(areFilePathsAndNonEmpty)) {
+        functionParameters[areFilePathsAndNonEmpty] <- lapply(
+            functionParameters[areFilePathsAndNonEmpty], 
+            getAbsolutePath, 
+            projectPath = projectPath
+        )
+    }
+    
+    functionParameters
+}
+
+
+
 #' 
 #' @export
 #' 
@@ -2208,6 +2309,10 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     # 1. Process name
     # 1. Process parameters
     # 1. Process data
+    if(!isOpenProject(projectPath)) {
+        warning("The project ", projectPath, " is not open.")
+        return(NULL)
+    }
     
     # Convert from possible JSON input:
     newValues <- parseParameter(newValues)
@@ -2530,10 +2635,10 @@ runProcess <- function(projectPath, modelName, processID) {
     }
     
     # Build a list of the arguments to the function:
-    functionArguments <- list()
+    functionParameters <- list()
     # Add the processData if a processData function:
     if(isProcessDataFunction(process$functionName)) {
-        functionArguments$processData <- process$processData
+        functionParameters$processData <- process$processData
     }
     
     # Get the function input as output from the previously run processes:
@@ -2558,36 +2663,69 @@ runProcess <- function(projectPath, modelName, processID) {
     
     
     # Add functionInputs and functionParameters:
-    functionArguments <- c(
-        functionArguments, 
+    functionParameters <- c(
+        functionParameters, 
         functionInputs, 
         process$functionParameters
     )
     
-    # Run the function:
-    processOutput <- do.call(
-        getFunctionNameFromPackageFunctionName(process$functionName), 
-        functionArguments, 
-        envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))
+    # Get absolute paths:
+    functionParameters <- getAbsolutePaths(
+        functionParameters = functionParameters, 
+        projectPath = projectPath, 
+        modelName = modelName,
+        processID = processID
     )
-    # Wrap the function output to a list named with the data type:
-    processOutput <- list(processOutput)
-    names(processOutput) <- getStoxFunctionMetaData(process$functionName, "functionOutputDataType")
     
-    # Store the processData (this must be a named list of only one data table):
-    if(isProcessDataFunction(process$functionName)) {
-        process$processData <- processOutput
+    ### # Run the function:
+    ### processOutput <- do.call(
+    ###     getFunctionNameFromPackageFunctionName(process$functionName), 
+    ###     functionParameters, 
+    ###     envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))### 
+    ### )
+    
+    # Try tunning the function, and return FALSE if failing:
+    failed <- FALSE
+    processOutput <- tryCatch(
+        do.call(
+            getFunctionNameFromPackageFunctionName(process$functionName), 
+            functionParameters, 
+            envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))
+        ), 
+        error = function(err) {
+            message(err)
+            failed<<-TRUE
+        }
+    )
+    
+    
+    if(failed){
+        return(FALSE)
     }
-    
-    # Write to memory files:
-    writeProcessOutputMemoryFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
-    
-    # Write to text files:
-    if(process$processParameters$fileOutput) {
-        writeProcessOutputTextFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
+    else{
+        # Update the active process ID:
+        writeActiveProcessID(projectPath, modelName, processID)
+        
+        # Wrap the function output to a list named with the data type:
+        processOutput <- list(processOutput)
+        names(processOutput) <- getStoxFunctionMetaData(process$functionName, "functionOutputDataType")
+        
+        # Store the processData (this must be a named list of only one data table):
+        if(isProcessDataFunction(process$functionName)) {
+            process$processData <- processOutput
+        }
+        
+        # Write to memory files:
+        writeProcessOutputMemoryFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
+        
+        # Write to text files:
+        if(process$processParameters$fileOutput) {
+            writeProcessOutputTextFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
+        }
+        
+        #invisible(processOutput)
+        TRUE
     }
-    
-    invisible(processOutput)
 }
 
 

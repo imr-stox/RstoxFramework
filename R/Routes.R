@@ -488,7 +488,7 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     processParameterNames <- names(processParameters)
     
     ##### Define the process name, the function name and the process parameters as the process property "process": #####
-    processArguments <- list(
+    processArguments <- data.table::data.table(
         # 1. name:
         name = as.list(c(
             "processName", 
@@ -540,28 +540,36 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     )
     
     # Add the name as names to each list element:
-    processArguments <- lapply(processArguments, setNames, unlist(processArguments$name))
+    #processArguments <- lapply(processArguments, setNames, unlist(processArguments$name))
     
     # Remove the showInMap argument if not relevant:
+    #if(!getCanShowInMap(process$functionName)) {
+    #    keep <- c(
+    #        TRUE, 
+    #        TRUE, 
+    #        processParameterNames != "showInMap"
+    #    )
+    #    processArguments <- lapply(processArguments, subset, keep)
+    #}
     if(!getCanShowInMap(process$functionName)) {
         keep <- c(
             TRUE, 
             TRUE, 
             processParameterNames != "showInMap"
         )
-        processArguments <- lapply(processArguments, subset, keep)
+        processArguments <- processArguments[keep, ]
     }
     #######################
     return(list(
-        processArguments = transposeList(processArguments)
+        #processArguments = transposeList(processArguments)
+        processArguments = processArguments
     ))
     
     ##############################
     ##### 2. FunctionInputs: #####
     ##############################
     
-    browser()
-    functionInputs <- list()
+    functionInputs <- data.table::data.table()
     if(length(process$functionName)) {
         
         processTable <- getProcessTable(projectPath, modelName)
@@ -608,7 +616,7 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     ##### 3. FunctionParameters: #####
     ##################################
     
-    functionParameters <- list()
+    functionParameters <- data.table::data.table()
     if(length(process$functionName)) {
         
         functionParameterNames <- names(process$functionParameters)

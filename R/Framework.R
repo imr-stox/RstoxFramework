@@ -434,7 +434,12 @@ getStoxFunctionAttributes <- function(packageName) {
     # Add the argument descriptions:
     argumentDescriptionFile <- file.path(system.file("extdata", package = packageName), "functionArguments.rds")
     if(file.exists(argumentDescriptionFile)) {
+        
+        # Read the argument descriptions:
         argumentDescriptions <- readRDS(argumentDescriptionFile)
+        # Keep only the argument descriptions for functions given in the stoxFunctionAttributes:
+        argumentDescriptions <- argumentDescriptions[names(argumentDescriptions) %in% names(stoxFunctionAttributes)]
+        
         for(functionName in names(argumentDescriptions)) {
             stoxFunctionAttributes [[functionName]] [["functionArgumentDescription"]] <- argumentDescriptions [[functionName]]
         }
@@ -705,10 +710,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     }
     else {
         # Set the active process ID:
-        stoxModelNames <-getRstoxFrameworkDefinitions("stoxModelNames")
-        for(modelName in stoxModelNames) {
-            writeActiveProcessID(projectPath, modelName, activeProcessID = 0)
-        }
+        initiateActiveProcessID(projectPath)
     }
     
     list(
@@ -753,10 +755,7 @@ openProject <- function(projectPath, showWarnings = FALSE) {
     setSavedStatus(projectPath, status = TRUE)
     
     # Set the active process ID:
-    stoxModelNames <-getRstoxFrameworkDefinitions("stoxModelNames")
-    for(modelName in stoxModelNames) {
-        writeActiveProcessID(projectPath, modelName, activeProcessID = 0)
-    }
+    initiateActiveProcessID(projectPath)
     
     list(
         projectPath = projectPath, 
@@ -894,9 +893,24 @@ getActiveProcessID <- function(projectPath, modelName) {
 writeActiveProcessID <- function(projectPath, modelName, activeProcessID) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
+    if(!file.exists(initiateActiveProcessID)) {
+        warning("The active process ID file has not been initiated.")
+    }
     activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
     activeProcessIDTable[[modelName]] <- activeProcessID
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t")
+    activeProcessIDFile
+}
+
+
+initiateActiveProcessID <- function(projectPath) {
+    # Read the active process ID for the model:
+    activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
+    # Initiate with all zeros:
+    activeProcessIDTable <- data.table::as.data.table(matrix(0, nrow = 1, ncol = 3))
+    colnames(activeProcessIDTable) <-getRstoxFrameworkDefinitions("stoxModelNames")
+    data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t")
+    activeProcessIDFile
 }
 
 
@@ -1824,13 +1838,13 @@ getProcessTable <- function(projectPath, modelName) {
         processID = processIndexTable$processID
     )
     # Get the processes that has errors:
-    hasError <- sapply(
+    hasModelError <- sapply(
         seq_along(processIndexTable$processID), 
         getFunctionInputErrors, 
         processTable = processTable, 
         functionInputs = functionInputs
     )
-    processTable$hasError <- hasError
+    processTable$hasModelError <- hasModelError
     
     # Add the data type:
     processTable$dataType <- sapply(functionNames, getStoxFunctionMetaData, "functionOutputDataType")

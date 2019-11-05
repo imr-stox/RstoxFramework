@@ -703,6 +703,13 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     if(!open) {
         closeProject(projectPath, save = TRUE)
     }
+    else {
+        # Set the active process ID:
+        stoxModelNames <-getRstoxFrameworkDefinitions("stoxModelNames")
+        for(modelName in stoxModelNames) {
+            writeActiveProcessID(projectPath, modelName, activeProcessID = 0)
+        }
+    }
     
     list(
         projectPath = projectPath, 
@@ -746,7 +753,8 @@ openProject <- function(projectPath, showWarnings = FALSE) {
     setSavedStatus(projectPath, status = TRUE)
     
     # Set the active process ID:
-    for(modelName in names(projectMemory)) {
+    stoxModelNames <-getRstoxFrameworkDefinitions("stoxModelNames")
+    for(modelName in stoxModelNames) {
         writeActiveProcessID(projectPath, modelName, activeProcessID = 0)
     }
     

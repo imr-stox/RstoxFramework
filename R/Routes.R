@@ -452,7 +452,10 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     
     # Small function to transpose a list:
     transposeList <- function(l) {
-        lapply(seq_along(l[[1]]), function(i) lapply(l, "[[", i))
+        outnames <- names(l[[1]])
+        out <- lapply(seq_along(l[[1]]), function(i) lapply(l, "[[", i))
+        names(out) <- outnames
+        out
     }
     # Function that gets the process names of the processes returning the specified data type
     getProcessNamesByDataType <- function(dataType, processTable) {
@@ -464,7 +467,6 @@ getProcessProperties <- function(projectPath, modelName, processID) {
             NULL
         }
     }
-    
     
     #######################
     ##### 1. Process: #####
@@ -487,48 +489,77 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     ##### Define the process name, the function name and the process parameters as the process property "process": #####
     processArguments <- list(
         # 1. name:
-        name = list("processName", "functionName", processParameterNames), 
+        name = as.list(c(
+            "processName", 
+            "functionName", 
+            processParameterNames
+        )), 
         # 2. displayName:
-        displayName = list("Process name", "Function", unname(unlist(processParametersDisplayNames))), 
+        displayName = as.list(c(
+            "Process name", 
+            "Function", 
+            unname(unlist(processParametersDisplayNames))
+        )), 
         # 3. description:
-        description = list(
+        description = as.list(c(
             "The name of the process, which must be unique within each model", 
             "The name of the function called by the process", 
             processParametersDescriptions
-        ), 
+        )), 
         # 4. type:
-        type = list("character", "character", sapply(processParameters, class)), 
+        type = as.list(c(
+            "character", 
+            "character", 
+            sapply(processParameters, class)
+        )), 
         # 5. format:
-        format = as.list(c("character", "character", rep("logical", length(processParameters)))), 
+        format = as.list(c(
+            "character", 
+            "character", 
+            rep("logical", length(processParameters))
+        )), 
         # 6. default:
-        default = as.list(c("", "", unname(unlist(processParameters)))), 
+        default = as.list(c(
+            "", 
+            "", 
+            unname(unlist(processParameters))
+        )), 
         # 7. possibleValues:
         possibleValues = c(
-            list(character()), 
+            list(character(1)), 
             getAvailableStoxFunctionNames(modelName), 
             rep(list(c(FALSE, TRUE)), length(processParameters))
         )
     )
     # 8. value:
-    processArguments$value <- process[processParameterNames]
+    processArguments$value <- c(
+        process["processName"], 
+        process["functionName"], 
+        process[["processParameters"]]
+    )
     
     # Add the name as names to each list element:
-    processArguments <- lapply(processArguments, setNames, processParameterNames)
+    processArguments <- lapply(processArguments, setNames, unlist(processArguments$name))
     
     # Remove the showInMap argument if not relevant:
     if(!getCanShowInMap(process$functionName)) {
-        keep <- processParameterNames != "showInMap"
+        keep <- c(
+            TRUE, 
+            TRUE, 
+            processParameterNames != "showInMap"
+        )
         processArguments <- lapply(processArguments, subset, keep)
     }
-    
-    processArguments <- transposeList(processArguments)
     #######################
-    
+    return(list(
+        processArguments = transposeList(processArguments)
+    ))
     
     ##############################
     ##### 2. FunctionInputs: #####
     ##############################
     
+    browser()
     functionInputs <- list()
     if(length(process$functionName)) {
         
@@ -616,10 +647,10 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     ##################################
 
     list(
-        processArguments = processArguments, 
-        functionInputs = functionInputs, 
-        functionParameters = functionParameters
-    )    
+        processArguments = transposeList(processArguments), 
+        functionInputs = transposeList(functionInputs), 
+        functionParameters = transposeList(functionParameters)
+    )
 }
 
 

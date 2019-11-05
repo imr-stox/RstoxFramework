@@ -18,17 +18,6 @@
 
 # Should we use "~" for the workspace folder? Tilde gives the Documents folder on Windows, whereas StoX 2.7 uses the user folder.
 #
-# The data types for communication with StoX: Boolean, String, Numeric, NULL, List of predefined values, FileName, FileNames
-# 
-# There is a hierarchy functionName - functionParameters - functionInputs. This needs to be taken into account in the categories and items
-# 
-# What to do with boolean, integer, numeric, string?
-#
-# Things to do in RstoxFramework:
-#
-# StoX
-# - Define the stox folder in the user home directory, since this avoids any global setting of StoX
-
 
 
 ##################################################
@@ -366,6 +355,19 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
     definitions
 }
 
+#' 
+#' @export
+#' 
+getProjectPaths <- function(projectPath, name = NULL) {
+    # Paste the project path to the relevant folders:
+    paths <- getRstoxFrameworkDefinitions("paths")
+    # Add the project path to all paths:
+    paths <- lapply(paths, function(x) if(is.list(x)) lapply(x, function(y) file.path(projectPath, y)) else file.path(projectPath, x))
+    if(length(name)) {
+        paths <- paths[[name]]
+    }
+    paths
+}
 
 #' 
 #' @export
@@ -410,6 +412,39 @@ getStoxLibrary <- function(packageNames) {
     
     # Return the non-duplicated functions: 
     stoxFunctionAttributes[!areDuplicatedFunctionNames]
+}
+
+# Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each elements (function) of the list:
+getStoxFunctionAttributes <- function(packageName) {
+    
+    stoxFunctionAttributes <- tryCatch(
+        getExportedValue(packageName, "stoxFunctionAttributes"), 
+        error = function(err) NULL
+    )
+    
+    # Add function and package name:
+    stoxFunctionAttributes <- lapply(stoxFunctionAttributes, append, list(packageName = packageName))
+    stoxFunctionAttributes <- mapply(
+        append, 
+        stoxFunctionAttributes, 
+        lapply(names(stoxFunctionAttributes), function(x) list(functionName = paste(packageName, x, sep = "::"))), 
+        SIMPLIFY = FALSE
+    )
+    
+    # Add the argument descriptions:
+    argumentDescriptionFile <- file.path(system.file("extdata", package = packageName), "functionArguments.rds")
+    if(file.exists(argumentDescriptionFile)) {
+        argumentDescriptions <- readRDS(argumentDescriptionFile)
+        for(functionName in names(argumentDescriptions)) {
+            stoxFunctionAttributes [[functionName]] [["functionArgumentDescription"]] <- argumentDescriptions [[functionName]]
+        }
+    }
+    else {
+        warning("The file ", argumentDescriptionFile, " does not exist.")
+    }
+    
+    
+    stoxFunctionAttributes
 }
 
 ### #' 
@@ -457,25 +492,9 @@ getStoxLibrary <- function(packageNames) {
 ###     functionName
 ### }
 
-# Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each elements (function) of the list:
-getStoxFunctionAttributes <- function(packageName) {
-    stoxFunctionAttributes <- tryCatch(
-        getExportedValue(packageName, "stoxFunctionAttributes"), 
-        error = function(err) NULL
-    )
-    # Add function and package name:
-    stoxFunctionAttributes <- lapply(stoxFunctionAttributes, append, list(packageName = packageName))
-    stoxFunctionAttributes <- mapply(
-        append, 
-        stoxFunctionAttributes, 
-        lapply(names(stoxFunctionAttributes), function(x) list(functionName = paste(packageName, x, sep = "::"))), 
-        SIMPLIFY = FALSE
-    )
-    
-    stoxFunctionAttributes
-}
 
 
+# Function for validating a StoX function library package:
 validateStoxLibraryPackage <- function(packageName) {
     
     # Get the StoX function attributes:
@@ -496,6 +515,7 @@ validateStoxLibraryPackage <- function(packageName) {
         return(FALSE)
     }
     
+    # This is GUI specific, and should not be used for validating a StoX funciton library package:
     ### # Get the StoX functions:
     ### stoxFunctionNames <- names(stoxFunctionAttributes)
     ### # Get the paths to the required single function PDFs:
@@ -519,40 +539,13 @@ validateStoxLibraryPackage <- function(packageName) {
     TRUE
 }
 
-
+# Functions for getting the package or function name from the full adress to a function:
 getPackageNameFromPackageFunctionName <- function(functionName) {
     sub("\\::.*", "", functionName)
 }
-
 getFunctionNameFromPackageFunctionName <- function(functionName) {
     substring(functionName, regexpr("::", functionName) + 2)
 }
-
-
-getPathToSingleFunctionPDF <- function(functionName) {
-    # Extract the package name:
-    packageName <- getPackageNameFromPackageFunctionName(functionName)
-    # Build the path to the function PDF:
-    pathToSingleFunctionPDF <- file.path(
-        system.file("extdata", "singleFunctionPDFs", package = packageName), 
-        paste(functionName, "pdf", sep = ".")
-    )
-    pathToSingleFunctionPDF
-}
-
-getPathToSingleFunctionArgumentRDS <- function(functionName) {
-    # Extract the package name:
-    packageName <- getPackageNameFromPackageFunctionName(functionName)
-    # Build the path to the function RDS:
-    pathToSingleFunctionArgumentRDS <- file.path(
-        system.file("extdata", "singleFunctionPDFs", package = packageName), 
-        paste(functionName, "rds", sep = ".")
-    )
-    pathToSingleFunctionArgumentRDS
-}
-
-
-
 
 
 # Function to check that the functionName refers to a valid funciton, i.e., that the function is exported from a valid package (see validateStoxLibraryPackage()), and that it is represented in the associated stoxFunctionAttributes list of that package:
@@ -631,19 +624,6 @@ defineProcessIDs <- function(projectMemory) {
 }
 
 
-#' 
-#' @export
-#' 
-getProjectPaths <- function(projectPath, name = NULL) {
-    # Paste the project path to the relevant folders:
-    paths <- getRstoxFrameworkDefinitions("paths")
-    # Add the project path to all paths:
-    paths <- lapply(paths, function(x) if(is.list(x)) lapply(x, function(y) file.path(projectPath, y)) else file.path(projectPath, x))
-    if(length(name)) {
-        paths <- paths[[name]]
-    }
-    paths
-}
 
 
 
@@ -712,7 +692,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
     # Set the project memory as the selected template:
-    thisTemplate <- addProcesses(
+    temp <- addProcesses(
         projectPath = projectPath, 
         modelName = modelName, 
         projectMemory = thisTemplate
@@ -755,15 +735,20 @@ openProject <- function(projectPath, showWarnings = FALSE) {
     # Read the project description file:
     projectMemory <- readProjectDescription(projectPath)
     
-    # Set the project memory as the selected template:
-    thisTemplate <- addProcesses(
+    # Set the project memory:
+    temp <- addProcesses(
         projectPath = projectPath, 
-        modelName = modelName, 
+        modelName = names(projectMemory), 
         projectMemory = projectMemory
     )
     
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
+    
+    # Set the active process ID:
+    for(modelName in names(projectMemory)) {
+        writeActiveProcessID(projectPath, modelName, activeProcessID = 0)
+    }
     
     list(
         projectPath = projectPath, 
@@ -887,7 +872,9 @@ resolveProjectPath <- function(filePath) {
     projectPath
 }
 
-
+#' 
+#' @export
+#'
 getActiveProcessID <- function(projectPath, modelName) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
@@ -1215,7 +1202,7 @@ removeProcessMemory <- function(projectPath, modelName, processID) {
     argumentFileTable <- getArgumentFileTable(projectPath)
     
     # Remove the process from the argument file table:
-    removeFromArgumentFileTable(argumentFileTable, modelName, processID)
+    argumentFileTable <- removeFromArgumentFileTable(argumentFileTable, modelName, processID)
     
     # Save the project memory:
     saveProjectMemory(projectPath, argumentFileTable)
@@ -1415,72 +1402,102 @@ unReDoProject <- function(projectPath, shift = 0) {
 
 
 
-
-
+##################################
+##### StoX function library: #####
+##################################
 
 #getStoxFunctionAttributes <- function(packageName) {
 #    package <- paste0("package", packageName)
 #    get("stoxFunctionAttributes", pos = package)
 #}
 
-getAvailableFunctions <- function(modelName) {
-    if(length(packageName)) {
-        # List packages:
-        
+# Function returning the names of the StoX functions available for a model:
+#' 
+#' @export
+#' 
+getAvailableStoxFunctionNames <- function(modelName) {
+    
+    # Get the function meta data:
+    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
+    
+    # Get the categories:
+    stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
+    # Get the names of the available functions:
+    availableFunctions <- names(stoxLibrary)
+    # Get the category of each function, and split by category:
+    functionCategories <- sapply(stoxLibrary, "[[", "functionCategory")
+    availableFunctionsByCategory <-split(availableFunctions, functionCategories)
+    
+    # Keep only the valid category:
+    availableFunctionsByCategory[modelName]
+}
+
+# Function for getting specific metadata of a function, or all metadata if metaDataName = NULL:
+getStoxFunctionMetaData <- function(functionName, metaDataName = NULL) {
+    
+    # Get the function name (without package name ::):
+    functionName <- getFunctionNameFromPackageFunctionName(functionName)
+    
+    # Get the function meta data:
+    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
+    # Match the metaDataName with the available meta data and return:
+    if(length(metaDataName) == 0) {
+        stoxLibrary [[functionName]]
     }
-    stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
-    names(stoxFunctionAttributes)
+    else if(metaDataName %in% names(stoxLibrary[[functionName]])) {
+        stoxLibrary [[functionName]] [[metaDataName]]
+    }
+    else {
+        warning("The requested meta data ", metaDataName, " is not included in the stoxFunctionAttributes.")
+        NULL
+    }
 }
 
-getFunctionOutputDataType <- function(functionName) {
-    # Get the function name (without package name ::):
-    functionName <- getFunctionNameFromPackageFunctionName(functionName)
-    # Extract the function output data type:
-    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
-    stoxLibrary[[functionName]]$functionOutputDataType
+
+getArgumentsToShow <- function(functionName, functionArguments, functionArgumentHierarchy) {
+    # Loop through the arguments given by paret tags in the functionArgumentHierarchy, and set toShow to FALSE if not any of the criterias are fulfilled:
+    toShow <- !logical(length(functionArguments))
+    names(toShow) <- names(functionArguments)
+    for(argumentName in names(functionArgumentHierarchy)) {
+        # Check the function arguments against the values in the function argument hierarchy:
+        fullfilled <- functionArguments[names(functionArgumentHierarchy[[argumentName]])] == unlist(functionArgumentHierarchy[[argumentName]])
+        if(!any(fullfilled)) {
+            toShow[[argumentName]] <- FALSE
+        }
+    }
 }
 
-getFunctionParameterDataTypes <- function(functionName) {
-    # Get the function name (without package name ::):
-    functionName <- getFunctionNameFromPackageFunctionName(functionName)
-    # Extract the function output data type:
-    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
-    stoxLibrary[[functionName]]$functionParameterDataType
-}
+
+
+### getStoxFunctionOutputDataType <- function(functionName) {
+###     # Get the function name (without package name ::):
+###     functionName <- getFunctionNameFromPackageFunctionName(functionName)
+###     # Extract the function output data type:
+###     stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
+###     stoxLibrary[[functionName]]$functionOutputDataType
+### }
+
 
 
 
 isProcessDataFunction <- function(functionName) {
     # Get the function output data type and match against the defined process data types:
-    functionOutputDataType <- getFunctionOutputDataType(functionName)
+    functionOutputDataType <- getStoxFunctionMetaData(functionName, "functionOutputDataType")
     functionOutputDataType %in% getRstoxFrameworkDefinitions("stoxProcessDataTypes")
 }
 
-getFunctionCategory <- function(functionName) {
-    # Get the function name (without package name ::):
-    functionName <- getFunctionNameFromPackageFunctionName(functionName)
-    # Extract the function output data type:
-    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
-    stoxLibrary[[functionName]]$functionCategory
-}
 
-getFunctionParameterHierarchy <- function(functionName) {
-    # Get the function name (without package name ::):
-    functionName <- getFunctionNameFromPackageFunctionName(functionName)
-    # Extract the function output data type:
-    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
-    stoxLibrary[[functionName]]$functionParameterHierarchy
-}
 
-getParametersToUseInStoX <- function(functionName) {
-    # Get the funciton parameter hierarchy:
-    functionParameterHierarchy <- getFunctionParameterHierarchy(functionName)
-    # ... the names of which are the parameters to use in StoX:
-    names(functionParameterHierarchy)
-}
+# No longer used. This funciton is replaced by getStoxFunctionParameters() and getStoxFunctionInputs()
+### getParametersToUseInStoX <- function(functionName) {
+###     # Get the funciton parameter hierarchy:
+###     functionParameterHierarchy <- getFunctionParameterHierarchy(functionName)
+###     # ... the names of which are the parameters to use in StoX:
+###     names(functionParameterHierarchy)
+### }
 
 # Function which gets the values defined for the parameters in the definition of a function:
-getFunctionParameterPossibleValues <- function(functionName) {
+getStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData = TRUE) {
     
     # Split the function name into function name and package name, and get the formals in the package environment:
     packageFunctionName <- strsplit(functionName, "::")[[1]]
@@ -1497,45 +1514,41 @@ getFunctionParameterPossibleValues <- function(functionName) {
     areMissing <- sapply(f, class) == "name" & sapply(f, function(x) length(x) > 0 & sum(nchar(x)) == 0)
     f[areMissing] <- vector("list", sum(areMissing))
     
+    if(dropProcessData) {
+        f <- f[names(f) != "processData"]
+    }
+    
     # Evaluate and return:
     f <- lapply(f, eval)
     f
 }
 
 # Function which gets the default values of a function:
-getFunctionParameterDefaults <- function(functionName) {
+getStoxFunctionParameterDefaults <- function(functionName) {
     # Get the possible values of the parameters of a function:
-    functionParameterPossibleValues <- getFunctionParameterPossibleValues(functionName)
+    functionParameterPossibleValues <- getStoxFunctionParameterPossibleValues(functionName)
     # The default is the first value:
     defaults <- lapply(functionParameterPossibleValues, utils::head, 1)
     defaults
 }
 
 # Function which gets the primitive types of the parameters of a function:
-getFunctionParameterPrimitiveTypes <- function(functionName) {
+getStoxFunctionParameterPrimitiveTypes <- function(functionName) {
     # Get the possible values of the parameters of a function:
-    functionParameterPossibleValues <- getFunctionParameterPossibleValues(functionName)
+    functionParameterPossibleValues <- getStoxFunctionParameterPossibleValues(functionName)
     # The default is the first value:
     primitiveType <- lapply(functionParameterPossibleValues, class)
     primitiveType
 }
-
-
-#' 
-#' @export
-#' 
-getStoxFunctions <- function(modelName) {
+# Function which gets the primitive types of the parameters of a function:
+getFunctionParameterPropertyItemTypes <- function(functionName) {
+    # Get the primitive types of the parameters of a function:
+    stoxFunctionParameterPrimitiveTypes <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
-    # Get the categories:
-    stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
-    # Get the names of the available functions:
-    availableFunctions <- names(stoxFunctionAttributes)
-    # Get the category of each function, and split by category:
-    functionCategories <- sapply(stoxFunctionAttributes, "[[", "functionCategory")
-    functionAttributesByCategory <-split(stoxFunctionAttributes, functionCategories)
-    
-    # Keep only the valid category:
-    functionAttributesByCategory[modelName]
+    # If not integer, double or logical, set to character (as all other types than these are wrapped in JSON strings):
+    setAsCharacter <- stoxFunctionParameterPrimitiveTypes %in% c("integer", "numeric", "logical")
+    stoxFunctionParameterPrimitiveTypes[setAsCharacter] <- "character"
+    stoxFunctionParameterPrimitiveTypes
 }
 
 
@@ -1547,6 +1560,9 @@ getStoxFunctions <- function(modelName) {
 
 
 
+#############################################################
+##### Functions for extracting properties of processes: #####
+#############################################################
 getFunctionName <- function(projectPath, modelName, processID) {
     getProjectMemoryData(
         projectPath, 
@@ -1624,11 +1640,11 @@ getDataType <- function(projectPath, modelName, processID) {
         processID = processID
     )
     # Get the data type from the function name:
-    getFunctionOutputDataType(functionName)
+    getStoxFunctionMetaData(functionName, "functionOutputDataType")
 }
     
 
-
+##### Functions for manipulating the process index table, which defines the order of the processes. These functions are used by the frontend to delete, add, and reorder processes: #####
 readProcessIndexTable <- function(projectPath, modelName) {
     # Get the path to the process index file:
     processIndexTableFile <- getProjectPaths(projectPath, "processIndexTableFile")
@@ -1637,6 +1653,7 @@ readProcessIndexTable <- function(projectPath, modelName) {
     if(!file.exists(processIndexTableFile)) {
         data.table::data.table()
     }
+    # Otherwise read the table from the file:
     else {
         processIndexTable <- data.table::fread(processIndexTableFile, sep = "\t")
         validRows <- processIndexTable$modelName %in% modelName
@@ -1749,7 +1766,7 @@ getProcessTable <- function(projectPath, modelName) {
     # Get a table of process name and ID:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     
-    # Return an empry data.table if the processIndexTable is empty:
+    # Return an empty data.table if the processIndexTable is empty:
     if(nrow(processIndexTable) == 0) {
         return(data.table::data.table())
     }
@@ -1774,8 +1791,7 @@ getProcessTable <- function(projectPath, modelName) {
         SIMPLIFY = FALSE
     )
     processParameters <- data.table::rbindlist(processParameters)
-    # Extract the "showInMap" parameter:
-
+    
     # Check whether the process returns process data:
     hasProcessData <- sapply(functionNames, isProcessDataFunction)
     
@@ -1807,6 +1823,9 @@ getProcessTable <- function(projectPath, modelName) {
         functionInputs = functionInputs
     )
     processTable$hasError <- hasError
+    
+    # Add the data type:
+    processTable$dataType <- sapply(functionNames, getStoxFunctionMetaData, "functionOutputDataType")
     
     ### processTable$functionExists <- functionExists(functionNames)
     
@@ -1868,7 +1887,7 @@ getPossibleProcessParameterNames <- function() {
 
 
 
-
+# This funciton is quite central, as it is resposible of setting the default values of funcitons. Only the function inputs and parameters introduced to a process using setFunctionName() can be modified:
 setFunctionName <- function(process, newFunctionName) {
     
     # Validate functionName:
@@ -1882,11 +1901,10 @@ setFunctionName <- function(process, newFunctionName) {
     #process$processParameters <- process$processParameters[possibleProcessParameters]
     
     # Get the parameters to display, and their defaults:
-    parametersToUseInStoX <- getParametersToUseInStoX(process$functionName)
-    defaults <- getFunctionParameterDefaults(process$functionName)[parametersToUseInStoX]
+    defaults <- getStoxFunctionParameterDefaults(process$functionName)
     
     # Detect which parameters are data types, which identifies them as function inputs (outputs from other processes):
-    areInputs <- isFunctionInput(parametersToUseInStoX)
+    areInputs <- isFunctionInput(names(defaults))
     
     # Split the defaults into function parameters and function inputs:
     process$functionParameters <- defaults[!areInputs]
@@ -2375,16 +2393,23 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL) {
 addProcesses <- function(projectPath, modelName, projectMemory) {
     # Get the possible models:
     stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
+    
     # Loop through the possible models and add the processes:
+    processes <- vector("list", length(stoxModelNames))
+    names(processes) <- stoxModelNames
+    
     for(modelName in stoxModelNames){
         for(ind in seq_along(projectMemory[[modelName]])){
-            addProcess(
+            processes [[modelName]] [[ind]] <- addProcess(
                 projectPath = projectPath, 
                 modelName = modelName, 
                 values = projectMemory[[modelName]][[ind]]
             )
         }
     }
+    
+    # Return the processes:
+    processes
 }
 
 #' 
@@ -2414,17 +2439,23 @@ addProcess <- function(projectPath, modelName, values) {
         processName = process$processName, 
         newValues = values
     )
+    
+    # Return the process:
+    process
 }
 #' 
 #' @export
 #' 
 removeProcess <- function(projectPath, modelName, processID) {
-    # Update the process index table:
+    # Update the project memory:
     removeProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID
     )
+    
+    # Update the process index table:
+    removeFromProcessIndexTable(projectPath, modelName, processID)
 }
 
 
@@ -2519,7 +2550,7 @@ runProcess <- function(projectPath, modelName, processID) {
     )
     # Wrap the function output to a list named with the data type:
     processOutput <- list(processOutput)
-    names(processOutput) <- getFunctionOutputDataType(process$functionName)
+    names(processOutput) <- getStoxFunctionMetaData(process$functionName, "functionOutputDataType")
     
     # Store the processData (this must be a named list of only one data table):
     if(isProcessDataFunction(process$functionName)) {

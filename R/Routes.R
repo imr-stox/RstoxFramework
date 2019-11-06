@@ -487,7 +487,6 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     processParametersDescriptions <- getRstoxFrameworkDefinitions("processParametersDescriptions")
     processParameterNames <- names(processParameters)
     
-    browser()
     ##### Define the process name, the function name and the process parameters as the process property "process": #####
     processArguments <- data.table::data.table(
         # 1. name:
@@ -561,10 +560,17 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         processArguments <- processArguments[keep, ]
     }
     #######################
-    #return(list(
-    #    #processArguments = transposeList(processArguments)
-    #    processArguments = processArguments
-    #))
+    output <- list(
+        list(
+            category = "processArguments", 
+            displayName = "Process", 
+            properties = processArguments
+        )
+    )
+    
+    return(output)
+        
+
     
     ##############################
     ##### 2. FunctionInputs: #####

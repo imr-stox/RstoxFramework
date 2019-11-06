@@ -725,7 +725,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE) {
     
     if(isOpenProject(projectPath)) {
         if(force) {
-            closeProject(projectPath)
+            closeProject(projectPath, save = FALSE)
         }
         message("Project ", projectPath, "is already open.")
         out <- list(
@@ -2893,8 +2893,10 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3, s
     processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
     
     # Loop through the processes:
+    status <- logical(length(processIDs))
+    names(status) <- processIDs
     for(processID in processIDs) {
-        temp <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
+        status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
     }
     
     # Save the project after each run:
@@ -2905,7 +2907,7 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3, s
     # Set the state as not running (deleting the isRunning file):
     setNotRunning(projectPath)
     
-    TRUE
+    status
 }
 
 

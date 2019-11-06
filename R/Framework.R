@@ -410,8 +410,9 @@ getStoxLibrary <- function(packageNames) {
         warning("The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
     }
     
-    # Return the non-duplicated functions: 
-    stoxFunctionAttributes[!areDuplicatedFunctionNames]
+    # Keep only the non-duplicated functions: 
+    stoxFunctionAttributes <- stoxFunctionAttributes[!areDuplicatedFunctionNames]
+    stoxFunctionAttributes
 }
 
 # Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each elements (function) of the list:
@@ -1563,7 +1564,7 @@ getStoxFunctionParameterDefaults <- function(functionName) {
 # Function which gets the primitive types of the parameters of a function:
 getStoxFunctionParameterPrimitiveTypes <- function(functionName) {
     # Get the possible values of the parameters of a function:
-    functionParameterPossibleValues <- getStoxFunctionParameterPossibleValues(functionName)
+    functionParameterPossibleValues <- getStoxFunctionParameterDefaults(functionName)
     # The default is the first value:
     primitiveType <- lapply(functionParameterPossibleValues, class)
     primitiveType
@@ -2215,10 +2216,10 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData)
 detectFilePaths <- function(functionParameters, projectPath, modelName, processID) {
     # Get the function name and the function parameter formats:
     functionName <- getFunctionName(projectPath, modelName, processID)
-    functionParameterFormats <- getStoxFunctionMetaData(functionName, "functionParameterFormats")
+    functionParameterFormat <- getStoxFunctionMetaData(functionName, "functionParameterFormat")
     
     # Detect file path formats:
-    areFilePathsAndNonEmpty <- functionParameterFormats[names(functionParameters)] %in% c("filePath", "filePaths", "directoryPath") & lengths(functionParameters) > 0
+    areFilePathsAndNonEmpty <- functionParameterFormat[names(functionParameters)] %in% c("filePath", "filePaths", "directoryPath") & lengths(functionParameters) > 0
     areFilePathsAndNonEmpty
 }
 
@@ -2880,24 +2881,25 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
 #' 
 #' @export
 #' 
-runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3, save = TRUE) {
+runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE) {
     
     # Check that the project exists:
+    failedVector <- logical(endProcess - startProcess + 1)
     if(!isProject(projectPath)) {
         warning("The StoX project ", projectPath, " does not exist")
-        return(FALSE)
+        return(failedVector)
     }
     
     # Check that the project is open:
     if(!isOpenProject(projectPath)) {
         warning("The StoX project ", projectPath, " is not open")
-        return(FALSE)
+        return(failedVector)
     }
     
     # Chech that none of the models of the project are running:
     if(isRunning(projectPath)) {
         warning("The project is running (", projectPath, ")")
-        return(FALSE)
+        return(failedVector)
     }
     else {
         setRunning(projectPath)
@@ -2905,6 +2907,10 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3, s
     
     # Get the processIDs:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    # Rstrict the startProcess and endProcess to the range of process indices:
+    startProcess <- max(1, startProcess)
+    endProcess <- min(nrow(processIndexTable), endProcess)
+    # Extract the requested process IDs:
     processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
     
     # Loop through the processes:

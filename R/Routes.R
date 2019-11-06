@@ -451,6 +451,23 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     # 7. possibleValues
     # 8. value
     
+    # Possible values of 'type':
+    # "integer"
+    # "double"
+    # "logical"
+    # "character"
+    
+    # Possible values of 'format':
+    # "none"
+    # "filter"
+    # "filePath"
+    # "filePaths"
+    # "directoryPath"
+    # "catchability" 
+    
+    # See image!!!!!!!!
+    
+    
     # Small function to transpose a list:
     transposeList <- function(l) {
         outnames <- names(l[[1]])
@@ -478,8 +495,6 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         modelName = modelName, 
         processID = processID
     )
-    
-    
     
     # Get the process properties depending on the processPropertyName:
     processParameters <- getRstoxFrameworkDefinitions("processParameters")
@@ -514,11 +529,7 @@ getProcessProperties <- function(projectPath, modelName, processID) {
             sapply(processParameters, class)
         )), 
         # 5. format:
-        format = as.list(c(
-            "character", 
-            "character", 
-            rep("logical", length(processParameters))
-        )), 
+        format = as.list(rep("none", 2 + length(processParameters))), 
         # 6. default:
         default = as.list(c(
             "", 
@@ -535,22 +546,12 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     # 8. value:
     processArguments$value <- c(
         process["processName"], 
-        process["functionName"], 
+        # Remove the package address and only use the function name:
+        getFunctionNameFromPackageFunctionName(process["functionName"]), 
         process[["processParameters"]]
     )
     
-    # Add the name as names to each list element:
-    #processArguments <- lapply(processArguments, setNames, unlist(processArguments$name))
-    
     # Remove the showInMap argument if not relevant:
-    #if(!getCanShowInMap(process$functionName)) {
-    #    keep <- c(
-    #        TRUE, 
-    #        TRUE, 
-    #        processParameterNames != "showInMap"
-    #    )
-    #    processArguments <- lapply(processArguments, subset, keep)
-    #}
     if(!getCanShowInMap(process$functionName)) {
         keep <- c(
             TRUE, 
@@ -560,18 +561,6 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         processArguments <- processArguments[keep, ]
     }
     #######################
-    output <- list(
-        list(
-            category = "processArguments", 
-            displayName = "Process", 
-            properties = processArguments
-        )
-    )
-    
-    #return(output)
-    browser()
-
-    
     
     # Declare functionInputs and functionParameters and 
     functionInputs <- data.table::data.table()
@@ -581,6 +570,18 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         
         # Get the function argument hierarchy:
         functionArgumentHierarchy = getStoxFunctionMetaData(process$functionName, "functionArgumentHierarchy", showWarnings = FALSE)
+        
+        
+        
+        
+   
+        
+        
+        
+        
+        
+        
+        
         
         ##############################
         ##### 2. FunctionInputs: #####
@@ -602,9 +603,9 @@ getProcessProperties <- function(projectPath, modelName, processID) {
                 # 3. description:
                 description = getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionInputNames], 
                 # 4. type:
-                type = getFunctionParameterPropertyItemTypes(process$functionName)[functionInputNames],
+                type = as.list(rep("character", 2 + length(processParameters))),
                 # 5. format:
-                format = getStoxFunctionMetaData(process$functionName, "functionParameterFormats")[functionInputNames],
+                format = as.list(rep("none", 2 + length(processParameters))),
                 # 6. default:
                 default = vector("list", length(functionInputNames)),
                 # 7. possibleValues:
@@ -635,6 +636,32 @@ getProcessProperties <- function(projectPath, modelName, processID) {
             # Get the names of the function parameters:
             functionParameterNames <- names(process$functionParameters)
             
+            
+            
+            
+            
+            
+            # Get the meta data functionParameterType:
+            functionParameterType = getStoxFunctionMetaData(process$functionName, "functionParameterType")
+            # If functionParameterType is not given for all parameters, try to interpret the type from the function definition:
+            parametersWithMissingType <- setdiff(functionParameterNames, names(functionParameterType))
+            if(length(parametersWithMissingType)) {
+                # Get the type from the function definition:
+                functionParameterPropertyItemTypes <- getFunctionParameterPropertyItemTypes(process$functionName)
+                # Insert the type for the variables with type missing in the stoxFunctionAttributes:
+                functionParameterType[parametersWithMissingType] <- functionParameterPropertyItemTypes[parametersWithMissingType]
+            }
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             # Define the function parameters:
             functionParameters <- data.table::data.table(
                 # 1. name:
@@ -644,9 +671,9 @@ getProcessProperties <- function(projectPath, modelName, processID) {
                 # 3. description:
                 description = getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionParameterNames], 
                 # 4. type:
-                type = getFunctionParameterPropertyItemTypes(process$functionName)[functionParameterNames],
+                type = functionParameterType[functionParameterNames],
                 # 5. format:
-                format = getStoxFunctionMetaData(process$functionName, "functionParameterFormats")[functionParameterNames],
+                format = getStoxFunctionMetaData(process$functionName, "functionParameterFormat")[functionParameterNames],
                 # 6. default:
                 default = getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames],
                 # 7. possibleValues:
@@ -690,13 +717,16 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     output
 }
 
+#' 
+#' @export
+#' 
+setProcessPropertyValue <- function(processProperty, processPropertyItemName, propertyItemValue, projectPath, modelName, processID) {
+    
+    
+    
+    
 
-# getFunctionOutputDataType
-# getCanShowInMap
-# getFunctionDefaults
-# getParameterDataTypes
-# getFunctionArgumentDescriptions
-
+}
 
 
 

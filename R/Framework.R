@@ -1458,7 +1458,7 @@ getAvailableStoxFunctionNames <- function(modelName) {
 }
 
 # Function for getting specific metadata of a function, or all metadata if metaDataName = NULL:
-getStoxFunctionMetaData <- function(functionName, metaDataName = NULL) {
+getStoxFunctionMetaData <- function(functionName, metaDataName = NULL, showWarnings = TRUE) {
     
     # Get the function name (without package name ::):
     functionName <- getFunctionNameFromPackageFunctionName(functionName)
@@ -1473,14 +1473,16 @@ getStoxFunctionMetaData <- function(functionName, metaDataName = NULL) {
         stoxLibrary [[functionName]] [[metaDataName]]
     }
     else {
-        warning("The requested meta data ", metaDataName, " is not included in the stoxFunctionAttributes.")
+        if(showWarnings) {
+            warning("The requested meta data ", metaDataName, " is not included in the stoxFunctionAttributes.")
+        }
         NULL
     }
 }
 
 
 getArgumentsToShow <- function(functionName, functionArguments, functionArgumentHierarchy) {
-    # Loop through the arguments given by paret tags in the functionArgumentHierarchy, and set toShow to FALSE if not any of the criterias are fulfilled:
+    # Loop through the arguments given by parent tags in the functionArgumentHierarchy, and set toShow to FALSE if not any of the criterias are fulfilled:
     toShow <- !logical(length(functionArguments))
     names(toShow) <- names(functionArguments)
     for(argumentName in names(functionArgumentHierarchy)) {
@@ -1490,6 +1492,7 @@ getArgumentsToShow <- function(functionName, functionArguments, functionArgument
             toShow[[argumentName]] <- FALSE
         }
     }
+    toShow
 }
 
 
@@ -2878,6 +2881,18 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
 #' @export
 #' 
 runModel <- function(projectPath, modelName, startProcess = 1, endProcess = 3, save = TRUE) {
+    
+    # Check that the project exists:
+    if(!isProject(projectPath)) {
+        warning("The StoX project ", projectPath, " does not exist")
+        return(FALSE)
+    }
+    
+    # Check that the project is open:
+    if(!isOpenProject(projectPath)) {
+        warning("The StoX project ", projectPath, " is not open")
+        return(FALSE)
+    }
     
     # Chech that none of the models of the project are running:
     if(isRunning(projectPath)) {

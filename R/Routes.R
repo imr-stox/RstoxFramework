@@ -568,99 +568,126 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         )
     )
     
-    return(output)
-        
+    #return(output)
+    browser()
 
     
-    ##############################
-    ##### 2. FunctionInputs: #####
-    ##############################
     
+    # Declare functionInputs and functionParameters and 
     functionInputs <- data.table::data.table()
-    if(length(process$functionName)) {
-        
-        processTable <- getProcessTable(projectPath, modelName)
-        thisProcessIndex <- which(processTable$processID == processID)
-        processTable <- processTable[seq_len(thisProcessIndex), ]
-        
-        functionInputNames <- names(process$functionInputs)
-        
-        functionInputs <- data.table::data.table(
-            # 1. name:
-            name = as.list(functionInputNames), 
-            # 2. displayName:
-            displayName = as.list(functionInputNames), 
-            # 3. description:
-            description = getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[[functionInputNames]], 
-            # 4. type:
-            type = getFunctionParameterPropertyItemTypes(process$functionName)[functionInputNames],
-            # 5. format:
-            format = getStoxFunctionMetaData(process$functionName, "functionParameterFormats")[[functionInputNames]],
-            # 6. default:
-            default = vector("list", length(functionInputNames)),
-            # 7. possibleValues:
-            possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
-            # 8. value:
-            value = process$functionInputs
-        )
-    }
-    
-    # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
-    argumentsToShow <- getArgumentsToShow(
-        functionName = process$functionName, 
-        functionArguments = functionInputs$value, 
-        functionArgumentHierarchy = getStoxFunctionMetaData(process$functionName, "functionArgumentHierarchy")
-        )
-    
-    functionInputs <- lapply(functionInputs, "[[", argumentsToShow)
-    ##############################
-    
-    
-    ##################################
-    ##### 3. FunctionParameters: #####
-    ##################################
-    
     functionParameters <- data.table::data.table()
+    
     if(length(process$functionName)) {
         
-        functionParameterNames <- names(process$functionParameters)
+        # Get the function argument hierarchy:
+        functionArgumentHierarchy = getStoxFunctionMetaData(process$functionName, "functionArgumentHierarchy", showWarnings = FALSE)
         
-        functionParameters <- data.table::data.table(
-            # 1. name:
-            name = as.list(functionParameterNames), 
-            # 2. displayName:
-            displayName = as.list(functionParameterNames), 
-            # 3. description:
-            description = getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[[functionParameterNames]], 
-            # 4. type:
-            type = getFunctionParameterPropertyItemTypes(process$functionName)[functionParameterNames],
-            # 5. format:
-            format = getStoxFunctionMetaData(process$functionName, "functionParameterFormats")[[functionParameterNames]],
-            # 6. default:
-            default = getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames],
-            # 7. possibleValues:
-            possibleValues = getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames],
-            # 8. value:
-            value = process$functionParameters
-        )
+        ##############################
+        ##### 2. FunctionInputs: #####
+        ##############################
+        # Run only if there are function inputs:
+        if(length(process$functionInputs)) {
+            # Get the process table, which is needed to get the output data types from the prior processes for use in the function inputs:
+            processTable <- getProcessTable(projectPath, modelName)
+            thisProcessIndex <- which(processTable$processID == processID)
+            processTable <- processTable[seq_len(thisProcessIndex), ]
+            functionInputNames <- names(process$functionInputs)
+            
+            # Define the function inputs:
+            functionInputs <- data.table::data.table(
+                # 1. name:
+                name = as.list(functionInputNames), 
+                # 2. displayName:
+                displayName = as.list(functionInputNames), 
+                # 3. description:
+                description = getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionInputNames], 
+                # 4. type:
+                type = getFunctionParameterPropertyItemTypes(process$functionName)[functionInputNames],
+                # 5. format:
+                format = getStoxFunctionMetaData(process$functionName, "functionParameterFormats")[functionInputNames],
+                # 6. default:
+                default = vector("list", length(functionInputNames)),
+                # 7. possibleValues:
+                possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
+                # 8. value:
+                value = process$functionInputs
+            )
+            
+            # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
+            argumentsToShow <- getArgumentsToShow(
+                functionName = process$functionName, 
+                functionArguments = functionInputs$value, 
+                functionArgumentHierarchy = functionArgumentHierarchy
+            )
+            # Select only the items to show in the GUI:
+            if(!all(argumentsToShow)) {
+                functionInputs <- lapply(functionInputs, "[[", argumentsToShow)
+            }
+        }
+        ##############################
+        
+        
+        ##################################
+        ##### 3. FunctionParameters: #####
+        ##################################
+        # Run only if there are function parameters (which there always will be):
+        if(length(process$functionParameters)) {
+            # Get the names of the function parameters:
+            functionParameterNames <- names(process$functionParameters)
+            
+            # Define the function parameters:
+            functionParameters <- data.table::data.table(
+                # 1. name:
+                name = as.list(functionParameterNames), 
+                # 2. displayName:
+                displayName = as.list(functionParameterNames), 
+                # 3. description:
+                description = getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionParameterNames], 
+                # 4. type:
+                type = getFunctionParameterPropertyItemTypes(process$functionName)[functionParameterNames],
+                # 5. format:
+                format = getStoxFunctionMetaData(process$functionName, "functionParameterFormats")[functionParameterNames],
+                # 6. default:
+                default = getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames],
+                # 7. possibleValues:
+                possibleValues = getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames],
+                # 8. value:
+                value = process$functionParameters
+            )
+            
+            # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
+            argumentsToShow <- getArgumentsToShow(
+                functionName = process$functionName, 
+                functionArguments = functionParameters$value, 
+                functionArgumentHierarchy = functionArgumentHierarchy
+            )
+            # Select only the items to show in the GUI:
+            if(!all(argumentsToShow)) {
+                functionParameters <- lapply(functionParameters, "[[", argumentsToShow)
+            }
+        }
+        ##############################
     }
     
-    # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy") !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    argumentsToShow <- getArgumentsToShow(
-        functionName = process$functionName, 
-        functionArguments = functionParameters$value, 
-        functionArgumentHierarchy = getStoxFunctionMetaData(process$functionName, "functionArgumentHierarchy")
+    # Create a list of the different properties, adding category and displayName:
+    output <- list(
+        list(
+            category = "processArguments", 
+            displayName = "Process", 
+            properties = processArguments
+        ), 
+        list(
+            category = "functionInputs", 
+            displayName = "Function inputs", 
+            properties = functionInputs
+        ), 
+        list(
+            category = "functionParameters", 
+            displayName = "Function parameters", 
+            properties = functionParameters
+        )
     )
-    
-    functionParameters <- lapply(functionParameters, "[[", argumentsToShow)
-    
-    ##################################
-
-    data.table::data.table(
-        processArguments = processArguments, 
-        functionInputs = functionInputs, 
-        functionParameters = functionParameters
-    )
+    output
 }
 
 

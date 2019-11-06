@@ -721,9 +721,12 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' 
 #' @export
 #' 
-openProject <- function(projectPath, showWarnings = FALSE) {
+openProject <- function(projectPath, showWarnings = FALSE, force = FALSE) {
     
     if(isOpenProject(projectPath)) {
+        if(force) {
+            closeProject(projectPath)
+        }
         message("Project ", projectPath, "is already open.")
         out <- list(
             projectPath = projectPath, 
@@ -2223,6 +2226,7 @@ getRelativePaths <- function(functionParameters, projectPath, modelName, process
     getRelativePath <- function(filePath, projectPath) {
         
         # Expand the paths:
+        message("Fix the getRelativePaths to actually accept relative paths!!!!!!!!!")
         projectPath <- path.expand(projectPath)
         filePath <- path.expand(filePath)
         
@@ -2669,6 +2673,7 @@ runProcess <- function(projectPath, modelName, processID) {
         process$functionParameters
     )
     
+    browser()
     # Get absolute paths:
     functionParameters <- getAbsolutePaths(
         functionParameters = functionParameters, 

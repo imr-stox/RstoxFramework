@@ -487,6 +487,7 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     processParametersDescriptions <- getRstoxFrameworkDefinitions("processParametersDescriptions")
     processParameterNames <- names(processParameters)
     
+    browser()
     ##### Define the process name, the function name and the process parameters as the process property "process": #####
     processArguments <- data.table::data.table(
         # 1. name:
@@ -560,10 +561,10 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         processArguments <- processArguments[keep, ]
     }
     #######################
-    return(list(
-        #processArguments = transposeList(processArguments)
-        processArguments = processArguments
-    ))
+    #return(list(
+    #    #processArguments = transposeList(processArguments)
+    #    processArguments = processArguments
+    #))
     
     ##############################
     ##### 2. FunctionInputs: #####
@@ -578,7 +579,7 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         
         functionInputNames <- names(process$functionInputs)
         
-        functionInputs <- list(
+        functionInputs <- data.table::data.table(
             # 1. name:
             name = as.list(functionInputNames), 
             # 2. displayName:
@@ -590,16 +591,13 @@ getProcessProperties <- function(projectPath, modelName, processID) {
             # 5. format:
             format = getStoxFunctionMetaData(process$functionName, "functionParameterFormats")[[functionInputNames]],
             # 6. default:
-            default = vector("list", length(functionParameterNames)),
+            default = vector("list", length(functionInputNames)),
             # 7. possibleValues:
             possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
             # 8. value:
             value = process$functionInputs
         )
     }
-    
-    # Add the name as names to each list element:
-    functionInputs <- lapply(functionInputs, setNames, functionInputs$name)
     
     # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
     argumentsToShow <- getArgumentsToShow(
@@ -621,7 +619,7 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         
         functionParameterNames <- names(process$functionParameters)
         
-        functionParameters <- list(
+        functionParameters <- data.table::data.table(
             # 1. name:
             name = as.list(functionParameterNames), 
             # 2. displayName:
@@ -641,9 +639,6 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         )
     }
     
-    # Add the name as names to each list element:
-    functionParameters <- lapply(functionParameters, setNames, functionParameters$name)
-    
     # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy") !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     argumentsToShow <- getArgumentsToShow(
         functionName = process$functionName, 
@@ -655,10 +650,10 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     
     ##################################
 
-    list(
-        processArguments = transposeList(processArguments), 
-        functionInputs = transposeList(functionInputs), 
-        functionParameters = transposeList(functionParameters)
+    data.table::data.table(
+        processArguments = processArguments, 
+        functionInputs = functionInputs, 
+        functionParameters = functionParameters
     )
 }
 

@@ -2673,7 +2673,6 @@ runProcess <- function(projectPath, modelName, processID) {
         process$functionParameters
     )
     
-    browser()
     # Get absolute paths:
     functionParameters <- getAbsolutePaths(
         functionParameters = functionParameters, 

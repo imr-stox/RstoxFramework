@@ -1602,12 +1602,9 @@ getFunctionParameterPropertyItemTypes <- function(functionName) {
     stoxFunctionParameterPrimitiveTypes <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
     # If not integer, double or logical, set to character (as all other types than these are wrapped in JSON strings):
-    
-    getRstoxFrameworkDefinitions("processPropertyTypes")$
-    
-    
-    setAsCharacter <- !stoxFunctionParameterPrimitiveTypes %in% c("integer", "numeric", "logical")
-    stoxFunctionParameterPrimitiveTypes[setAsCharacter] <- "character"
+    processPropertyTypes <- getRstoxFrameworkDefinitions("processPropertyTypes")
+    setAsCharacter <- !stoxFunctionParameterPrimitiveTypes %in% processPropertyTypes$optional
+    stoxFunctionParameterPrimitiveTypes[setAsCharacter] <- processPropertyTypes$default
     stoxFunctionParameterPrimitiveTypes
 }
 
@@ -2443,7 +2440,7 @@ parseParameter <- function(parameter) {
         parameter <- jsonlite::fromJSON(parameter)
     }
     else if(is.character(parameter) && jsonlite::validate(parameter)) {
-        parameter <- jsonlite::parse_json(parameter)
+        parameter <- jsonlite::parse_json(parameter, simplifyVector = TRUE)
     }
     parameter
 }

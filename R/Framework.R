@@ -2432,7 +2432,7 @@ parseParameter <- function(parameter) {
     if("json" %in% class(parameter)) {
         parameter <- jsonlite::fromJSON(parameter)
     }
-    else if(jsonlite::validate(parameter)) {
+    else if(is.character(parameter) && jsonlite::validate(parameter)) {
         parameter <- jsonlite::parse_json(parameter)
     }
     parameter
@@ -2983,9 +2983,7 @@ setNotRunning <- function(projectPath) {
 runFunction <- function(what, args) {
     
     # Parse the args if given as a JSON string:
-    print(args)
     args <- parseParameter(args)
-    print(args)
     
     # Reset the warnings:
     assign("last.warning", NULL, envir = baseenv())
@@ -3012,6 +3010,14 @@ runFunction <- function(what, args) {
     if(length(msg) == 0) {
         msg <- NULL
     }
+    if(length(warn)) {
+        warn <- as.character(warn)
+    }
+    if(length(err)) {
+        err <- as.character(err)
+    }
+    
+    
     
     # Clean the warnings:
     warn <- unname(unlist(warn[names(warn) == "message"]))

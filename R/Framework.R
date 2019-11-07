@@ -78,6 +78,21 @@ initiateRstoxFramework <- function(){
         "geojson"
     )
     
+    # Define the process property types:
+    processPropertyFormats <- c(
+        "logical", 
+        "integer", 
+        "double"
+    )
+    # Define the process property formats:
+    processPropertyFormats <- c(
+        "filePath", 
+        "filePaths", 
+        "directoryPath", 
+        "filterExpressionTable", 
+        "table"
+    )
+    
     # Define the StoX folders, data sources, model names, model display names, model descriptions, and the latter three grouped as model info:
     stoxFolders <- c(
         Input = "Input", 
@@ -2418,7 +2433,7 @@ parseParameter <- function(parameter) {
         parameter <- jsonlite::fromJSON(parameter)
     }
     else if(jsonlite::validate(parameter)) {
-        jsonlite::parse_json(parameter)
+        parameter <- jsonlite::parse_json(parameter)
     }
     parameter
 }

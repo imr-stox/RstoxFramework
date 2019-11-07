@@ -1591,13 +1591,13 @@ getStoxFunctionParameterDefaults <- function(functionName) {
 # Function which gets the primitive types of the parameters of a function:
 getStoxFunctionParameterPrimitiveTypes <- function(functionName) {
     # Get the possible values of the parameters of a function:
-    functionParameterPossibleValues <- getStoxFunctionParameterDefaults(functionName)
+    functionParameterDefaults <- getStoxFunctionParameterDefaults(functionName)
     # The default is the first value:
-    primitiveType <- lapply(functionParameterPossibleValues, class)
+    primitiveType <- lapply(functionParameterDefaults, class)
     primitiveType
 }
 # Function which gets the primitive types of the parameters of a function:
-getFunctionParameterPropertyItemTypes <- function(functionName) {
+getStoxFunctionParameterPropertyTypes <- function(functionName) {
     # Get the primitive types of the parameters of a function:
     stoxFunctionParameterPrimitiveTypes <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
@@ -1608,6 +1608,17 @@ getFunctionParameterPropertyItemTypes <- function(functionName) {
     stoxFunctionParameterPrimitiveTypes
 }
 
+# Function which applies the default format on formats not recognized :
+getFunctionParameterPropertyFormats <- function(functionName) {
+    # Get the primitive types of the parameters of a function:
+    stoxFunctionParameterPrimitiveTypes <- getStoxFunctionParameterPrimitiveTypes(functionName)
+    
+    # If not integer, double or logical, set to character (as all other types than these are wrapped in JSON strings):
+    processPropertyTypes <- getRstoxFrameworkDefinitions("processPropertyTypes")
+    setAsCharacter <- !stoxFunctionParameterPrimitiveTypes %in% processPropertyTypes$optional
+    stoxFunctionParameterPrimitiveTypes[setAsCharacter] <- processPropertyTypes$default
+    stoxFunctionParameterPrimitiveTypes
+}
 
 
 
@@ -1837,7 +1848,7 @@ getProcessTable <- function(projectPath, modelName) {
     )
     
     # Check whether the data type can be shown in the map:
-    canShowInMap <- getCanShowInMap(functionNames)
+    canShowInMap <- sapply(functionNames, getCanShowInMap)
     
     # Check whether the user has defined that the data from the process should be shown in the map:
     processParameters <- mapply(
@@ -3002,15 +3013,13 @@ setNotRunning <- function(projectPath) {
 runFunction <- function(what, args) {
     
     # Parse the args if given as a JSON string:
-    print(args)
     args <- parseParameter(args)
-    print(args)
     
     # Reset the warnings:
     assign("last.warning", NULL, envir = baseenv())
     
     # Run the function 'what' and store the warnings and error along with the result:
-    warn <- NULL
+    warn <- character(0)
     err <- NULL
     msg <- capture.output({
         value <- withCallingHandlers(
@@ -3028,9 +3037,6 @@ runFunction <- function(what, args) {
     type = "message"
     )
 
-    if(length(msg) == 0) {
-        msg <- NULL
-    }
     if(length(warn)) {
         warn <- as.character(warn)
     }

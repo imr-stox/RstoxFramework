@@ -629,16 +629,40 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
             # Get the names of the function parameters:
             functionParameterNames <- names(process$functionParameters)
             
+            
+            
+            
             # Get the meta data functionParameterType:
             functionParameterType = getStoxFunctionMetaData(process$functionName, "functionParameterType")
             # If functionParameterType is not given for all parameters, try to interpret the type from the function definition:
             parametersWithMissingType <- setdiff(functionParameterNames, names(functionParameterType))
             if(length(parametersWithMissingType)) {
                 # Get the type from the function definition:
-                functionParameterPropertyItemTypes <- getFunctionParameterPropertyItemTypes(process$functionName)
+                functionParameterPropertyTypes <- getStoxFunctionParameterPropertyTypes(process$functionName)
                 # Insert the type for the variables with type missing in the stoxFunctionAttributes:
-                functionParameterType[parametersWithMissingType] <- functionParameterPropertyItemTypes[parametersWithMissingType]
+                functionParameterType[parametersWithMissingType] <- functionParameterPropertyTypes[parametersWithMissingType]
             }
+            
+            
+            getStoxFunctionParameterPropertyTypes <- function(process) {
+                
+                # Get the names of the function parameters:
+                functionParameterNames <- names(process$functionParameters)
+                
+                # Get the meta data functionParameterType:
+                functionParameterType = getStoxFunctionMetaData(process$functionName, "functionParameterType")
+                # If functionParameterType is not given for all parameters, try to interpret the type from the function definition:
+                parametersWithMissingType <- setdiff(functionParameterNames, names(functionParameterType))
+                if(length(parametersWithMissingType)) {
+                    # Get the type from the function definition:
+                    functionParameterPropertyTypes <- getStoxFunctionParameterPropertyTypes(process$functionName)
+                    # Insert the type for the variables with type missing in the stoxFunctionAttributes:
+                    functionParameterType[parametersWithMissingType] <- functionParameterPropertyTypes[parametersWithMissingType]
+                }
+                functionParameterType
+            }
+            
+            
             
             # Define the function parameters:
             functionParameters <- data.table::data.table(

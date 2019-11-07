@@ -307,7 +307,7 @@ stoxTemplates <- list(
 					)
 				)
 			),
-			Statistics = list(
+			Analysis = list(
 				runBootstrap = list(
 					processName = "runBootstrap",
 					functionName = "runBootstrap",
@@ -623,7 +623,7 @@ stoxTemplates <- list(
 					)
 				)
 			),
-			Statistics = list(
+			Analysis = list(
 				runBootstrap = list(
 					processName = "runBootstrap",
 					functionName = "runBootstrap",
@@ -889,7 +889,7 @@ stoxTemplates <- list(
 					)
 				)
 			),
-			Statistics = list(
+			Analysis = list(
 				runBootstrap = list(
 					processName = "runBootstrap",
 					functionName = "runBootstrap",
@@ -1493,7 +1493,7 @@ stoxTemplates <- list(
 					)
 				)
 			),
-			Statistics = list(
+			Analysis = list(
 				prepareDATRAS = list(
 					processName = "prepareDATRAS",
 					functionName = "prepareDATRAS",

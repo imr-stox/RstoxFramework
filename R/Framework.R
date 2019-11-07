@@ -39,7 +39,7 @@ initiateRstoxFramework <- function(){
         "RstoxBase", 
         "RstoxData"
         #"RstoxECA", 
-        #"RstoxStatistics", 
+        #"RstoxAnalysis", 
         #"RstoxReport"
     )
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages)
@@ -91,18 +91,18 @@ initiateRstoxFramework <- function(){
     )
     stoxModelNames <- c(
         Baseline = "Baseline", 
-        Statistics = "Statistics", 
+        Analysis = "Analysis", 
         Report = "Report"
     )
     stoxModelDisplayNames <- c(
         Baseline = "Baseline", 
-        Statistics = "Statistics", 
+        Analysis = "Analysis", 
         Report = "Report"
     )
     stoxModelDescriptions <- c(
         Baseline = "Baseline: The estimation model", 
-        Statistics = "Statistics: Processes that run Baseline to generate statistcs such as estimates of variation", 
-        Report = "Report: Processes that run Baseline or Statistics processes to generate reports"
+        Analysis = "Analysis: Processes that run Baseline for analysis, such as estimation of variation", 
+        Report = "Report: Processes that run Baseline or Analysis processes to generate reports"
     )
     stoxModelInfo <- data.table::data.table(
         modelName = stoxModelNames, 
@@ -179,7 +179,7 @@ initiateRstoxFramework <- function(){
     processDefaultSansProcessData <- processDefaultFull[names(processDefaultFull) != "processData"]
     processDefault <- list(
         Baseline = processDefaultFull, 
-        Statistics = processDefaultSansProcessData, 
+        Analysis = processDefaultSansProcessData, 
         Report = processDefaultSansProcessData
     )
     
@@ -728,7 +728,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE) {
         if(force) {
             closeProject(projectPath, save = FALSE)
         }
-        message("Project ", projectPath, "is already open.")
+        warning("Project ", projectPath, "is already open.")
         out <- list(
             projectPath = projectPath, 
             projectName = basename(projectPath)
@@ -856,8 +856,14 @@ isSaved <- function(projectPath) {
 #' @export
 #' 
 isOpenProject <- function(projectPath) {
-    existsFolders <- sapply(getProjectPaths(projectPath, "projectSessionFolderStructure"), file.exists)
-    length(existsFolders) && all(existsFolders)
+    if(isProject(projectPath)) {
+        existsFolders <- sapply(getProjectPaths(projectPath, "projectSessionFolderStructure"), file.exists)
+        length(existsFolders) && all(existsFolders)
+    }
+    else {
+        warning("Project ", projectPath, " does not exist.")
+        NA
+    }
 }
 
 #' 
@@ -1572,6 +1578,7 @@ getStoxFunctionParameterPrimitiveTypes <- function(functionName) {
 # Function which gets the primitive types of the parameters of a function:
 getFunctionParameterPropertyItemTypes <- function(functionName) {
     # Get the primitive types of the parameters of a function:
+    browser()
     stoxFunctionParameterPrimitiveTypes <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
     # If not integer, double or logical, set to character (as all other types than these are wrapped in JSON strings):
@@ -2231,7 +2238,6 @@ getRelativePaths <- function(functionParameters, projectPath, modelName, process
     getRelativePath <- function(filePath, projectPath) {
         
         # Expand the paths:
-        message("Fix the getRelativePaths to actually accept relative paths!!!!!!!!!")
         projectPath <- path.expand(projectPath)
         filePath <- path.expand(filePath)
         
@@ -2702,8 +2708,8 @@ runProcess <- function(projectPath, modelName, processID) {
             envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))
         ), 
         error = function(err) {
-            message(err)
-            failed<<-TRUE
+            failed <<- TRUE
+            stop(err)
         }
     )
     
@@ -2913,6 +2919,8 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     else {
         setRunning(projectPath)
     }
+    # Set the state as not running (deleting the isRunning file):
+    on.exit(setNotRunning(projectPath))
     
     # Loop through the processes:
     status <- logical(length(processIDs))
@@ -2925,9 +2933,6 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     if(save) {
         saveProject(projectPath)
     }
-    
-    # Set the state as not running (deleting the isRunning file):
-    setNotRunning(projectPath)
     
     status
 }
@@ -2951,4 +2956,49 @@ setNotRunning <- function(projectPath) {
     unlink(projectIsRunningFile, force = TRUE)
 }
 
+
+#' 
+#' @export
+#' 
+runFunction <- function(what, args) {
+    
+    # Parse the args if given as a JSON string:
+    args <- parseParameter(args)
+    
+    # Reset the warnings:
+    assign("last.warning", NULL, envir = baseenv())
+    
+    # Run the function 'what' and store the warnings and error along with the result:
+    warn <- NULL
+    err <- NULL
+    msg <- capture.output({
+        value <- withCallingHandlers(
+            tryCatch(do.call(what, args), 
+                error=function(e) {
+                    err <<- e
+                    NULL
+                }), 
+                warning=function(w) {
+                    warn <<- append(warn, w)
+                    invokeRestart("muffleWarning")
+                }
+            )
+        }, 
+    type = "message"
+    )
+
+    if(length(msg) == 0) {
+        msg <- NULL
+    }
+    
+    # Clean the warnings:
+    warn <- unname(unlist(warn[names(warn) == "message"]))
+    
+    # Return a list of warnings and error along with the result:
+    list(
+        value = value, 
+        message = msg, 
+        warning = warn, 
+        error = err)
+}
 

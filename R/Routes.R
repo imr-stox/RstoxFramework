@@ -439,7 +439,7 @@ getProcessPropertyNames <- function() {
 #' 
 #' @export
 #' 
-getProcessProperties <- function(projectPath, modelName, processID) {
+getProcessPropertySheet <- function(projectPath, modelName, processID) {
     
     # The project properties contains the following elements:
     # 1. name
@@ -459,11 +459,16 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     
     # Possible values of 'format':
     # "none"
-    # "filter"
+    # "filterExpressionTable"
     # "filePath"
     # "filePaths"
     # "directoryPath"
-    # "catchability" 
+    # "catchabilityTable"
+    # "NASCTable"
+    # "length2TSTable" 
+    # "speciesCategoryTable"
+    # "acousticCategoryTable" 
+    
     
     # See image!!!!!!!!
     
@@ -625,6 +630,7 @@ getProcessProperties <- function(projectPath, modelName, processID) {
             functionParameterNames <- names(process$functionParameters)
             
             # Get the meta data functionParameterType:
+            browser()
             functionParameterType = getStoxFunctionMetaData(process$functionName, "functionParameterType")
             # If functionParameterType is not given for all parameters, try to interpret the type from the function definition:
             parametersWithMissingType <- setdiff(functionParameterNames, names(functionParameterType))
@@ -672,17 +678,17 @@ getProcessProperties <- function(projectPath, modelName, processID) {
     # Create a list of the different properties, adding category and displayName:
     output <- list(
         list(
-            category = "processArguments", 
+            groupName = "processArguments", 
             displayName = "Process", 
             properties = processArguments
         ), 
         list(
-            category = "functionInputs", 
+            groupName = "functionInputs", 
             displayName = "Function inputs", 
             properties = functionInputs
         ), 
         list(
-            category = "functionParameters", 
+            groupName = "functionParameters", 
             displayName = "Function parameters", 
             properties = functionParameters
         )
@@ -693,25 +699,26 @@ getProcessProperties <- function(projectPath, modelName, processID) {
 #' 
 #' @export
 #' 
-setProcessPropertyValue <- function(processProperty, processPropertyItemName, propertyItemValue, projectPath, modelName, processID) {
+setProcessPropertyValue <- function(groupName, name, value, projectPath, modelName, processID) {
+    
     # If the process property 'processArguments' is given, modify the process name, function name or process parameters:
-    if(processProperty == "processArguments") {
+    if(groupName == "processArguments") {
         # Modify process name:
-        if(processPropertyItemName == "processName") {
+        if(name == "processName") {
             modifyProcessName(
                 projectPath = projectPath, 
                 modelName = modelName, 
                 processID = processID, 
-                newProcessName = propertyItemValue
+                newProcessName = value
             )
         }
         # Modify function name:
-        else if(processPropertyItemName == "functionName") {
+        else if(name == "functionName") {
             modifyFunctionName(
                 projectPath = projectPath, 
                 modelName = modelName, 
                 processID = processID, 
-                newFunctionName = propertyItemValue
+                newFunctionName = value
             )
         }
         # Modify process parameters:
@@ -720,28 +727,35 @@ setProcessPropertyValue <- function(processProperty, processPropertyItemName, pr
                 projectPath = projectPath, 
                 modelName = modelName, 
                 processID = processID, 
-                newProcessParameters = setNames(list(propertyItemValue), propertyItemValue)
+                newProcessParameters = setNames(list(value), name)
             )
         }
     }
     # If the process property 'functionInputs' is given, modify the function inputs:
-    if(processProperty == "functionInputs") {
+    if(groupName == "functionInputs") {
         modifyFunctionInputs(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newFunctionInputs = setNames(list(propertyItemValue), propertyItemValue)
+            newFunctionInputs = setNames(list(value), name)
         )
     }
     # If the process property 'functionInputs' is given, modify the function parameters:
-    if(processProperty == "functionParameters") {
+    if(groupName == "functionParameters") {
         modifyFunctionParameters(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newFunctionParameters = setNames(list(propertyItemValue), propertyItemValue)
+            newFunctionParameters = setNames(list(value), name)
         )
     }
+    
+    # Return the modified process properties:
+    getProcessProperties(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
 }
 
 

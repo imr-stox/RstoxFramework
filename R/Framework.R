@@ -2833,64 +2833,70 @@ getProcessIndexFromProcessID <- function(projectPath, modelName, processID) {
 #' 
 writeProcessOutputTextFile <- function(processOutput, process, projectPath, modelName) {
     
-    # Function for writing one element of the function output list:
-    reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
-        if(length(processOutputOne)){
-            if("SpatialPolygons" %in% class(processOutputOne)) {
-                # Add file extension:
-                filePath <- paste(filePathSansExt, "geojson", sep = ".")
-                # Write the file:
-                jsonlite::write_json(geojsonio::geojson_json(processOutputOne), path = filePath)
-            }
-            else if("data.table" %in% class(processOutputOne)) {
-                # Add file extension:
-                filePath <- paste(filePathSansExt, "txt", sep = ".")
-                # Write the file:
-                data.table::fwrite(processOutputOne, filePath, sep = "\t")
-            }
-            else {
-                stop("Unknown function output")
+    if(length(processOutput)) {
+        # Function for writing one element of the function output list:
+        reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
+            if(length(processOutputOne)){
+                if("SpatialPolygons" %in% class(processOutputOne)) {
+                    # Add file extension:
+                    filePath <- paste(filePathSansExt, "geojson", sep = ".")
+                    # Write the file:
+                    jsonlite::write_json(geojsonio::geojson_json(processOutputOne), path = filePath)
+                }
+                else if("data.table" %in% class(processOutputOne)) {
+                    # Add file extension:
+                    filePath <- paste(filePathSansExt, "txt", sep = ".")
+                    # Write the file:
+                    data.table::fwrite(processOutputOne, filePath, sep = "\t")
+                }
+                else {
+                    stop("Unknown function output")
+                }
             }
         }
-    }
-    
-    # Flatten the list and add names from the levels of the list:
-    unlistToDataType <- function(processOutput) {
         
-        areAllValidOutputDataClasses <- function(processOutput) {
-            validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
-            classes <- lapply(processOutput, class)
-            classes <- unlist(lapply(classes, "[[", 1))
-            all(classes %in% validOutputDataClasses)
-        }
-        
-        
-        unlistOne <- function(processOutput) {
-            if(!areAllValidOutputDataClasses(processOutput)){
-                processOutput <- unlist(processOutput, recursive = FALSE)
+        # Flatten the list and add names from the levels of the list:
+        unlistToDataType <- function(processOutput) {
+            
+            areAllValidOutputDataClasses <- function(processOutput) {
+                validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
+                classes <- lapply(processOutput, class)
+                classes <- unlist(lapply(classes, "[[", 1))
+                all(classes %in% validOutputDataClasses)
             }
+            
+            
+            unlistOne <- function(processOutput) {
+                if(!areAllValidOutputDataClasses(processOutput)){
+                    processOutput <- unlist(processOutput, recursive = FALSE)
+                }
+                processOutput
+            }
+            
+            for(i in seq_len(2)) {
+                processOutput <- unlistOne(processOutput)
+            }
+            
+            
             processOutput
         }
         
-        for(i in seq_len(2)) {
-            processOutput <- unlistOne(processOutput)
-        }
-
-                
-        processOutput
+        # Unlist introduces dots, and we replace by underscore:
+        processOutput <- unlistToDataType(processOutput)
+        names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)
+        
+        folderPath <- getProjectPaths(projectPath = projectPath, paste("Output", modelName, sep = "_"))
+        processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = process$processID)
+        fileNamesSansExt <- paste(processIndex, names(processOutput), sep = "_")
+        filePathsSansExt <- file.path(folderPath, paste(fileNamesSansExt))
+        
+        # Set the file name:
+        mapply(reportFunctionOutputOne, processOutput, filePathsSansExt)
+        # lapply(processOutput, reportFunctionOutputOne)
     }
-    
-    processOutput <- unlistToDataType(processOutput)
-    names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)
-    
-    folderPath <- getProjectPaths(projectPath = projectPath, paste("Output", modelName, sep = "_"))
-    processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = process$processID)
-    fileNamesSansExt <- paste(processIndex, names(processOutput), sep = "_")
-    filePathsSansExt <- file.path(folderPath, paste(fileNamesSansExt))
-    
-    # Set the file name:
-    mapply(reportFunctionOutputOne, processOutput, filePathsSansExt)
-    # lapply(processOutput, reportFunctionOutputOne)
+    else {
+        NULL
+    }
 }
 
 #' 
@@ -2898,17 +2904,23 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
 #' 
 writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, modelName) {
     
-    # Set the file name:
-    folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = process$processID)
-    processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = process$processID)
-    fileNameSansExt <- paste(processIndex, names(processOutput), sep = "_")
-    fileName <- paste(fileNameSansExt, "rds", sep = ".")
-    filePath <- file.path(folderPath, fileName)
+    if(length(processOutput)) {
+        # Set the file name:
+        folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = process$processID)
+        processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = process$processID)
+        fileNameSansExt <- paste(processIndex, names(processOutput), sep = "_")
+        fileName <- paste(fileNameSansExt, "rds", sep = ".")
+        filePath <- file.path(folderPath, fileName)
+        
+        # Create the folder and save the process output as one file containing a list of DataType, ans possible sublists specified by the function producing the output:
+        dir.create(dirname(filePath), recursive = TRUE, showWarnings = FALSE)
+        # Drop the top level, since this is the data type, and this is known in runProcess:
+        saveRDS(processOutput[[1]], filePath)
+    }
+    else {
+        NULL
+    }
     
-    # Create the folder and save the process output as one file containing a list of DataType, ans possible sublists specified by the function producing the output:
-    dir.create(dirname(filePath), recursive = TRUE, showWarnings = FALSE)
-    # Drop the top level, since this is the data type, and this is known in runProcess:
-    saveRDS(processOutput[[1]], filePath)
 }
 
 

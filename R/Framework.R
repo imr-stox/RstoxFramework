@@ -79,18 +79,24 @@ initiateRstoxFramework <- function(){
     )
     
     # Define the process property types:
-    processPropertyFormats <- c(
-        "logical", 
-        "integer", 
-        "double"
+    processPropertyTypes <- list(
+        default = "character", 
+        optional = list(
+            "logical", 
+            "integer", 
+            "double"
+        )
     )
     # Define the process property formats:
-    processPropertyFormats <- c(
-        "filePath", 
-        "filePaths", 
-        "directoryPath", 
-        "filterExpressionTable", 
-        "table"
+    processPropertyFormats <- list(
+        default = "none", 
+        optional = list(
+            "filePath", 
+            "filePaths", 
+            "directoryPath", 
+            "table", 
+            "filterExpressionTable"
+        )
     )
     
     # Define the StoX folders, data sources, model names, model display names, model descriptions, and the latter three grouped as model info:
@@ -1596,6 +1602,10 @@ getFunctionParameterPropertyItemTypes <- function(functionName) {
     stoxFunctionParameterPrimitiveTypes <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
     # If not integer, double or logical, set to character (as all other types than these are wrapped in JSON strings):
+    
+    getRstoxFrameworkDefinitions("processPropertyTypes")$
+    
+    
     setAsCharacter <- !stoxFunctionParameterPrimitiveTypes %in% c("integer", "numeric", "logical")
     stoxFunctionParameterPrimitiveTypes[setAsCharacter] <- "character"
     stoxFunctionParameterPrimitiveTypes
@@ -2983,7 +2993,9 @@ setNotRunning <- function(projectPath) {
 runFunction <- function(what, args) {
     
     # Parse the args if given as a JSON string:
+    print(args)
     args <- parseParameter(args)
+    print(args)
     
     # Reset the warnings:
     assign("last.warning", NULL, envir = baseenv())

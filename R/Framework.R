@@ -2051,6 +2051,7 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName)
     # Convert from possible JSON input:
     newProcessName <- parseParameter(newProcessName)
     
+    # Change the process name only if different from the existing:
     if(!identical(processName, newProcessName)) {
         # Validate the new process name (for invalid characters):
         if(validateProcessnName(projectPath = projectPath, modelName = modelName, newProcessName = newProcessName)) {
@@ -2883,6 +2884,14 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
 #' 
 runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE) {
     
+    # Get the processIDs:
+    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    # Rstrict the startProcess and endProcess to the range of process indices:
+    startProcess <- max(1, startProcess)
+    endProcess <- min(nrow(processIndexTable), endProcess)
+    # Extract the requested process IDs:
+    processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
+    
     # Check that the project exists:
     failedVector <- logical(endProcess - startProcess + 1)
     if(!isProject(projectPath)) {
@@ -2904,14 +2913,6 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     else {
         setRunning(projectPath)
     }
-    
-    # Get the processIDs:
-    processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    # Rstrict the startProcess and endProcess to the range of process indices:
-    startProcess <- max(1, startProcess)
-    endProcess <- min(nrow(processIndexTable), endProcess)
-    # Extract the requested process IDs:
-    processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
     
     # Loop through the processes:
     status <- logical(length(processIDs))

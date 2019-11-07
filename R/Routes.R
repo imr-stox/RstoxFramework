@@ -571,18 +571,6 @@ getProcessProperties <- function(projectPath, modelName, processID) {
         # Get the function argument hierarchy:
         functionArgumentHierarchy = getStoxFunctionMetaData(process$functionName, "functionArgumentHierarchy", showWarnings = FALSE)
         
-        
-        
-        
-   
-        
-        
-        
-        
-        
-        
-        
-        
         ##############################
         ##### 2. FunctionInputs: #####
         ##############################
@@ -636,11 +624,6 @@ getProcessProperties <- function(projectPath, modelName, processID) {
             # Get the names of the function parameters:
             functionParameterNames <- names(process$functionParameters)
             
-            
-            
-            
-            
-            
             # Get the meta data functionParameterType:
             functionParameterType = getStoxFunctionMetaData(process$functionName, "functionParameterType")
             # If functionParameterType is not given for all parameters, try to interpret the type from the function definition:
@@ -651,16 +634,6 @@ getProcessProperties <- function(projectPath, modelName, processID) {
                 # Insert the type for the variables with type missing in the stoxFunctionAttributes:
                 functionParameterType[parametersWithMissingType] <- functionParameterPropertyItemTypes[parametersWithMissingType]
             }
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             
             # Define the function parameters:
             functionParameters <- data.table::data.table(
@@ -721,11 +694,54 @@ getProcessProperties <- function(projectPath, modelName, processID) {
 #' @export
 #' 
 setProcessPropertyValue <- function(processProperty, processPropertyItemName, propertyItemValue, projectPath, modelName, processID) {
-    
-    
-    
-    
-
+    # If the process property 'processArguments' is given, modify the process name, function name or process parameters:
+    if(processProperty == "processArguments") {
+        # Modify process name:
+        if(processPropertyItemName == "processName") {
+            modifyProcessName(
+                projectPath = projectPath, 
+                modelName = modelName, 
+                processID = processID, 
+                newProcessName = propertyItemValue
+            )
+        }
+        # Modify function name:
+        else if(processPropertyItemName == "functionName") {
+            modifyFunctionName(
+                projectPath = projectPath, 
+                modelName = modelName, 
+                processID = processID, 
+                newFunctionName = propertyItemValue
+            )
+        }
+        # Modify process parameters:
+        else {
+            modifyProcessParameters(
+                projectPath = projectPath, 
+                modelName = modelName, 
+                processID = processID, 
+                newProcessParameters = setNames(list(propertyItemValue), propertyItemValue)
+            )
+        }
+    }
+    # If the process property 'functionInputs' is given, modify the function inputs:
+    if(processProperty == "functionInputs") {
+        modifyFunctionInputs(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            newFunctionInputs = setNames(list(propertyItemValue), propertyItemValue)
+        )
+    }
+    # If the process property 'functionInputs' is given, modify the function parameters:
+    if(processProperty == "functionParameters") {
+        modifyFunctionParameters(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            newFunctionParameters = setNames(list(propertyItemValue), propertyItemValue)
+        )
+    }
 }
 
 

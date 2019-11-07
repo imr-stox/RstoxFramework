@@ -543,7 +543,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
         )), 
         # 7. possibleValues:
         possibleValues = c(
-            list(character(1)), 
+            list(character(0)), 
             getAvailableStoxFunctionNames(modelName), 
             rep(list(c(FALSE, TRUE)), length(processParameters))
         )
@@ -630,7 +630,6 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
             functionParameterNames <- names(process$functionParameters)
             
             # Get the meta data functionParameterType:
-            browser()
             functionParameterType = getStoxFunctionMetaData(process$functionName, "functionParameterType")
             # If functionParameterType is not given for all parameters, try to interpret the type from the function definition:
             parametersWithMissingType <- setdiff(functionParameterNames, names(functionParameterType))

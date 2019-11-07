@@ -1578,11 +1578,10 @@ getStoxFunctionParameterPrimitiveTypes <- function(functionName) {
 # Function which gets the primitive types of the parameters of a function:
 getFunctionParameterPropertyItemTypes <- function(functionName) {
     # Get the primitive types of the parameters of a function:
-    browser()
     stoxFunctionParameterPrimitiveTypes <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
     # If not integer, double or logical, set to character (as all other types than these are wrapped in JSON strings):
-    setAsCharacter <- stoxFunctionParameterPrimitiveTypes %in% c("integer", "numeric", "logical")
+    setAsCharacter <- !stoxFunctionParameterPrimitiveTypes %in% c("integer", "numeric", "logical")
     stoxFunctionParameterPrimitiveTypes[setAsCharacter] <- "character"
     stoxFunctionParameterPrimitiveTypes
 }
@@ -2409,11 +2408,17 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
         processID = processID
     )
 }
+#' 
+#' @export
+#' 
 # Convert JSON input to list:
 parseParameter <- function(parameter) {
     # If the parameter is JSON, convert to list:
     if("json" %in% class(parameter)) {
         parameter <- jsonlite::fromJSON(parameter)
+    }
+    else if(jsonlite::validate(parameter)) {
+        jsonlite::parse_json(parameter)
     }
     parameter
 }
@@ -2963,7 +2968,9 @@ setNotRunning <- function(projectPath) {
 runFunction <- function(what, args) {
     
     # Parse the args if given as a JSON string:
+    print(args)
     args <- parseParameter(args)
+    print(args)
     
     # Reset the warnings:
     assign("last.warning", NULL, envir = baseenv())

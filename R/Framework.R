@@ -2989,20 +2989,41 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     else {
         setRunning(projectPath)
     }
-    # Set the state as not running (deleting the isRunning file):
-    on.exit(
-        {
-            setNotRunning(projectPath)
-            return(failedVector)
-        }
-    )
+    
+    on.exit({
+        setNotRunning(projectPath)
+    })
+
     
     # Loop through the processes:
     status <- logical(length(processIDs))
     names(status) <- processIDs
-    for(processID in processIDs) {
-        status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
-    }
+    
+    #err <- NULL
+    
+    # Try running the processes, and retun the failedVector if craching:
+    tryCatch(
+        {
+            for(processID in processIDs) {
+                status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
+            }
+        }#, 
+        #error = function(e) {
+        #    err <<- e
+        #    stop(err)
+        #}, 
+        #finally = {
+        #    
+            
+            #if(length(err)) {
+            #    stop(err)
+            #}
+            
+            #return(status)
+        #}
+    )
+    
+    #status
     
     # Save the project after each run:
     if(save) {
@@ -3048,19 +3069,19 @@ runFunction <- function(what, args) {
     err <- NULL
     msg <- capture.output({
         value <- withCallingHandlers(
-            tryCatch(do.call(what, args), 
-                error=function(e) {
-                    err <<- e
+            tryCatch(
+                do.call(what, args), 
+                error = function(e) {
+                    err <<- conditionMessage(e)
                     NULL
-                }), 
-                warning=function(w) {
-                    warn <<- append(warn, w)
-                    invokeRestart("muffleWarning")
                 }
-            )
-        }, 
-    type = "message"
-    )
+            ), 
+            warning=function(w) {
+                warn <<- append(warn, conditionMessage(w))
+                invokeRestart("muffleWarning")
+            }
+        )
+    }, type = "message")
 
     if(length(warn)) {
         warn <- as.character(warn)
@@ -3072,7 +3093,7 @@ runFunction <- function(what, args) {
     
     
     # Clean the warnings:
-    warn <- unname(unlist(warn[names(warn) == "message"]))
+    #warn <- unname(unlist(warn[names(warn) == "message"]))
     
     # Return a list of warnings and error along with the result:
     list(

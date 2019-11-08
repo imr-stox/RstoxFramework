@@ -2990,7 +2990,12 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
         setRunning(projectPath)
     }
     # Set the state as not running (deleting the isRunning file):
-    on.exit(setNotRunning(projectPath))
+    on.exit(
+        {
+            setNotRunning(projectPath)
+            return(failedVector)
+        }
+    )
     
     # Loop through the processes:
     status <- logical(length(processIDs))

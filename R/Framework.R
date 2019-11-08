@@ -1598,26 +1598,46 @@ getStoxFunctionParameterPrimitiveTypes <- function(functionName) {
 }
 # Function which gets the primitive types of the parameters of a function:
 getStoxFunctionParameterPropertyTypes <- function(functionName) {
-    # Get the primitive types of the parameters of a function:
-    stoxFunctionParameterPrimitiveTypes <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
-    # If not integer, double or logical, set to character (as all other types than these are wrapped in JSON strings):
+    # Get the primitive types of the parameters of a function (as specified in the function definition):
+    typeFromDefinition <- getStoxFunctionParameterPrimitiveTypes(functionName)
+    
+    # Get the meta data functionParameterType (as specified in the 'stoxFunctionAttributes' of each package):
+    functionParameterType = getStoxFunctionMetaData(functionName, "functionParameterType")
+    
+    # Replace the types by those from the meta data:
+    valid <- intersect(names(typeFromDefinition), names(functionParameterType))
+    if(length(valid)) {
+        typeFromDefinition[valid] <- functionParameterType[valid]
+    }
+    
+    # If not integer, double or logical, set to character (as all other types than these are wrapped to JSON strings by the GUI):
     processPropertyTypes <- getRstoxFrameworkDefinitions("processPropertyTypes")
-    setAsCharacter <- !stoxFunctionParameterPrimitiveTypes %in% processPropertyTypes$optional
-    stoxFunctionParameterPrimitiveTypes[setAsCharacter] <- processPropertyTypes$default
-    stoxFunctionParameterPrimitiveTypes
+    setAsCharacter <- !typeFromDefinition %in% processPropertyTypes$optional
+    typeFromDefinition[setAsCharacter] <- processPropertyTypes$default
+    
+    # Return the types:
+    typeFromDefinition
 }
 
 # Function which applies the default format on formats not recognized :
 getFunctionParameterPropertyFormats <- function(functionName) {
-    # Get the primitive types of the parameters of a function:
-    stoxFunctionParameterPrimitiveTypes <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
-    # If not integer, double or logical, set to character (as all other types than these are wrapped in JSON strings):
-    processPropertyTypes <- getRstoxFrameworkDefinitions("processPropertyTypes")
-    setAsCharacter <- !stoxFunctionParameterPrimitiveTypes %in% processPropertyTypes$optional
-    stoxFunctionParameterPrimitiveTypes[setAsCharacter] <- processPropertyTypes$default
-    stoxFunctionParameterPrimitiveTypes
+    # Get the types, and interpret all types as format "none":
+    formats <- getStoxFunctionParameterPropertyTypes(functionName)
+    formats[] <- "none"
+    
+    # Get the meta data functionParameterFormat (as specified in the 'stoxFunctionAttributes' of each package):
+    functionParameterFormat = getStoxFunctionMetaData(functionName, "functionParameterFormat")
+    
+    # Replace the formats by those from the meta data:
+    valid <- intersect(names(formats), names(functionParameterFormat))
+    if(length(valid)) {
+        formats[valid] <- functionParameterFormat[valid]
+    }
+    
+    # Return the formats:
+    formats
 }
 
 

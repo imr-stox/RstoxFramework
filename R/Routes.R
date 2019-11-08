@@ -469,17 +469,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
     # "speciesCategoryTable"
     # "acousticCategoryTable" 
     
-    
     # See image!!!!!!!!
     
-    
-    # Small function to transpose a list:
-    transposeList <- function(l) {
-        outnames <- names(l[[1]])
-        out <- lapply(seq_along(l[[1]]), function(i) lapply(l, "[[", i))
-        names(out) <- outnames
-        out
-    }
     # Function that gets the process names of the processes returning the specified data type
     getProcessNamesByDataType <- function(dataType, processTable) {
         hasRequestedDataType <- processTable$dataType == dataType
@@ -489,6 +480,15 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
         else {
             NULL
         }
+    }
+    
+    # Function to replace an empty object by numeric(0), which results in [] in JSON:
+    replaceEmpty <- function(x) {
+        areEmpty <- lengths(x) == 0
+        if(any(areEmpty)) {
+            x[areEmpty] <- rep(list(double(0)), sum(areEmpty))
+        }
+        x   
     }
     
     #######################
@@ -536,11 +536,13 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
         # 5. format:
         format = as.list(rep("none", 2 + length(processParameters))), 
         # 6. default:
-        default = as.list(c(
-            "", 
-            "", 
-            unname(unlist(processParameters))
-        )), 
+        default = c(
+            list(
+                character(0), 
+                character(0)
+            ), 
+            unname(processParameters)
+        ), 
         # 7. possibleValues:
         possibleValues = c(
             list(character(0)), 
@@ -594,13 +596,13 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # 2. displayName:
                 displayName = as.list(functionInputNames), 
                 # 3. description:
-                description = getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionInputNames], 
+                description = replaceEmpty(getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionInputNames]), 
                 # 4. type:
-                type = as.list(rep("character", 2 + length(processParameters))),
+                type = as.list(rep("character", length(functionInputNames))),
                 # 5. format:
-                format = as.list(rep("none", 2 + length(processParameters))),
+                format = as.list(rep("none", length(functionInputNames))),
                 # 6. default:
-                default = vector("list", length(functionInputNames)),
+                default = rep(list(double(0)), length(functionInputNames)), 
                 # 7. possibleValues:
                 possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # 8. value:
@@ -624,45 +626,11 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
         ##################################
         ##### 3. FunctionParameters: #####
         ##################################
+        
         # Run only if there are function parameters (which there always will be):
         if(length(process$functionParameters)) {
             # Get the names of the function parameters:
             functionParameterNames <- names(process$functionParameters)
-            
-            
-            
-            
-            # Get the meta data functionParameterType:
-            functionParameterType = getStoxFunctionMetaData(process$functionName, "functionParameterType")
-            # If functionParameterType is not given for all parameters, try to interpret the type from the function definition:
-            parametersWithMissingType <- setdiff(functionParameterNames, names(functionParameterType))
-            if(length(parametersWithMissingType)) {
-                # Get the type from the function definition:
-                functionParameterPropertyTypes <- getStoxFunctionParameterPropertyTypes(process$functionName)
-                # Insert the type for the variables with type missing in the stoxFunctionAttributes:
-                functionParameterType[parametersWithMissingType] <- functionParameterPropertyTypes[parametersWithMissingType]
-            }
-            
-            
-            getStoxFunctionParameterPropertyTypes <- function(process) {
-                
-                # Get the names of the function parameters:
-                functionParameterNames <- names(process$functionParameters)
-                
-                # Get the meta data functionParameterType:
-                functionParameterType = getStoxFunctionMetaData(process$functionName, "functionParameterType")
-                # If functionParameterType is not given for all parameters, try to interpret the type from the function definition:
-                parametersWithMissingType <- setdiff(functionParameterNames, names(functionParameterType))
-                if(length(parametersWithMissingType)) {
-                    # Get the type from the function definition:
-                    functionParameterPropertyTypes <- getStoxFunctionParameterPropertyTypes(process$functionName)
-                    # Insert the type for the variables with type missing in the stoxFunctionAttributes:
-                    functionParameterType[parametersWithMissingType] <- functionParameterPropertyTypes[parametersWithMissingType]
-                }
-                functionParameterType
-            }
-            
-            
             
             # Define the function parameters:
             functionParameters <- data.table::data.table(
@@ -671,15 +639,15 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # 2. displayName:
                 displayName = as.list(functionParameterNames), 
                 # 3. description:
-                description = getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionParameterNames], 
+                description = replaceEmpty(getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionParameterNames]), 
                 # 4. type:
-                type = functionParameterType[functionParameterNames],
+                type = replaceEmpty(getStoxFunctionParameterPropertyTypes(process$functionName)[functionParameterNames]),
                 # 5. format:
-                format = getStoxFunctionMetaData(process$functionName, "functionParameterFormat")[functionParameterNames],
+                format = replaceEmpty(getFunctionParameterPropertyFormats(process$functionName)[functionParameterNames]),
                 # 6. default:
-                default = getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames],
+                default = replaceEmpty(getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames]),
                 # 7. possibleValues:
-                possibleValues = getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames],
+                possibleValues = replaceEmpty(getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames]),
                 # 8. value:
                 value = process$functionParameters
             )
@@ -716,6 +684,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
             properties = functionParameters
         )
     )
+    
+    # Return the list of process property groups (process property sheet):
     output
 }
 

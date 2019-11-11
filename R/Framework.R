@@ -474,52 +474,6 @@ getStoxFunctionAttributes <- function(packageName) {
     stoxFunctionAttributes
 }
 
-### #' 
-### #' @export
-### #'
-### getStoxFunctionTable <- function() {
-###     # Get the list of all StoX functions with attributes:
-###     stoxFunctionList <- getStoxLibrary()
-###     # extract a table of 
-###     stoxFunctionTable <- data.table::data.table(
-###         functionName = sapply(stoxFunctionList, "[[", "functionName"), 
-###         packageFunctionName = sapply(stoxFunctionList, "[[", "packageName")
-###     )
-###     
-###     stoxFunctionTable
-### }
-### 
-### expandFunctionName <- function(functionName) {
-###     
-###     # Check first whether the function names are already expanded:
-###     expanded <- grepl("::", functionName)
-###     
-###     # Match the non-expanded with the stoxFunctionTable:
-###     stoxFunctionTable <- getStoxFunctionTable()
-###     matches <- match(functionName[!expanded], stoxFunctionTable$functionName)
-###     
-###     # report a warning for the functions that were not recognized:
-###     if(any(is.na(matches))) {
-###         warning(
-###             "The following funciton names were not expanded: ", 
-###             paste(functionName[!expanded][is.na(matches)], collapse = ", ")
-###         )
-###     }
-###     
-###     # Expand the recognized functions:
-###     toExpand <- which(!expanded)[!is.na(matches)]
-###     cleanMatches <- matches[!is.na(matches)]
-###     if(length(toExpand)) {
-###         functionName[toExpand] <- paste(
-###             stoxFunctionTable$packageFunctionName[cleanMatches], 
-###             sep ="::"
-###         )
-###     }
-###     
-###     functionName
-### }
-
-
 
 # Function for validating a StoX function library package:
 validateStoxLibraryPackage <- function(packageName) {
@@ -1446,15 +1400,6 @@ unReDoProject <- function(projectPath, shift = 0) {
 
 
 
-
-
-
-
-
-
-
-
-
 ##################################
 ##### StoX function library: #####
 ##################################
@@ -1524,18 +1469,6 @@ getArgumentsToShow <- function(functionName, functionArguments, functionArgument
 }
 
 
-
-### getStoxFunctionOutputDataType <- function(functionName) {
-###     # Get the function name (without package name ::):
-###     functionName <- getFunctionNameFromPackageFunctionName(functionName)
-###     # Extract the function output data type:
-###     stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
-###     stoxLibrary[[functionName]]$functionOutputDataType
-### }
-
-
-
-
 isProcessDataFunction <- function(functionName) {
     # Get the function output data type and match against the defined process data types:
     functionOutputDataType <- getStoxFunctionMetaData(functionName, "functionOutputDataType")
@@ -1544,16 +1477,8 @@ isProcessDataFunction <- function(functionName) {
 
 
 
-# No longer used. This funciton is replaced by getStoxFunctionParameters() and getStoxFunctionInputs()
-### getParametersToUseInStoX <- function(functionName) {
-###     # Get the funciton parameter hierarchy:
-###     functionParameterHierarchy <- getFunctionParameterHierarchy(functionName)
-###     # ... the names of which are the parameters to use in StoX:
-###     names(functionParameterHierarchy)
-### }
-
 # Function which gets the values defined for the parameters in the definition of a function:
-getStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData = TRUE) {
+getStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData = TRUE, fill.logical = TRUE) {
     
     # Split the function name into function name and package name, and get the formals in the package environment:
     packageFunctionName <- strsplit(functionName, "::")[[1]]
@@ -1576,6 +1501,15 @@ getStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData
     
     # Evaluate and return:
     f <- lapply(f, eval)
+    
+    # Insert c(FALSE, TRUE) for logicals:
+    if(fill.logical) {
+        areLogicals <- sapply(f, is.logical)
+        if(sum(areLogicals)) {
+            f[areLogicals] <- rep(list(c(FALSE, TRUE)), length(areLogicals))
+        }
+    }
+    
     f
 }
 
@@ -2676,23 +2610,10 @@ removeProcess <- function(projectPath, modelName, processID) {
 
 
 #### Functions to run models: ####
-
-
-
-### #' 
-### #' @export
-### #' 
-### getProcess <- function(projectPath, modelName, processID) {
-###     #projectDescription <- getCurrentProjectDescription(projectPath)
-###     #process <- projectDescription[[modelName]][[processID]]
-###     process <- getProjectMemoryData(projectPath, modelName, processID)
-###     process$processIndex <- match(processName, names(projectDescription[[modelName]]))
-###     process
-### }
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
     
     # Get the process:
     process <- getProcess(
@@ -2759,6 +2680,16 @@ runProcess <- function(projectPath, modelName, processID) {
     
     # Try tunning the function, and return FALSE if failing:
     failed <- FALSE
+    if(msg) {
+        message(
+            "Running process ", 
+            getProcessIndexFromProcessID(projectPath, modelName, processID), 
+            ": ", 
+            getProcessName(projectPath, modelName, processID), 
+            "..."
+            )
+    }
+    
     processOutput <- tryCatch(
         do.call(
             getFunctionNameFromPackageFunctionName(process$functionName), 
@@ -2800,21 +2731,6 @@ runProcess <- function(projectPath, modelName, processID) {
         TRUE
     }
 }
-
-
-#wrapProcessOutputToList <- function(processOutput) {
-#    if(is.data.table::data.table(processOutput) || "SpatialPolygons" %in% class(processOutput)) {
-#        processOutput <- list(processOutput)
-#    }
-#    processOutput
-#}
-
-#setProcessOutputNames <- function(processOutput, processName) {
-#    processOutputNames <- paste(processName, names(processOutput), sep = "_")
-#    processOutputNames <- gsub('\\_$', '', processOutputNames)
-#    names(processOutput) <- processOutputNames
-#    processOutput
-#}
 
 #' 
 #' @export
@@ -2996,18 +2912,19 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
 
     
     # Loop through the processes:
-    status <- logical(length(processIDs))
-    names(status) <- processIDs
+    #status <- logical(length(processIDs))
+    #names(status) <- processIDs
     
     #err <- NULL
     
     # Try running the processes, and retun the failedVector if craching:
-    tryCatch(
-        {
+    #tryCatch(
+    #    {
             for(processID in processIDs) {
-                status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
+                #status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
+                runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
             }
-        }#, 
+   #     }#, 
         #error = function(e) {
         #    err <<- e
         #    stop(err)
@@ -3021,7 +2938,7 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
             
             #return(status)
         #}
-    )
+    #)
     
     #status
     
@@ -3030,7 +2947,8 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
         saveProject(projectPath)
     }
     
-    status
+    #status
+    utils::tail(processID, 1)
 }
 
 

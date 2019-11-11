@@ -546,7 +546,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
         # 7. possibleValues:
         possibleValues = c(
             list(character(0)), 
-            getAvailableStoxFunctionNames(modelName), 
+            # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
+            as.list(getAvailableStoxFunctionNames(modelName)), 
             rep(list(c(FALSE, TRUE)), length(processParameters))
         )
     )
@@ -604,7 +605,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # 6. default:
                 default = rep(list(double(0)), length(functionInputNames)), 
                 # 7. possibleValues:
-                possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
+                #possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
+                # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
+                possibleValues = lapply(lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable), as.list),
                 # 8. value:
                 value = process$functionInputs
             )
@@ -647,7 +650,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # 6. default:
                 default = replaceEmpty(getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames]),
                 # 7. possibleValues:
-                possibleValues = replaceEmpty(getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames]),
+                # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
+                possibleValues = lapply(replaceEmpty(getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames]), as.list),
                 # 8. value:
                 value = process$functionParameters
             )

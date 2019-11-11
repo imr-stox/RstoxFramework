@@ -2,6 +2,7 @@
 
 export(addEmptyProcess)
 export(addProcess)
+export(addStations)
 export(closeProject)
 export(copyProject)
 export(createProject)

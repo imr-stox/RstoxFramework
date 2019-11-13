@@ -129,7 +129,7 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     )
     
     # Select the type if interactive mode depending on the output data type from the process:
-    if(dataType %in% getRstoxFrameworkDefinitions("stratumDataTypes")) {
+    if(dataType %in% getRstoxFrameworkDefinitions("stratumDataType")) {
         "stratum"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("asouticPSUDataType")) {
@@ -138,7 +138,7 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaPSUDataType")) {
         "sweptAreaPSU"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataTypes")) {
+    else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataType")) {
         "assignment"
     }
     else {
@@ -711,11 +711,12 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         }
         # Modify function name:
         else if(name == "functionName") {
+            # Get the full address to the function using getPackageFunctionNameFromFunctionName():
             modifyFunctionName(
                 projectPath = projectPath, 
                 modelName = modelName, 
                 processID = processID, 
-                newFunctionName = value
+                newFunctionName = getPackageFunctionNameFromFunctionName(value)
             )
         }
         # Modify process parameters:
@@ -748,7 +749,7 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     }
     
     # Return the modified process properties:
-    getProcessProperties(
+    getProcessPropertySheet(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID

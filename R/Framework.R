@@ -2930,7 +2930,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
 #' @inheritParams Projects
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, pretty = FALSE, drop = FALSE) {
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, drop = FALSE) {
     
     # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
     if(any(grepl("/", tableName))) {
@@ -2972,8 +2972,8 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     }
     
     # Read the files recursively:
-    processOutput <- rapply(processOutputFiles, readProcessOutputFile, pretty = pretty, how = "replace")
-    
+    processOutput <- rapply(processOutputFiles, readProcessOutputFile, flatten = flatten, pretty = pretty, how = "replace")
+
     # Unlist if only one element:
     if(drop) {
         while(is.list(processOutput) && !data.table::is.data.table(processOutput) && length(processOutput) == 1) {
@@ -2984,22 +2984,25 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     processOutput
 }
 
-readProcessOutputFile <- function(filePath, pretty = FALSE) {
+readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE) {
     out <- readRDS(filePath)
+    if(flatten) {
+        out <- flattenProcessOutput(out)
+    }
     if(pretty) {
-        out <- prettyfyProcessOutput(out)
+        out <- fixedWidthDataTable(out)
     }
     out
 }
 
-prettyfyProcessOutput <- function(processOutput) {
+flattenProcessOutput <- function(processOutput) {
     if(firstClass(processOutput) == "SpatialPolygons") {
         geojsonio::geojson_json(processOutput)
     }
     else if(firstClass(processOutput) == "data.table") {
         # Check whether the table is rugged:
         if(isDataTableRugged(processOutput)) {
-            prettyfyDataTable(processOutput)
+            flattenDataTable(processOutput)
         }
     }
     else {

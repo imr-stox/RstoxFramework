@@ -88,8 +88,8 @@ expandDT <- function(DT, toExpand = NULL) {
     DT
 }
 
-# Function to create a pretty data table from a data table which may contain empty cells and vectors in cells (all vectors must have equal length for one row):
-prettyfyDataTable <- function(x, replace = NA) {
+# Function to create a rectangular data table from a data table which may contain empty cells and vectors in cells (all vectors must have equal length for one row):
+flattenDataTable <- function(x, replace = NA) {
     
     # Replace all empty with NA
     x <- replaceEmptyInDataTable(x, replace = replace)
@@ -107,4 +107,22 @@ prettyfyDataTable <- function(x, replace = NA) {
     #     AcousticLayer [LayerID, LayerName, MinRange, MaxRange]
     # SweptAreaLayer:
     #     SweptAreaLayer [LayerID, LayerName, MinDepth, MaxDepth]
+}
+
+# Function to convert data.table to fixed width:
+fixedWidthDataTable <- function(x) {
+    # First convert all columns to character:
+    x <- x[, (colnames(x)) := lapply(.SD, as.character), .SDcols = colnames(x)]
+    # Get the maximum number of characters of the columns:
+    suppressWarnings(maxNcharColumns <- sapply(x, function(x) max(nchar(x), na.rm = TRUE)))
+    # Get the number of characters of the column names:
+    ncharColumnNames <- nchar(names(x))
+    # Get maximum of the two:
+    maxNchar <- pmax(maxNcharColumns, ncharColumnNames, na.rm = TRUE)
+    # Create the code to fixed width the columns:
+    maxNcharString <- paste0("%", maxNchar, "s")
+    # Fixed width:
+    out <- data.table::as.data.table(mapply(sprintf, maxNcharString, x))
+    names(out) <- names(x)
+    out
 }

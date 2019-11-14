@@ -2862,7 +2862,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
     failed <- FALSE
     if(msg) {
         message(
-            "Running process ", 
+            "StoX: Running process ", 
             getProcessIndexFromProcessID(projectPath, modelName, processID), 
             ": ", 
             getProcessName(projectPath, modelName, processID), 
@@ -3317,7 +3317,7 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
 #' 
 #' @export
 #' 
-runFunction <- function(what, args, onlyMessage = TRUE) {
+runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) {
     
     # Parse the args if given as a JSON string:
     args <- parseParameter(args)
@@ -3333,12 +3333,12 @@ runFunction <- function(what, args, onlyMessage = TRUE) {
             tryCatch(
                 do.call(what, args), 
                 error = function(e) {
-                    err <<- if(onlyMessage) conditionMessage(e) else e
+                    err <<- if(removeCall) conditionMessage(e) else e
                     NULL
                 }
             ), 
             warning=function(w) {
-                warn <<- append(warn, if(onlyMessage) conditionMessage(w) else w)
+                warn <<- append(warn, if(removeCall) conditionMessage(w) else w)
                 invokeRestart("muffleWarning")
             }
         )
@@ -3350,7 +3350,9 @@ runFunction <- function(what, args, onlyMessage = TRUE) {
     if(length(err)) {
         err <- as.character(err)
     }
-    
+    if(onlyStoxMessages) {
+        msg <- trimws(sub("StoX:", "", msg[startsWith(msg, "StoX:")], fixed = TRUE))
+    }
     
     
     # Clean the warnings:

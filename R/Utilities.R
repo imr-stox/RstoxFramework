@@ -39,4 +39,72 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
     }
 }
 
+# Function to get the first element of class(x):
+firstClass <- function(x) {
+    class(x)[1]
+}
 
+# Function to select valid elements by name
+selectValidElements <- function(x, names) {
+    validNames <- intersect(names, names(x))
+    x[validNames]
+}
+
+# Function to check whether a data table is rugged:
+isDataTableRugged <- function(x) {
+    lens <- sapply(x, lengths)
+    all(lens == lens[1])
+}
+
+# Function to remove all empty elements of a data.table:
+replaceEmptyInDataTable = function(DT, replace = NA) {
+    for (i in names(DT)) {
+        DT[lengths(get(i)) == 0, (i):= replace]
+    }
+    DT     
+}
+
+# Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps:
+expandDT <- function(DT, toExpand = NULL) {
+    # Set the columns to expand:
+    if(length(toExpand) == 0) {
+        lens <- lapply(DT, lengths)
+        lensLargerThan1 <- sapply(lens, function(l) any(l > 1))
+        toExpand <- names(DT)[lensLargerThan1]
+    }
+
+    if(length(toExpand)) {
+        DT <- do.call(
+            cbind, 
+            c(
+                list(
+                    DT[rep(1:.N, lengths(get(toExpand[1]))), !toExpand, with = FALSE]
+                ), 
+                lapply(toExpand, function(x) DT[, unlist(get(x))])
+            )
+        )
+    }
+    
+    DT
+}
+
+# Function to create a pretty data table from a data table which may contain empty cells and vectors in cells (all vectors must have equal length for one row):
+prettyfyDataTable <- function(x, replace = NA) {
+    
+    # Replace all empty with NA
+    x <- replaceEmptyInDataTable(x, replace = replace)
+
+    x <- expandDT(x)
+    # AcousticPSU:
+    #     Stratum_PSU [Stratum, PSUID (vector), PSUName (vector)]
+    #     PSU_EDSU [PSUID, EDSU (vector)]
+    # SweptAreaPSU:
+    #     Stratum_PSU [Stratum, PSUID (vector), PSUName (vector)]
+    #     PSU_Station [PSUID, Station (vector)]
+    # Assignment:
+    #     Assignment [PSUID, LayerID, Station (vector), StationWeight (vector)]
+    # AcousticLayer:
+    #     AcousticLayer [LayerID, LayerName, MinRange, MaxRange]
+    # SweptAreaLayer:
+    #     SweptAreaLayer [LayerID, LayerName, MinDepth, MaxDepth]
+}

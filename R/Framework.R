@@ -1,3 +1,6 @@
+# TODO:
+# getModelNameFromProcessID
+
 # RstoxFramework functions run by Modify-processes in the GUI will return update flags
 # 
 # updateProcessTable
@@ -63,10 +66,22 @@ initiateRstoxFramework <- function(){
     )
     
     #### Fundamental settings of StoX: ####
-    
+    # Define the number of digits to use in JSON files:
     digits <- list(
         JSON = 6
     )
+    
+    # Define the permitted classes for individual outputs from StoX functions:
+    validOutputDataClasses <- c(
+        "data.table", 
+        "SpatialPolygons"
+    )
+    ## Define the valid output data classes:
+    #validOutputDataClasses <- c(
+    #    "data.table", 
+    #    "json", 
+    #    "geojson"
+    #)
     
     # Define the regular expression listing lower and upper characters, integers, underscore and dot:
     validProcessNameSet <- "[[:alnum:]_.]"
@@ -75,12 +90,6 @@ initiateRstoxFramework <- function(){
     # The number of digits in the integer part of the project IDs:
     numDigitsOfProcessIntegerID <- 3
     
-    # Define the valid output data classes:
-    validOutputDataClasses <- c(
-        "data.table", 
-        "json", 
-        "geojson"
-    )
     
     # Define the process property types:
     processPropertyTypes <- list(
@@ -1683,7 +1692,7 @@ getStoxFunctionParameterPrimitiveTypes <- function(functionName) {
     # Get the possible values of the parameters of a function:
     functionParameterDefaults <- getStoxFunctionParameterDefaults(functionName)
     # The default is the first value:
-    primitiveType <- lapply(functionParameterDefaults, class)
+    primitiveType <- lapply(functionParameterDefaults, firstClass)
     primitiveType
 }
 # Function which gets the primitive types of the parameters of a function:
@@ -2344,7 +2353,7 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData)
     )
     
     # Convert from possible JSON input:
-    newProcessData <- lapply(newProcessData, parseParameter)
+    #newProcessData <- lapply(newProcessData, parseParameter)
     
     # Modify the funciton parameters:
     modifiedProcessData <- setListElements(
@@ -2487,7 +2496,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     }
     
     # Convert from possible JSON input:
-    newValues <- parseParameter(newValues)
+    #newValues <- parseParameter(newValues)
     
     # Get process ID from process name:
     processID <- getProcessIDFromProcessName(
@@ -2880,13 +2889,16 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
         # Update the active process ID:
         writeActiveProcessID(projectPath, modelName, processID)
         
-        # Wrap the function output to a list named with the data type:
-        processOutput <- list(processOutput)
-        names(processOutput) <- getStoxFunctionMetaData(process$functionName, "functionOutputDataType")
+        # If a valid output class wrap the function output to a list named with the data type:
+        if(firstClass(processOutput) %in% getRstoxFrameworkDefinitions("validOutputDataClasses")) {
+            processOutput <- list(processOutput)
+            names(processOutput) <- getStoxFunctionMetaData(process$functionName, "functionOutputDataType")
+        }
         
         # Store the processData (this must be a named list of only one data table):
         if(isProcessDataFunction(process$functionName)) {
-            process$processData <- processOutput
+            modifyProcessData(projectPath, modelName, processID, processOutput)
+            #process$processData <- processOutput
         }
         
         # Write to memory files:
@@ -2918,33 +2930,152 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
 #' @inheritParams Projects
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL) {
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, pretty = FALSE, drop = FALSE) {
+    
+    # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
+    if(any(grepl("/", tableName))) {
+        subFolder_tableName <- strsplit(tableName, "/")
+        subFolder <- sapply(subFolder_tableName, "[", 1)
+        tableName <- sapply(subFolder_tableName, "[", 2)
+    }
     
     # Get the directory holding the output files:
     folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID)
     
-    # The tables are saved by individual files named by the table name:
-    if(length(tableName)) {
-        filePahts <- file.path(folderPath, paste(tableName, "rds", sep = "."))
-        if(!all(file.exists(filePahts))) {
-            tableNames <- tools:file_path_sans_ext(list.files(folderPath, full.names = FALSE, pattern = "\\.rds$"))
-            warning("The requested output (", paste(tableName, collapse = ", "), ") does not exist for the process ", getProcessName(projectPath = projectPath, modelName = modelName, processID = processID), ". Possible tables are ", paste(tableNames, sep = ","), ".")
+    # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
+    folderDepth <- getFolderDepth(folderPath)
+    
+    # Get the files 
+    processOutputFiles <- getProcessOutputFiles(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
+    # Get the file paths of the requested memory files:
+    if(folderDepth == 1) {
+        # Get the selected tables:
+        if(length(tableName)) {
+            processOutputFiles <- selectValidElements(processOutputFiles, tableName)
         }
     }
     else {
-        filePahts <- list.files(folderPath, full.names = TRUE, pattern = "\\.rds$")
+        # Apply the subFolder if given:
+        if(length(subFolder)) {
+            processOutputFiles <- selectValidElements(processOutputFiles, subFolder)
+        }
+        
+        # Also select the tables of each sub folder:
+        if(length(tableName)) {
+            processOutputFiles <- lapply(processOutputFiles, selectValidElements, tableName)
+        }
     }
     
-    # Read the files to a list:
-    processOutput <- lapply(filePahts, readRDS)
-    unlist(processOutput, recursive = FALSE)
+    # Read the files recursively:
+    processOutput <- rapply(processOutputFiles, readProcessOutputFile, pretty = pretty, how = "replace")
+    
+    # Unlist if only one element:
+    if(drop) {
+        while(is.list(processOutput) && !data.table::is.data.table(processOutput) && length(processOutput) == 1) {
+            processOutput <- processOutput[[1]]
+        }
+    }
+    
+    processOutput
 }
+
+readProcessOutputFile <- function(filePath, pretty = FALSE) {
+    out <- readRDS(filePath)
+    if(pretty) {
+        out <- prettyfyProcessOutput(out)
+    }
+    out
+}
+
+prettyfyProcessOutput <- function(processOutput) {
+    if(firstClass(processOutput) == "SpatialPolygons") {
+        geojsonio::geojson_json(processOutput)
+    }
+    else if(firstClass(processOutput) == "data.table") {
+        # Check whether the table is rugged:
+        if(isDataTableRugged(processOutput)) {
+            prettyfyDataTable(processOutput)
+        }
+    }
+    else {
+        stop("Invalid process output.")
+    }
+}
+
+# Function to get all process output memory files of a process:
+#' 
+#' @inheritParams Projects
+#' @export
+#' 
+getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNames = FALSE) {
+    
+    # Function to list RDS file in a folder:
+    listRDSFiles <- function(folderPath) {
+        # Create a list of the files, and name it with the file names sans ext:
+        out <- as.list(list.files(folderPath, full.names = TRUE, pattern = "\\.rds$"))
+        names(out) <- basename(tools::file_path_sans_ext(unlist(out)))
+        out
+    }
+    
+    # Get the directory holding the output files:
+    folderPath <- getProcessOutputFolder(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
+    folderDepth <- getFolderDepth(folderPath)
+    
+    # Get the file paths of the memory files and prepare the processOutput for writing to these files:
+    if(folderDepth == 1) {
+        processOutputFiles <- listRDSFiles(folderPath)
+    }
+    else {
+        # Get the sub folder paths and create the folders:
+        folderPaths <- list.dirs(folderPath, recursive = FALSE)
+        processOutputFiles <- lapply(folderPaths, listRDSFiles)
+        names(processOutputFiles) <- basename(folderPaths)
+    }
+    
+    if(onlyTableNames) {
+        # Strip the table names of the folderPath:
+        processOutputFiles <- gsub(path.expand(folderPath), "", unname(unlist(processOutputFiles)))
+        # Remove the resulting trailing "/" and the file extension:
+        processOutputFiles <- substring(processOutputFiles, 2)
+        processOutputFiles <- tools::file_path_sans_ext(processOutputFiles)
+    }
+    
+    processOutputFiles
+}
+
+#' 
+#' @inheritParams Projects
+#' @export
+#' 
+getProcessOutputTableNames <- function(projectPath, modelName, processID) {
+    getProcessOutputFiles(projectPath, modelName, processID, onlyTableNames = TRUE)
+}
+
 
 deleteProcessOutput <- function(projectPath, modelName, processID) {
     # Get the directory holding the output files:
     folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID)
     unlink(folderPath, recursive = FALSE, force = TRUE)
 }
+
+# Function for reading all RDS files in a folder non-recursively:
+readFolderWithRSDFiles <- function(folderPath) {
+    # Get the paths to the output files:
+    filePaths <- list.files(folderPath, full.names = FALSE, pattern = "\\.rds$")
+    # Read the files to a list:
+    processOutput <- lapply(filePahts, readRDS)
+}
+
 
 getProcessOutputFolder <- function(projectPath, modelName, processID) {
     file.path(getProjectPaths(projectPath, "dataFolder"), modelName, processID)
@@ -2991,8 +3122,8 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
             
             areAllValidOutputDataClasses <- function(processOutput) {
                 validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
-                classes <- lapply(processOutput, class)
-                classes <- unlist(lapply(classes, "[[", 1))
+                classes <- sapply(processOutput, firstClass)
+                #classes <- unlist(lapply(classes, "[[", 1))
                 all(classes %in% validOutputDataClasses)
             }
             
@@ -3037,22 +3168,64 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
 writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, modelName) {
     
     if(length(processOutput)) {
-        # Set the file name:
+        # Get the path to the folder to place the memory file in:
         folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = process$processID)
-        processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = process$processID)
-        # fileNameSansExt <- paste(processIndex, names(processOutput), sep = "_")
-        fileName <- paste(names(processOutput), "rds", sep = ".")
-        filePath <- file.path(folderPath, fileName)
+        # Create the folder:
+        dir.create(folderPath, recursive = TRUE, showWarnings = FALSE)
         
-        # Create the folder and save the process output as one file containing a list of DataType, ans possible sublists specified by the function producing the output:
-        dir.create(dirname(filePath), recursive = TRUE, showWarnings = FALSE)
-        # Drop the top level, since this is the data type, and this is known in runProcess:
-        saveRDS(processOutput[[1]], filePath)
+        # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
+        outputDepth <- getOutputDepth(processOutput)
+        
+        # Get the file paths of the memory files and prepare the processOutput for writing to these files:
+        if(outputDepth == 1) {
+            fileNames <- getProcessOutputMemoryFileNames(processOutput)
+            filePaths <- file.path(folderPath, fileNames)
+        }
+        else {
+            # Get the sub folder paths and create the folders:
+            folderPaths <- file.path(folderPath, names(processOutput))
+            lapply(folderPaths, dir.create, recursive = TRUE, showWarnings = FALSE)
+            
+            # Create the file names and add the folder paths to the file names (flattening the output):
+            fileNames <- lapply(processOutput, getProcessOutputMemoryFileNames)
+            filePaths <- c(mapply(file.path, folderPaths, fileNames))
+            
+            # Flatten the processOutput:
+            processOutput <- unlist(processOutput, recursive = FALSE)
+        }
+        
+        
+        # Write the individual tables:
+        mapply(saveRDS, processOutput, filePaths)
     }
     else {
         NULL
     }
     
+}
+# Function to get the depth of the data, 1 for a list of valid output data objects, and 2 for a list of such lists:
+getOutputDepth <- function(x) {
+    outputDepth <- 1
+    validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
+    if(is.list(x[[1]]) && firstClass(x[[1]][[1]]) %in% validOutputDataClasses) {
+        outputDepth <- 2
+    }
+    outputDepth
+}
+# Function to get the folder of the memory files, 1 for all files in one folder, and 2 for a subfolders:
+getFolderDepth <- function(folderPath) {
+    # List the files in the folder:
+    filePaths <- list.dirs(folderPath, recursive = FALSE)
+    folderDepth <- 1
+    if(length(filePaths)) {
+        folderDepth <- 2
+    }
+    folderDepth
+}
+
+# Small function to get the file name of a memory file:
+getProcessOutputMemoryFileNames <- function(processOutput) {
+    paste(names(processOutput), "rds", sep = ".")
 }
 
 

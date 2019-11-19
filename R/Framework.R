@@ -41,7 +41,7 @@ initiateRstoxFramework <- function(){
     officialStoxLibraryPackages <- c(
         "RstoxBase", 
         "RstoxData"
-        #"RstoxECA", 
+        #"RstoxFDA", 
         #"RstoxAnalysis", 
         #"RstoxReport"
     )
@@ -2802,6 +2802,8 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
         processID = processID
     )
     process$processID <- processID
+    print("process")
+    print(process)
     
     # If not not enabled, return immediately:
     if(!process$processParameters$enabled) {
@@ -2817,17 +2819,21 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
     
     # Get the function input as output from the previously run processes:
     functionInputProcessNames <- unlist(process$functionInputs)
-    functionInputsProcessIDs <- getProcessIDFromProcessName(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processName = functionInputProcessNames
-    )
-    if(length(functionInputsProcessIDs)) {
+    if(length(functionInputProcessNames)) {
+        # Get the function input process IDs:
+        functionInputsProcessIDs <- mapply(
+            getProcessIDFromProcessName, 
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processName = functionInputProcessNames
+        )
+        # Get the actual function inputs from the functionInputsProcessIDs:
         functionInputs <- mapply(
             getProcessOutput, 
             projectPath = projectPath, 
             modelName = modelName, 
-            processID = functionInputsProcessIDs
+            processID = functionInputsProcessIDs, 
+            SIMPLIFY = FALSE
         )
         names(functionInputs) <- names(functionInputProcessNames)
     }
@@ -2835,8 +2841,9 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
         functionInputs <- NULL
     }
     
-    
     # Add functionInputs and functionParameters:
+    print("str(functionInputs)")
+    print(str(functionInputs))
     functionParameters <- c(
         functionParameters, 
         functionInputs, 
@@ -3363,6 +3370,7 @@ runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) 
         value = value, 
         message = msg, 
         warning = warn, 
-        error = err)
+        error = err
+    )
 }
 

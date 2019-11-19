@@ -39,7 +39,13 @@ getFunctionInputErrors <- function(ind, processTable, functionInputs) {
     
     #### Check wheter the processes from which process output is requested as funciton input exist prior to the current process: ####
     # Get names of processes prior to the current process:
-    priorProcesses <- processTable$processName[seq_len(ind - 1)]
+    prior <- seq_len(ind - 1)
+    # Discard processes with enabled = FALSE:
+    prior <- subset(prior, processTable$enabled[prior])
+    
+    # Select the prior processes:
+    priorProcesses <- processTable$processName[prior]
+    
     # Get the names of the processes from which funciton intpu is requested:
     requestedProcessNames <- unlist(functionInputs[[ind]])
     requestedFunctionInputDataTypes <- names(requestedProcessNames)
@@ -50,7 +56,7 @@ getFunctionInputErrors <- function(ind, processTable, functionInputs) {
     
     if(!requestedProcessesExist) {
         warning(
-            "The following requested processes do not exist prior to the process", 
+            "The following requested processes do not exist, or are not enabled, prior to the process", 
             processTable$processName[ind], 
             ": ", 
             paste(setdiff(requestedProcessNames, priorProcesses), collapse = ", ")
@@ -482,7 +488,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
         }
     }
     
-    # Function to replace an empty object by numeric(0), which results in [] in JSON:
+    # Function to replace an empty object by numeric(0), which results in [] in JSON (since OpenCPU uses auto-unbox = TRUE):
     replaceEmpty <- function(x) {
         areEmpty <- lengths(x) == 0
         if(any(areEmpty)) {
@@ -609,7 +615,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
                 possibleValues = lapply(lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable), as.list),
                 # 8. value:
-                value = process$functionInputs
+                value = replaceEmpty(process$functionInputs)
             )
             
             # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
@@ -653,7 +659,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
                 possibleValues = lapply(replaceEmpty(getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames]), as.list),
                 # 8. value:
-                value = process$functionParameters
+                value = replaceEmpty(process$functionParameters)
             )
             
             # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):

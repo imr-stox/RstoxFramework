@@ -5,31 +5,27 @@
 #2. Shoudl we introduce IDs for PSUs, Stratum and Layers?
 #
 
-# Possible structure of the fundamental process data:
-# 
-# Stratum:
-#     StratumID    StratumName    Polygon 
-# 
-# AcousticPSU:
-#     StratumID      PSUID          PSUName   EDSU
-# 
-# SweptAreaPSU:
-#     StratumID      PSUID          PSUName   Station
-# 
-# AcousticLayer: 
-#     LayerID      LayerName      MinRange  MaxRange
-# 
-# SweptAreaLayer: 
-#     LayerID      LayerName      MinDepth  MaxDepth
-# 
-# Assignment: 
-#     AcousticPSU  AcousticLayer  Station   StationWeight  AssignmentID
-# 
 
 
 # Decided after discussion with Åsmund on 2019-11-12:
 
 # 1. We will strive for minimum redundancy in the process data. Process data will be saved as data tables with the possibility of variable length vectors in each cell, such as StratumID, StratumName and a vector of PSUs, and saved to the project.xml as JSON
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -356,6 +352,12 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
     
     
 }
+
+
+
+
+
+
 
 
 ## 

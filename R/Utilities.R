@@ -95,18 +95,6 @@ flattenDataTable <- function(x, replace = NA) {
     x <- replaceEmptyInDataTable(x, replace = replace)
 
     x <- expandDT(x)
-    # AcousticPSU:
-    #     Stratum_PSU [Stratum, PSUID (vector), PSUName (vector)]
-    #     PSU_EDSU [PSUID, EDSU (vector)]
-    # SweptAreaPSU:
-    #     Stratum_PSU [Stratum, PSUID (vector), PSUName (vector)]
-    #     PSU_Station [PSUID, Station (vector)]
-    # Assignment:
-    #     Assignment [PSUID, LayerID, Station (vector), StationWeight (vector)]
-    # AcousticLayer:
-    #     AcousticLayer [LayerID, LayerName, MinRange, MaxRange]
-    # SweptAreaLayer:
-    #     SweptAreaLayer [LayerID, LayerName, MinDepth, MaxDepth]
 }
 
 # Function to convert data.table to fixed width:

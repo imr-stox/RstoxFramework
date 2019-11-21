@@ -431,14 +431,7 @@ getProcessPropertyNames <- function() {
     #    catchability
     #    length2tsLayerPSU, 
     
-    
-    
-    # Datatypes in the project.xml
-    # String
-    # Ingeger
-    # Double
-    # Boolean
-    
+
     
 }
 
@@ -475,7 +468,6 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
     # "speciesCategoryTable"
     # "acousticCategoryTable" 
     
-    # See image!!!!!!!!
     
     # Function that gets the process names of the processes returning the specified data type
     getProcessNamesByDataType <- function(dataType, processTable) {
@@ -488,7 +480,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
         }
     }
     
-    # Function to replace an empty object by numeric(0), which results in [] in JSON (since OpenCPU uses auto-unbox = TRUE):
+    # Function to replace an empty object by double(0) or character(1), which results in [] in JSON (since OpenCPU uses auto-unbox = TRUE):
     replaceEmpty <- function(x, vector = TRUE) {
         areEmpty <- lengths(x) == 0
         if(any(areEmpty)) {
@@ -620,7 +612,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
                 possibleValues = lapply(lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable), as.list),
                 # 8. value:
-                value = replaceEmpty(process$functionInputs)
+                value = replaceEmpty(process$functionInputs, vector = FALSE)
             )
             
             # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
@@ -664,7 +656,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
                 possibleValues = lapply(replaceEmpty(getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames]), as.list),
                 # 8. value:
-                value = replaceEmpty(process$functionParameters)
+                value = replaceEmpty(process$functionParameters, vector = FALSE)
             )
             
             # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):

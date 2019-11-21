@@ -714,12 +714,12 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         }
         # Modify function name:
         else if(name == "functionName") {
-            # Get the full address to the function using getPackageFunctionNameFromFunctionName():
+            # Get the full address to the function using getPackageFunctionName():
             modifyFunctionName(
                 projectPath = projectPath, 
                 modelName = modelName, 
                 processID = processID, 
-                newFunctionName = getPackageFunctionNameFromFunctionName(value)
+                newFunctionName = getPackageFunctionName(value)
             )
         }
         # Modify process parameters:

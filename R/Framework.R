@@ -534,7 +534,10 @@ getPackageNameFromPackageFunctionName <- function(functionName) {
 getFunctionNameFromPackageFunctionName <- function(functionName) {
     substring(functionName, regexpr("::", functionName) + 2)
 }
-getPackageFunctionNameFromFunctionName <- function(functionName) {
+getPackageFunctionName <- function(functionName) {
+    if(grepl("::", functionName, fixed = TRUE)) {
+        return(functionName)
+    }
     stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
     if(functionName %in% names(stoxLibrary)) {
         stoxLibrary[[functionName]]$functionName
@@ -550,7 +553,7 @@ getPackageFunctionNameFromFunctionName <- function(functionName) {
 validateFunction <- function(functionName) {
     
     # Expand the funciton name:
-    functionName <- getPackageFunctionNameFromFunctionName(functionName)
+    functionName <- getPackageFunctionName(functionName)
     
     # 1. Check first that the function name contains a double colon, which is the first requirement for a process:
     #if(!grepl("::", functionName, fixed = TRUE)) {

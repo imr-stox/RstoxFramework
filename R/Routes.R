@@ -56,7 +56,7 @@ getFunctionInputErrors <- function(ind, processTable, functionInputs) {
     
     if(!requestedProcessesExist) {
         warning(
-            "The following requested processes do not exist, or are not enabled, prior to the process", 
+            "The following requested processes do not exist, or are not enabled, prior to the process ", 
             processTable$processName[ind], 
             ": ", 
             paste(setdiff(requestedProcessNames, priorProcesses), collapse = ", ")
@@ -651,7 +651,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # 5. format:
                 format = replaceEmpty(getFunctionParameterPropertyFormats(process$functionName)[functionParameterNames]),
                 # 6. default:
-                default = replaceEmpty(getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames]),
+                default = replaceEmpty(getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames], vector = FALSE),
                 # 7. possibleValues:
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
                 possibleValues = lapply(replaceEmpty(getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames]), as.list),

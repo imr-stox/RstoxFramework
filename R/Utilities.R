@@ -52,6 +52,10 @@ selectValidElements <- function(x, names) {
 
 # Function to check whether a data table is rugged:
 isDataTableRugged <- function(x) {
+    # Return immediately if x has length 0:
+    if(nrow(x) == 0) {
+        return(FALSE)
+    }
     lens <- sapply(x, lengths)
     all(lens == lens[1])
 }
@@ -91,6 +95,11 @@ expandDT <- function(DT, toExpand = NULL) {
 # Function to create a rectangular data table from a data table which may contain empty cells and vectors in cells (all vectors must have equal length for one row):
 flattenDataTable <- function(x, replace = NA) {
     
+    # Return immediately if x has length 0:
+    if(length(x) == 0) {
+        return(x)
+    }
+    
     # Replace all empty with NA
     x <- replaceEmptyInDataTable(x, replace = replace)
 
@@ -98,7 +107,12 @@ flattenDataTable <- function(x, replace = NA) {
 }
 
 # Function to convert data.table to fixed width:
-fixedWidthDataTable <- function(x) {
+fixedWidthDataTable <- function(x, collapse = "") {
+    # Return immediately if x has length 0:
+    if(length(x) == 0) {
+        return(x)
+    }
+    
     # First convert all columns to character:
     x <- x[, (colnames(x)) := lapply(.SD, as.character), .SDcols = colnames(x)]
     # Get the maximum number of characters of the columns:
@@ -110,7 +124,12 @@ fixedWidthDataTable <- function(x) {
     # Create the code to fixed width the columns:
     maxNcharString <- paste0("%", maxNchar, "s")
     # Fixed width:
-    out <- data.table::as.data.table(mapply(sprintf, maxNcharString, x))
+    out <- data.table::as.data.table(mapply(sprintf, maxNcharString, x, SIMPLIFY = FALSE))
     names(out) <- names(x)
+    
+    # Collapse to lines:
+    out <- apply(out, 1, paste, collapse = collapse)
+    #out <- out[, paste(.SD, collapse = ""), by = seq_len(nrow(out))][[2]]
+    
     out
 }

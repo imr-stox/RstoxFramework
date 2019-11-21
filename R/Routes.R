@@ -489,10 +489,15 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
     }
     
     # Function to replace an empty object by numeric(0), which results in [] in JSON (since OpenCPU uses auto-unbox = TRUE):
-    replaceEmpty <- function(x) {
+    replaceEmpty <- function(x, vector = TRUE) {
         areEmpty <- lengths(x) == 0
         if(any(areEmpty)) {
-            x[areEmpty] <- rep(list(double(0)), sum(areEmpty))
+            if(vector) {
+                x[areEmpty] <- rep(list(double(0)), sum(areEmpty))
+            }
+            else {
+                x[areEmpty] <- rep(list(character(1)), sum(areEmpty))
+            }
         }
         x   
     }
@@ -544,8 +549,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
         # 6. default:
         default = c(
             list(
-                character(0), 
-                character(0)
+                character(1), 
+                character(1)
             ), 
             unname(processParameters)
         ), 
@@ -609,7 +614,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
                 # 5. format:
                 format = as.list(rep("none", length(functionInputNames))),
                 # 6. default:
-                default = rep(list(double(0)), length(functionInputNames)), 
+                default = rep(list(character(1)), length(functionInputNames)), 
                 # 7. possibleValues:
                 #possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.

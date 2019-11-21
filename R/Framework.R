@@ -536,7 +536,13 @@ getFunctionNameFromPackageFunctionName <- function(functionName) {
 }
 getPackageFunctionNameFromFunctionName <- function(functionName) {
     stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
-    stoxLibrary[[functionName]]$functionName
+    if(functionName %in% names(stoxLibrary)) {
+        stoxLibrary[[functionName]]$functionName
+    }
+    else {
+        NULL
+    }
+    
 }
 
 
@@ -544,10 +550,13 @@ getPackageFunctionNameFromFunctionName <- function(functionName) {
 validateFunction <- function(functionName) {
     
     # Expand the funciton name:
-    #functionName <- expandFunctionName(functionName)
+    functionName <- getPackageFunctionNameFromFunctionName(functionName)
     
     # 1. Check first that the function name contains a double colon, which is the first requirement for a process:
-    if(!grepl("::", functionName, fixed = TRUE)) {
+    #if(!grepl("::", functionName, fixed = TRUE)) {
+    #    stop("The function \"", functionName, "\" does not appear to be a string of the form PACKAGENAME::FUNCTIONNAME, where PACK#AGENAME is the package exporting the function with name FUNCTIONNAME.")
+    #}
+    if(length(functionName) == 0) {
         stop("The function \"", functionName, "\" does not appear to be a string of the form PACKAGENAME::FUNCTIONNAME, where PACKAGENAME is the package exporting the function with name FUNCTIONNAME.")
     }
     
@@ -2802,8 +2811,6 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
         processID = processID
     )
     process$processID <- processID
-    print("process")
-    print(process)
     
     # If not not enabled, return immediately:
     if(!process$processParameters$enabled) {
@@ -2842,8 +2849,6 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
     }
     
     # Add functionInputs and functionParameters:
-    print("str(functionInputs)")
-    print(str(functionInputs))
     functionParameters <- c(
         functionParameters, 
         functionInputs, 
@@ -3367,10 +3372,10 @@ runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) 
     
     # Return a list of warnings and error along with the result:
     list(
-        value = value, 
-        message = msg, 
-        warning = warn, 
-        error = err
+        value = if(!is.list(value)) as.list(value) else value, 
+        message = as.list(msg), 
+        warning = as.list(warn), 
+        error = as.list(err)
     )
 }
 

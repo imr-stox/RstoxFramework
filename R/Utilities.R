@@ -132,7 +132,7 @@ fixedWidthDataTable <- function(x, collapse = " ") {
     #out <- out[, paste(.SD, collapse = ""), by = seq_len(nrow(out))][[2]]
     
     # Add the header:
-    header <- sprintf(maxNcharString, names(x))
+    header <- paste(sprintf(maxNcharString, names(x)), collapse = collapse)
     out <- rbind(
         header, 
         out

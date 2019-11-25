@@ -701,6 +701,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
 #' 
 setProcessPropertyValue <- function(groupName, name, value, projectPath, modelName, processID) {
     
+    # Parse the value:
+    value <- parseParameter(value)
+    
     # If the process property 'processArguments' is given, modify the process name, function name or process parameters:
     if(groupName == "processArguments") {
         # Modify process name:
@@ -760,6 +763,9 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
 }
 
 
+parseProcessPropertyValue <- function(value) {
+    
+}
 
 
 ##########

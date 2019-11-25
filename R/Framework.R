@@ -443,7 +443,7 @@ getStoxLibrary <- function(packageNames) {
     stoxFunctionAttributes
 }
 
-# Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each elements (function) of the list:
+# Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each element (function) of the list:
 getStoxFunctionAttributes <- function(packageName) {
     
     stoxFunctionAttributes <- tryCatch(
@@ -481,6 +481,16 @@ getStoxFunctionAttributes <- function(packageName) {
     stoxFunctionAttributes
 }
 
+# Function for reading the backwardCompatibility object of a package:
+getBackwardCompatibility <- function(packageName) {
+    
+    backwardCompatibility <- tryCatch(
+        getExportedValue(packageName, "backwardCompatibility"), 
+        error = function(err) NULL
+    )
+    
+    backwardCompatibility
+}
 
 # Function for validating a StoX function library package:
 validateStoxLibraryPackage <- function(packageName) {
@@ -2194,9 +2204,6 @@ modifyFunctionName <- function(projectPath, modelName, processID, newFunctionNam
         processID = processID
     )
 
-    # Convert from possible JSON input:
-    newFunctionName <- parseParameter(newFunctionName)
-    
     # Change the function name only if different from the existing:
     if(!identical(process$functionName, newFunctionName)) {
         # Error if the function name is not character:
@@ -2226,9 +2233,6 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName)
         processID = processID
     )
     
-    # Convert from possible JSON input:
-    newProcessName <- parseParameter(newProcessName)
-    
     # Change the process name only if different from the existing:
     if(!identical(processName, newProcessName)) {
         # Validate the new process name (for invalid characters):
@@ -2253,9 +2257,6 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         modelName = modelName, 
         processID = processID
     )
-    
-    # Convert from possible JSON input:
-    newFunctionParameters <- lapply(newFunctionParameters, parseParameter)
     
     # Modify any file or directory paths to relative paths if possible, and issue a warning if the projectPath is not in the path:
     newFunctionParameters <- getRelativePaths(
@@ -2296,9 +2297,6 @@ modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionI
         processID = processID
     )
     
-    # Convert from possible JSON input:
-    newFunctionInputs <- lapply(newFunctionInputs, parseParameter)
-    
     # Modify the funciton inputs:
     modifiedFunctionInputs <- setListElements(
         list = functionInputs, 
@@ -2330,9 +2328,6 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
         processID = processID
     )
     
-    # Convert from possible JSON input:
-    newProcessParameters <- lapply(newProcessParameters, parseParameter)
-    
     # Modify the funciton parameters:
     modifiedProcessParameters <- setListElements(
         list = processParameters, 
@@ -2363,9 +2358,6 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData)
         modelName = modelName, 
         processID = processID
     )
-    
-    # Convert from possible JSON input:
-    #newProcessData <- lapply(newProcessData, parseParameter)
     
     # Modify the funciton parameters:
     modifiedProcessData <- setListElements(
@@ -2506,9 +2498,6 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
         warning("The project ", projectPath, " is not open.")
         return(NULL)
     }
-    
-    # Convert from possible JSON input:
-    #newValues <- parseParameter(newValues)
     
     # Get process ID from process name:
     processID <- getProcessIDFromProcessName(
@@ -3381,4 +3370,26 @@ runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) 
         error = as.list(err)
     )
 }
+
+
+##################################################
+##################################################
+#' Convert a project from StoX 2.7 to the current StoX
+#' 
+#' This function applies the conversion functions defined in the \code{stoxFunctionAttributes} list defined in each StoX function package.
+#' 
+#' @noRd
+#' 
+convertProjectDescription <- function(projectPath) {
+    # Get the current project description:
+    projectDescription <- getProjectMemoryData(projectPath)
+    
+    # Get the StoX version:
+    StoxVersion <- attr(projectDescription, "StoxVersion")
+    if(StoxVersion < 2.7) {
+        stop("Backward compatibility not supported for versions of StoX prior to 2.7")
+    }
+    
+}
+
 

@@ -107,7 +107,7 @@ flattenDataTable <- function(x, replace = NA) {
 }
 
 # Function to convert data.table to fixed width:
-fixedWidthDataTable <- function(x, collapse = " ") {
+fixedWidthDataTable <- function(x, collapse = " ", na = "-") {
     # Return immediately if x has length 0:
     if(length(x) == 0) {
         return(x)
@@ -115,6 +115,10 @@ fixedWidthDataTable <- function(x, collapse = " ") {
     
     # First convert all columns to character:
     x <- x[, (colnames(x)) := lapply(.SD, as.character), .SDcols = colnames(x)]
+    
+    # Replace all NA with the user specified na:
+    x[is.na(x)] <- na
+    
     # Get the maximum number of characters of the columns:
     suppressWarnings(maxNcharColumns <- sapply(x, function(x) max(nchar(x), na.rm = TRUE)))
     # Get the number of characters of the column names:

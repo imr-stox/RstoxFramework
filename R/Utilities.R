@@ -1,85 +1,146 @@
-initiateRstox <- function(){
+#*********************************************
+#*********************************************
+#' Merge two data tables with all=TRUE and the specified columns and keys.
+#' 
+#' Merges two data tables (see \code{\link[data.table]{data.table}}) with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
+#' 
+#' @param x,y		Two data tables to be merged.
+#' @param var		A character vector of names of the columns to keep while merging.
+#' @param keys		A character vector of names of the columns to merge by (see the \code{by} argument in \code{\link[data.table]{merge}}).
+#' @param keys.out	Logical: If TRUE return a list with the keys used and the merged data.
+#'
+#' @return A merged data table.
+#' 
+#' @noRd
+#'
+#' @import data.table
+#' 
+merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "length", "lengthresolution"), keys=c("cruise", "serialnumber", "samplenumber", "SpecCat"), keys.out=FALSE) {
+    # Get the keys common for the two data tables:
+    commonVar <- intersect(names(x), names(y))
+    thisKeys <- intersect(keys, commonVar)
+    # Get the variables requested for x and y:
+    xvar <- intersect(names(x), c(var, keys))
+    yvar <- intersect(names(y), c(var, keys))
+    # Remove variables named identically ('weight' in biotic v1.4):
+    yvar <- setdiff(yvar, xvar)
+    # Add the keys:
+    xvar <- unique(c(thisKeys, xvar))
+    yvar <- unique(c(thisKeys, yvar))
     
-    # NMD and Stox defines different data types (Stox has the more general category "acoustic"):
-    NMD_data_sources <- c(acoustic = "echosounder", biotic = "biotic", landing = "landing")
-    # The implemented NMD APIs for the NMD_data_sources:
-    NMD_API_versions <- list(
-        biotic = c(1, 2, 3), 
-        echosounder = 1, 
-        reference = c(1, 2), 
-        landing = NULL
-    )
+    # Merge the data.tables:
+    out <- merge(x[,xvar, with=FALSE], y[,yvar, with=FALSE], all=TRUE, by=thisKeys)
     
-    # The format used by NMD for shapshot time:
-    dateTimeNMDAPIFormat <- "%Y-%m-%dT%H.%M.%OSZ"
-    
-    # The current API and datasource formats:
-    ver <- list(
-        API = list(
-            biotic = "3", 
-            echosounder = "1", 
-            reference = "2", 
-            landing = NA
-        ),
-        reference = "2.0", 
-        biotic = "3.0",
-        echosounder = NA, 
-        landing = NA
-    )
-    
-    # Define project types:
-    project_types <- c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal")
-    
-    # Define the process levels for the presicion estimate:
-    processLevels <- c("bootstrap", "bootstrapImpute")
-    
-    # Define ECA covariates ******************** THIS SHOULD PROBABLY BE MOVED TO THE RstoxECA package:
-    ECACovariates <- data.frame(
-        Name = c(
-            "temporal", 
-            "gearfactor", 
-            "spatial", 
-            "platformfactor"
-        ), 
-        Processe = c(
-            "DefineTemporalLanding", 
-            "DefineGearLanding", 
-            "DefineSpatialLanding", 
-            "DefinePlatformLanding"
-        ), 
-        Description = c(
-            "The temporal covariate", 
-            "The gear covariate given as groups of gear codes", 
-            "The spatial covariate giving polygons or locations", 
-            "The platform covariate (vessels)"
-        ), 
-        stringsAsFactors = FALSE
-    )
-    
-    # Define the dependencies to include in the version names of the automated testing:
-    internal_dependencies <- c("Reca")
-    
-    # Assign to RstoxEnv and return the definitions:
-    Definitions <- list(
-        Stox_reading_processes = Stox_reading_processes, 
-        dateTimeNMDAPIFormat = dateTimeNMDAPIFormat, 
-        NMD_data_sources = NMD_data_sources, 
-        ver = ver, 
-        project_types = project_types, 
-        processLevels = processLevels, 
-        ECACovariates = ECACovariates, 
-        internal_dependencies = internal_dependencies
-    )
-    
-    # Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv:
-    utils::globalVariables("RstoxEnv")
-    assign("RstoxEnv", new.env(), parent.env(environment()))
-    
-    assign("Definitions", Definitions, envir=get("RstoxEnv"))
-    assign("Projects", list(), envir=get("RstoxEnv"))
-    
-    # Return the definitions:
-    Definitions
+    if(keys.out) {
+        list(data=out, keys=thisKeys)
+    }
+    else {
+        out
+    }
 }
 
+# Function to get the first element of class(x):
+firstClass <- function(x) {
+    class(x)[1]
+}
 
+# Function to select valid elements by name
+selectValidElements <- function(x, names) {
+    validNames <- intersect(names, names(x))
+    x[validNames]
+}
+
+# Function to check whether a data table is rugged:
+isDataTableRugged <- function(x) {
+    # Return immediately if x has length 0:
+    if(nrow(x) == 0) {
+        return(FALSE)
+    }
+    lens <- sapply(x, lengths)
+    all(lens == lens[1])
+}
+
+# Function to remove all empty elements of a data.table:
+replaceEmptyInDataTable = function(DT, replace = NA) {
+    for (i in names(DT)) {
+        DT[lengths(get(i)) == 0, (i):= replace]
+    }
+    DT     
+}
+
+# Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps:
+expandDT <- function(DT, toExpand = NULL) {
+    # Set the columns to expand:
+    if(length(toExpand) == 0) {
+        lens <- lapply(DT, lengths)
+        lensLargerThan1 <- sapply(lens, function(l) any(l > 1))
+        toExpand <- names(DT)[lensLargerThan1]
+    }
+
+    if(length(toExpand)) {
+        DT <- do.call(
+            cbind, 
+            c(
+                list(
+                    DT[rep(1:.N, lengths(get(toExpand[1]))), !toExpand, with = FALSE]
+                ), 
+                lapply(toExpand, function(x) DT[, unlist(get(x))])
+            )
+        )
+    }
+    
+    DT
+}
+
+# Function to create a rectangular data table from a data table which may contain empty cells and vectors in cells (all vectors must have equal length for one row):
+flattenDataTable <- function(x, replace = NA) {
+    
+    # Return immediately if x has length 0:
+    if(length(x) == 0) {
+        return(x)
+    }
+    
+    # Replace all empty with NA
+    x <- replaceEmptyInDataTable(x, replace = replace)
+
+    x <- expandDT(x)
+}
+
+# Function to convert data.table to fixed width:
+fixedWidthDataTable <- function(x, collapse = " ", na = "-") {
+    # Return immediately if x has length 0:
+    if(length(x) == 0) {
+        return(x)
+    }
+    
+    # First convert all columns to character:
+    x <- x[, (colnames(x)) := lapply(.SD, as.character), .SDcols = colnames(x)]
+    
+    # Replace all NA with the user specified na:
+    x[is.na(x)] <- na
+    
+    # Get the maximum number of characters of the columns:
+    suppressWarnings(maxNcharColumns <- sapply(x, function(x) max(nchar(x), na.rm = TRUE)))
+    # Get the number of characters of the column names:
+    ncharColumnNames <- nchar(names(x))
+    # Get maximum of the two:
+    maxNchar <- pmax(maxNcharColumns, ncharColumnNames, na.rm = TRUE)
+    # Create the code to fixed width the columns:
+    maxNcharString <- paste0("%", maxNchar, "s")
+    # Fixed width:
+    out <- data.table::as.data.table(mapply(sprintf, maxNcharString, x, SIMPLIFY = FALSE))
+    names(out) <- names(x)
+    
+    # Collapse to lines:
+    out <- apply(out, 1, paste, collapse = collapse)
+    #out <- out[, paste(.SD, collapse = ""), by = seq_len(nrow(out))][[2]]
+    
+    # Add the header:
+    header <- paste(sprintf(maxNcharString, names(x)), collapse = collapse)
+    out <- c(
+        header, 
+        out
+    )
+    
+    out
+}

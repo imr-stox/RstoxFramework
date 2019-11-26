@@ -9,10 +9,10 @@ getRstoxFrameworkDefinitions(name = NULL, ...)
 \arguments{
 \item{name}{An optional string vector denoting which definitions to extract.}
 
-\item{...}{Values overriding the values of definitions.}
+\item{...}{values overriding the values of definitions.}
 }
 \value{
-A list of vital definitions in RstoxFramework.
+A list of definitions.
 }
 \description{
 This function gets vital definitions from the RstoxFramework environment.

@@ -181,7 +181,7 @@ initiateRstoxFramework <- function(){
     processParametersDisplayNames <- list(
         enabled = "Enabled", 
         showInMap = "Show in map", 
-        fileOutput = "write to output"
+        fileOutput = "Write to output"
     )
     processParametersDescriptions <- list(
         enabled = "Whether to execute the process or not", 
@@ -1007,7 +1007,7 @@ writeProjectDescriptionXML <- function(projectPath) {
 
 writeProjectXML <- function(projectDescription, projectXMLFile) {
     # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
-    saveProject(projectDescription, projectXMLFile)
+    #saveProject(projectDescription, projectXMLFile)
 }
 
 
@@ -2168,6 +2168,7 @@ setListElements <- function(list, insertList, projectPath, modelName, processID)
     valid <- insertNames %in% presentNames
     
     # This warning made more sense when the contents of setListElements() was included in every function using it, since the process and function name was available. 
+    
     if(any(!valid)) {
         # Warn the user that there are invalid list elements:
         warning(

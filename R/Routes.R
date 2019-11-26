@@ -354,11 +354,11 @@ getStationData <- function(projectPath, modelName, processID) {
     getProcessOutput(projectPath, modelName, processID, tableName = "Station")$Station
 }
 
-getEDSUData <- function(projectPath, modelName, processID) {
-    # Get the EDSU data:
-    Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
-    extrapolateEDSU(Log)
-}
+#getEDSUData <- function(projectPath, modelName, processID) {
+#    # Get the EDSU data:
+#    Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
+#    extrapolateEDSU(Log)
+#}
 
 # Add stop position of the EDSUs for plotting in the map:
 extrapolateLongitudeLatitude <- function(StartLongitude, StartLatitude) {

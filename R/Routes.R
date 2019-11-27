@@ -148,7 +148,7 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
         "assignment"
     }
     else {
-        stop("Invalid dataType")
+        "none"
     }
 }
 

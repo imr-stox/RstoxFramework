@@ -97,7 +97,8 @@ initiateRstoxFramework <- function(){
         optional = list(
             "logical", 
             "integer", 
-            "double"
+            "double", 
+            "numeric"
         )
     )
     # Define the process property formats:
@@ -124,9 +125,9 @@ initiateRstoxFramework <- function(){
         Landing = "Landing"
     )
     stoxModelNames <- c(
-        Baseline = "Baseline", 
-        Analysis = "Analysis", 
-        Report = "Report"
+        Baseline = "baseline", 
+        Analysis = "analysis", 
+        Report = "report"
     )
     stoxModelDisplayNames <- c(
         Baseline = "Baseline", 
@@ -1724,7 +1725,7 @@ getStoxFunctionParameterPropertyTypes <- function(functionName) {
     typeFromDefinition <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
     # Get the meta data functionParameterType (as specified in the 'stoxFunctionAttributes' of each package):
-    functionParameterType = getStoxFunctionMetaData(functionName, "functionParameterType")
+    functionParameterType <- getStoxFunctionMetaData(functionName, "functionParameterType")
     
     # Replace the types by those from the meta data:
     valid <- intersect(names(typeFromDefinition), names(functionParameterType))

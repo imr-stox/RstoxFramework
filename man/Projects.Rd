@@ -17,7 +17,7 @@ openProject(projectPath, showWarnings = FALSE, force = FALSE)
 
 closeProject(projectPath, save = NULL)
 
-saveProject(projectPath)
+saveProject(projectDescription, filename)
 
 saveAsProject(projectPath, newProjectPath, ow = FALSE)
 

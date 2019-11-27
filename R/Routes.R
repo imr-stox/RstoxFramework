@@ -147,6 +147,12 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataType")) {
         "assignment"
     }
+    else if(dataType %in% getRstoxFrameworkDefinitions("stationDataType")) {
+        "station"
+    }
+    else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType")) {
+        "EDSU"
+    }
     else {
         "none"
     }
@@ -227,24 +233,24 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
 getMapData  <- function(projectPath, modelName, processID) {
     
     # Get the interactive mode:
-    mapMode <- getInteractiveMode(projectPath, modelName, processID)
+    interactiveMode <- getInteractiveMode(projectPath, modelName, processID)
     
     # Call the appropriate function depending on the interactive mode:
-    if(mapMode == "stratum") {
+    if(interactiveMode == "stratum") {
         getStratumData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
         )
     }
-    else if(mapMode == "station") {
+    else if(interactiveMode == "station") {
         getStationData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
         )
     }
-    else if(mapMode == "EDSU") {
+    else if(interactiveMode == "EDSU") {
         getSweptAreaPSUData(
             projectPath = projectPath, 
             modelName = modelName, 
@@ -252,7 +258,7 @@ getMapData  <- function(projectPath, modelName, processID) {
         )
     }
     else {
-        stop("Invalid mapMode")
+        geojsonio::geojson_json(getRstoxFrameworkDefinitions("emptyStratumPolygon"))
     }
 }
 
@@ -262,6 +268,11 @@ getStratumData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
+    # Return an empty StratumPolygon if processData is empty:
+    if(length(processData) == 0) {
+        return(getRstoxFrameworkDefinitions("emptyStratumPolygon"))
+    }
+    
     # Issue an error of the process data are not of StratumPolygon type:
     if(names(processData) != "StratumPolygon"){
         processName <- getProcessName(projectPath, modelName, processID)
@@ -270,7 +281,7 @@ getStratumData <- function(projectPath, modelName, processID) {
     }
     
     # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    stratumPolygon <- geojsonio::geojson_json(processData)
+    stratumPolygon <- geojsonio::geojson_json(processData$StratumPolygon)
     #stratum <- data.table::data.table(
     #    stratum = names(processData), 
     #    includeInTotal = 

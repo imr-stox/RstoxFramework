@@ -167,11 +167,16 @@ initiateRstoxFramework <- function(){
         SweptAreaPSU = "SweptAreaPSU"
     )
     
-    # Define the data types for the map modes "stratum", "assignment", "acousticPSU" and "sweptAreaPSU"
+    # Define the data types for the interactive modes:
     stratumDataType <- "StratumPolygon"
     asouticPSUDataType <- "AcousticPSU"
     sweptAreaPSUDataType <- "SweptAreaPSU"
     assignmentDataType <- "Assignment"
+    stationDataType <- "StoxBiotic"
+    EDSUDataType <- "StoxAcoustic"
+    
+    # Define empty StratumPolygon data type:
+    emptyStratumPolygon <- sp::SpatialPolygons(list())
     
     # Define the process parameters with default values, display names and descriptions:
     processParameters <- list(
@@ -1029,7 +1034,7 @@ initiateActiveProcessID <- function(projectPath) {
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     # Initiate with all zeros:
     activeProcessIDTable <- data.table::as.data.table(matrix(NA, nrow = 1, ncol = 3))
-    colnames(activeProcessIDTable) <-getRstoxFrameworkDefinitions("stoxModelNames")
+    colnames(activeProcessIDTable) <- getRstoxFrameworkDefinitions("stoxModelNames")
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
     activeProcessIDFile
 }
@@ -2165,25 +2170,25 @@ setListElements <- function(list, insertList, projectPath, modelName, processID)
     
     # Report a warning for elements not present in the list:
     insertNames <- names(insertList)
-    presentNames <- names(list)
-    valid <- insertNames %in% presentNames
+    #presentNames <- names(list)
+    #valid <- insertNames %in% presentNames
     
     # This warning made more sense when the contents of setListElements() was included in every function using it, since the process and function name was available. 
     
-    if(any(!valid)) {
-        # Warn the user that there are invalid list elements:
-        warning(
-            "Removed the following unrecognized parameters for the function ", 
-            getFunctionName(projectPath, modelName, processID), 
-            " of process ", 
-            getProcessName(projectPath, modelName, processID), 
-            ": ", 
-            paste(insertNames[!valid], collapse = ", "),
-            if(length(presentNames)) paste0(" (Valid parameters: ", paste(presentNames, sep = ", "), ")")
-        )
-        # Keep only the new list elements that are present in the list:
-        insertNames <- insertNames[valid]
-    }
+    #if(any(!valid)) {
+    #    # Warn the user that there are invalid list elements:
+    #    warning(
+    #        "Removed the following unrecognized parameters for the function ", 
+    #        getFunctionName(projectPath, modelName, processID), 
+    #        " of process ", 
+    #        getProcessName(projectPath, modelName, processID), 
+    #        ": ", 
+    #        paste(insertNames[!valid], collapse = ", "),
+    #        if(length(presentNames)) paste0(" (Valid parameters: ", paste(presentNames, sep = ", "), ")")
+    #    )
+    #    # Keep only the new list elements that are present in the list:
+    #    insertNames <- insertNames[valid]
+    #}
     
     # Insert the list elements (one by one for safety):
     if(length(insertNames)) {
@@ -2354,14 +2359,14 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
 }
 modifyProcessData <- function(projectPath, modelName, processID, newProcessData) {
     
-    # Get the function inputs:
+    # Get the process data:
     processData<- getProcessData(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID
     )
     
-    # Modify the funciton parameters:
+    # Modify the process data:
     modifiedProcessData <- setListElements(
         list = processData, 
         insertList = newProcessData, 
@@ -3067,7 +3072,8 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
 #' @export
 #' 
 getProcessOutputTableNames <- function(projectPath, modelName, processID) {
-    getProcessOutputFiles(projectPath, modelName, processID, onlyTableNames = TRUE)
+    # Ensure that this is a vector in JSON after auto_unbox = TRUE, by using as.list():
+    as.list(getProcessOutputFiles(projectPath, modelName, processID, onlyTableNames = TRUE))
 }
 
 

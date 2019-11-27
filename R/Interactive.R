@@ -379,7 +379,9 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
 ## all.equal(Assignment, Assignment2)
 
 
-
+createNode <- function(PSUName, EDSU, projectPath, modelName, processID) {
+    
+}
 
 
 

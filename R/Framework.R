@@ -125,9 +125,9 @@ initiateRstoxFramework <- function(){
         Landing = "Landing"
     )
     stoxModelNames <- c(
-        Baseline = "baseline", 
-        Analysis = "analysis", 
-        Report = "report"
+        Baseline = "Baseline", 
+        Analysis = "Analysis", 
+        Report = "Report"
     )
     stoxModelDisplayNames <- c(
         Baseline = "Baseline", 

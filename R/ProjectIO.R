@@ -790,7 +790,7 @@ readProject <- function(projectxml){
 #' @param projectDescription nested list representation of StoX project
 #' @param filename to write to
 #' @export
-saveProject <- function(projectDescription, filename){
+saveProjectEdvin <- function(projectDescription, filename){
   namespace = "http://www.imr.no/formats/stox/v3"
   
   doc <- xml_new_document()

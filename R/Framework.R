@@ -3366,7 +3366,8 @@ runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) 
     
     # Return a list of warnings and error along with the result:
     list(
-        value = if(!is.list(value)) as.list(value) else value, 
+        #value = if(!is.list(value)) as.list(value) else value, 
+        value = value, 
         message = as.list(msg), 
         warning = as.list(warn), 
         error = as.list(err)

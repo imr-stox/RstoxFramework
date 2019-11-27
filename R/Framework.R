@@ -3315,7 +3315,11 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     }
     
     #status
-    utils::tail(processID, 1)
+    list(
+        activeProcessID = utils::tail(processID, 1), 
+        interactiveMode = getInteractiveMode(projectPath, modelName, processID)
+    )
+    
 }
 
 

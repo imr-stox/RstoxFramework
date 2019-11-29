@@ -3026,7 +3026,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     }
     
     # Read the files recursively:
-    processOutput <- rapply(processOutputFiles, readProcessOutputFile, flatten = flatten, pretty = pretty, linesPerPage = linesPerPage, pageindex = pageindex, how = how, collapse = collapse, na = na)
+    processOutput <- rapply(processOutputFiles, readProcessOutputFile, flatten = flatten, pretty = pretty, linesPerPage = linesPerPage, pageindex = pageindex, collapse = collapse, na = na, how = "replace")
 
     # Unlist if only one element:
     if(drop) {
@@ -3051,10 +3051,11 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, lin
     }
     
     # Extract the requested lines:
+    numberOfLines <- nrow(data)
+    numberOfPages <- ceiling(numberOfLines / linesPerPage)
     if(length(pageindex)) {
-        numberOfLines <- nrow(data)
-        numberOfPages <- ceiling(numberOfLines / linesPerPage)
-        linesToExtract <- seq_len(linesPerPage) + rep(pageindex, each = linesPerPage)
+        linesToExtract <- seq_len(linesPerPage) + rep((pageindex - 1) * linesPerPage, each = linesPerPage)
+        linesToExtract <- linesToExtract[linesToExtract <= numberOfLines]
         data <- data[linesToExtract, ]
     }
     

@@ -48,6 +48,8 @@ initiateRstoxFramework <- function(){
     
     # Define the requested (all) function attributes:
     requestedFunctionAttributeNames <- c(
+        "packageName", 
+        "functionName", 
         "functionType", 
         "functionCategory", 
         "functionOutputDataType", 
@@ -464,6 +466,7 @@ getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
 # Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each element (function) of the list:
 getStoxFunctionAttributes <- function(packageName, requestedFunctionAttributeNames = NULL) {
     
+    # Get the exported object 'stoxFunctionAttributes' from the package:
     stoxFunctionAttributes <- tryCatch(
         getExportedValue(packageName, "stoxFunctionAttributes"), 
         error = function(err) NULL
@@ -479,7 +482,6 @@ getStoxFunctionAttributes <- function(packageName, requestedFunctionAttributeNam
     )
     
     # Add the requested attributes if missing:
-    
     if(length(requestedFunctionAttributeNames)) {
         stoxFunctionAttributes <- addMissingAttributes(stoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     }
@@ -501,7 +503,6 @@ getStoxFunctionAttributes <- function(packageName, requestedFunctionAttributeNam
         warning("The file ", argumentDescriptionFile, " does not exist.")
     }
     
-    
     stoxFunctionAttributes
 }
 
@@ -520,7 +521,6 @@ addMissingAttributes <- function(stoxFunctionAttributes, requestedFunctionAttrib
     }
     
     # Add the missing attributes from all functions:
-    #requestedFunctionAttributeNames <- getRstoxFrameworkDefinitions("requestedFunctionAttributeNames")
     stoxFunctionAttributes <- lapply(stoxFunctionAttributes, addMissingAttributes_one, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     stoxFunctionAttributes
 }
@@ -2253,7 +2253,7 @@ modifyFunctionName <- function(projectPath, modelName, processID, newFunctionNam
         modelName = modelName, 
         processID = processID
     )
-
+    
     # Change the function name only if different from the existing:
     if(!identical(process$functionName, newFunctionName)) {
         # Error if the function name is not character:

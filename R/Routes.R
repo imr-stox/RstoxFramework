@@ -449,7 +449,7 @@ getProcessPropertyNames <- function() {
 #' 
 #' @export
 #' 
-getProcessPropertySheet <- function(projectPath, modelName, processID) {
+getProcessPropertySheet <- function(projectPath, modelName, processID, outfile = NULL) {
     
     # The project properties contains the following elements:
     # 1. name
@@ -573,6 +573,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
         process[["processParameters"]]
     )
     
+    # Add help on the processArguments:
+    #processArguments$help <- NULL
+    
     # Remove the showInMap argument if not relevant:
     if(!getCanShowInMap(process$functionName)) {
         keep <- c(
@@ -685,7 +688,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
     }
     
     # Create a list of the different properties, adding category and displayName:
-    output <- list(
+    propertySheet <- list(
         list(
             groupName = "processArguments", 
             displayName = "Process", 
@@ -700,6 +703,16 @@ getProcessPropertySheet <- function(projectPath, modelName, processID) {
             groupName = "functionParameters", 
             displayName = "Function parameters", 
             properties = functionParameters
+        )
+    )
+    
+    output <- list(
+        propertySheet = propertySheet, 
+        help = getFunctionHelpAsHtml(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            outfile = outfile
         )
     )
     
@@ -794,26 +807,43 @@ getPathToSingleFunctionPDF <- function(functionName) {
 #' 
 #' @export
 #' 
-getFunctionHelpAsHtml <- function(functionName, packageName = NULL, outfile = NULL) {
-    # Extract the package name:
-    if(length(packageName) == 0) {
-        packageName <- getPackageNameFromFunctionName(functionName)
-    }
+getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = NULL) {
+    # Extract the packageName::functionName:
+    packageName_functionName <- getFunctionName(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    # Get the package and function name:
+    packageName <- getPackageNameFromPackageFunctionName(packageName_functionName)
+    functionName <- getFunctionNameFromPackageFunctionName(packageName_functionName)
+    # Get the help:
+    html <- getObjectHelpAsHtml(packageName = packageName, objectName = functionName, outfile = outfile)
+    html
+}
+
+
+#' 
+#' @export
+#' 
+getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL) {
     
     # Read the documentation database:
     db <- tools::Rd_db(packageName)
     # Write the help to file as html and read back:
-    functionName.Rd <- paste0(functionName, ".Rd")
+    objectName.Rd <- paste0(objectName, ".Rd")
     
+    # Get the links of the package:
+    Links <- tools::findHTMLlinks(pkgDir = find.package(packageName))
+    
+    # Write to a temporary file
     if(length(outfile) == 0) {
         outfile <- tempfile(fileext = ".html")
     }
-    
-    
-    Links <- tools::findHTMLlinks(pkgDir = find.package("RstoxBase"))
-    
-    tools::Rd2HTML(db[[functionName.Rd]], out = outfile, Links = Links)
-    paste(readLines(outfile), collapse="\n")
+    tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links)
+    html <- paste(readLines(outfile), collapse="\n")
+    unlink(outfile, force = TRUE)
+    html
 }
 
 

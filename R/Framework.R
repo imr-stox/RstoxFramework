@@ -45,7 +45,19 @@ initiateRstoxFramework <- function(){
         #"RstoxAnalysis", 
         #"RstoxReport"
     )
-    stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages)
+    
+    # Define the requested (all) function attributes:
+    requestedFunctionAttributeNames <- c(
+        "functionType", 
+        "functionCategory", 
+        "functionOutputDataType", 
+        "functionParameterType", 
+        "functionParameterFormat", 
+        "functionArgumentHierarchy"
+    )
+    
+    # Get the stoxLibrary as the list of function attributes from all official packages:
+    stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     
     ##### Data: #####
     speciesVariables <- list(
@@ -406,12 +418,12 @@ getProjectPaths <- function(projectPath, name = NULL) {
 #' 
 #' @export
 #'
-getStoxLibrary <- function(packageNames) {
+getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
     
     # Validate the pakcages:
     packageNames <- packageNames[sapply(packageNames, validateStoxLibraryPackage)]
     # Get a list of the 'stoxFunctionAttributes' from each package:
-    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes)
+    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     
     # Collapse to one list:
     stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
@@ -450,7 +462,7 @@ getStoxLibrary <- function(packageNames) {
 }
 
 # Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each element (function) of the list:
-getStoxFunctionAttributes <- function(packageName) {
+getStoxFunctionAttributes <- function(packageName, requestedFunctionAttributeNames = NULL) {
     
     stoxFunctionAttributes <- tryCatch(
         getExportedValue(packageName, "stoxFunctionAttributes"), 
@@ -465,6 +477,12 @@ getStoxFunctionAttributes <- function(packageName) {
         lapply(names(stoxFunctionAttributes), function(x) list(functionName = paste(packageName, x, sep = "::"))), 
         SIMPLIFY = FALSE
     )
+    
+    # Add the requested attributes if missing:
+    
+    if(length(requestedFunctionAttributeNames)) {
+        stoxFunctionAttributes <- addMissingAttributes(stoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
+    }
     
     # Add the argument descriptions:
     argumentDescriptionFile <- file.path(system.file("extdata", package = packageName), "functionArguments.rds")
@@ -486,6 +504,28 @@ getStoxFunctionAttributes <- function(packageName) {
     
     stoxFunctionAttributes
 }
+
+# Function to add the missing attributes of all functions:
+addMissingAttributes <- function(stoxFunctionAttributes, requestedFunctionAttributeNames) {
+    # Function to add the missing attributes on one function:
+    addMissingAttributes_one <- function(stoxFunctionAttribute, requestedFunctionAttributeNames) {
+        # Declare a list of empty elements named with the requested attributes:
+        out <- vector("list", length(requestedFunctionAttributeNames))
+        names(out) <- requestedFunctionAttributeNames
+        # Get the names of the present attributes:
+        presentNames <- intersect(names(stoxFunctionAttribute), requestedFunctionAttributeNames)
+        # Insert the present attributes:
+        out[presentNames] <- stoxFunctionAttribute[presentNames]
+        out
+    }
+    
+    # Add the missing attributes from all functions:
+    #requestedFunctionAttributeNames <- getRstoxFrameworkDefinitions("requestedFunctionAttributeNames")
+    stoxFunctionAttributes <- lapply(stoxFunctionAttributes, addMissingAttributes_one, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
+    stoxFunctionAttributes
+}
+
+
 
 # Function for reading the backwardCompatibility object of a package:
 getBackwardCompatibility <- function(packageName) {
@@ -2944,7 +2984,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
 #' @inheritParams Projects
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), search = character(0), drop = FALSE) {
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), search = character(0), collapse = " ", na = "-", drop = FALSE) {
     
     # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
     if(any(grepl("/", tableName))) {
@@ -2986,7 +3026,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     }
     
     # Read the files recursively:
-    processOutput <- rapply(processOutputFiles, readProcessOutputFile, flatten = flatten, pretty = pretty, how = "replace")
+    processOutput <- rapply(processOutputFiles, readProcessOutputFile, flatten = flatten, pretty = pretty, linesPerPage = linesPerPage, pageindex = pageindex, search = search, how = how, collapse = collapse, na = na)
 
     # Unlist if only one element:
     if(drop) {
@@ -2998,15 +3038,21 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     processOutput
 }
 
+
+# Function to read a single process output file, possibly by pages and in flattened and pretty view:
 readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), search = character(0), collapse = " ", na = "-") {
+    
+    # Read the process output file:
     out <- readRDS(filePath)
+    
+    # Flatten the output so that cells which are vectors are transposed and the non-vector cells of the same line repeated:
     if(flatten) {
         out <- flattenProcessOutput(out)
     }
     
     # Extract the requested lines:
     
-    
+    # Convert to pretty view, which inserts spaces to obtain 
     if(pretty) {
         out <- fixedWidthDataTable(out, collapse = collapse, na = na)
     }

@@ -2984,7 +2984,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
 #' @inheritParams Projects
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), search = character(0), collapse = " ", na = "-", drop = FALSE) {
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), collapse = " ", na = "-", drop = FALSE) {
     
     # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
     if(any(grepl("/", tableName))) {
@@ -3026,7 +3026,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     }
     
     # Read the files recursively:
-    processOutput <- rapply(processOutputFiles, readProcessOutputFile, flatten = flatten, pretty = pretty, linesPerPage = linesPerPage, pageindex = pageindex, search = search, how = how, collapse = collapse, na = na)
+    processOutput <- rapply(processOutputFiles, readProcessOutputFile, flatten = flatten, pretty = pretty, linesPerPage = linesPerPage, pageindex = pageindex, how = how, collapse = collapse, na = na)
 
     # Unlist if only one element:
     if(drop) {
@@ -3040,23 +3040,34 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
 
 
 # Function to read a single process output file, possibly by pages and in flattened and pretty view:
-readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), search = character(0), collapse = " ", na = "-") {
+readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), collapse = " ", na = "-") {
     
     # Read the process output file:
-    out <- readRDS(filePath)
+    data <- readRDS(filePath)
     
     # Flatten the output so that cells which are vectors are transposed and the non-vector cells of the same line repeated:
     if(flatten) {
-        out <- flattenProcessOutput(out)
+        data <- flattenProcessOutput(data)
     }
     
     # Extract the requested lines:
+    if(length(pageindex)) {
+        numberOfLines <- nrow(data)
+        numberOfPages <- ceiling(numberOfLines / linesPerPage)
+        linesToExtract <- seq_len(linesPerPage) + rep(pageindex, each = linesPerPage)
+        data <- data[linesToExtract, ]
+    }
     
     # Convert to pretty view, which inserts spaces to obtain 
     if(pretty) {
-        out <- fixedWidthDataTable(out, collapse = collapse, na = na)
+        data <- fixedWidthDataTable(data, collapse = collapse, na = na)
+        data <- list(
+            data = data, 
+            numberOfLines = numberOfLines, 
+            numberOfPages = numberOfPages
+        )
     }
-    out
+    data
 }
 
 flattenProcessOutput <- function(processOutput) {

@@ -835,10 +835,10 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL) {
     
     # Get the links of the package:
     Links <- tools::findHTMLlinks(pkgDir = find.package(packageName))
-    if(! names(Links) %in% "ReadBiotic") {
+    # Return empty string if the function 
+    if(! names(Links) %in% objectName) {
         return("")
     }
-    
     
     # Write to a temporary file
     if(length(outfile) == 0) {

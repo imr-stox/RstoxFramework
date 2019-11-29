@@ -2984,7 +2984,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
 #' @inheritParams Projects
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), collapse = " ", na = "-", drop = FALSE) {
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), columnSeparator = " ", lineSeparator = NULL, na = "-", drop = FALSE) {
     
     # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
     if(any(grepl("/", tableName))) {
@@ -3026,7 +3026,18 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     }
     
     # Read the files recursively:
-    processOutput <- rapply(processOutputFiles, readProcessOutputFile, flatten = flatten, pretty = pretty, linesPerPage = linesPerPage, pageindex = pageindex, collapse = collapse, na = na, how = "replace")
+    processOutput <- rapply(
+        processOutputFiles, 
+        readProcessOutputFile, 
+        flatten = flatten, 
+        pretty = pretty, 
+        linesPerPage = linesPerPage, 
+        pageindex = pageindex, 
+        columnSeparator = columnSeparator, 
+        lineSeparator = lineSeparator, 
+        na = na, 
+        how = "replace"
+    )
 
     # Unlist if only one element:
     if(drop) {
@@ -3040,7 +3051,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
 
 
 # Function to read a single process output file, possibly by pages and in flattened and pretty view:
-readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), collapse = " ", na = "-") {
+readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), columnSeparator = " ", lineSeparator = NULL, na = "-") {
     
     # Read the process output file:
     data <- readRDS(filePath)
@@ -3061,7 +3072,13 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, lin
     
     # Convert to pretty view, which inserts spaces to obtain 
     if(pretty) {
-        data <- fixedWidthDataTable(data, collapse = collapse, na = na)
+        data <- fixedWidthDataTable(
+            data, 
+            columnSeparator = columnSeparator, 
+            lineSeparator = lineSeparator, 
+            na = na
+        )
+        # In the pretty model, output a list containing the number of lines and the number of pages:
         data <- list(
             data = data, 
             numberOfLines = numberOfLines, 

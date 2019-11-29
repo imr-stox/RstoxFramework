@@ -107,7 +107,7 @@ flattenDataTable <- function(x, replace = NA) {
 }
 
 # Function to convert data.table to fixed width:
-fixedWidthDataTable <- function(x, collapse = " ", na = "-") {
+fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na = "-") {
     # Return immediately if x has length 0:
     if(length(x) == 0) {
         return(x)
@@ -132,15 +132,20 @@ fixedWidthDataTable <- function(x, collapse = " ", na = "-") {
     names(out) <- names(x)
     
     # Collapse to lines:
-    out <- apply(out, 1, paste, collapse = collapse)
+    out <- apply(out, 1, paste, collapse = columnSeparator)
     #out <- out[, paste(.SD, collapse = ""), by = seq_len(nrow(out))][[2]]
     
     # Add the header:
-    header <- paste(sprintf(maxNcharString, names(x)), collapse = collapse)
+    header <- paste(sprintf(maxNcharString, names(x)), collapse = columnSeparator)
     out <- c(
         header, 
         out
     )
+    
+    # Collapse the lines if requested:
+    if(length(lineSeparator)) {
+        out <- paste(out, collapse = lineSeparator)
+    }
     
     out
 }

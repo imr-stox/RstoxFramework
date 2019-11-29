@@ -129,14 +129,19 @@ initiateRstoxFramework <- function(){
     
     # Define the StoX folders, data sources, model names, model display names, model descriptions, and the latter three grouped as model info:
     stoxFolders <- c(
-        Input = "Input", 
-        Output = "Output", 
-        Process = "Process"
+        Input = "input", 
+        Output = "output", 
+        Process = "process"
     )
-    stoxDataSources <- c(
-        Acoustic = "Acoustic", 
-        Biotic = "Biotic", 
-        Landing = "Landing"
+    stoxDataSourceFolders <- c(
+        Acoustic = "acoustic", 
+        Biotic = "biotic", 
+        Landing = "landing"
+    )
+    stoxModelFolders <- c(
+        Baseline = "baseline", 
+        Analysis = "analysis", 
+        Report = "report"
     )
     stoxModelNames <- c(
         Baseline = "Baseline", 
@@ -161,11 +166,11 @@ initiateRstoxFramework <- function(){
     
     # Define the folder structure of StoX:
     stoxFolderStructure <- list(
-        stoxDataSources, 
-        stoxModelNames, 
-        ""
+        stoxDataSourceFolders, 
+        stoxModelFolders, 
+        c(Process = "")
     )
-    stoxFolderStructureNames <- unname(unlist(mapply(paste, stoxFolders, stoxFolderStructure, sep = "_")))
+    stoxFolderStructureNames <- unlist(lapply(stoxFolderStructure, names))
     stoxFolderStructure <- unname(unlist(mapply(file.path, stoxFolders, stoxFolderStructure)))
     stoxFolderStructure <- gsub('\\/$', '', stoxFolderStructure)
     names(stoxFolderStructure) <- stoxFolderStructureNames
@@ -1654,8 +1659,6 @@ getAvailableStoxFunctionNames <- function(modelName) {
     # Get the function meta data:
     stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
     
-    # Get the categories:
-    stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
     # Get the names of the available functions:
     availableFunctions <- names(stoxLibrary)
     # Get the category of each function, and split by category:
@@ -2681,6 +2684,8 @@ createNewProcessID <- function(projectPath, modelName, n = 1) {
     else {
         maxProcessIntegerIDTable <- data.table::fread(maxProcessIntegerIDFile, sep = "\t")
     }
+    print("maxProcessIntegerIDTable")
+    print(maxProcessIntegerIDTable)
     
     # Add 1 to the current process integer ID of the model
     processIntegerID <- maxProcessIntegerIDTable[[modelName]] + seq_len(n)
@@ -3245,7 +3250,12 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
         processOutput <- unlistToDataType(processOutput)
         names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)
         
-        folderPath <- getProjectPaths(projectPath = projectPath, paste("Output", modelName, sep = "_"))
+        folderPath <- getProjectPaths(
+            projectPath = projectPath, 
+            #name = paste(getRstoxFrameworkDefinitions("paths")$stoxFolders["Output"], modelName, sep = "_")
+            name = modelName
+        )
+        
         processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = process$processID)
         fileNamesSansExt <- paste(processIndex, names(processOutput), sep = "_")
         filePathsSansExt <- file.path(folderPath, paste(fileNamesSansExt))

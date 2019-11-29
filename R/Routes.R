@@ -789,3 +789,31 @@ getPathToSingleFunctionPDF <- function(functionName) {
     pathToSingleFunctionPDF
 }
 
+
+
+#' 
+#' @export
+#' 
+getFunctionHelpAsHtml <- function(functionName, packageName = NULL, outfile = NULL) {
+    # Extract the package name:
+    if(length(packageName) == 0) {
+        packageName <- getPackageNameFromFunctionName(functionName)
+    }
+    
+    # Read the documentation database:
+    db <- tools::Rd_db(packageName)
+    # Write the help to file as html and read back:
+    functionName.Rd <- paste0(functionName, ".Rd")
+    
+    if(length(outfile) == 0) {
+        outfile <- tempfile(fileext = ".html")
+    }
+    
+    
+    Links <- tools::findHTMLlinks(pkgDir = find.package("RstoxBase"))
+    
+    tools::Rd2HTML(db[[functionName.Rd]], out = outfile, Links = Links)
+    paste(readLines(outfile), collapse="\n")
+}
+
+

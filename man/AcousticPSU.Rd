@@ -2,7 +2,31 @@
 % Please edit documentation in R/Interactive.R
 \name{AcousticPSU}
 \alias{AcousticPSU}
+\alias{addAcousticPSU}
+\alias{removeAcousticPSU}
+\alias{renameAcousticPSU}
+\alias{addEDSU}
+\alias{removeEDSU}
 \title{Add or remove biotic stations from assignments}
+\usage{
+addAcousticPSU(Stratum, PSUName = NULL, projectPath, modelName,
+  processID)
+
+removeAcousticPSU(PSUName, projectPath, modelName, processID)
+
+renameAcousticPSU(PSUName, newPSUName, projectPath, modelName, processID)
+
+addEDSU(PSUName, EDSU, projectPath, modelName, processID)
+
+removeEDSU(acousticPSU, EDSU, projectPath, modelName, processID)
+}
+\arguments{
+\item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
+
+\item{modelName}{The name of the model (one of "Baseline", "Analysis" and "Report").}
+
+\item{processID}{The ID of the process.}
+}
 \description{
 The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
 }

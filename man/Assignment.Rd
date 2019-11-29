@@ -2,13 +2,38 @@
 % Please edit documentation in R/Interactive.R
 \name{Assignment}
 \alias{Assignment}
+\alias{addStations}
+\alias{removeStations}
+\alias{modifyAssignment}
+\alias{assignment_addStations}
+\alias{assignment_removeStations}
 \title{Add or remove biotic stations from assignments}
+\usage{
+addStations(acousticPSU, acousticLayer, Station, projectPath, modelName,
+  processID)
+
+removeStations(acousticPSU, acousticLayer, Station, projectPath, modelName,
+  processID)
+
+modifyAssignment(acousticPSU, acousticLayer, Station, projectPath,
+  modelName, processID, action = c("add", "remove"))
+
+assignment_addStations(acousticPSU, acousticLayer, Station, Assignment)
+
+assignment_removeStations(acousticPSU, acousticLayer, Station, Assignment)
+}
 \arguments{
 \item{acousticPSU}{The acoustic primary sampling unit (PSU) for which to remove the station.}
 
 \item{acousticLayer}{The acoustic Layer for which to remove the station.}
 
 \item{Station}{The biotic station to remove (can be a vector of stations).}
+
+\item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
+
+\item{modelName}{The name of the model (one of "Baseline", "Analysis" and "Report").}
+
+\item{processID}{The ID of the process.}
 }
 \description{
 The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.

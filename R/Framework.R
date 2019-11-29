@@ -563,6 +563,9 @@ getPackageFunctionName <- function(functionName) {
     }
     
 }
+getPackageNameFromFunctionName <- function(functionName) {
+    getPackageNameFromPackageFunctionName(getPackageFunctionName(functionName))
+}
 
 
 # Function to check that the functionName refers to a valid funciton, i.e., that the function is exported from a valid package (see validateStoxLibraryPackage()), and that it is represented in the associated stoxFunctionAttributes list of that package:
@@ -1290,7 +1293,7 @@ getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL
         }
     }
     else {
-        argumentFileTable <- data.table()
+        argumentFileTable <- data.table::data.table()
     }
     
     argumentFileTable
@@ -2941,7 +2944,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
 #' @inheritParams Projects
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, drop = FALSE) {
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), search = character(0), drop = FALSE) {
     
     # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
     if(any(grepl("/", tableName))) {
@@ -2995,13 +2998,17 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     processOutput
 }
 
-readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE) {
+readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), search = character(0), collapse = " ", na = "-") {
     out <- readRDS(filePath)
     if(flatten) {
         out <- flattenProcessOutput(out)
     }
+    
+    # Extract the requested lines:
+    
+    
     if(pretty) {
-        out <- fixedWidthDataTable(out)
+        out <- fixedWidthDataTable(out, collapse = collapse, na = na)
     }
     out
 }

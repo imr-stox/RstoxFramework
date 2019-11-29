@@ -5,7 +5,9 @@
 \title{Get output of a StoX process.}
 \usage{
 getProcessOutput(projectPath, modelName, processID, tableName = NULL,
-  subFolder = NULL, flatten = FALSE, pretty = FALSE, drop = FALSE)
+  subFolder = NULL, flatten = FALSE, pretty = FALSE,
+  linesPerPage = 1000L, pageindex = integer(0),
+  search = character(0), drop = FALSE)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}

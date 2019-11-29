@@ -836,7 +836,7 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL) {
     # Get the links of the package:
     Links <- tools::findHTMLlinks(pkgDir = find.package(packageName))
     # Return empty string if the function 
-    if(! names(Links) %in% objectName) {
+    if(! objectName %in% names(Links)) {
         return("")
     }
     

@@ -357,7 +357,7 @@ initiateRstoxFramework <- function(){
     assign("definitions", definitions, envir=get("RstoxFrameworkEnv"))
     assign("projects", list(), envir=get("RstoxFrameworkEnv"))
     
-    # Load the required packages to enable searching for formals and documentation:
+    # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
     lapply(officialStoxLibraryPackages, library, character.only = TRUE)
     
     #### Return the definitions: ####

@@ -114,33 +114,18 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
     }
     
     # First convert all columns to character:
-    x <- x[, (colnames(x)) := lapply(.SD, as.character), .SDcols = colnames(x)]
+    x <- x[, (colnames(x)) := lapply(.SD, as.character), .SDcols = names(x)]
     
     # Replace all NA with the user specified na:
     x[is.na(x)] <- na
     
-    # Get the maximum number of characters of the columns:
-    suppressWarnings(maxNcharColumns <- sapply(x, function(x) max(nchar(x), na.rm = TRUE)))
-    # Get the number of characters of the column names:
-    ncharColumnNames <- nchar(names(x))
-    # Get maximum of the two:
-    maxNchar <- pmax(maxNcharColumns, ncharColumnNames, na.rm = TRUE)
-    # Create the code to fixed width the columns:
-    maxNcharString <- paste0("%", maxNchar, "s")
-    # Fixed width:
-    out <- data.table::as.data.table(mapply(sprintf, maxNcharString, x, SIMPLIFY = FALSE))
-    names(out) <- names(x)
+    # Add the column names:
+    out <- rbindlist(list(structure(as.list(names(x)), names = names(x)), x))
+    # Left pad with space:
+    out <- out[, lapply(.SD, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))]
     
     # Collapse to lines:
-    out <- apply(out, 1, paste, collapse = columnSeparator)
-    #out <- out[, paste(.SD, collapse = ""), by = seq_len(nrow(out))][[2]]
-    
-    # Add the header:
-    header <- paste(sprintf(maxNcharString, names(x)), collapse = columnSeparator)
-    out <- c(
-        header, 
-        out
-    )
+    out <- out[, do.call(paste, c(.SD, sep = columnSeparator)), .SDcols = names(x)]
     
     # Collapse the lines if requested:
     if(length(lineSeparator)) {

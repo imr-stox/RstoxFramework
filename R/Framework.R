@@ -814,9 +814,9 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE) {
         )
         return(out)
     }
-    else if(force) {
+    #else if(force) {
         closeProject(projectPath, save = FALSE)
-    }
+    #}
     
     
     projectPath <- resolveProjectPath(projectPath)
@@ -831,6 +831,9 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE) {
     # Read the project description file:
     projectMemory <- readProjectDescription(projectPath)
     
+    # Set the active process ID to 0 for all models:
+    initiateActiveProcessID(projectPath)
+    
     # Set the project memory:
     temp <- addProcesses(
         projectPath = projectPath, 
@@ -840,9 +843,6 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE) {
     
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
-    
-    # Set the active process ID to 0 for all models:
-    initiateActiveProcessID(projectPath)
     
     list(
         projectPath = projectPath, 
@@ -957,8 +957,10 @@ isSaved <- function(projectPath) {
 #' 
 isOpenProject <- function(projectPath) {
     if(isProject(projectPath)) {
+        activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
+        hasActiveProcessData <- file.exists(activeProcessIDFile)
         existsFolders <- sapply(getProjectPaths(projectPath, "projectSessionFolderStructure"), file.exists)
-        length(existsFolders) && all(existsFolders)
+        hasActiveProcessData && length(existsFolders) && all(existsFolders)
     }
     else {
         warning("Project ", projectPath, " does not exist.")
@@ -2684,8 +2686,6 @@ createNewProcessID <- function(projectPath, modelName, n = 1) {
     else {
         maxProcessIntegerIDTable <- data.table::fread(maxProcessIntegerIDFile, sep = "\t")
     }
-    print("maxProcessIntegerIDTable")
-    print(maxProcessIntegerIDTable)
     
     # Add 1 to the current process integer ID of the model
     processIntegerID <- maxProcessIntegerIDTable[[modelName]] + seq_len(n)

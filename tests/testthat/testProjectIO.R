@@ -32,8 +32,8 @@ projectDescription <- list(
         Density = "AcousticDensity"
       )
     ), 
-    DefineStrata = list(
-      ProcessName = "DefineStrata", 
+    DefineStratum = list(
+      ProcessName = "DefineStratum", 
       FunctionName = "ReadAcoustic", 
       ProcessParameters = list(
         Enabled = TRUE, 
@@ -176,13 +176,13 @@ expect_true(xml_validate(data, schema))
 #read back in
 reread <- readProject(tempfile)
 file.remove(tempfile)
-expect_equal(class(projectDescription$Baseline$DefineStrata$FunctionParameters$FileNames), class(reread$Baseline$DefineStrata$FunctionParameters$FileNames))
-expect_equal(class(projectDescription$Baseline$DefineStrata$FunctionParameters$UseProcessData), class(reread$Baseline$DefineStrata$FunctionParameters$UseProcessData))
+expect_equal(class(projectDescription$Baseline$DefineStratum$FunctionParameters$FileNames), class(reread$Baseline$DefineStratum$FunctionParameters$FileNames))
+expect_equal(class(projectDescription$Baseline$DefineStratum$FunctionParameters$UseProcessData), class(reread$Baseline$DefineStratum$FunctionParameters$UseProcessData))
 
 # expected errors writing
 tempfile <- tempfile()
 wrongobject <- projectDescription
-wrongobject$Baseline$DefineStrata$FunctionParameters$Area <- as.factor(c(1.2,2.1))
+wrongobject$Baseline$DefineStratum$FunctionParameters$Area <- as.factor(c(1.2,2.1))
 expect_error(saveProject(wrongobject, tempfile))
 if (file.exists(tempfile)){
   file.remove(tempfile)

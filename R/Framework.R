@@ -191,8 +191,8 @@ initiateRstoxFramework <- function(){
     asouticPSUDataType <- "AcousticPSU"
     sweptAreaPSUDataType <- "SweptAreaPSU"
     assignmentDataType <- "Assignment"
-    stationDataType <- "StoxBiotic"
-    EDSUDataType <- "StoxAcoustic"
+    stationDataType <- "StoxBioticData"
+    EDSUDataType <- "StoxAcousticData"
     
     # Define empty StratumPolygon data type:
     emptyStratumPolygon <- sp::SpatialPolygons(list())
@@ -2476,6 +2476,10 @@ getRelativePaths <- function(functionParameters, projectPath, modelName, process
         filePath
     }
     
+    getRelativePaths <- function(filePaths, projectPath) {
+        sapply(filePaths, getRelativePath, projectPath)
+    }
+    
     # Detect the file paths:
     areFilePathsAndNonEmpty <- detectFilePaths(
         functionParameters = functionParameters, 
@@ -2488,7 +2492,7 @@ getRelativePaths <- function(functionParameters, projectPath, modelName, process
     if(any(areFilePathsAndNonEmpty)) {
         functionParameters[areFilePathsAndNonEmpty] <- lapply(
             functionParameters[areFilePathsAndNonEmpty], 
-            getRelativePath, 
+            getRelativePaths, 
             projectPath = projectPath
         )
     }
@@ -2989,7 +2993,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
 #' @inheritParams Projects
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), columnSeparator = " ", lineSeparator = NULL, na = "-", drop = FALSE) {
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), columnSeparator = " ", lineSeparator = NULL, na = "-", drop = FALSE, list.pretty = FALSE) {
     
     # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
     if(any(grepl("/", tableName))) {
@@ -3041,6 +3045,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
         columnSeparator = columnSeparator, 
         lineSeparator = lineSeparator, 
         na = na, 
+        list.pretty = list.pretty, 
         how = "replace"
     )
 
@@ -3056,7 +3061,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
 
 
 # Function to read a single process output file, possibly by pages and in flattened and pretty view:
-readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), columnSeparator = " ", lineSeparator = NULL, na = "-") {
+readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
     
     # Read the process output file:
     data <- readRDS(filePath)
@@ -3081,7 +3086,8 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, lin
             data, 
             columnSeparator = columnSeparator, 
             lineSeparator = lineSeparator, 
-            na = na
+            na = na, 
+            list.pretty = list.pretty
         )
         # In the pretty model, output a list containing the number of lines and the number of pages:
         data <- list(
@@ -3120,6 +3126,15 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
         # Create a list of the files, and name it with the file names sans ext:
         out <- as.list(list.files(folderPath, full.names = TRUE, pattern = "\\.rds$"))
         names(out) <- basename(tools::file_path_sans_ext(unlist(out)))
+        
+        # Read the order file if present:
+        orderFile <- file.path(folderPath, "tableOrder.txt")
+        if(file.exists(orderFile)) {
+            tableOrder <- readLines(orderFile)
+            tableOrder <- basename(tools::file_path_sans_ext(unlist(tableOrder)))
+            out <- out[tableOrder]
+        }
+        
         out
     }
     
@@ -3221,7 +3236,6 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
         
         # Flatten the list and add names from the levels of the list:
         unlistToDataType <- function(processOutput) {
-            
             areAllValidOutputDataClasses <- function(processOutput) {
                 validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
                 classes <- sapply(processOutput, firstClass)
@@ -3275,6 +3289,13 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
 writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, modelName) {
     
     if(length(processOutput)) {
+        
+        saveRDSs <- function(objects, files) {
+            orderFileName <- file.path(dirname(files[1]), "tableOrder.txt")
+            write(files, orderFileName)
+            mapply(saveRDS, objects, files)
+        }
+        
         # Get the path to the folder to place the memory file in:
         folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = process$processID)
         # Create the folder:
@@ -3286,7 +3307,12 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
         # Get the file paths of the memory files and prepare the processOutput for writing to these files:
         if(outputDepth == 1) {
             fileNames <- getProcessOutputMemoryFileNames(processOutput)
+            #filePaths <- file.path(folderPath, fileNames)
             filePaths <- file.path(folderPath, fileNames)
+            
+            # Wrap in a list to coordinate using the saveRDSs():
+            filePaths <- list(filePaths)
+            processOutput <- list(processOutput)
         }
         else {
             # Get the sub folder paths and create the folders:
@@ -3295,15 +3321,15 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
             
             # Create the file names and add the folder paths to the file names (flattening the output):
             fileNames <- lapply(processOutput, getProcessOutputMemoryFileNames)
-            filePaths <- c(mapply(file.path, folderPaths, fileNames))
+            #filePaths <- unlist(mapply(file.path, folderPaths, fileNames, SIMPLIFY = FALSE))
+            filePaths <- mapply(file.path, folderPaths, fileNames, SIMPLIFY = FALSE)
             
             # Flatten the processOutput:
-            processOutput <- unlist(processOutput, recursive = FALSE)
+            #processOutput <- unlist(processOutput, recursive = FALSE)
         }
         
-        
         # Write the individual tables:
-        mapply(saveRDS, processOutput, filePaths)
+        mapply(saveRDSs, processOutput, filePaths)
     }
     else {
         NULL
@@ -3339,7 +3365,7 @@ getProcessOutputMemoryFileNames <- function(processOutput) {
 #' 
 #' @export
 #' 
-runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE) {
+runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
     
     # Get the processIDs:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -3363,7 +3389,7 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     }
     
     # Chech that none of the models of the project are running:
-    if(isRunning(projectPath)) {
+    if(isRunning(projectPath) && !force) {
         warning("The project is running (", projectPath, ")")
         return(failedVector)
     }

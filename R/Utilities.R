@@ -107,7 +107,7 @@ flattenDataTable <- function(x, replace = NA) {
 }
 
 # Function to convert data.table to fixed width:
-fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na = "-") {
+fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
     # Return immediately if x has length 0:
     if(length(x) == 0) {
         return(x)
@@ -130,6 +130,9 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
     # Collapse the lines if requested:
     if(length(lineSeparator)) {
         out <- paste(out, collapse = lineSeparator)
+    }
+    else if(list.pretty) {
+        out <- list(out)
     }
     
     out

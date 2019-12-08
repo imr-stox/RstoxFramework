@@ -251,13 +251,14 @@ getMapData  <- function(projectPath, modelName, processID) {
         )
     }
     else if(interactiveMode == "EDSU") {
-        getSweptAreaPSUData(
+        getEDSUData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
         )
     }
     else {
+        warning("No map data available from the process ", processID, " of model ", modelName, " of project ", projectPath)
         geojsonio::geojson_json(getRstoxFrameworkDefinitions("emptyStratumPolygon"))
     }
 }
@@ -362,56 +363,160 @@ getAssignmentData <- function(projectPath, modelName, processID) {
 
 getStationData <- function(projectPath, modelName, processID) {
     # Get the station data:
-    getProcessOutput(projectPath, modelName, processID, tableName = "Station")$Station
+    Station <- getProcessOutput(projectPath, modelName, processID, tableName = "Station")$Station
+    
+    # Split the Station table into the coordinates and the properties:
+    coordinates <- Station[, c("StartLongitude", "StartLatitude")]
+    rownames(coordinates) <- Station$Station
+    properties <- Station[, !(colnames(Station) %in% c("StartLongitude", "StartLatitude"))]
+    rownames(properties) <- Station$Station
+    
+    # Create a spatial points data frame and convert to geojson:
+    StationData <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)
+    StationData <- geojsonio::geojson_json(StationData)
+    
+    StationData
 }
 
-#getEDSUData <- function(projectPath, modelName, processID) {
-#    # Get the EDSU data:
-#    Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
-#    extrapolateEDSU(Log)
-#}
+getEDSUData <- function(projectPath, modelName, processID) {
+    # Get the EDSU data:
+    Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
+    
+    # Extrapolate 
+    extrapolateEDSU(Log)
+}
+
+
+Log2SpatialLinesPolygon <- function(Log) {
+    
+    getLine <- function(Log) {
+        l <- cbind(
+            c(Log$startLongitude, Log$endLongitude), 
+            c(Log$startLatitude, Log$endLatitude)
+        )
+        L <- Line(l)
+        Lines(list(L), ID = Log$EDSU)
+        
+    }
+    segments <- Log[, getLine(.SD), .SDcols = names(Log)]
+    
+    
+        
+            
+    
+    ## from the sp vignette:
+    l1 <- cbind(c(1, 2, 3), c(3, 2, 2))
+    l2 <- cbind(c(1, 2, 3), c(1, 1.5, 1))
+    
+    Sl1 <- Line(l1)
+    Sl2 <- Line(l2)
+    
+    S1 <- Lines(list(Sl1), ID = "a")
+    S2 <- Lines(list(Sl2), ID = "b")
+    
+    Sl <- SpatialLines(list(S1, S2))
+    
+    
+}
+ 
+
+
+extrapolateEDSU <- function(Log, pos = 0.5) {
+    # Run the extrapolation function on each Paltform, effectively ordering the data by platform:
+    Log <- Log[, extrapolateLongitudeLatitude(.SD), by = CruiseKey, .SDcols = names(Log)]
+    
+    # Get the click points of the EDSUs:
+    Log <- getClickPoints(Log, pos = pos)
+    
+    Log
+}
+
+
+getClickPoints <- function(Log, pos = 0.5) {
+    # Create the click points as a weighted average of the start and end points:
+    browser()
+    Log$clickLongitude <- (Log$startLongitude * (1 - pos) + Log$endLongitude * pos)
+    Log$clickLatitude <- (Log$startLatitude * (1 - pos) + Log$endLatitude * pos)
+    Log
+}
+
+# Function to extract the start, middle and end positions from StoxBiotic:
+getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle", "end"), coordinateNames = c("Longitude", "Latitude")) {
+    
+    browser()
+    # Get the number of positions of the Log:
+    numPositions <- nrow(Log)
+    
+    # Define the position names:
+    positionNames <- c(outer(positionOrigins, coordinateNames, paste0))
+    
+    # Create a table with missing positions:
+    positionsNA <- data.table::as.data.table(
+        array(dim = c(numPositions, length(positionNames)), dimnames = list(NULL, positionNames))
+    )
+    # Fill in the present data:
+    presentNames <- c(outer(Log[1, c(Origin, Origin2)], c("Longitude", "Latitude"), paste0))
+    positionsNA[, presentNames] <- Log[, .(Longitude, Longitude2, Latitude, Latitude2)]
+    
+    # Add the missing positions to the Log:
+    Log <- cbind(Log, positionsNA)
+    
+    Log
+}
 
 # Add stop position of the EDSUs for plotting in the map:
-extrapolateLongitudeLatitude <- function(StartLongitude, StartLatitude) {
+extrapolateLongitudeLatitude <- function(Log) {
     
-    # Add stop longitude and latitude:
-    stopLongitude <- StartLongitude[-1]
-    stopLatitude <- StartLatitude[-1]
-    # Get the vector of the last segment:
-    lastLongitude <- diff(utils::tail(StartLongitude, 2))
-    lastLatitude <- diff(utils::tail(StartLatitude, 2))
-    # Add this vector to the last stop point to get the extrapolated final stop point:
-    stopLongitudeFinal <- utils::tail(stopLongitude, 1) + lastLongitude
-    stopLatitudeFinal <- utils::tail(stopLatitude, 1) + lastLatitude
+    # Funciton to map values outside of a range to the maximum value:
+    mapToRange <- function(x, length) {
+        x[x > length] <- length
+        x
+    }
     
-    StopLongitude <- c(stopLongitude, lastLongitude)
-    StopLatitude <- c(stopLatitude, lastLatitude)
+    # Get the number of positions of the Log:
+    numPositions <- nrow(Log)
     
-    # Add mid longitude and latitude:
-    MidLongitude <- (StartLongitude + StopLongitude) / 2
-    MidLatitude <- (StartLatitude + StopLatitude) / 2
+    # Extract the start, middle and end position:
+    Log <- getStartMiddleEndPosition(Log)
     
-    StoxAcousticData <- data.table::data.table(
-        StopLongitude = StopLongitude,
-        StopLatitude = StopLatitude,
-        MidLongitude = MidLongitude, 
-        MidLatitude = MidLatitude
-    )
+    # Add the 'interpolated' tag:
+    Log$interpolated <- FALSE
     
-    # Add a tag for extrapolated mid and stop positions:
-    StoxAcousticData$Extrapolated <- c(
-        logical(length(StartLongitude) - 1), 
-        TRUE
-    )
+    # Detect missing values:
+    naStart <- is.na(Log$startLongitude) | is.na(Log$startLatitude)
+    naMiddle <- is.na(Log$middleLongitude) | is.na(Log$middleLatitude)
+    naEnd <- is.na(Log$endLongitude) | is.na(Log$endLatitude)
+    StartNotEnd <- which(!naStart & naEnd)
+    onlyMiddle <- which(naStart & !naMiddle & naEnd)
+    EndNotStart <- which(naStart & !naEnd)
     
-    # Return the StoxAcousticData:
-    StoxAcousticData
+    # Interpolate:
+    if(length(StartNotEnd)) {
+        Log[StartNotEnd, c("endLongitude", "endLatitude")] <- Log[mapToRange(StartNotEnd + 1, numPositions), c("startLongitude", "startLatitude")]
+        Log$interpolated[StartNotEnd] <- TRUE
+    }
+    if(length(onlyMiddle)) {
+        Log[onlyMiddle, c("startLongitude", "startLatitude")] <- (
+            Log[mapToRange(onlyMiddle - 1, numPositions), c("middleLongitude", "middleLatitude")] +
+            Log[onlyMiddle, c("middleLongitude", "middleLatitude")]
+        ) / 2
+        Log[onlyMiddle, c("endLongitude", "endLatitude")] <- (
+            Log[onlyMiddle, c("middleLongitude", "middleLatitude")] + 
+            Log[mapToRange(onlyMiddle + 1, numPositions), c("middleLongitude", "middleLatitude")]
+        ) / 2
+        Log$interpolated[v] <- TRUE
+    }
+    if(length(EndNotStart)) {
+        Log[EndNotStart, c("startLongitude", "startLatitude")] <- Log[mapToRange(EndNotStart - 1, numPositions), c("endLongitude", "endLatitude")]
+        Log$interpolated[EndNotStart] <- TRUE
+    }
+
+    Log
 }
 
-extrapolateEDSU <- function(Log) {
-    # Run the extrapolation function on each Paltform, effectively ordering the data by platform:
-    Log[, extrapolateLongitudeLatitude(StartLongitude, StartLatitude), by = Platform]
-}
+
+
+
 
 ##########
 

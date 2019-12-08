@@ -388,9 +388,15 @@ createNode <- function(PSUName, EDSU, projectPath, modelName, processID) {
 
 # 
 # # DefineStrata	
-# createNode(NewNode, Node1, Node2), 
-# deleteNode(Node), 
-# modifyNode(NewNode, Node)
+createNode <- function(projectPath, modelName, processID, StratumID, NewNode, NodeIndex1, NodeIndex2) {
+    
+}
+deleteNode <- function(projectPath, modelName, processID, StratumID, NodeIndex) {
+    
+}
+modifyNode <- function(projectPath, modelName, processID, StratumID, NewNode, NodeIndex) {
+    
+}
 # 
 # # DefineAcousticPSU	
 # addAcousticPSU(Stratum, PSU), 

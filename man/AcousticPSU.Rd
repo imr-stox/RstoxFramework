@@ -9,14 +9,13 @@
 \alias{removeEDSU}
 \title{Add or remove biotic stations from assignments}
 \usage{
-addAcousticPSU(Stratum, PSUName = NULL, projectPath, modelName,
-  processID)
+addAcousticPSU(Stratum, PSU = NULL, projectPath, modelName, processID)
 
-removeAcousticPSU(PSUName, projectPath, modelName, processID)
+removeAcousticPSU(PSU, projectPath, modelName, processID)
 
-renameAcousticPSU(PSUName, newPSUName, projectPath, modelName, processID)
+renameAcousticPSU(PSU, newPSUName, projectPath, modelName, processID)
 
-addEDSU(PSUName, EDSU, projectPath, modelName, processID)
+addEDSU(PSU, EDSU, projectPath, modelName, processID)
 
 removeEDSU(acousticPSU, EDSU, projectPath, modelName, processID)
 }

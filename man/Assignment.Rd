@@ -2,32 +2,32 @@
 % Please edit documentation in R/Interactive.R
 \name{Assignment}
 \alias{Assignment}
-\alias{addStations}
-\alias{removeStations}
+\alias{addHauls}
+\alias{removeHauls}
 \alias{modifyAssignment}
 \alias{assignment_addStations}
 \alias{assignment_removeStations}
 \title{Add or remove biotic stations from assignments}
 \usage{
-addStations(acousticPSU, acousticLayer, Station, projectPath, modelName,
+addHauls(acousticPSU, acousticLayer, Haul, projectPath, modelName,
   processID)
 
-removeStations(acousticPSU, acousticLayer, Station, projectPath, modelName,
+removeHauls(acousticPSU, acousticLayer, Haul, projectPath, modelName,
   processID)
 
-modifyAssignment(acousticPSU, acousticLayer, Station, projectPath,
-  modelName, processID, action = c("add", "remove"))
+modifyAssignment(acousticPSU, acousticLayer, Haul, projectPath, modelName,
+  processID, action = c("add", "remove"))
 
-assignment_addStations(acousticPSU, acousticLayer, Station, Assignment)
+assignment_addStations(acousticPSU, acousticLayer, Haul, Assignment)
 
-assignment_removeStations(acousticPSU, acousticLayer, Station, Assignment)
+assignment_removeStations(acousticPSU, acousticLayer, Haul, Assignment)
 }
 \arguments{
-\item{acousticPSU}{The acoustic primary sampling unit (PSU) for which to remove the station.}
+\item{acousticPSU}{The acoustic primary sampling unit (PSU) for which to remove the haul}
 
-\item{acousticLayer}{The acoustic Layer for which to remove the station.}
+\item{acousticLayer}{The acoustic Layer for which to remove the haul}
 
-\item{Station}{The biotic station to remove (can be a vector of stations).}
+\item{Haul}{The biotic haul to remove (can be a vector of hauls).}
 
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
@@ -44,17 +44,17 @@ The assignment IDs are refreshed for every change, after sorting the assignemnts
 \examples{
 # Create artificial assignment data:
 Assignment <- data.table::data.table(
-    PSUName = paste0("T", c(1,1, 2, 3,3)), 
+    PSU = paste0("T", c(1,1, 2, 3,3)), 
     Layer = "L1", 
-    Station = c(1,2, 2, 1,2), 
+    Haul = c(1,2, 2, 1,2), 
     AssignmentID = c(1,1, 2, 1,1)
 )
 
-# Add a station:
+# Add a haul:
 Assignment1 <- assignment_addStations("T3", "L1", 4, Assignment)
 all.equal(Assignment, Assignment2)
 
-# Remove the same station:
+# Remove the same haul:
 Assignment2 <- assignment_removeStations("T3", "L1", 4, Assignment1)
 all.equal(Assignment, Assignment2)
 

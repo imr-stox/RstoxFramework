@@ -265,6 +265,9 @@ getMapData  <- function(projectPath, modelName, processID) {
 
 
 # Individual get data functions:
+#' 
+#' @export
+#' 
 getStratumData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -291,6 +294,9 @@ getStratumData <- function(projectPath, modelName, processID) {
     stratumPolygon
 }
 
+#' 
+#' @export
+#' 
 getAcousticPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -315,6 +321,9 @@ getAcousticPSUData <- function(projectPath, modelName, processID) {
     )
 }
 
+#' 
+#' @export
+#' 
 getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -326,19 +335,23 @@ getSweptAreaPSUData <- function(projectPath, modelName, processID) {
         return(NULL)
     }
     
-    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    Station_PSU <- processData$SweptAreaPSU[, c("Station", "PSU")]
-    PSU_Stratum <- unique(processData$SweptAreaPSU[, c("PSU", "Stratum")])
-    Stratum = unique(processData$SweptAreaPSU$Stratum)
-    
-    # Return the list of data.tables:
-    list(
-        Station_PSU = Station_PSU, 
-        PSU_Stratum = PSU_Stratum, 
-        Stratum = Stratum
-    )
+    ### # Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    ### Station_PSU <- processData$SweptAreaPSU[, c("Station", "PSU")]
+    ### PSU_Stratum <- unique(processData$c[, c("PSU", "Stratum")])
+    ### Stratum = unique(processData$SweptAreaPSU$Stratum)
+    ### 
+    ### # Return the list of data.tables:
+    ### list(
+    ###     Station_PSU = Station_PSU, 
+    ###     PSU_Stratum = PSU_Stratum, 
+    ###     Stratum = Stratum
+    ### )
+    processData$processData
 }
 
+#' 
+#' @export
+#' 
 getAssignmentData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -350,26 +363,42 @@ getAssignmentData <- function(projectPath, modelName, processID) {
         return(NULL)
     }
     
-    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    PSU_Layer_AssignmentID <- unique(processData$Assignment[, c("PSU", "Layer", "AssignmentID")])
-    AssignmentID_Station_StationWeight <- unique(processData$Assignment[, c("AssignmentID", "Station", "StationWeight")])
-    
-    # Return the list of data.tables:
-    list(
-        PSU_Layer_AssignmentID = PSU_Layer_AssignmentID, 
-        AssignmentID_Station_StationWeight = AssignmentID_Station_StationWeight
-    )
+    ### # Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    ### PSU_Layer_AssignmentID <- unique(processData$Assignment[, c("PSU", "Layer", "AssignmentID")])
+    ### AssignmentID_Station_StationWeight <- unique(processData$Assignment[, c("AssignmentID", "Station", "StationWeight")])
+    ### 
+    ### # Return the list of data.tables:
+    ### list(
+    ###     PSU_Layer_AssignmentID = PSU_Layer_AssignmentID, 
+    ###     AssignmentID_Station_StationWeight = AssignmentID_Station_StationWeight
+    ### )
+    processData$Assignment
 }
 
+
+#' 
+#' @export
+#' 
 getStationData <- function(projectPath, modelName, processID) {
     # Get the station data:
     Station <- getProcessOutput(projectPath, modelName, processID, tableName = "Station")$Station
+    Haul <- getProcessOutput(projectPath, modelName, processID, tableName = "Haul")$Haul
+    Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
     
     # Split the Station table into the coordinates and the properties:
     coordinates <- Station[, c("StartLongitude", "StartLatitude")]
-    rownames(coordinates) <- Station$Station
-    properties <- Station[, !(colnames(Station) %in% c("StartLongitude", "StartLatitude"))]
-    rownames(properties) <- Station$Station
+    #rownames(coordinates) <- Station$Station
+    properties <- Station[, !(colnames(Station) %in% c("StartLongitude", "StartLatitude")), with = FALSE]
+    #rownames(properties) <- Station$Station
+    
+    # Add the haul info as a property, wrapped in a JSON string:
+    HaulInfo <- Station_Haul[, .(HaulInfo = jsonlite::toJSON(.SD)), .SDcols = names(Haul), by = Station]
+    properties$HaulInfo <- HaulInfo$HaulInfo
+    
+    #coordinates <- Station[, c("StartLongitude", "StartLatitude")]
+    #rownames(coordinates) <- Station$Station
+    #properties <- Station[, !(colnames(Station) %in% c("StartLongitude", "StartLatitude"))]
+    #rownames(properties) <- Station$Station
     
     # Create a spatial points data frame and convert to geojson:
     StationData <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)

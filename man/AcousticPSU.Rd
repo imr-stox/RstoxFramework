@@ -7,7 +7,7 @@
 \alias{renameAcousticPSU}
 \alias{addEDSU}
 \alias{removeEDSU}
-\title{Add or remove biotic stations from assignments}
+\title{Add or remove biotic acoustic PSUs and EDSUs}
 \usage{
 addAcousticPSU(Stratum, PSU = NULL, projectPath, modelName, processID)
 

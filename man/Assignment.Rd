@@ -2,30 +2,19 @@
 % Please edit documentation in R/Interactive.R
 \name{Assignment}
 \alias{Assignment}
-\alias{addHauls}
-\alias{removeHauls}
-\alias{modifyAssignment}
-\alias{assignment_addStations}
-\alias{assignment_removeStations}
-\title{Add or remove biotic stations from assignments}
+\alias{addHaulToAssignment}
+\alias{removeHaulFromAssignment}
+\title{Add or remove biotic hauls from assignments}
 \usage{
-addHauls(acousticPSU, acousticLayer, Haul, projectPath, modelName,
+addHaulToAssignment(PSU, Layer, Haul, projectPath, modelName, processID)
+
+removeHaulFromAssignment(PSU, Layer, Haul, projectPath, modelName,
   processID)
-
-removeHauls(acousticPSU, acousticLayer, Haul, projectPath, modelName,
-  processID)
-
-modifyAssignment(acousticPSU, acousticLayer, Haul, projectPath, modelName,
-  processID, action = c("add", "remove"))
-
-assignment_addStations(acousticPSU, acousticLayer, Haul, Assignment)
-
-assignment_removeStations(acousticPSU, acousticLayer, Haul, Assignment)
 }
 \arguments{
-\item{acousticPSU}{The acoustic primary sampling unit (PSU) for which to remove the haul}
+\item{PSU}{The acoustic primary sampling unit (PSU) for which to remove the haul}
 
-\item{acousticLayer}{The acoustic Layer for which to remove the haul}
+\item{Layer}{The acoustic Layer for which to remove the haul}
 
 \item{Haul}{The biotic haul to remove (can be a vector of hauls).}
 
@@ -36,26 +25,26 @@ assignment_removeStations(acousticPSU, acousticLayer, Haul, Assignment)
 \item{processID}{The ID of the process.}
 }
 \description{
-The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
+The functions \code{addHaulsToAssignment} and \code{removeHaulsFromAssignment} adds or removes biotic hauls from the Assignment process data of the specified process.
 }
 \details{
 The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
 }
 \examples{
-# Create artificial assignment data:
-Assignment <- data.table::data.table(
-    PSU = paste0("T", c(1,1, 2, 3,3)), 
-    Layer = "L1", 
-    Haul = c(1,2, 2, 1,2), 
-    AssignmentID = c(1,1, 2, 1,1)
-)
-
-# Add a haul:
-Assignment1 <- assignment_addStations("T3", "L1", 4, Assignment)
-all.equal(Assignment, Assignment2)
-
-# Remove the same haul:
-Assignment2 <- assignment_removeStations("T3", "L1", 4, Assignment1)
-all.equal(Assignment, Assignment2)
+## # Create artificial assignment data:
+## Assignment <- data.table::data.table(
+##     PSU = paste0("T", c(1,1, 2, 3,3)), 
+##     Layer = "L1", 
+##     Haul = c(1,2, 2, 1,2), 
+##     AssignmentID = c(1,1, 2, 1,1)
+## )
+## 
+## # Add a haul:
+## Assignment1 <- assignment_addHauls("T3", "L1", 4, Assignment)
+## all.equal(Assignment, Assignment2)
+## 
+## # Remove the same haul:
+## Assignment2 <- assignment_removeHauls("T3", "L1", 4, Assignment1)
+## all.equal(Assignment, Assignment2)
 
 }

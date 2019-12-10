@@ -16,33 +16,33 @@
 
 ############################################################
 ############################################################
-#' Add or remove biotic stations from assignments
+#' Add or remove biotic hauls from assignments
 #' 
-#' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
+#' The functions \code{addHaulsToAssignment} and \code{removeHaulsFromAssignment} adds or removes biotic hauls from the Assignment process data of the specified process.
 #' 
-#' @param acousticPSU   The acoustic primary sampling unit (PSU) for which to remove the haul
-#' @param acousticLayer The acoustic Layer for which to remove the haul
+#' @param PSU   The acoustic primary sampling unit (PSU) for which to remove the haul
+#' @param Layer The acoustic Layer for which to remove the haul
 #' @param Haul       The biotic haul to remove (can be a vector of hauls).
 #' 
 #' @details 
 #' The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
 #' 
 #' @examples
-#' # Create artificial assignment data:
-#' Assignment <- data.table::data.table(
-#'     PSU = paste0("T", c(1,1, 2, 3,3)), 
-#'     Layer = "L1", 
-#'     Haul = c(1,2, 2, 1,2), 
-#'     AssignmentID = c(1,1, 2, 1,1)
-#' )
-#' 
-#' # Add a haul:
-#' Assignment1 <- assignment_addStations("T3", "L1", 4, Assignment)
-#' all.equal(Assignment, Assignment2)
-#' 
-#' # Remove the same haul:
-#' Assignment2 <- assignment_removeStations("T3", "L1", 4, Assignment1)
-#' all.equal(Assignment, Assignment2)
+#' ## # Create artificial assignment data:
+#' ## Assignment <- data.table::data.table(
+#' ##     PSU = paste0("T", c(1,1, 2, 3,3)), 
+#' ##     Layer = "L1", 
+#' ##     Haul = c(1,2, 2, 1,2), 
+#' ##     AssignmentID = c(1,1, 2, 1,1)
+#' ## )
+#' ## 
+#' ## # Add a haul:
+#' ## Assignment1 <- assignment_addHauls("T3", "L1", 4, Assignment)
+#' ## all.equal(Assignment, Assignment2)
+#' ## 
+#' ## # Remove the same haul:
+#' ## Assignment2 <- assignment_removeHauls("T3", "L1", 4, Assignment1)
+#' ## all.equal(Assignment, Assignment2)
 #' 
 #' @inheritParams getProcessOutput
 #' @name Assignment
@@ -52,10 +52,10 @@ NULL
 #' @export
 #' @rdname Assignment
 #' 
-addHauls <- function(acousticPSU, acousticLayer, Haul, projectPath, modelName, processID) {
+addHaulToAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID) {
     modifyAssignment(
-        acousticPSU, 
-        acousticLayer, 
+        PSU, 
+        Layer, 
         Haul, 
         projectPath, 
         modelName, 
@@ -67,10 +67,10 @@ addHauls <- function(acousticPSU, acousticLayer, Haul, projectPath, modelName, p
 #' @export
 #' @rdname Assignment
 #' 
-removeHauls <- function(acousticPSU, acousticLayer, Haul, projectPath, modelName, processID) {
+removeHaulFromAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID) {
     modifyAssignment(
-        acousticPSU, 
-        acousticLayer, 
+        PSU, 
+        Layer, 
         Haul, 
         projectPath, 
         modelName, 
@@ -78,11 +78,9 @@ removeHauls <- function(acousticPSU, acousticLayer, Haul, projectPath, modelName
         action = "remove"
     )
 }
-#' 
-#' @export
-#' @rdname Assignment
-#' 
-modifyAssignment <- function(acousticPSU, acousticLayer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
+
+# Generic function to add or remove a haul:
+modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
     
     # Check that the process returns Assigment process data:
     if(!checkDataType("Assignment", projectPath, modelName, processID)) {
@@ -93,17 +91,17 @@ modifyAssignment <- function(acousticPSU, acousticLayer, Haul, projectPath, mode
     Assignment <- getProcessData(projectPath, modelName, processID)$Assignment
     
     # Check for existing PSU:
-    if(!acousticPSU %in% Assignment$PSU) {
-        warning("The acoustic PSU with name ", acousticPSU, " does not exist. Please choose a different PSU name or add the PSU using DefineAcousticPSU.")
+    if(!PSU %in% Assignment$PSU) {
+        warning("The acoustic PSU with name ", PSU, " does not exist. Please choose a different PSU name or add the PSU using DefineAcousticPSU.")
     }
     
-    # Add the stations and update the assignment IDs:
-    utilityFunctionName <- paste0("assignment_", action[1], "Stations")
+    # Add the hauls and update the assignment IDs:
+    utilityFunctionName <- paste0("assignment_", action[1], "Haul")
     Assignment <- do.call(
         utilityFunctionName, 
         list(
-            acousticPSU = acousticPSU, 
-            acousticLayer = acousticLayer, 
+            PSU = PSU, 
+            Layer = Layer, 
             Haul = Haul, 
             Assignment = Assignment
         )
@@ -121,18 +119,16 @@ modifyAssignment <- function(acousticPSU, acousticLayer, Haul, projectPath, mode
     # Return the assignments:
     Assignment
 }
-#' 
-#' @export
-#' @rdname Assignment
-#' 
-assignment_addStations <- function(acousticPSU, acousticLayer, Haul, Assignment) {
+
+# Function that adds a haul to the assignment data:
+assignment_addHaul <- function(PSU, Layer, Haul, Assignment) {
     
     # Add the hauls:
     toAdd <- data.table::data.table(
-        PSU = acousticPSU, 
-        Layer = acousticLayer, 
+        PSU = PSU, 
+        Layer = Layer, 
         Haul = Haul, 
-        HaulWeight = 1
+        WeightingFactor = 1
     )
     Assignment <- rbind(
         Assignment, 
@@ -142,22 +138,20 @@ assignment_addStations <- function(acousticPSU, acousticLayer, Haul, Assignment)
     # Return the assignments:
     Assignment
 }
-#' 
-#' @export
-#' @rdname Assignment
-#' 
-assignment_removeStations <- function(acousticPSU, acousticLayer, Haul, Assignment) {
+
+# Function that removes a haul from the assignment data:
+assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
     
     # Get the row indixces of the PSU and Layer:
-    atPSU <- Assignment$PSU %in% acousticPSU
-    atLayer <- Assignment$Layer  %in% acousticLayer
+    atPSU <- Assignment$PSU %in% PSU
+    atLayer <- Assignment$Layer  %in% Layer
     at <- which(atPSU & atLayer)
     
     # Get the indices in 'at' to remove:
-    atStations <- Assignment[at, ]$Haul %in% Haul
+    atHauls <- Assignment[at, ]$Haul %in% Haul
     
-    # Remove the stations:
-    Assignment <- Assignment[-at[atStations], ]
+    # Remove the hauls:
+    Assignment <- Assignment[-at[atHauls], ]
     
     # Return the assignments:
     Assignment
@@ -168,7 +162,7 @@ assignment_removeStations <- function(acousticPSU, acousticLayer, Haul, Assignme
 
 ############################################################
 ############################################################
-#' Add or remove biotic stations from assignments
+#' Add or remove biotic acoustic PSUs and EDSUs
 #' 
 #' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
 #' 
@@ -186,12 +180,16 @@ NULL
 addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcosticPSU <- getProcessData("AcosticPSU", projectPath, modelName, processID)
     
-    # If the acousticPSU ID is not given, set it to one larger than the largest integer:
-    #acousticPSUNumeric <- 
-    
-    # Check that the acoustic PSU does not exist: 
+    # If the PSU is not given, use the default PSU name:
+    if(length(PSU) == 0) {
+        PSU <- getNewDefaultName(AcosticPSU$Stratum_PSU$PSU, getRstoxFrameworkDefinitions("process_Prefix"))
+    }
+    # Check that the acoustic PSU does not exist:
+    if(any(AcosticPSU$Stratum_PSU$PSU == PSU)) {
+        stop("The name of the Acoustic PSU (", ")")
+    }
     
     
     # Add the acsoutic PSU:
@@ -264,7 +262,6 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
     
     
 }
-
 
 
 

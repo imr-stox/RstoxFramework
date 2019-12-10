@@ -2125,7 +2125,7 @@ createEmptyProcess <- function(modelName = "Baseline", processName = NULL) {
     # Get the default process with empty fields for project and function name, process data, and function parameters and inputs:
     process <- getRstoxFrameworkDefinitions("processDefault")[[modelName]]
     # Possibly add the given process name (this is done here since creating a default process name is not always needed or wanted):
-    if(length(processName) || is.na(processName) || nchar(processName) == 0) {
+    if(length(processName) && !is.na(processName) && nchar(processName) > 0) {
         process$processName <- processName
     }
     process
@@ -2658,23 +2658,25 @@ getNewDefaultProcessName <- function(projectPath, modelName) {
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processNames <- processIndexTable$processNames
     
-    # Identify all process names starting with the process_Prefix:
-    process_Prefix <- getRstoxFrameworkDefinitions("process_Prefix")
-    startsWithProcess_Prefix <- startsWith(processNames, process_Prefix)
+    ## Identify all process names starting with the process_Prefix:
+    #process_Prefix <- getRstoxFrameworkDefinitions("process_Prefix")
+    #startsWithProcess_Prefix <- startsWith(processNames, process_Prefix)
+    #
+    ## Get the lowest index which is not occupied:
+    #if(any(startsWithProcess_Prefix)) {
+    #    # Extract the integers after the underscore:
+    #    process_Index <- as.numeric(substring(processNames[startsWithProcess_Prefix], nchar(process_Prefix) + 1))
+    #    process_Index <- min(seq_len(max(process_Index)))
+    #}
+    #else {
+    #    process_Index <- 1
+    #}
+    #
+    ## Create and return the name of the new project:
+    #processName <- paste0(process_Prefix, process_Index)
+    #processName
     
-    # Get the lowest index which is not occupied:
-    if(any(startsWithProcess_Prefix)) {
-        # Extract the integers after the underscore:
-        process_Index <- as.numeric(substring(processNames[startsWithProcess_Prefix], nchar(process_Prefix) + 1))
-        process_Index <- min(seq_len(max(process_Index)))
-    }
-    else {
-        process_Index <- 1
-    }
-    
-    # Create and return the name of the new project:
-    processName <- paste0(process_Prefix, process_Index)
-    processName
+    getNewDefaultName(processNames, getRstoxFrameworkDefinitions("process_Prefix"))
 }
 
 createNewProcessID <- function(projectPath, modelName, n = 1) {

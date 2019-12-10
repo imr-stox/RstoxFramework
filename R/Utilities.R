@@ -137,3 +137,63 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
     
     out
 }
+
+# Function to extract the trailing integer of a string (vector):
+getTrailingInteger <- function(x, integer = TRUE) {
+    # Get the trailing numerics:
+    trailing <- stringr::str_extract(x, "[^[a-z]]*$")
+    
+    # Convert to numeric if specified:
+    if(integer) {
+        as.integer(trailing)
+    }
+    else {
+        trailing
+    }
+}
+
+# Function to generate a new name in the sequence of names starting with the prefix:
+getNewDefaultName <- function(names, prefix) {
+    
+    # Find the names starting with the prefix:
+    startsWithProcess_Prefix <- which(startsWith(names, prefix))
+    # Get the trailing integers of the names starting with the prefix:
+    trailingIntegerString <- getTrailingInteger(names[startsWithProcess_Prefix], integer = FALSE)
+    trailingInteger <- getTrailingInteger(names[startsWithProcess_Prefix])
+    # Verify that the number of characters equals the sum of the prefix and the number of characters of the numeric string:
+    hasCorrectNumberOfCharacters <- nchar(names[startsWithProcess_Prefix]) == nchar(prefix) + nchar(trailingIntegerString)
+    
+    if(length(hasCorrectNumberOfCharacters) == 0) {
+        newInteger <- 1
+    }
+    else {
+        # Get new integer as one more than the maximum integer:
+        newInteger <- max(trailingInteger[hasCorrectNumberOfCharacters]) + 1
+    }
+    
+    # Add 1 to the latest integer:
+    newName <- paste0(prefix, newInteger)
+    
+    newName
+    #currentMax <- 1
+    #detectedTheLast <- TRUE
+    #
+    #while(detectedTheLast) {
+    #    # Create a vector of potential names, pasting the prefix and a sequence of integer:
+    #    sequence <- currentMax - 1 + seq_len(length)
+    #    potentialNames <- paste0(prefix, sequence)
+    #    # Fin the latest name:
+    #    latest <- max(which(names %in% potentialNames))
+    #    # Break the loop 
+    #}
+    #
+    ## Create a vector of potential names, pasting the prefix and a sequence of integer:
+    #potentialNames <- paste0(prefix, seq_len(length(names) * lengthFact))
+    ## Fin the latest name:
+    #latest <- max(which(names %in% potentialNames))
+    #
+    ## Return the new default name, as the next in the sequence:
+    #potentialNames[latest + 1]
+}
+
+

@@ -28,7 +28,11 @@ removeEDSU(acousticPSU, EDSU, projectPath, modelName, processID)
 }
 \description{
 The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
+
+The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
 }
 \details{
+The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
+
 The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
 }

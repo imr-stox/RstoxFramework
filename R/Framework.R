@@ -777,6 +777,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     
     # Create the project session folder structure:
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
+    browser()
     
     # Set the project memory as the selected template:
     temp <- addProcesses(
@@ -1876,6 +1877,7 @@ getProcessParameters <- function(projectPath, modelName, processID) {
     )
 }
 
+# This function gets the process data as stored in the process memory files. These process data may diffre from the process data output from the process, stored in the output data files, particularly if interactive functions have been used. In this case, the process must be run again with UseProcessData = TRUE (automatically set by RstoxFramework) to update the process output, which is used in runProcess() using getProcessOutput(). 
 getProcessData <- function(projectPath, modelName, processID) {
     getProjectMemoryData(
         projectPath, 

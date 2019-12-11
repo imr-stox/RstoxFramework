@@ -95,7 +95,7 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
         warning("The acoustic PSU with name ", PSU, " does not exist. Please choose a different PSU name or add the PSU using DefineAcousticPSU.")
     }
     
-    # Add the hauls and update the assignment IDs:
+    # Add the hauls:
     utilityFunctionName <- paste0("assignment_", action[1], "Haul")
     Assignment <- do.call(
         utilityFunctionName, 
@@ -179,28 +179,30 @@ NULL
 #' 
 addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processID) {
     
+    # Check that the process returns Assigment process data:
+    if(!checkDataType("AcosticPSU", projectPath, modelName, processID)) {
+        stop("The process ", getProcessName(projectPath, modelName, processID), " does not return AcosticPSU data.")
+    }
+    
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData("AcosticPSU", projectPath, modelName, processID)
+    AcosticPSU <- getProcessData(projectPath, modelName, processID)
     
     # If the PSU is not given, use the default PSU name:
     if(length(PSU) == 0) {
-        PSU <- getNewDefaultName(AcosticPSU$Stratum_PSU$PSU, getRstoxFrameworkDefinitions("process_Prefix"))
+        PSU <- getNewDefaultName(AcosticPSU$Stratum_PSU$PSU, "T")
     }
-    # Check that the acoustic PSU does not exist:
+    # Check whether the acoustic PSU already exists:
     if(any(AcosticPSU$Stratum_PSU$PSU == PSU)) {
         stop("The name of the Acoustic PSU (", ")")
     }
     
-    
     # Add the acsoutic PSU:
-    
     toAdd <- data.table::data.table(
         Stratum = Stratum, 
-        PSU = acousticPSU, 
-        EDSU = NA
+        PSU = PSU
     )
-    AcosticPSU <- data.table::data.table(
-        AcosticPSU, 
+    AcosticPSU$Stratum_PSU <- data.table::data.table(
+        AcosticPSU$Stratum_PSU, 
         toAdd
     )
     
@@ -216,15 +218,13 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     AcosticPSU <- getProcessData(projectPath, modelName, processID)
     
     # Add the acsoutic PSU:
-    toRemove <- AcosticPSU$PSU == acousticPSU
-        
-    AcosticPSU <- data.table::data.table(
-        AcosticPSU, 
-        toAdd
-    )
+    PSUsToKeep <- !AcosticPSU$Stratum_PSU$PSU %in% PSU
+    EDSUsToKeep <- !AcosticPSU$PSU_EDSU$PSU %in% PSU
+    
+    AcosticPSU$Stratum_PSU <- AcosticPSU$Stratum_PSU[PSUsToKeep, ]
+    AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
     
     AcosticPSU
-    
 }
 #' 
 #' @export
@@ -236,12 +236,11 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
     AcosticPSU <- getProcessData(projectPath, modelName, processID)
     
     # Add the acsoutic PSU:
-    toRemove <- AcosticPSU$PSU == acousticPSU
+    PSUsToRename <- AcosticPSU$Stratum_PSU$PSU %in% PSU
+    EDSUsToRename <- AcosticPSU$PSU_EDSU$PSU %in% PSU
     
-    AcosticPSU <- data.table::data.table(
-        AcosticPSU, 
-        toAdd
-    )
+    AcosticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
+    AcosticPSU$PSU_EDSU$PSU[EDSUsToRename] <- newPSUName
     
     AcosticPSU
     
@@ -252,7 +251,20 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
 #' 
 addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     
+    # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
+    AcosticPSU <- getProcessData(projectPath, modelName, processID)
     
+    # Add the acsoutic PSU:
+    toAdd <- data.table::data.table(
+        PSU = PSU, 
+        EDSU = EDSU
+    )
+    AcosticPSU$PSU_EDSU <- data.table::data.table(
+        AcosticPSU$PSU_EDSU, 
+        toAdd
+    )
+    
+    AcosticPSU
 }
 #' 
 #' @export
@@ -260,7 +272,15 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
 #' 
 removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
     
+    # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
+    AcosticPSU <- getProcessData(projectPath, modelName, processID)
     
+    # Add the acsoutic PSU:
+    EDSUsToKeep <- !AcosticPSU$PSU_EDSU$EDSU %in% EDSU
+    
+    AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
+    
+    AcosticPSU
 }
 
 
@@ -268,6 +288,23 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
 
 
 
+############################################################
+############################################################
+#' Stratum manipulation
+#' 
+#' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
+#' 
+#' @details 
+#' The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
+#' 
+#' @inheritParams getProcessOutput
+#' @name AcousticPSU
+#' 
+NULL
+#' 
+#' @export
+#' @rdname Straum
+#' 
 
 
 
@@ -275,7 +312,32 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
 
 
 
-createNode <- function(PSU, EDSU, projectPath, modelName, processID) {
+library(sp)
+crds <- cbind(x=c(0, 0, 400, 400, 0), y=c(0, 400, 400, 0, 0))
+# str(crds)
+Pl <- Polygon(crds)
+# str(Pl)
+ID <- "400x400"
+Pls <- Polygons(list(Pl), ID=ID)
+# str(Pls)
+SPls <- SpatialPolygons(list(Pls))
+
+
+
+
+addStratum <- function(stratumName, coordinates, projectPath, modelName, processID) {
+    
+    # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
+    StratumPolygon <- getProcessData(projectPath, modelName, processID)
+    
+    # Add the coordinates:
+    toAdd <- list(Polygons(list(Polygon(coordinates)), ID = stratumName))
+    StratumPolygon$StratumPolygon@polygons <- c(StratumPolygon$StratumPolygon@polygons, toAdd)
+    
+    StratumPolygon
+}
+
+removeStratum <- function(PSU, EDSU, projectPath, modelName, processID) {
     
 }
 

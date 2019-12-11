@@ -777,7 +777,8 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     
     # Create the project session folder structure:
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
-    browser()
+    # Set the active process ID to 0 for all models:
+    initiateActiveProcessID(projectPath)
     
     # Set the project memory as the selected template:
     temp <- addProcesses(
@@ -790,10 +791,6 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     saveProject(projectPath)
     if(!open) {
         closeProject(projectPath, save = TRUE)
-    }
-    else {
-        # Set the active process ID to 0 for all models:
-        initiateActiveProcessID(projectPath)
     }
     
     list(

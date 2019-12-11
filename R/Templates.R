@@ -1517,11 +1517,11 @@ stoxTemplates <- list(
 			Baseline = list(
 				ReadBiotic = list(
 					processName = "ReadBiotic",
-					functionName = "RstoxBase::ReadBiotic"
+					functionName = "RstoxData::ReadBiotic"
 				),
 				DefineStratum = list(
-					processName = "DefineStratum",
-					functionName = "RstoxBase::DefineStratum", 
+					processName = "DefineStrata",
+					functionName = "RstoxBase::DefineStrata", 
 					processParameters = list(
 					    showInMap = TRUE
 					)

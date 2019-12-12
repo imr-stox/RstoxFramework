@@ -912,12 +912,14 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         )
     }
     
-    # Return the modified process properties:
-    getProcessPropertySheet(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID
-    )
+    ## Return the modified process properties:
+    #getProcessPropertySheet(
+    #    projectPath = projectPath, 
+    #    modelName = modelName, 
+    #    processID = processID
+    #)
+    
+    # Return the flags for changed process data and process property
 }
 
 
@@ -941,7 +943,7 @@ getPathToSingleFunctionPDF <- function(functionName) {
 #' 
 #' @export
 #' 
-getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = NULL) {
+getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = NULL, stylesheet = "") {
     # Extract the packageName::functionName:
     packageName_functionName <- getFunctionName(
         projectPath = projectPath, 
@@ -952,7 +954,7 @@ getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = N
     packageName <- getPackageNameFromPackageFunctionName(packageName_functionName)
     functionName <- getFunctionNameFromPackageFunctionName(packageName_functionName)
     # Get the help:
-    html <- getObjectHelpAsHtml(packageName = packageName, objectName = functionName, outfile = outfile)
+    html <- getObjectHelpAsHtml(packageName = packageName, objectName = functionName, outfile = outfile, stylesheet = stylesheet)
     html
 }
 
@@ -960,7 +962,7 @@ getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = N
 #' 
 #' @export
 #' 
-getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL) {
+getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesheet = "") {
     
     # Read the documentation database:
     db <- tools::Rd_db(packageName)
@@ -978,7 +980,7 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL) {
     if(length(outfile) == 0) {
         outfile <- tempfile(fileext = ".html")
     }
-    tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links)
+    tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links, stylesheet = stylesheet)
     html <- paste(readLines(outfile), collapse="\n")
     unlink(outfile, force = TRUE)
     html

@@ -2274,9 +2274,14 @@ modifyFunctionName <- function(projectPath, modelName, processID, newFunctionNam
             processID = processID, 
             process = process
         )
+        
+        # Return a flag TRUE if the function name was changed: 
+        return(TRUE)
     }
-    
-    process
+    else {
+        return(FALSE)
+    }
+    #process
 }
 modifyProcessName <- function(projectPath, modelName, processID, newProcessName) {
     
@@ -2299,9 +2304,15 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName)
                 argumentValue = newProcessName
             )
         }
+        
+        # Return a flag TRUE if the process name was changed: 
+        return(TRUE)
+    }
+    else {
+        return(FALSE)
     }
     
-    processName
+    #processName
 }
 modifyFunctionParameters <- function(projectPath, modelName, processID, newFunctionParameters) {
     
@@ -2338,9 +2349,15 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
             argumentName = "functionParameters", 
             argumentValue = list(modifiedFunctionParameters) # We need to list this to make it correspond to the single value of the argumentName parameter.
         )
+        
+        # Return a flag TRUE if the function parameters were changed: 
+        return(TRUE)
+    }
+    else {
+        return(FALSE)
     }
     
-    modifiedFunctionParameters
+    #modifiedFunctionParameters
 }
 modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionInputs) {
     
@@ -2369,9 +2386,15 @@ modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionI
             argumentName = "functionInputs", 
             argumentValue = list(modifiedFunctionInputs) # We need to list this to make it correspond to the single value of the argumentName parameter.
         )
+    
+        # Return a flag TRUE if the function inputs were changed: 
+        return(TRUE)
+    }
+    else {
+        return(FALSE)
     }
     
-    modifiedFunctionInputs
+    #modifiedFunctionInputs
 }
 modifyProcessParameters <- function(projectPath, modelName, processID, newProcessParameters) {
     
@@ -2400,9 +2423,15 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
             argumentName = "processParameters", 
             argumentValue = list(modifiedProcessParameters) # We need to list this to make it correspond to the single value of the argumentName parameter.
         )
+    
+        # Return a flag TRUE if the process parameters were changed: 
+        return(TRUE)
+    }
+    else {
+        return(FALSE)
     }
     
-    modifiedProcessParameters
+    #modifiedProcessParameters
 }
 modifyProcessData <- function(projectPath, modelName, processID, newProcessData) {
     
@@ -2431,9 +2460,15 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData)
             argumentName = "processData", 
             argumentValue = list(modifiedProcessData) # We need to list this to make it correspond to the single value of the argumentName parameter.
         )
+    
+        # Return a flag TRUE if the process data were changed: 
+        return(TRUE)
+    }
+    else {
+        return(FALSE)
     }
     
-    modifiedProcessData
+    #modifiedProcessData
 }
 
 
@@ -2564,9 +2599,12 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
         processName = processName
     )
     
+    # Output a flag of TRUE if a modification occurred:
+    modified <- FALSE
+    
     # Function name:
     if(length(newValues$functionName)) {
-        modifyFunctionName(
+        modified <- modified | modifyFunctionName(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -2576,7 +2614,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     
     # Function parameters:
     if(length(newValues$functionParameters)) {
-        modifyFunctionParameters(
+        modified <- modified | modifyFunctionParameters(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -2586,7 +2624,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     
     # Function inputs:
     if(length(newValues$functionInputs)) {
-        modifyFunctionInputs(
+        modified <- modified | modifyFunctionInputs(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -2596,7 +2634,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     
     # Process name:
     if(length(newValues$processName)) {
-        modifyProcessName(
+        modified <- modified | modifyProcessName(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -2606,7 +2644,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     
     # Process parameters:
     if(length(newValues$processParameters)) {
-        modifyProcessParameters(
+        modified <- modified | modifyProcessParameters(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -2616,7 +2654,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     
     # Process data:
     if(length(newValues$processData)) {
-        modifyProcessData(
+        modified <- modified | modifyProcessData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -2627,12 +2665,14 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     # Set the status as not saved (saving is done when running a process):
     setSavedStatus(projectPath, status = FALSE)
     
-    # Return the process:
-    getProcess(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID
-    )
+    ### # Return the process:
+    ### getProcess(
+    ###     projectPath = projectPath, 
+    ###     modelName = modelName, 
+    ###     processID = processID
+    ### )
+    
+    return(modified)
 }
 #' 
 #' @export
@@ -2808,7 +2848,7 @@ addProcess <- function(projectPath, modelName, values) {
     )
     
     # Apply the arguments:
-    process <- modifyProcess(
+    modifyProcess(
         projectPath = projectPath, 
         modelName = modelName, 
         processName = process$processName, 
@@ -2816,7 +2856,12 @@ addProcess <- function(projectPath, modelName, values) {
     )
     
     # Return the process:
-    process
+    process <- getProcess(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = process$processID
+    )
+    return(process)
 }
 #' 
 #' @export
@@ -2922,7 +2967,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
     ###     envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))### 
     ### )
     
-    # Try tunning the function, and return FALSE if failing:
+    # Try running the function, and return FALSE if failing:
     failed <- FALSE
     if(msg) {
         message(
@@ -2962,6 +3007,9 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
         # Store the processData (this must be a named list of only one data table):
         if(isProcessDataFunction(process$functionName)) {
             modifyProcessData(projectPath, modelName, processID, processOutput)
+            
+            # Set the function parameters UseProcessData to TRUE:
+            setUseProcessDataToTRUE(projectPath, modelName, processID)
             #process$processData <- processOutput
         }
         
@@ -2976,6 +3024,11 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
         #invisible(processOutput)
         TRUE
     }
+}
+
+
+setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
+    modifyFunctionParameters(projectPath, modelName, processID, list(UseProcessData = TRUE))
 }
 
 

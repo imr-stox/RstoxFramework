@@ -206,6 +206,15 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         toAdd
     )
     
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
+    
     AcosticPSU
 }
 #' 
@@ -224,6 +233,15 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     AcosticPSU$Stratum_PSU <- AcosticPSU$Stratum_PSU[PSUsToKeep, ]
     AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
     
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
+    
     AcosticPSU
 }
 #' 
@@ -241,6 +259,15 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
     
     AcosticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
     AcosticPSU$PSU_EDSU$PSU[EDSUsToRename] <- newPSUName
+    
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
     
     AcosticPSU
     
@@ -264,6 +291,15 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
         toAdd
     )
     
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
+    
     AcosticPSU
 }
 #' 
@@ -279,6 +315,15 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
     EDSUsToKeep <- !AcosticPSU$PSU_EDSU$EDSU %in% EDSU
     
     AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
+    
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
     
     AcosticPSU
 }
@@ -298,33 +343,13 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
 #' The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
 #' 
 #' @inheritParams getProcessOutput
-#' @name AcousticPSU
+#' @name Straum
 #' 
 NULL
 #' 
 #' @export
 #' @rdname Straum
 #' 
-
-
-
-
-
-
-
-library(sp)
-crds <- cbind(x=c(0, 0, 400, 400, 0), y=c(0, 400, 400, 0, 0))
-# str(crds)
-Pl <- Polygon(crds)
-# str(Pl)
-ID <- "400x400"
-Pls <- Polygons(list(Pl), ID=ID)
-# str(Pls)
-SPls <- SpatialPolygons(list(Pls))
-
-
-
-
 addStratum <- function(stratumName, coordinates, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
@@ -334,36 +359,72 @@ addStratum <- function(stratumName, coordinates, projectPath, modelName, process
     toAdd <- list(Polygons(list(Polygon(coordinates)), ID = stratumName))
     StratumPolygon$StratumPolygon@polygons <- c(StratumPolygon$StratumPolygon@polygons, toAdd)
     
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(list(StratumPolygon = StratumPolygon)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
+    
     StratumPolygon
 }
-
-removeStratum <- function(PSU, EDSU, projectPath, modelName, processID) {
+#' 
+#' @export
+#' @rdname Straum
+#' 
+removeStratum <- function(stratumName, projectPath, modelName, processID) {
     
-}
-
-
-
-
-# 
-# # DefineStrata	
-createNode <- function(projectPath, modelName, processID, StratumID, NewNode, NodeIndex1, NodeIndex2) {
+    # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
+    StratumPolygon <- getProcessData(projectPath, modelName, processID)
     
-}
-deleteNode <- function(projectPath, modelName, processID, StratumID, NodeIndex) {
+    # Add the coordinates:
+    atRemove <- match(stratumName, names(StratumPolygon$StratumPolygon))
+    if(!any(is.na(toRemove))) {
+        StratumPolygon$StratumPolygon@polygons <- StratumPolygon$StratumPolygon@polygons[-atRemove]
+    }
     
-}
-modifyNode <- function(projectPath, modelName, processID, StratumID, NewNode, NodeIndex) {
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(list(StratumPolygon = StratumPolygon)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
     
+    StratumPolygon
 }
-# 
-# # DefineAcousticPSU	
-# addAcousticPSU(Stratum, PSU), 
-# removeAcousticPSU(Stratum, PSU), 
-# addEDSU(PSU, EDSU), 
-# removeEDSU(PSU, EDSU)
-# 
-# # DefineSweptAreaPSU	
-# addSweptAreaPSU(Stratum), 
-# addStation(Station, PSU), 
-# removeStation(Station, PSU)
-# 
+#' 
+#' @export
+#' @rdname Straum
+#' 
+modifyStratum <- function(stratumName, coordinates, processID, StratumID, NewNode, NodeIndex) {
+    
+    # Function to create a polygon from coordinates and stratum name:
+    coordinatesToPolygon <- function(stratumName, coordinates) {
+        Polygons(list(Polygon(coordinates)), ID = stratumName)
+    }
+    
+    # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
+    StratumPolygon <- getProcessData(projectPath, modelName, processID)
+    
+    # Add the coordinates:
+    atModify <- match(stratumName, names(StratumPolygon$StratumPolygon))
+    toModify <- mapply(coordinatesToPolygon, stratumName, coordinates)
+    if(!any(is.na(toRemove))) {
+        StratumPolygon$StratumPolygon@polygons[atModify] <- toModify
+    }
+    
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(list(StratumPolygon = StratumPolygon)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
+    
+    StratumPolygon
+}

@@ -912,12 +912,12 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         )
     }
     
-    ## Return the modified process properties:
-    #getProcessPropertySheet(
-    #    projectPath = projectPath, 
-    #    modelName = modelName, 
-    #    processID = processID
-    #)
+    # Return the modified process properties:
+    getProcessPropertySheet(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
     
     # Return the flags for changed process data and process property
 }

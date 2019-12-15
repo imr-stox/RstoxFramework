@@ -7,12 +7,11 @@
 \alias{modifyStratum}
 \title{Stratum manipulation}
 \usage{
-addStratum(stratumName, coordinates, projectPath, modelName, processID)
+addStratum(stratum, projectPath, modelName, processID)
 
 removeStratum(stratumName, projectPath, modelName, processID)
 
-modifyStratum(stratumName, coordinates, processID, StratumID, NewNode,
-  NodeIndex)
+modifyStratum(stratum, processID, StratumID, NewNode, NodeIndex)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}

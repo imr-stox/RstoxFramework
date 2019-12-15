@@ -350,14 +350,26 @@ NULL
 #' @export
 #' @rdname Straum
 #' 
-addStratum <- function(stratumName, coordinates, projectPath, modelName, processID) {
+addStratum <- function(stratum, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
     StratumPolygon <- getProcessData(projectPath, modelName, processID)
     
-    # Add the coordinates:
-    toAdd <- list(Polygons(list(Polygon(coordinates)), ID = stratumName))
-    StratumPolygon$StratumPolygon@polygons <- c(StratumPolygon$StratumPolygon@polygons, toAdd)
+    # If given as a GeoJSON string, parse to a SpatialPolygons object:
+    if(is.character(stratum)) {
+        stratum <- geojsonio::geojson_sp(stratum)
+    }
+    
+    # Add the new strata, but check that the stratum names are not in use:
+    usedStratumNames <- intersect(names(stratum), names(StratumPolygon$StratumPolygon))
+    if(length(usedStratumNames)) {
+        stop("The stratum name ", usedStratumNames, " already exist. Choose a different name")
+    }
+    #toAdd <- list(Polygons(list(Polygon(coordinates)), ID = stratumName))
+    StratumPolygon$StratumPolygon@polygons <- c(
+        StratumPolygon$StratumPolygon@polygons, 
+        stratum@polygons
+    )
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -365,7 +377,7 @@ addStratum <- function(stratumName, coordinates, projectPath, modelName, process
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(list(StratumPolygon = StratumPolygon)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     StratumPolygon
@@ -381,7 +393,7 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
     
     # Add the coordinates:
     atRemove <- match(stratumName, names(StratumPolygon$StratumPolygon))
-    if(!any(is.na(toRemove))) {
+    if(!any(is.na(atRemove))) {
         StratumPolygon$StratumPolygon@polygons <- StratumPolygon$StratumPolygon@polygons[-atRemove]
     }
     
@@ -391,7 +403,7 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(list(StratumPolygon = StratumPolygon)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     StratumPolygon
@@ -400,7 +412,7 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
 #' @export
 #' @rdname Straum
 #' 
-modifyStratum <- function(stratumName, coordinates, processID, StratumID, NewNode, NodeIndex) {
+modifyStratum <- function(stratum, processID, StratumID, NewNode, NodeIndex) {
     
     # Function to create a polygon from coordinates and stratum name:
     coordinatesToPolygon <- function(stratumName, coordinates) {
@@ -410,11 +422,15 @@ modifyStratum <- function(stratumName, coordinates, processID, StratumID, NewNod
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
     StratumPolygon <- getProcessData(projectPath, modelName, processID)
     
-    # Add the coordinates:
-    atModify <- match(stratumName, names(StratumPolygon$StratumPolygon))
-    toModify <- mapply(coordinatesToPolygon, stratumName, coordinates)
-    if(!any(is.na(toRemove))) {
-        StratumPolygon$StratumPolygon@polygons[atModify] <- toModify
+    # If given as a GeoJSON string, parse to a SpatialPolygons object:
+    if(is.character(stratum)) {
+        stratum <- geojsonio::geojson_sp(stratum)
+    }
+    
+    # Modify the coordinates:
+    atModify <- match(names(stratum), names(StratumPolygon$StratumPolygon))
+    if(!any(is.na(atModify))) {
+        StratumPolygon$StratumPolygon@polygons[atModify] <- stratum@polygons
     }
     
     # Set the Assignment back to the process data of the process:
@@ -423,7 +439,7 @@ modifyStratum <- function(stratumName, coordinates, processID, StratumID, NewNod
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(list(StratumPolygon = StratumPolygon)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     StratumPolygon

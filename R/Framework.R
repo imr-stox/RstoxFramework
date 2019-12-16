@@ -2541,10 +2541,10 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
     getAbsolutePath <- function(filePath, projectPath) {
         # Check first whether the file exists as a relative path:
         absolutePath <- file.path(projectPath, filePath)
-        if(file.exists(absolutePath)) {
+        if(all(file.exists(absolutePath))) {
             absolutePath
         }
-        else if(file.exists(filePath)) {
+        else if(all(file.exists(filePath))) {
             filePath
         }
         else {

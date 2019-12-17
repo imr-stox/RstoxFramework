@@ -343,12 +343,12 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
 #' The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
 #' 
 #' @inheritParams getProcessOutput
-#' @name Straum
+#' @name Stratum
 #' 
 NULL
 #' 
 #' @export
-#' @rdname Straum
+#' @rdname Stratum
 #' 
 addStratum <- function(stratum, projectPath, modelName, processID) {
     
@@ -384,7 +384,7 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
 }
 #' 
 #' @export
-#' @rdname Straum
+#' @rdname Stratum
 #' 
 removeStratum <- function(stratumName, projectPath, modelName, processID) {
     
@@ -410,14 +410,9 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
 }
 #' 
 #' @export
-#' @rdname Straum
+#' @rdname Stratum
 #' 
-modifyStratum <- function(stratum, processID, StratumID, NewNode, NodeIndex) {
-    
-    # Function to create a polygon from coordinates and stratum name:
-    coordinatesToPolygon <- function(stratumName, coordinates) {
-        Polygons(list(Polygon(coordinates)), ID = stratumName)
-    }
+modifyStratum <- function(stratum, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
     StratumPolygon <- getProcessData(projectPath, modelName, processID)

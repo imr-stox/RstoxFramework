@@ -386,19 +386,14 @@ getStationData <- function(projectPath, modelName, processID) {
     Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
     
     # Split the Station table into the coordinates and the properties:
-    coordinates <- Station[, c("StartLongitude", "StartLatitude")]
+    coordinates <- Station[, c("Longitude", "Latitude")]
     #rownames(coordinates) <- Station$Station
-    properties <- Station[, !(colnames(Station) %in% c("StartLongitude", "StartLatitude")), with = FALSE]
+    properties <- Station[, !(colnames(Station) %in% c("Longitude", "Latitude")), with = FALSE]
     #rownames(properties) <- Station$Station
     
     # Add the haul info as a property, wrapped in a JSON string:
     HaulInfo <- Station_Haul[, .(HaulInfo = jsonlite::toJSON(.SD)), .SDcols = names(Haul), by = Station]
     properties$HaulInfo <- HaulInfo$HaulInfo
-    
-    #coordinates <- Station[, c("StartLongitude", "StartLatitude")]
-    #rownames(coordinates) <- Station$Station
-    #properties <- Station[, !(colnames(Station) %in% c("StartLongitude", "StartLatitude"))]
-    #rownames(properties) <- Station$Station
     
     # Create a spatial points data frame and convert to geojson:
     StationData <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)

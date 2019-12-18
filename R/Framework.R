@@ -61,6 +61,54 @@ initiateRstoxFramework <- function(){
     # Get the stoxLibrary as the list of function attributes from all official packages:
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     
+    #### Data types: ####
+    #stoxModelDataTypes <- c(
+    #    "AcousticData", 
+    #    "StoxAcousticData", 
+    #    "MergedStoxAcousticData", 
+    #    "NASCData", 
+    #    "LandingData", 
+    #    "LandingCovariateData", 
+    #    "LandingWeightCovariateData", 
+    #    "BioticData", 
+    #    "StoxBioticData", 
+    #    "MergedStoxBioticData", 
+    #    "BioticCovariateData", 
+    #    "LengthDistributionData", 
+    #    "AssignmentLengthDistributionData", 
+    #    "Density", 
+    #    "StratumArea", 
+    #    "Abundance", 
+    #    "AssignedIndividuals", 
+    #    "AssignedStations", 
+    #    "SuperIndividuals"
+    #)
+    #stoxProcessDataTypes <- c(
+    #    "AcousticPSU", 
+    #    "AcousticLayer", 
+    #    "SweptAreaPSU", 
+    #    "SweptAreaLayer", 
+    #    "Assignment", 
+    #    "Survey", 
+    #    "SpeciesCategoryDefinition", 
+    #    "AcousticCategoryDefinition", 
+    #    "StratumPolygon", 
+    #    "TemporalCovariate", 
+    #    "GearCovariate", 
+    #    "SpatialCovariate", 
+    #    "PlatformCovariate", 
+    #    "AgeError", 
+    #    "StratumNeighbour"
+    #)
+    #stoxDataTypes <- c(
+    #    stoxModelDataTypes, 
+    #    stoxProcessDataTypes
+    #)
+    stoxDataTypes <- data.table::data.table(
+        functionOutputDataType = sapply(stoxLibrary, "[[", "functionOutputDataType"), 
+        functionType = sapply(stoxLibrary, "[[", "functionType")
+    )
+    
     ##### Data: #####
     speciesVariables <- list(
         NMDBiotic1.4 = c(
@@ -270,51 +318,6 @@ initiateRstoxFramework <- function(){
     activeProcessIDFile <- file.path(projectMemoryFolder, "activeProcessID.txt")
     # The file containing a table of one row holding the maximum process ID (sequential integer starting from 1 at the firstly generated process) for each model (columns named by the model names):
     maxProcessIntegerIDFile <- file.path(projectMemoryFolder, "maxProcessIntegerID.txt")
-    
-    
-    #### Data types: ####
-    stoxModelDataTypes <- c(
-        "AcousticData", 
-        "StoxAcousticData", 
-        "MergedStoxAcousticData", 
-        "NASCData", 
-        "LandingData", 
-        "LandingCovariateData", 
-        "LandingWeightCovariateData", 
-        "BioticData", 
-        "StoxBioticData", 
-        "MergedStoxBioticData", 
-        "BioticCovariateData", 
-        "LengthDistributionData", 
-        "AssignmentLengthDistributionData", 
-        "Density", 
-        "StratumArea", 
-        "Abundance", 
-        "AssignedIndividuals", 
-        "AssignedStations", 
-        "SuperIndividuals"
-    )
-    stoxProcessDataTypes <- c(
-        "AcousticPSU", 
-        "AcousticLayer", 
-        "SweptAreaPSU", 
-        "SweptAreaLayer", 
-        "Assignment", 
-        "Survey", 
-        "SpeciesCategoryDefinition", 
-        "AcousticCategoryDefinition", 
-        "StratumPolygon", 
-        "TemporalCovariate", 
-        "GearCovariate", 
-        "SpatialCovariate", 
-        "PlatformCovariate", 
-        "AgeError", 
-        "StratumNeighbour"
-    )
-    stoxDataTypes <- c(
-        stoxModelDataTypes, 
-        stoxProcessDataTypes
-    )
     
     
     #### Define an object with all path objects for convenience in getProjectPaths(): ####
@@ -1710,8 +1713,9 @@ getArgumentsToShow <- function(functionName, functionArguments, functionArgument
 
 isProcessDataFunction <- function(functionName) {
     # Get the function output data type and match against the defined process data types:
-    functionOutputDataType <- getStoxFunctionMetaData(functionName, "functionOutputDataType")
-    functionOutputDataType %in% getRstoxFrameworkDefinitions("stoxProcessDataTypes")
+    #functionOutputDataType <- getStoxFunctionMetaData(functionName, "functionOutputDataType")
+    #functionOutputDataType %in% getRstoxFrameworkDefinitions("stoxProcessDataTypes")
+    getStoxFunctionMetaData(functionName, "functionType") == "processData"
 }
 
 
@@ -2116,7 +2120,7 @@ getProcessTable <- function(projectPath, modelName) {
 isFunctionInput <- function(parameter) {
     # Get the valid data types (model data and process data), and check whether the inputs are in these:
     stoxDataTypes <- getRstoxFrameworkDefinitions("stoxDataTypes")
-    parameter %in% stoxDataTypes
+    parameter %in% stoxDataTypes$functionOutputDataType
 }
 
 
@@ -3047,7 +3051,7 @@ setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
 #' @inheritParams Projects
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), columnSeparator = " ", lineSeparator = NULL, na = "-", drop = FALSE, list.pretty = FALSE) {
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, linesPerPage = 1000L, pageindex = integer(0), columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE, drop = FALSE, drop.datatype = TRUE) {
     
     # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
     if(any(grepl("/", tableName))) {
@@ -3103,6 +3107,11 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
         how = "replace"
     )
 
+    # Unlist the top level if a single tabled data type is wrapped in a list:
+    if(drop.datatype && is.list(processOutput) && length(processOutput) == 1 && names(processOutput) %in% getRstoxFrameworkDefinitions("stoxDataTypes")$functionOutputDataType) {
+        processOutput <- processOutput[[1]]
+    }
+    
     # Unlist if only one element:
     if(drop) {
         while(is.list(processOutput) && !data.table::is.data.table(processOutput) && length(processOutput) == 1) {

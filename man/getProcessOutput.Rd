@@ -8,7 +8,7 @@ getProcessOutput(projectPath, modelName, processID, tableName = NULL,
   subFolder = NULL, flatten = FALSE, pretty = FALSE,
   linesPerPage = 1000L, pageindex = integer(0),
   columnSeparator = " ", lineSeparator = NULL, na = "-",
-  drop = FALSE, list.pretty = FALSE)
+  list.pretty = FALSE, drop = FALSE, drop.datatype = TRUE)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}

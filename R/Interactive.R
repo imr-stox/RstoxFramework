@@ -357,7 +357,7 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     
     # If given as a GeoJSON string, parse to a SpatialPolygons object:
     if(is.character(stratum)) {
-        stratum <- geojsonio::geojson_sp(stratum)
+        stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
     }
     
     # Add the new strata, but check that the stratum names are not in use:

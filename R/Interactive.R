@@ -419,7 +419,7 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     
     # If given as a GeoJSON string, parse to a SpatialPolygons object:
     if(is.character(stratum)) {
-        stratum <- geojsonio::geojson_sp(stratum)
+        stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
     }
     
     # Modify the coordinates:

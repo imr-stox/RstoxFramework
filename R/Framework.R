@@ -3301,7 +3301,7 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
                     data.table::fwrite(processOutputOne, filePath, sep = "\t")
                 }
                 else {
-                    stop("Unknown function output")
+                    stop("Unknown function output: ", class(processOutputOne))
                 }
             }
         }

@@ -1,4 +1,4 @@
 .onLoad <- function(libname, pkgname){
-	# Initiate the Rstox envitonment:
+	# Initiate the RstoxFramework envitonment:
 	initiateRstoxFramework()
 } 

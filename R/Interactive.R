@@ -355,7 +355,7 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
     StratumPolygon <- getProcessData(projectPath, modelName, processID)
     
-    # If given as a GeoJSON string, parse to a SpatialPolygons object:
+    # If given as a GeoJSON string, parse to a SpatialPolygonsDataFrame object:
     if(is.character(stratum)) {
         stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
     }
@@ -417,13 +417,17 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
     StratumPolygon <- getProcessData(projectPath, modelName, processID)
     
-    # If given as a GeoJSON string, parse to a SpatialPolygons object:
+    # If given as a GeoJSON string, parse to a SpatialPolygonsDataFrame object:
     if(is.character(stratum)) {
         stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
     }
     
     # Modify the coordinates:
-    atModify <- match(names(stratum), names(StratumPolygon$StratumPolygon))
+    atModify <- match(
+        RstoxBase::getStratumNames(stratum), 
+        RstoxBase::getStratumNames(StratumPolygon$StratumPolygon)
+    )
+    print(atModify)
     if(!any(is.na(atModify))) {
         StratumPolygon$StratumPolygon@polygons[atModify] <- stratum@polygons
     }

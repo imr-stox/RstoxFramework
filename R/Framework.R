@@ -136,7 +136,8 @@ initiateRstoxFramework <- function(){
     # Define the permitted classes for individual outputs from StoX functions:
     validOutputDataClasses <- c(
         "data.table", 
-        "SpatialPolygons"
+        #"SpatialPolygons"
+        "SpatialPolygonsDataFrame"
     )
     ## Define the valid output data classes:
     #validOutputDataClasses <- c(
@@ -243,7 +244,11 @@ initiateRstoxFramework <- function(){
     EDSUDataType <- "StoxAcousticData"
     
     # Define empty StratumPolygon data type:
-    emptyStratumPolygon <- sp::SpatialPolygons(list())
+    #emptyStratumPolygon <- sp::SpatialPolygons(list())
+    emptyStratumPolygon <- sp::SpatialPolygonsDataFrame(
+        sp::SpatialPolygons(list()), 
+        data = data.frame()
+    )
     
     # Define the process parameters with default values, display names and descriptions:
     processParameters <- list(
@@ -1001,6 +1006,8 @@ readProjectXML <- function(projectXMLFile) {
     readProject(projectXMLFile)
 }
 
+
+##### UNFINISHED!!!!!!!!!!!!! #####
 processData2JSON <- function(processData, digits = getRstoxFrameworkDefinitions("digits")) {
     if("Stratum" %in% names(processData)) {
         #as.character(geojsonio::geojson_json(processData))
@@ -3163,7 +3170,8 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, lin
 }
 
 flattenProcessOutput <- function(processOutput) {
-    if(firstClass(processOutput) == "SpatialPolygons") {
+    #if(firstClass(processOutput) == "SpatialPolygons") {
+    if(firstClass(processOutput) == "SpatialPolygonsDataFrame") {
         geojsonio::geojson_json(processOutput)
     }
     else if(firstClass(processOutput) == "data.table") {
@@ -3279,8 +3287,9 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
         # Function for writing one element of the function output list:
         reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
             if(length(processOutputOne)){
-                if("SpatialPolygons" %in% class(processOutputOne)) {
-                    # Add file extension:
+                #if("SpatialPolygons" %in% class(processOutputOne)) {
+                if("SpatialPolygonsDataFrame" %in% class(processOutputOne)) {
+                        # Add file extension:
                     filePath <- paste(filePathSansExt, "geojson", sep = ".")
                     # Write the file:
                     jsonlite::write_json(geojsonio::geojson_json(processOutputOne), path = filePath)

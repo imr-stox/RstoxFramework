@@ -428,8 +428,14 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
         RstoxBase::getStratumNames(stratum)
     )
     print(atModify)
-    if(!any(is.na(atModify))) {
-        StratumPolygon$StratumPolygon@polygons[atModify] <- stratum@polygons
+    print(RstoxBase::getStratumNames(StratumPolygon$StratumPolygon))
+    print(RstoxBase::getStratumNames(stratum))
+    atModify <- which(RstoxBase::getStratumNames(StratumPolygon$StratumPolygon) == RstoxBase::getStratumNames(stratum))
+    
+    print(atModify)
+    if(length(atModify)) {
+    #if(!any(is.na(atModify))) {
+            StratumPolygon$StratumPolygon@polygons[atModify] <- stratum@polygons
     }
     
     # Set the Assignment back to the process data of the process:

@@ -380,7 +380,7 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
         argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    StratumPolygon
+    TRUE
 }
 #' 
 #' @export
@@ -406,7 +406,7 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
         argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    StratumPolygon
+    TRUE
 }
 #' 
 #' @export
@@ -441,5 +441,5 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
         argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    StratumPolygon
+    TRUE
 }

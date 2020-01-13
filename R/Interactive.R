@@ -423,9 +423,9 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     }
     
     # Modify the coordinates:
-    atModify <- match(
-        RstoxBase::getStratumNames(stratum), 
-        RstoxBase::getStratumNames(StratumPolygon$StratumPolygon)
+    atModify <- match( 
+        RstoxBase::getStratumNames(StratumPolygon$StratumPolygon), 
+        RstoxBase::getStratumNames(stratum)
     )
     print(atModify)
     if(!any(is.na(atModify))) {

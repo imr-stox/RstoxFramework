@@ -392,7 +392,7 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
     StratumPolygon <- getProcessData(projectPath, modelName, processID)
     
     # Add the coordinates:
-    atRemove <- match(stratumName, names(StratumPolygon$StratumPolygon))
+    atRemove <- match(names(StratumPolygon$StratumPolygon), stratumName)
     if(!any(is.na(atRemove))) {
         StratumPolygon$StratumPolygon@polygons <- StratumPolygon$StratumPolygon@polygons[-atRemove]
     }

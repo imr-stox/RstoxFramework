@@ -357,7 +357,8 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     
     # If given as a GeoJSON string, parse to a SpatialPolygonsDataFrame object:
     if(is.character(stratum)) {
-        stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
+        #stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
+        stratum <- rgdal::readOGR(stratum)
     }
     
     # Add the new strata, but check that the stratum names are not in use:
@@ -419,7 +420,8 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     
     # If given as a GeoJSON string, parse to a SpatialPolygonsDataFrame object:
     if(is.character(stratum)) {
-        stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
+        #stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
+        stratum <- rgdal::readOGR(stratum)
     }
     
     # Modify the coordinates:
@@ -433,6 +435,7 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     atModify <- which(RstoxBase::getStratumNames(StratumPolygon$StratumPolygon) == RstoxBase::getStratumNames(stratum))
     
     print(atModify)
+    browser()
     if(length(atModify)) {
     #if(!any(is.na(atModify))) {
             StratumPolygon$StratumPolygon@polygons[atModify] <- stratum@polygons

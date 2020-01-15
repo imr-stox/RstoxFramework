@@ -10,7 +10,12 @@ addons:
     packages:
     - libproj-dev 
     - libgdal-dev
-    - libgeos-dev 
+    - libgeos-dev
+    - libnode-dev
+    - libjq-dev
+    - libudunits2-dev
+    - libprotobuf-dev
+    - protobuf-compiler
   homebrew:
     packages:
     - proj

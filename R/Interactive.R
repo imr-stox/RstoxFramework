@@ -393,7 +393,11 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
     StratumPolygon <- getProcessData(projectPath, modelName, processID)
     
     # Add the coordinates:
-    atRemove <- match(names(StratumPolygon$StratumPolygon), stratumName)
+    # Modify the coordinates:
+    atModify <- match( 
+        stratumName, 
+        RstoxBase::getStratumNames(StratumPolygon$StratumPolygon)
+    )
     if(!any(is.na(atRemove))) {
         StratumPolygon$StratumPolygon@polygons <- StratumPolygon$StratumPolygon@polygons[-atRemove]
     }
@@ -426,16 +430,9 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     
     # Modify the coordinates:
     atModify <- match( 
-        RstoxBase::getStratumNames(StratumPolygon$StratumPolygon), 
-        RstoxBase::getStratumNames(stratum)
+        RstoxBase::getStratumNames(stratum), 
+        RstoxBase::getStratumNames(StratumPolygon$StratumPolygon)
     )
-    print(atModify)
-    print(RstoxBase::getStratumNames(StratumPolygon$StratumPolygon))
-    print(RstoxBase::getStratumNames(stratum))
-    atModify <- which(RstoxBase::getStratumNames(StratumPolygon$StratumPolygon) == RstoxBase::getStratumNames(stratum))
-    
-    print(atModify)
-    browser()
     if(length(atModify)) {
     #if(!any(is.na(atModify))) {
             StratumPolygon$StratumPolygon@polygons[atModify] <- stratum@polygons

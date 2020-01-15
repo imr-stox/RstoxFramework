@@ -3462,7 +3462,7 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     
     # Chech that none of the models of the project are running:
     if(isRunning(projectPath) && !force) {
-        warning("The project is running (", projectPath, ")")
+        warning("The project is running (", projectPath, "). Use force = TRUE to force restart the project.")
         return(failedVector)
     }
     else {

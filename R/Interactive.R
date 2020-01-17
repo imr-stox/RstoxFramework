@@ -362,7 +362,10 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     }
     
     # Add the new strata, but check that the stratum names are not in use:
-    usedStratumNames <- intersect(names(stratum), names(StratumPolygon$StratumPolygon))
+    usedStratumNames <- intersect(
+        RstoxBase::getStratumNames(stratum), 
+        RstoxBase::getStratumNames(StratumPolygon$StratumPolygon)
+    )
     if(length(usedStratumNames)) {
         stop("The stratum name ", usedStratumNames, " already exist. Choose a different name")
     }

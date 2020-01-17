@@ -5,6 +5,22 @@ matrix:
     r: 3.5
   - os: osx
     r: 3.5
+addons:
+  apt:
+    packages:
+    - libproj-dev 
+    - libgdal-dev
+    - libgeos-dev
+    - libnode-dev
+    - libjq-dev
+    - libudunits2-dev
+    - libprotobuf-dev
+    - protobuf-compiler
+  homebrew:
+    packages:
+    - proj
+    - gdal
+    - geos
 if: tag IS blank
 sudo: false
 cache: packages

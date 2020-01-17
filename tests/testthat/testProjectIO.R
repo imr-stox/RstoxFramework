@@ -124,6 +124,7 @@ projectDescription <- list(
 
 context("save project")
 tempfile <- tempfile()
+skip('skip')
 # save
 saveProject(projectDescription, tempfile)
 # validate

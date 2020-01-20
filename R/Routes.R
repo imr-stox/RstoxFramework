@@ -411,37 +411,37 @@ getEDSUData <- function(projectPath, modelName, processID) {
 }
 
 
-Log2SpatialLinesPolygon <- function(Log) {
-    
-    getLine <- function(Log) {
-        l <- cbind(
-            c(Log$startLongitude, Log$endLongitude), 
-            c(Log$startLatitude, Log$endLatitude)
-        )
-        L <- Line(l)
-        Lines(list(L), ID = Log$EDSU)
-        
-    }
-    segments <- Log[, getLine(.SD), .SDcols = names(Log)]
-    
-    
-        
-            
-    
-    ## from the sp vignette:
-    l1 <- cbind(c(1, 2, 3), c(3, 2, 2))
-    l2 <- cbind(c(1, 2, 3), c(1, 1.5, 1))
-    
-    Sl1 <- Line(l1)
-    Sl2 <- Line(l2)
-    
-    S1 <- Lines(list(Sl1), ID = "a")
-    S2 <- Lines(list(Sl2), ID = "b")
-    
-    Sl <- SpatialLines(list(S1, S2))
-    
-    
-}
+#Log2SpatialLinesPolygon <- function(Log) {
+#    
+#    getLine <- function(Log) {
+#        l <- cbind(
+#            c(Log$startLongitude, Log$endLongitude), 
+#            c(Log$startLatitude, Log$endLatitude)
+#        )
+#        L <- Line(l)
+#        Lines(list(L), ID = Log$EDSU)
+#        
+#    }
+#    segments <- Log[, getLine(.SD), .SDcols = names(Log)]
+#    
+#    
+#        
+#            
+#    
+#    ## from the sp vignette:
+#    l1 <- cbind(c(1, 2, 3), c(3, 2, 2))
+#    l2 <- cbind(c(1, 2, 3), c(1, 1.5, 1))
+#    
+#    Sl1 <- Line(l1)
+#    Sl2 <- Line(l2)
+#    
+#    S1 <- Lines(list(Sl1), ID = "a")
+#    S2 <- Lines(list(Sl2), ID = "b")
+#    
+#    Sl <- SpatialLines(list(S1, S2))
+#    
+#    
+#}
  
 
 

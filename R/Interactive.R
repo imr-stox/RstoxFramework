@@ -358,7 +358,9 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     # If given as a GeoJSON string, parse to a SpatialPolygonsDataFrame object:
     if(is.character(stratum)) {
         #stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
-        stratum <- rgdal::readOGR(stratum)
+        stratum <- rgdal::readOGR(stratum, stringsAsFactors = FALSE)
+        # Add "x", "y" as column names of the coords, since readOGR() does not do this:
+        stratum <- addCoordsNames(stratum)
     }
     
     # Add the new strata, but check that the stratum names are not in use:
@@ -369,6 +371,10 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     if(length(usedStratumNames)) {
         stop("The stratum name ", usedStratumNames, " already exist. Choose a different name")
     }
+    if(length(RstoxBase::getStratumNames(stratum)) == 0) {
+        stop("The new stratum must have a name")
+    }
+    
     #toAdd <- list(Polygons(list(Polygon(coordinates)), ID = stratumName))
     StratumPolygon$StratumPolygon@polygons <- c(
         StratumPolygon$StratumPolygon@polygons, 
@@ -429,6 +435,8 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     if(is.character(stratum)) {
         #stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
         stratum <- rgdal::readOGR(stratum)
+        # Add "x", "y" as column names of the coords, since readOGR() does not do this:
+        stratum <- addCoordsNames(stratum)
     }
     
     # Modify the coordinates:
@@ -451,4 +459,16 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     )
     
     TRUE
+}
+
+
+addCoordsNames <- function(stratum, names = c("x", "y")) {
+    # Hack to change the names of the coords to "x" and "y":
+    for(i in seq_along(stratum@polygons)) {
+        for(j in seq_along(stratum@polygons[[i]]@Polygons)) {
+            colnames(stratum@polygons[[i]]@Polygons[[j]]@coords) <- names
+        }
+    }
+    
+    return(stratum)
 }

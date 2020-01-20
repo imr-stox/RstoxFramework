@@ -26,9 +26,6 @@ Imports:
     sp (>= 1.3.2),
     RstoxBase (>= 1.0),
     RstoxData (>= 0.6.5)
-Remotes:
-    StoXProject/RstoxBase,
-    StoXProject/RstoxData
 Suggests: 
     testthat
 RoxygenNote: 7.0.2

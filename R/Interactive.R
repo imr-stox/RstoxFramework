@@ -376,9 +376,13 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     }
     
     #toAdd <- list(Polygons(list(Polygon(coordinates)), ID = stratumName))
-    StratumPolygon$StratumPolygon@polygons <- c(
-        StratumPolygon$StratumPolygon@polygons, 
-        stratum@polygons
+    #StratumPolygon$StratumPolygon@polygons <- c(
+    #    StratumPolygon$StratumPolygon@polygons, 
+    #    stratum@polygons
+    #)
+    StratumPolygon$StratumPolygon <- rbind(
+        StratumPolygon$StratumPolygon, 
+        stratum
     )
     
     # Set the Assignment back to the process data of the process:

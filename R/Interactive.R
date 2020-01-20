@@ -116,8 +116,9 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
         argumentValue = list(list(Assignment = Assignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    # Return the assignments:
-    Assignment
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 
 # Function that adds a haul to the assignment data:
@@ -135,8 +136,9 @@ assignment_addHaul <- function(PSU, Layer, Haul, Assignment) {
         toAdd
     )
     
-    # Return the assignments:
-    Assignment
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 
 # Function that removes a haul from the assignment data:
@@ -153,8 +155,9 @@ assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
     # Remove the hauls:
     Assignment <- Assignment[-at[atHauls], ]
     
-    # Return the assignments:
-    Assignment
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 
 
@@ -215,7 +218,9 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 #' 
 #' @export
@@ -242,7 +247,9 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
         argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 #' 
 #' @export
@@ -269,8 +276,9 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
         argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
-    
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 #' 
 #' @export
@@ -300,7 +308,9 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
         argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 #' 
 #' @export
@@ -325,7 +335,9 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
         argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 
 
@@ -394,7 +406,9 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
         argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    TRUE
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 #' 
 #' @export
@@ -424,7 +438,9 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
         argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    TRUE
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 #' 
 #' @export
@@ -462,7 +478,9 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
         argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    TRUE
+    # Revert the active process ID to the previous process:
+    activeProcessID <- revertActiveProcessID(projectPath, modelName)
+    return(list(activeProcessID = activeProcessID))
 }
 
 

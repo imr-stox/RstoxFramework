@@ -1176,12 +1176,30 @@ writeActiveProcessID <- function(projectPath, modelName, activeProcessID) {
     activeProcessIDFile
 }
 
+#' 
+#' @export
+#'
 revertActiveProcessID <- function(projectPath, modelName, step = 1) {
+    browser()
     # Read the active process ID for the model:
     activeProcessID <- getActiveProcessID(
         projectPath = projectPath, 
         modelName = modelName
     )
+    
+    
+    # Get the process ID to reset the model to:
+    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    processIndex <- which(processIndexTable$processID == processID)
+    
+    # Get the active process ID as the process ID of the process before the specified process in the processIndexTable (or NA if processIndex is 1):
+    if(processIndex == 1) {
+        activeProcessID <- NA
+    }
+    else {
+        activeProcessID <- processIndexTable$processID[processIndex - 1]
+    }
+    
     
     # Subtract 'step' from the active process ID:
     activeProcessID <- activeProcessID - step
@@ -1197,14 +1215,14 @@ revertActiveProcessID <- function(projectPath, modelName, step = 1) {
 }
 
 
-
-
-
-# 
+#' 
+#' @export
+#'
 resetModel <- function(projectPath, modelName, processID = 1) {
     
-    # Delete the output from the processes past the activeProcessID:
-    deleteProcessOutput(projectPath, modelName, processID)
+    # ??
+    ## Delete the output from the processes past the activeProcessID:
+    #deleteProcessOutput(projectPath, modelName, processID)
     
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -1219,7 +1237,8 @@ resetModel <- function(projectPath, modelName, processID = 1) {
     }
     
     writeActiveProcessID(projectPath, modelName, activeProcessID)
-    activeProcessID
+    
+    return(activeProcessID)
 }
 
 
@@ -3271,6 +3290,7 @@ getProcessOutputTableNames <- function(projectPath, modelName, processID) {
 deleteProcessOutput <- function(projectPath, modelName, processID) {
     # Get the directory holding the output files:
     folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID)
+    print(folderPath)
     unlink(folderPath, recursive = FALSE, force = TRUE)
 }
 

@@ -302,23 +302,26 @@ getAcousticPSUData <- function(projectPath, modelName, processID) {
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of AcousticPSU type:
-    if(names(processData) != "AcousticPSU"){
+    if(!all(names(processData) %in% c("Stratum_PSU", "PSU_EDSU"))){
         processName <- getProcessName(projectPath, modelName, processID)
         warning("The process ", processName, " does not return process data of type AcousticPSU")
         return(NULL)
     }
     
+    ## Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    #EDSU_PSU <- processData$AcousticPSU[, c("EDSU", "PSU")]
+    #PSU_Stratum <- unique(processData$AcousticPSU[, c("PSU", "Stratum")])
+    #Stratum = unique(processData$AcousticPSU$Stratum)
     # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    EDSU_PSU <- processData$AcousticPSU[, c("EDSU", "PSU")]
-    PSU_Stratum <- unique(processData$AcousticPSU[, c("PSU", "Stratum")])
-    Stratum = unique(processData$AcousticPSU$Stratum)
+    Stratum = unique(processData$Stratum_PSU$Stratum)
     
     # Return the list of data.tables:
-    list(
-        EDSU_PSU = EDSU_PSU, 
-        PSU_Stratum = PSU_Stratum, 
-        Stratum = Stratum
+    output <- c(
+        processData, 
+        list(Stratum = Stratum)
     )
+    
+    return(output)
 }
 
 #' 
@@ -402,6 +405,9 @@ getStationData <- function(projectPath, modelName, processID) {
     StationData
 }
 
+#' 
+#' @export
+#' 
 getEDSUData <- function(projectPath, modelName, processID) {
     # Get the EDSU data:
     Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log

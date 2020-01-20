@@ -1176,7 +1176,25 @@ writeActiveProcessID <- function(projectPath, modelName, activeProcessID) {
     activeProcessIDFile
 }
 
-
+revertActiveProcessID <- function(projectPath, modelName, step = 1) {
+    # Read the active process ID for the model:
+    activeProcessID <- getActiveProcessID(
+        projectPath = projectPath, 
+        modelName = modelName
+    )
+    
+    # Subtract 'step' from the active process ID:
+    activeProcessID <- activeProcessID - step
+    
+    # Write the reverte active process ID:
+    writeActiveProcessID(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        activeProcessID = activeProcessID
+    )
+    
+    activeProcessID
+}
 
 
 

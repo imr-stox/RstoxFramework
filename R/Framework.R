@@ -3297,56 +3297,8 @@ getProcessIndexFromProcessID <- function(projectPath, modelName, processID) {
 #' @export
 #' 
 writeProcessOutputTextFile <- function(processOutput, process, projectPath, modelName) {
-    
+    # Return NULL for empty process output:
     if(length(processOutput)) {
-        # Function for writing one element of the function output list:
-        reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
-            if(length(processOutputOne)){
-                #if("SpatialPolygons" %in% class(processOutputOne)) {
-                if("SpatialPolygonsDataFrame" %in% class(processOutputOne)) {
-                        # Add file extension:
-                    filePath <- paste(filePathSansExt, "geojson", sep = ".")
-                    # Write the file:
-                    jsonlite::write_json(geojsonio::geojson_json(processOutputOne), path = filePath)
-                }
-                else if("data.table" %in% class(processOutputOne)) {
-                    # Add file extension:
-                    filePath <- paste(filePathSansExt, "txt", sep = ".")
-                    # Write the file:
-                    data.table::fwrite(processOutputOne, filePath, sep = "\t")
-                }
-                else {
-                    stop("Unknown function output: ", class(processOutputOne))
-                }
-            }
-        }
-        
-        # Flatten the list and add names from the levels of the list:
-        unlistToDataType <- function(processOutput) {
-            areAllValidOutputDataClasses <- function(processOutput) {
-                validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
-                classes <- sapply(processOutput, firstClass)
-                #classes <- unlist(lapply(classes, "[[", 1))
-                all(classes %in% validOutputDataClasses)
-            }
-            
-            
-            unlistOne <- function(processOutput) {
-                if(!areAllValidOutputDataClasses(processOutput)){
-                    processOutput <- unlist(processOutput, recursive = FALSE)
-                }
-                processOutput
-            }
-            
-            # Unlist through 2 levels:
-            for(i in seq_len(2)) {
-                processOutput <- unlistOne(processOutput)
-            }
-            
-            
-            processOutput
-        }
-        
         # Unlist introduces dots, and we replace by underscore:
         processOutput <- unlistToDataType(processOutput)
         names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)
@@ -3369,6 +3321,56 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
         NULL
     }
 }
+
+# Function for writing one element of the function output list:
+reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
+    if(length(processOutputOne)){
+        #if("SpatialPolygons" %in% class(processOutputOne)) {
+        if("SpatialPolygonsDataFrame" %in% class(processOutputOne)) {
+            # Add file extension:
+            filePath <- paste(filePathSansExt, "geojson", sep = ".")
+            # Write the file:
+            jsonlite::write_json(geojsonio::geojson_json(processOutputOne), path = filePath)
+        }
+        else if("data.table" %in% class(processOutputOne)) {
+            # Add file extension:
+            filePath <- paste(filePathSansExt, "txt", sep = ".")
+            # Write the file:
+            data.table::fwrite(processOutputOne, filePath, sep = "\t")
+        }
+        else {
+            stop("Unknown function output: ", class(processOutputOne))
+        }
+    }
+}
+
+# Function to flatten the list and add names from the levels of the list:
+unlistToDataType <- function(processOutput) {
+    
+    # Function to check that all the output elements are of the vvavli classes:
+    areAllValidOutputDataClasses <- function(processOutput) {
+        validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
+        classes <- sapply(processOutput, firstClass)
+        #classes <- unlist(lapply(classes, "[[", 1))
+        all(classes %in% validOutputDataClasses)
+    }
+    
+    
+    unlistOne <- function(processOutput) {
+        if(!areAllValidOutputDataClasses(processOutput)){
+            processOutput <- unlist(processOutput, recursive = FALSE)
+        }
+        processOutput
+    }
+    
+    # Unlist through 2 levels:
+    for(i in seq_len(2)) {
+        processOutput <- unlistOne(processOutput)
+    }
+    
+    return(processOutput)
+}
+
 
 #' 
 #' @export
@@ -3597,6 +3599,7 @@ runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) 
 #' This function applies the conversion functions defined in the \code{stoxFunctionAttributes} list defined in each StoX function package.
 #' 
 #' @noRd
+#' @export
 #' 
 convertProjectDescription <- function(projectPath) {
     # Get the current project description:
@@ -3604,10 +3607,39 @@ convertProjectDescription <- function(projectPath) {
     
     # Get the StoX version:
     StoxVersion <- attr(projectDescription, "StoxVersion")
-    if(StoxVersion < 2.7) {
+    if(resourceversion < "1.92") {
         stop("Backward compatibility not supported for versions of StoX prior to 2.7")
     }
     
+}
+
+
+##################################################
+##################################################
+#' Check the version for backwards compatibility
+#' 
+#' @noRd
+#' @export
+#'
+checkVersion <- function(projectDescription, resourceVersion = NULL, RstoxFrameworkVersion = NULL) {
+    # Get the StoxVersion from the attributes:
+    savedResourceVersion <- attr(projectDescription, "resourceversion")
+    savedRstoxFrameworkVersion <- attr(projectDescription, "RstoxFrameworkVersion")
+    
+    # Issue an error if the project.xml is before the backwards compatibility time limit:
+    if(savedResourceVersion < "1.92") {
+        stop("Backward compatibility not supported for versions of StoX prior to 2.7 (resourceversion 1.92)")
+    }
+    
+    if(length(resourceVersion) && savedResourceVersion == resourceversion) {
+        return(TRUE)
+    }
+    else if(length(RstoxFrameworkVersion) && savedRstoxFrameworkVersion == RstoxFrameworkVersion) {
+        return(TRUE)
+    }
+    else {
+        return(FALSE)
+    }
 }
 
 

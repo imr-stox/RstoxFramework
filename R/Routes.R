@@ -986,3 +986,42 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
     unlink(outfile, force = TRUE)
     html
 }
+
+
+#' 
+#' @export
+#' 
+getPossibleValues <- function(projectPath, modelName, processID) {
+    
+    # Get the process output:
+    processOutput <- getProcessOutput(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    # Convert to a list of tables:
+    processOutput <- unlistToDataType(processOutput)
+    
+    # Get a vector of tables:
+    tableNames <- names(processOutput)
+    
+    # Get a list of column names:
+    columnNames <- lapply(processOutput, names)
+    names(columnNames) <- tableNames
+    
+    # Get a list of unique values for each column of each table:
+    getUniqueValues <- function(x) {
+        lapply(x, function(y) sort(unique(y)))
+    }
+    possibleValues <- lapply(processOutput, getUniqueValues)
+    
+    # Return a list of the tableNames, columnNames and possibleValues:
+    return(
+        list(
+            tableNames = tableNames, 
+            columnNames = columnNames,
+            possibleValues = possibleValues
+        )
+    )
+}
+

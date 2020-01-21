@@ -62,48 +62,25 @@ initiateRstoxFramework <- function(){
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     
     #### Data types: ####
-    #stoxModelDataTypes <- c(
-    #    "AcousticData", 
-    #    "StoxAcousticData", 
-    #    "MergedStoxAcousticData", 
-    #    "NASCData", 
-    #    "LandingData", 
-    #    "LandingCovariateData", 
-    #    "LandingWeightCovariateData", 
-    #    "BioticData", 
-    #    "StoxBioticData", 
-    #    "MergedStoxBioticData", 
-    #    "BioticCovariateData", 
-    #    "LengthDistributionData", 
-    #    "AssignmentLengthDistributionData", 
-    #    "Density", 
-    #    "StratumArea", 
-    #    "Abundance", 
-    #    "AssignedIndividuals", 
-    #    "AssignedStations", 
-    #    "SuperIndividuals"
-    #)
-    #stoxProcessDataTypes <- c(
-    #    "AcousticPSU", 
-    #    "AcousticLayer", 
-    #    "SweptAreaPSU", 
-    #    "SweptAreaLayer", 
-    #    "Assignment", 
-    #    "Survey", 
-    #    "SpeciesCategoryDefinition", 
-    #    "AcousticCategoryDefinition", 
-    #    "StratumPolygon", 
-    #    "TemporalCovariate", 
-    #    "GearCovariate", 
-    #    "SpatialCovariate", 
-    #    "PlatformCovariate", 
-    #    "AgeError", 
-    #    "StratumNeighbour"
-    #)
-    #stoxDataTypes <- c(
-    #    stoxModelDataTypes, 
-    #    stoxProcessDataTypes
-    #)
+    oldStoxModelDataTypes <- c(
+        "AcousticData",
+        "BioticData",
+        "LandingData",
+        "NASC",
+        "LengthDist",
+        "Density",
+        "Abundance",
+        "IndividualDataStations",
+        "IndividualData",
+        "SuperIndividuals",
+        "PolygonArea",
+        "StationSpecCatDensity",
+        "BioticCovData",
+        "LandingCovData",
+        "LandingWeightCovData",
+        "ProcessData"
+    )
+    
     stoxDataTypes <- data.table::data.table(
         functionOutputDataType = sapply(stoxLibrary, "[[", "functionOutputDataType"), 
         functionType = sapply(stoxLibrary, "[[", "functionType")

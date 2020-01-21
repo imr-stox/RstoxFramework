@@ -384,6 +384,8 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
         stratum <- rgdal::readOGR(stratum, stringsAsFactors = FALSE)
         # Add "x", "y" as column names of the coords, since readOGR() does not do this:
         stratum <- addCoordsNames(stratum)
+        # added by aasmund: Set projection to empty by default, rbind will then work.
+        stratum@proj4string@projargs <- ''
     }
     
     # Add the new strata, but check that the stratum names are not in use:

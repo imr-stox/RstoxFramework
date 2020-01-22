@@ -1375,7 +1375,7 @@ appendProjectDescription <- function(projectDescription, modelName, processID, a
     if(!argumentName %in% names(projectDescription [[modelName]] [[processID]])) {
         projectDescription [[modelName]] [[processID]] <- append(
             projectDescription [[modelName]] [[processID]], 
-            structure(list(thisArgumentValue), names = argumentName)
+            structure(list(argumentValue), names = argumentName)
         )
     }
     else {

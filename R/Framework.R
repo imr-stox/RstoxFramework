@@ -1288,29 +1288,42 @@ getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL
         thisArgumentName <- argumentFileTable$argumentName[ind]
         thisArgumentValue <- readRDS(argumentFileTable$argumentFile[[ind]])
         
-        # Append the missing list elements down to the argument:
-        if(!thisModelName %in% names(projectMemory)) {
-            projectMemory <- append(
-                projectMemory, 
-                structure(list(NULL), names = thisModelName)
-            )
-        }
-        if(!thisProcessID %in% names(projectMemory [[thisModelName]])) {
-            projectMemory [[thisModelName]] <- append(
-                projectMemory[[thisModelName]], 
-                structure(list(NULL), names = thisProcessID)
-            )
-        }
-        # If missing, append the argument, and if not replace it:
-        if(!thisArgumentName %in% names(projectMemory [[thisModelName]] [[thisProcessID]])) {
-            projectMemory [[thisModelName]] [[thisProcessID]] <- append(
-                projectMemory [[thisModelName]] [[thisProcessID]], 
-                structure(list(thisArgumentValue), names = thisArgumentName)
-            )
-        }
-        else {
-            projectMemory [[thisModelName]] [[thisProcessID]] [[thisArgumentName]] <- thisArgumentValue
-        }
+        projectMemory <- appendProjectDescription(
+            projectMemory, 
+            modelName = thisModelName, 
+            processID = thisProcessID, 
+            argumentName = thisArgumentName, 
+            argumentValue = thisArgumentValue
+        )
+        
+        # # Append the missing list elements down to the argument:
+        # if(!thisModelName %in% names(projectMemory)) {
+        #     projectMemory <- append(
+        #         projectMemory, 
+        #         structure(list(NULL), names = thisModelName)
+        #     )
+        # }
+        # if(!thisProcessID %in% names(projectMemory [[thisModelName]])) {
+        #     projectMemory [[thisModelName]] <- append(
+        #         projectMemory[[thisModelName]], 
+        #         structure(list(NULL), names = thisProcessID)
+        #     )
+        # }
+        # # If missing, append the argument, and if not replace it:
+        # if(!thisArgumentName %in% names(projectMemory [[thisModelName]] [[thisProcessID]])) {
+        #     projectMemory [[thisModelName]] [[thisProcessID]] <- append(
+        #         projectMemory [[thisModelName]] [[thisProcessID]], 
+        #         structure(list(thisArgumentValue), names = thisArgumentName)
+        #     )
+        # }
+        # else {
+        #     projectMemory [[thisModelName]] [[thisProcessID]] [[thisArgumentName]] <- thisArgumentValue
+        # }
+        
+        
+        
+        
+        
         
         
         
@@ -1342,6 +1355,36 @@ getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL
     # Return the list containing the requested project memory objects:
     projectMemory
 }
+
+
+appendProjectDescription <- function(projectDescription, modelName, processID, argumentName, argumentValue) {
+    # Append the missing list elements down to the argument:
+    if(!modelName %in% names(projectDescription)) {
+        projectDescription <- append(
+            projectDescription, 
+            structure(list(NULL), names = modelName)
+        )
+    }
+    if(!processID %in% names(projectDescription [[modelName]])) {
+        projectDescription [[modelName]] <- append(
+            projectDescription[[modelName]], 
+            structure(list(NULL), names = processID)
+        )
+    }
+    # If missing, append the argument, and if not replace it:
+    if(!argumentName %in% names(projectDescription [[modelName]] [[processID]])) {
+        projectDescription [[modelName]] [[processID]] <- append(
+            projectDescription [[modelName]] [[processID]], 
+            structure(list(thisArgumentValue), names = argumentName)
+        )
+    }
+    else {
+        projectDescription [[modelName]] [[processID]] [[argumentName]] <- argumentValue
+    }
+    
+    return(projectDescription)
+}
+
 
 # Read the process argument files to a list of the elements modelName, processID, argumentName, argumentValue:
 getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL, type = c("current", "original")) {
@@ -3601,15 +3644,33 @@ runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) 
 #' @noRd
 #' @export
 #' 
-convertProjectDescription <- function(projectPath) {
+convertProjectDescription1.92 <- function(projectDescription) {
     # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath)
+    #projectDescription <- getProjectMemoryData(projectPath)
     
-    # Get the StoX version:
-    StoxVersion <- attr(projectDescription, "StoxVersion")
-    if(resourceversion < "1.92") {
-        stop("Backward compatibility not supported for versions of StoX prior to 2.7")
-    }
+    ## Get the StoX version:
+    #StoxVersion <- attr(projectDescription, "StoxVersion")
+    #if(resourceversion < "1.92") {
+    #    stop("Backward compatibility not supported for versions of StoX prior to 2.7")
+    #}
+    
+    # Checkc the version, issuing an error if resourceversion is set and lower than "1.92":
+    checkVersion(projectDescription)
+    
+    # Extract proecess name:
+    
+    
+    # Extract function name:
+    
+    # Extract proecess parameters:
+    
+    # Extract proecess data:
+    
+    # Extract function input:
+    
+    # Extract function parameters:
+    
+    
     
 }
 

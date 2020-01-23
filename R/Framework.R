@@ -3373,7 +3373,18 @@ reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
             # Add file extension:
             filePath <- paste(filePathSansExt, "geojson", sep = ".")
             # Write the file:
-            jsonlite::write_json(geojsonio::geojson_json(processOutputOne), path = filePath)
+            jsonObject <- geojsonio::geojson_json(processOutputOne)
+            
+            # Hack to rermove all IDs from the geojson:
+            browser()
+            removeIDsFromGeojson <- function(json) {
+                json[[1]] <- gsub(",\\s*\\\"id\\\":[\\\"a-zA-Z1-9_]*", "", json[[1]])
+                json
+            }
+            
+            jsonObject <- removeIDsFromGeojson(jsonObject)
+            
+            jsonlite::write_json(jsonObject, path = filePath)
         }
         else if("data.table" %in% class(processOutputOne)) {
             # Add file extension:
@@ -3657,18 +3668,38 @@ convertProjectDescription1.92 <- function(projectDescription) {
     # Checkc the version, issuing an error if resourceversion is set and lower than "1.92":
     checkVersion(projectDescription)
     
-    # Extract proecess name:
+    newProjectDescription <- list()
     
     
-    # Extract function name:
+    #for(modelName in )
     
-    # Extract proecess parameters:
     
-    # Extract proecess data:
     
-    # Extract function input:
+    convertProcess <- function(projectDescription, modelName, processID) {
+        
+        process <- list()
+        
+        # Extract proecess name:
+        projectDescription <- appendProjectDescription(
+            projectDescription = projectDescription, 
+            modelName = modelName, 
+            processID = processID, 
+            argumentName = "processName", 
+            argumentValue = 
+        )
+        
+        # Extract function name:
+        
+        # Extract proecess parameters:
+        
+        # Extract proecess data:
+        
+        # Extract function input:
+        
+        # Extract function parameters:
+    }
     
-    # Extract function parameters:
+    
     
     
     

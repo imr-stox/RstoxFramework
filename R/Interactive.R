@@ -520,6 +520,23 @@ copyPolygonNameToID <- function(stratum) {
         stratum@polygons[[ind]]@ID <- polygonName[ind]
     }
     
+    # Update rownames of the data slot:
+    rownames(slot(stratum, "data")) <- polygonName
+    
+    return(stratum)
+}
+
+# Function to rename the IDs to the column polygonNames of a SpatialPolygonsDataFrame:
+setEmptyID <- function(stratum) {
+    
+    # Get the polygon names and IDs:
+    polygonName <- stratum$polygonName
+    
+    # Rename all IDs to the polygon names:
+    for (ind in seq_along(stratum@polygons)) {
+        stratum@polygons[[ind]]@ID <- ""
+    }
+    
     return(stratum)
 }
 

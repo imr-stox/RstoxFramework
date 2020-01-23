@@ -138,8 +138,8 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     if(dataType %in% getRstoxFrameworkDefinitions("stratumDataType")) {
         "stratum"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("asouticPSUDataType")) {
-        "asouticPSU"
+    else if(dataType %in% getRstoxFrameworkDefinitions("acousticPSUDataType")) {
+        "acoustic"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaPSUDataType")) {
         "sweptAreaPSU"
@@ -313,7 +313,9 @@ getAcousticPSUData <- function(projectPath, modelName, processID) {
     #PSU_Stratum <- unique(processData$AcousticPSU[, c("PSU", "Stratum")])
     #Stratum = unique(processData$AcousticPSU$Stratum)
     # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    Stratum = unique(processData$Stratum_PSU$Stratum)
+    Stratum = data.table::data.table(
+        Stratum = unique(processData$Stratum_PSU$Stratum)
+    )
     
     # Return the list of data.tables:
     output <- c(

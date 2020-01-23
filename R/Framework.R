@@ -3376,12 +3376,6 @@ reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
             jsonObject <- geojsonio::geojson_json(processOutputOne)
             
             # Hack to rermove all IDs from the geojson:
-            browser()
-            removeIDsFromGeojson <- function(json) {
-                json[[1]] <- gsub(",\\s*\\\"id\\\":[\\\"a-zA-Z1-9_]*", "", json[[1]])
-                json
-            }
-            
             jsonObject <- removeIDsFromGeojson(jsonObject)
             
             jsonlite::write_json(jsonObject, path = filePath)
@@ -3397,6 +3391,13 @@ reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
         }
     }
 }
+
+removeIDsFromGeojson <- function(json) {
+    json[[1]] <- gsub(",\\s*\\\"id\\\":[\\\"a-zA-Z1-9_]*", "", json[[1]])
+    json
+}
+
+
 
 # Function to flatten the list and add names from the levels of the list:
 unlistToDataType <- function(processOutput) {

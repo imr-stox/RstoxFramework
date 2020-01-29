@@ -153,6 +153,16 @@ initiateRstoxFramework <- function(){
         )
     )
     
+    # Define filter operators for the different data types:
+    filterOperators <- list(
+        character = c("==", "!=", "%in%", "%notin%"), 
+        logical   = c("==", "!="), # This may never be used
+        integer   = c("<", "<=", "==", "!=", ">=", ">", "%in%", "%notin%"),
+        double    = c("<", "<=", "==", "!=", ">=", ">", "%in%", "%notin%"),
+        numeric   = c("<", "<=", "==", "!=", ">=", ">", "%in%", "%notin%"),
+        POSIXct   = c("<", "<=", "==", "!=", ">=", ">", "%in%", "%notin%")
+    )
+    
     # Define the StoX folders, data sources, model names, model display names, model descriptions, and the latter three grouped as model info:
     stoxFolders <- c(
         Input = "input", 
@@ -165,24 +175,24 @@ initiateRstoxFramework <- function(){
         Landing = "landing"
     )
     stoxModelFolders <- c(
-        Baseline = "baseline", 
-        Analysis = "analysis", 
-        Report = "report"
+        baseline = "baseline", 
+        analysis = "analysis", 
+        report = "report"
     )
     stoxModelNames <- c(
-        Baseline = "Baseline", 
-        Analysis = "Analysis", 
-        Report = "Report"
+        baseline = "baseline", 
+        analysis = "analysis", 
+        report = "report"
     )
     stoxModelDisplayNames <- c(
-        Baseline = "Baseline", 
-        Analysis = "Analysis", 
-        Report = "Report"
+        baseline = "Baseline", 
+        analysis = "Analysis", 
+        report = "Report"
     )
     stoxModelDescriptions <- c(
-        Baseline = "Baseline: The estimation model", 
-        Analysis = "Analysis: Processes that run Baseline for analysis, such as estimation of variation", 
-        Report = "Report: Processes that run Baseline or Analysis processes to generate reports"
+        baseline = "Baseline: The estimation model", 
+        analysis = "Analysis: Processes that run Baseline for analysis, such as estimation of variation", 
+        report = "Report: Processes that run Baseline or Analysis processes to generate reports"
     )
     stoxModelInfo <- data.table::data.table(
         modelName = stoxModelNames, 
@@ -261,9 +271,9 @@ initiateRstoxFramework <- function(){
     )
     processDefaultSansProcessData <- processDefaultFull[names(processDefaultFull) != "processData"]
     processDefault <- list(
-        Baseline = processDefaultFull, 
-        Analysis = processDefaultSansProcessData, 
-        Report = processDefaultSansProcessData
+        baseline = processDefaultFull, 
+        analysis = processDefaultSansProcessData, 
+        report = processDefaultSansProcessData
     )
     
     
@@ -1157,7 +1167,6 @@ writeActiveProcessID <- function(projectPath, modelName, activeProcessID) {
 #' @export
 #'
 revertActiveProcessID <- function(projectPath, modelName, step = 1) {
-    browser()
     # Read the active process ID for the model:
     activeProcessID <- getActiveProcessID(
         projectPath = projectPath, 
@@ -2188,7 +2197,7 @@ isFunctionInput <- function(parameter) {
 }
 
 
-createEmptyProcess <- function(modelName = "Baseline", processName = NULL) {
+createEmptyProcess <- function(modelName = "baseline", processName = NULL) {
     # Get the default process with empty fields for project and function name, process data, and function parameters and inputs:
     process <- getRstoxFrameworkDefinitions("processDefault")[[modelName]]
     # Possibly add the given process name (this is done here since creating a default process name is not always needed or wanted):
@@ -3106,7 +3115,7 @@ setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
 #' 
 #' Gets the output of a process that has been run.
 #' 
-#' @param modelName The name of the model (one of "Baseline", "Analysis" and "Report").
+#' @param modelName The name of the model (one of "baseline", "analysis" and "report").
 #' @param processID The ID of the process.
 #' @param tableName The name of the table to extract from the process.
 #' 

@@ -36,8 +36,12 @@ getAvailableTemplatesDescriptions <- function() {
 ##### Processes: #####
 # Function to get whether the process has input data error:
 getFunctionInputErrors <- function(ind, processTable, functionInputs) {
-    
+
     #### Check wheter the processes from which process output is requested as funciton input exist prior to the current process: ####
+    if(ind == 1) {
+        return(FALSE)
+    }
+    
     # Get names of processes prior to the current process:
     prior <- seq_len(ind - 1)
     # Discard processes with enabled = FALSE:
@@ -993,7 +997,7 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 #' 
 #' @export
 #' 
-getPossibleValues <- function(projectPath, modelName, processID) {
+getPossibleValues <- function(projectPath, modelName, processID, tableName) {
     
     # Get the process output:
     processOutput <- getProcessOutput(
@@ -1004,26 +1008,71 @@ getPossibleValues <- function(projectPath, modelName, processID) {
     # Convert to a list of tables:
     processOutput <- unlistToDataType(processOutput)
     
-    # Get a vector of tables:
+    # Get a vector of table names:
     tableNames <- names(processOutput)
+    # Select the requested table:
+    if(! tableName %in% tableNames) {
+        stop("Invalid table. Choose one of the following: ", paste(tableNames, collapse = ", "))
+    }
     
-    # Get a list of column names:
-    columnNames <- lapply(processOutput, names)
-    names(columnNames) <- tableNames
+    # Get the column names:
+    name <- names(processOutput[[tableName]])
+    
+    # Get the data types:
+    type <- sapply(processOutput[[tableName]], firstClass)
+    
+    # Get the operators:
+    operators <- getRstoxFrameworkDefinitions("filterOperators")[type]
     
     # Get a list of unique values for each column of each table:
-    getUniqueValues <- function(x) {
-        lapply(x, function(y) sort(unique(y)))
-    }
-    possibleValues <- lapply(processOutput, getUniqueValues)
+    options <- getPossibleValuesOneTable(processOutput[[tableName]])
+    options <- lapply(options, getOptionList)
+    
+     
+    output <- mapply(
+        list, 
+        name = name, 
+        type = type, 
+        operators = operators, 
+        options = options, 
+        SIMPLIFY = FALSE
+    )
+    
     
     # Return a list of the tableNames, columnNames and possibleValues:
-    return(
-        list(
-            tableNames = tableNames, 
-            columnNames = columnNames,
-            possibleValues = possibleValues
-        )
-    )
+    return(output)
 }
 
+getOptionList <- function(option, digits = 6) {
+    option <- data.table::data.table(
+        name = format(option, digits = digits), 
+        value = option
+    )
+    output <- unname(split(option, seq_len(nrow(option))))
+    output <- lapply(output, as.list)
+    return(output)
+}
+
+
+getPossibleValuesOneTable <- function(table) {
+    # Unique and then sort each column:
+    sortUnique <- function(y) {
+        sort(unique(y))
+    }
+    lapply(table, sortUnique)
+}
+
+
+#' 
+#' @export
+#' 
+RExpression2JSON <- function(RExpression) {
+    
+}
+
+#' 
+#' @export
+#' 
+JSON2RExpression <- function(JSON) {
+    
+}

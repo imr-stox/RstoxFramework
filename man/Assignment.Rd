@@ -19,7 +19,7 @@ removeHaulFromAssignment(PSU, Layer, Haul, projectPath, modelName, processID)
 
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
-\item{modelName}{The name of the model (one of "Baseline", "Analysis" and "Report").}
+\item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
 
 \item{processID}{The ID of the process.}
 }

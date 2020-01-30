@@ -197,147 +197,190 @@ getNewDefaultName <- function(names, prefix) {
 }
 
 
-json_str <- '{
-  "negate": true,
-  "linkoperator": "&",
-  "group": [
-    {
-      "linkoperator": "|",
-      "group": [
-        {
-          "negate": false,
-          "field": "age",
-          "operator": "!=",
-          "value": 1
-        },
-        {
-          "negate": false,
-          "field": "sttype",
-          "operator": "<",
-          "value": 5
-        }
-      ]
-    },
-    {
-      "negate": false,
-      "field": "name",
-      "operator": "%in%",
-      "value": [1,2,3]
-    }
-  ]
-}'
 
-j2expr = function(json_str) {
-  #convert from json to list
-  json_l <- jsonlite::fromJSON(json_str, simplifyVector = F)
-  # convert from list to expression 
-  l2expr = function(l) {
-    ret <- NULL
+
+
+# Function to convert from R list to expression:
+list2expression <- function(l) {
+    # Declare the resulting expression
+    result <- NULL
+    # If the current group or expression should be negated, we need to enclose the expression in paretheses:
     negate <- isTRUE(l$negate)
-    needpar <- negate
-    if(any(names(l) == "linkoperator")) { 
-      # group found
-      needpar <- TRUE
-      link <- paste('', l$linkoperator, '')
-      ret <- paste(lapply(l$group, l2expr), collapse=link)
-    } else { 
-      # expression found
-      val <- l$value
-      needQuote <- is.character(val)
-      if(needQuote) {
-        val <- paste0('\'', val, '\'')
-      }
-      if(is.list(val)) {
-        val = paste0('c(', paste(val, collapse=','), ')')
-      }
-      ret <- paste(l$field, l$operator, val)
+    needParentheses <- negate
+    
+    # Identify groups by the linkoperator:
+    if(any(names(l) == "linkOperator")) { 
+        # Groups need parentheses, and the link is padded by spaces for readability:
+        needParentheses <- TRUE
+        link <- paste('', l$linkOperator, '')
+        
+        # Recurse into the children:
+        result <- paste(lapply(l$group, list2expression), collapse = link)
+    } 
+    # Otherwise build the expression:
+    else {
+        # Extract the value for some processing:
+        value <- l$value
+        
+        # If the value is a character, pad with quotation marks:
+        if(is.character(value)) {
+            value <- paste0('\'', value, '\'')
+        }
+        # If more than one value, obtain the c(...) notation: 
+        if(length(value) > 1) {
+            value = paste0('c(', paste(value, collapse=', '), ')')
+        }
+        
+        # Paste field, operator and value:
+        result <- paste(l$field, l$operator, value)
     }
-    if(needpar) {
-      ret <- paste0('(', ret, ')')
+    
+    # Enclose in parentheses if there was a link operator or a negation:
+    if(needParentheses) {
+        result <- paste0('(', result, ')')
     }
+    
+    # Add the exclamation mark to apply negation:
     if(negate) {
-      ret <- paste0('!', ret)
+        result <- paste0('!', result)
     }
-    return(ret)
-  }
-  l2expr(json_l)
+    
+    return(result)
 }
+
+
+
+
+
+
+
+#j2expr = function(json_str) {
+#    #convert from json to list
+#    json_l <- jsonlite::fromJSON(json_str, simplifyVector = F)
+#    
+#    l2expr(json_l)
+#}
 
 #expr <- j2expr(json_str)
 
 #setRefClass("Log", fields=list(entries="list"))
 #log <- new("Log",entries=list())
 #writeToLog = function(level, s, lg) {
-#  lg$entries[[length(lg$entries) + 1]] <- paste(level, s);
+#	lg$entries[[length(lg$entries) + 1]] <- paste(level, s);
 #}
 #writeToLog(1, 'start', l)
 
-#convert from expression to list 
-expr2j = function(expr) {
-  expr2l = function(expr, parent, recLevel, log) {
-    res <- NULL;
+
+expression2list = function(expr, parent = NULL) {
+    res <- NULL
     if(is.null(parent)) {
-      parent <- list(listOperator = '&', rules = list())
-      res <- parent;
+        parent <- list(linkOperator = '&', rules = list())
+        res <- parent
     }
     orFoundAtLevel0 <- FALSE
     andFoundAtLevel0 <- FALSE
     level <- 0
     for(c in unlist(strsplit(expr, ''))) {
-      andFoundAtLevel0 <- andFoundAtLevel0 | level == 0 & c == '&'
-      orFoundAtLevel0 <- orFoundAtLevel0 | level == 0 & c == '|'
-      if (c == '(') {
-        level <- level + 1;
-      } else if (c == ')') {
-        level <- level -1;
-      }
+        andFoundAtLevel0 <- andFoundAtLevel0 | level == 0 & c == '&'
+        orFoundAtLevel0 <- orFoundAtLevel0 | level == 0 & c == '|'
+        if (c == '(') {
+            level <- level + 1
+        } else if (c == ')') {
+            level <- level -1
+        }
     }
     splitOperator <- NULL
     groupsList <- NULL
     if(orFoundAtLevel0) {
-      splitOperator <- '|'
+        splitOperator <- '|'
     } else if(andFoundAtLevel0) {
-      splitOperator <- '&'
+        splitOperator <- '&'
     }
     expr <- trimws(expr)
-  #  writeToLog(recLevel, paste("afterparse-1:", "class:", class(expr), "expr:", expr), log)
+    
     if(!is.null(splitOperator)) {
-      res$linkoperator = splitOperator
-      groupsList <- unlist(strsplit(expr, splitOperator, fixed=T))
-      #res$group <- lapply(groupsList, expr2l, group, recLevel + 1)
-      res$group <- list()
-      for(grp in groupsList) {
-        res$group[[length(res$group) + 1]] <- expr2l(grp, parent, recLevel + 1, log) 
-      }
+        res$linkOperator = splitOperator
+        groupsList <- unlist(strsplit(expr, splitOperator, fixed = TRUE))
+        
+        res$group <- list()
+        for(grp in groupsList) {
+            res$group[[length(res$group) + 1]] <- expression2list(grp, parent) 
+        }
     } else {
-      negate <- startsWith(expr, '!')
-      if(isTRUE(negate)) {
-        expr <- substr(expr, 2, nchar(expr))
-      }
-      expr <- trimws(expr)
-      if(startsWith(expr, '(') & endsWith(expr, ')')) {
-        # rid off surrounding parenthesis (..)
-        expr <- substr(expr, 2, nchar(expr) - 1)
-        res <- expr2l(expr, parent, recLevel + 1, log)
-        res$negate <- negate
-      } else {
-        # expression field op value
-        s <- unlist(strsplit(gsub('([.^s]*)\\s*(!=|==|<|<=|>|>=|%in%)\\s*([.^s]*)', '\\1;\\2;\\3', expr), ';'))
-        if(length(s) == 3) {
-          #valid syntax: field op value
-          val <- eval(parse(text=s[[3]]))
-          res <- list(field=s[[1]], operator=s[[2]], value=val)
-          if(!is.null(parent)) {
-            parent$group[[length(parent$group) + 1]] <- res
-          }
-        }   
-      }
+        negate <- startsWith(expr, '!')
+        if(isTRUE(negate)) {
+            expr <- substr(expr, 2, nchar(expr))
+        }
+        expr <- trimws(expr)
+        if(startsWith(expr, '(') & endsWith(expr, ')')) {
+            # rid off surrounding parenthesis (..)
+            expr <- substr(expr, 2, nchar(expr) - 1)
+            res <- expression2list(expr, parent)
+            res$negate <- negate
+        } else {
+            # expression field op value
+            s <- unlist(strsplit(gsub('([.^s]*)\\s*(!=|==|<|<=|>|>=|%in%)\\s*([.^s]*)', '\\1;\\2;\\3', expr), ';'))
+            if(length(s) == 3) {
+                #valid syntax: field op value
+                val <- eval(parse(text=s[[3]]))
+                res <- list(field=s[[1]], operator=s[[2]], value=val)
+                if(!is.null(parent)) {
+                    parent$group[[length(parent$group) + 1]] <- res
+                }
+            }	 
+        }
     }
     res
-  }
-  json_l <- expr2l(expr, NULL, 0, log)
-  jsonlite::toJSON(json_l, auto_unbox = T, pretty=T)
 }
-j2expr(expr2j(expr))
 
 
+
+
+l <- list(
+    linkOperator = "&", 
+    group = list(
+        list(
+            linkOperator = "|", 
+            group = list(
+                list(
+                    negate = FALSE, 
+                    field = "age", 
+                    operator = "!=", 
+                    value = 1
+                ), 
+                list(
+                    negate = FALSE, 
+                    field = "sttype", 
+                    operator = "<", 
+                    value = 5
+                )
+            )
+        ), 
+        list(
+            negate = FALSE, 
+            field = "name", 
+            operator = "%in%", 
+            value = c(1, 2, 4.5)
+        )
+    ), 
+    negate = TRUE
+)
+
+ll <- list2expression(l)
+lll <- expression2list(ll, NULL)
+names(lll)
+names(l)
+identical(lll, l)
+all.equal(lll, l)
+
+
+#convert from expression to list 
+expr2j = function(expr) {
+    
+    json_l <- expr2l(expr, NULL, 0, log)
+    jsonlite::toJSON(json_l, auto_unbox = T, pretty=T)
+}
+#j2expr(expr2j(expr))
+    
+    
+    

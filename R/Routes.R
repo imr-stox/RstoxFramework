@@ -997,7 +997,7 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 #' 
 #' @export
 #' 
-getPossibleValues <- function(projectPath, modelName, processID, tableName) {
+getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     
     # Get the process output:
     processOutput <- getProcessOutput(
@@ -1066,13 +1066,13 @@ getPossibleValuesOneTable <- function(table) {
 #' 
 #' @export
 #' 
-RExpression2JSON <- function(RExpression) {
+expression2List <- function(expression) {
     
 }
 
 #' 
 #' @export
 #' 
-JSON2RExpression <- function(JSON) {
+listRExpression <- function(list) {
     
 }

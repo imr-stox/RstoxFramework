@@ -196,11 +196,17 @@ getNewDefaultName <- function(names, prefix) {
     #potentialNames[latest + 1]
 }
 
+# Function to convert from json to R expression:
+#' 
+#' @export
+#' 
+json2expression <- function(json) {
+    l <- parseParameter(json)
+    list2expression(l)
+}
 
 
-
-
-# Function to convert from R list to expression:
+# Function to convert from R list to R expression:
 #' 
 #' @export
 #' 

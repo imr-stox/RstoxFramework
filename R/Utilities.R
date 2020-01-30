@@ -363,18 +363,30 @@ expression2list = function(expr, parent = NULL) {
             )
             safeSeparator <- ";"
             groupingKey <- paste0("\\", 1:3, collapse = safeSeparator)
+            code <- gsub(
+                regularExpression, 
+                groupingKey, 
+                expr
+            )
+            splittedCode <- strsplit(code, safeSeparator)[[1]]
+            s <- c(
+                splittedCode[1], 
+                splittedCode[2], 
+                paste(splittedCode[-c(1,2)], collapse = safeSeparator)
+            )
+            
             
             #s <- unlist(strsplit(gsub('([.^s]*)\\s*(!=|==|<|<=|>|>=|%in%)\\s*([.^s]*)', '\\1;\\2;\\3', expr), ';'))
-            s <- unlist(
-                strsplit(
-                    gsub(
-                        regularExpression, 
-                        groupingKey, 
-                        expr
-                    ), 
-                    safeSeparator
-                )
-            )
+            #s <- unlist(
+            #    strsplit(
+            #        gsub(
+            #            regularExpression, 
+            #            groupingKey, 
+            #            expr
+            #        ), 
+            #        safeSeparator
+            #    )
+            #)
             if(length(s) == 3) {
                 #valid syntax: field op value
                 val <- eval(parse(text = s[[3]]))

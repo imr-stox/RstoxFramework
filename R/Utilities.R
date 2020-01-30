@@ -353,17 +353,16 @@ expression2list = function(expr, parent = NULL) {
             
             # expression field op value
             allPossibleOperators <- unique(unlist(getRstoxFrameworkDefinitions("filterOperators")))
-            space <- "\\s*"
+            space <- "\\s+"
             regularExpression <- paste0(
-                "([.^s]*)", 
+                "([[:alnum:]^\\\\s]+)", 
                 space, 
                 paste0("(", paste(allPossibleOperators, collapse = "|"), ")"), 
                 space, 
-                "([.^s]*)"
+                "(.+)"
             )
             safeSeparator <- ";"
             groupingKey <- paste0("\\", 1:3, collapse = safeSeparator)
-                
             
             #s <- unlist(strsplit(gsub('([.^s]*)\\s*(!=|==|<|<=|>|>=|%in%)\\s*([.^s]*)', '\\1;\\2;\\3', expr), ';'))
             s <- unlist(

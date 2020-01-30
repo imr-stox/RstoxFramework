@@ -3151,36 +3151,31 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     if(folderDepth == 1) {
         # Get the selected tables:
         if(length(tableName)) {
-            selectedProcessOutputFiles <- selectValidElements(processOutputFiles, tableName)
-        }
-        
-        if(length(selectedProcessOutputFiles) == 0) {
-            warning("Invalid specification of projectPath, modelName, processID or tableName (most likely tableName). Possible values are ", paste(processOutputFiles, collapse = ", "))
+            processOutputFiles <- selectValidElements(processOutputFiles, tableName)
         }
     }
     else {
         # Apply the subFolder if given:
         if(length(subFolder)) {
-            selectedProcessOutputFiles <- selectValidElements(processOutputFiles, subFolder)
+            processOutputFiles <- selectValidElements(processOutputFiles, subFolder)
         }
         
         # Also select the tables of each sub folder:
         if(length(tableName)) {
             # Warning: This selection ignores the file extension by the partial matching of R:
-            selectedProcessOutputFiles <- lapply(selectedProcessOutputFiles, selectValidElements, tableName)
+            processOutputFiles <- lapply(processOutputFiles, selectValidElements, tableName)
         }
-        
-        if(length(selectedProcessOutputFiles) == 0) {
-            temp <- unlist(lapply(names(processOutputFiles), function(x) paste(x, basename(tools::file_path_sans_ext(processOutputFiles[[x]])), sep = "/")))
-            warning("Invalid specification of projectPath, modelName, processID or tableName (most likely tableName). Possible values are \n\t", paste(temp, collapse = ",\n\t"))
-        }
+    }
+    
+    if(length(processOutputFiles) == 0) {
+        warning("Invalid specification of projectPath, modelName, processID or tableName (most likely tableName).")
     }
     
     
     
     # Read the files recursively:
     processOutput <- rapply(
-        selectedProcessOutputFiles, 
+        processOutputFiles, 
         readProcessOutputFile, 
         flatten = flatten, 
         pretty = pretty, 
@@ -3433,14 +3428,16 @@ unlistToDataType <- function(processOutput) {
     
     
     unlistOne <- function(processOutput) {
-        # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
-        processOutputNames <- lapply(names(l), function(x) paste(x, names(l[[x]]), sep = "_"))
-        
         # Unlist and add the names:
         if(!areAllValidOutputDataClasses(processOutput)){
+            # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
+            processOutputNames <- unlist(lapply(names(processOutput), function(x) paste(x, names(processOutput[[x]]), sep = "_")))
+            # Unlist down one level:
             processOutput <- unlist(processOutput, recursive = FALSE)
+            # Add the names again:
+            names(processOutput) <- processOutputNames
         }
-        names(processOutput) <- processOutputNames
+        
         processOutput
     }
     

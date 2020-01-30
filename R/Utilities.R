@@ -201,6 +201,9 @@ getNewDefaultName <- function(names, prefix) {
 
 
 # Function to convert from R list to expression:
+#' 
+#' @export
+#' 
 list2expression <- function(l) {
     # Declare the resulting expression
     result <- NULL
@@ -270,11 +273,17 @@ list2expression <- function(l) {
 #}
 #writeToLog(1, 'start', l)
 
-
+# Parse an R expression to a nested list:
+#' 
+#' @export
+#' 
 expression2list = function(expr, parent = NULL) {
     res <- NULL
     if(is.null(parent)) {
-        parent <- list(linkOperator = '&', rules = list())
+        parent <- list(
+            linkOperator = '&', 
+            negate = FALSE, 
+            rules = list())
         res <- parent
     }
     orFoundAtLevel0 <- FALSE
@@ -298,6 +307,7 @@ expression2list = function(expr, parent = NULL) {
     }
     expr <- trimws(expr)
     
+    # If a splitOperator (| or &) is found, split into a list of groups:
     if(!is.null(splitOperator)) {
         res$linkOperator = splitOperator
         groupsList <- unlist(strsplit(expr, splitOperator, fixed = TRUE))
@@ -306,24 +316,61 @@ expression2list = function(expr, parent = NULL) {
         for(grp in groupsList) {
             res$group[[length(res$group) + 1]] <- expression2list(grp, parent) 
         }
-    } else {
+    } 
+    # Otherwise parse to find any groups identifies with parentheses:
+    else {
+        # Get the negate operator:
         negate <- startsWith(expr, '!')
         if(isTRUE(negate)) {
             expr <- substr(expr, 2, nchar(expr))
         }
         expr <- trimws(expr)
+        
+        # If there are paretheses, interpret these as groups:
         if(startsWith(expr, '(') & endsWith(expr, ')')) {
             # rid off surrounding parenthesis (..)
             expr <- substr(expr, 2, nchar(expr) - 1)
-            res <- expression2list(expr, parent)
-            res$negate <- negate
-        } else {
+            # Add negate and recurse into the groups:
+            res <- #c(
+                #list(negate = negate), 
+                expression2list(expr, parent)
+            #)
+            #res$negate <- negate
+            if(length(res$negate) == 0) {
+                res <- c(
+                    list(negate = negate), 
+                    res
+                )
+            }
+            else {
+                res$negate = res$negate != negate
+            }
+        } 
+        # Otherwise treat the expression:
+        else {
+            # Get the negate operator:
+            print(expr)
+            thisNegate <- startsWith(expr, '!')
+            if(isTRUE(thisNegate)) {
+                expr <- substr(expr, 2, nchar(expr))
+            }
+            expr <- trimws(expr)
+            
             # expression field op value
             s <- unlist(strsplit(gsub('([.^s]*)\\s*(!=|==|<|<=|>|>=|%in%)\\s*([.^s]*)', '\\1;\\2;\\3', expr), ';'))
             if(length(s) == 3) {
                 #valid syntax: field op value
-                val <- eval(parse(text=s[[3]]))
-                res <- list(field=s[[1]], operator=s[[2]], value=val)
+                val <- eval(parse(text = s[[3]]))
+                res <- list(
+                    # Trick to accept one ! outside of the parethesis and one inside, which implies not negate:
+                    negate = negate != thisNegate, 
+                    field = s[[1]], 
+                    operator = s[[2]], 
+                    value = val
+                    )
+                print("res")
+                print(res)
+                print("end")
                 if(!is.null(parent)) {
                     parent$group[[length(parent$group) + 1]] <- res
                 }
@@ -337,9 +384,11 @@ expression2list = function(expr, parent = NULL) {
 
 
 l <- list(
+    negate = TRUE, 
     linkOperator = "&", 
     group = list(
         list(
+            negate = FALSE, 
             linkOperator = "|", 
             group = list(
                 list(
@@ -349,7 +398,7 @@ l <- list(
                     value = 1
                 ), 
                 list(
-                    negate = FALSE, 
+                    negate = TRUE, 
                     field = "sttype", 
                     operator = "<", 
                     value = 5
@@ -362,24 +411,23 @@ l <- list(
             operator = "%in%", 
             value = c(1, 2, 4.5)
         )
-    ), 
-    negate = TRUE
+    )
 )
 
-ll <- list2expression(l)
-lll <- expression2list(ll, NULL)
-names(lll)
-names(l)
-identical(lll, l)
-all.equal(lll, l)
+#ll <- list2expression(l)
+#lll <- expression2list(ll, NULL)
+#names(lll)
+#names(l)
+#identical(lll, l)
+#all.equal(lll, l)
 
 
 #convert from expression to list 
-expr2j = function(expr) {
-    
-    json_l <- expr2l(expr, NULL, 0, log)
-    jsonlite::toJSON(json_l, auto_unbox = T, pretty=T)
-}
+#expr2j = function(expr) {
+#    
+#    json_l <- expr2l(expr, NULL, 0, log)
+#    jsonlite::toJSON(json_l, auto_unbox = T, pretty=T)
+#}
 #j2expr(expr2j(expr))
     
     

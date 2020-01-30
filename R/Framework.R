@@ -3132,6 +3132,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
         subFolder <- sapply(subFolder_tableName, "[", 1)
         tableName <- sapply(subFolder_tableName, "[", 2)
     }
+   
     
     # Get the directory holding the output files:
     folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID)
@@ -3150,24 +3151,36 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     if(folderDepth == 1) {
         # Get the selected tables:
         if(length(tableName)) {
-            processOutputFiles <- selectValidElements(processOutputFiles, tableName)
+            selectedProcessOutputFiles <- selectValidElements(processOutputFiles, tableName)
+        }
+        
+        if(length(selectedProcessOutputFiles) == 0) {
+            warning("Invalid specification of projectPath, modelName, processID or tableName (most likely tableName). Possible values are ", paste(processOutputFiles, collapse = ", "))
         }
     }
     else {
         # Apply the subFolder if given:
         if(length(subFolder)) {
-            processOutputFiles <- selectValidElements(processOutputFiles, subFolder)
+            selectedProcessOutputFiles <- selectValidElements(processOutputFiles, subFolder)
         }
         
         # Also select the tables of each sub folder:
         if(length(tableName)) {
-            processOutputFiles <- lapply(processOutputFiles, selectValidElements, tableName)
+            # Warning: This selection ignores the file extension by the partial matching of R:
+            selectedProcessOutputFiles <- lapply(selectedProcessOutputFiles, selectValidElements, tableName)
+        }
+        
+        if(length(selectedProcessOutputFiles) == 0) {
+            temp <- unlist(lapply(names(processOutputFiles), function(x) paste(x, basename(tools::file_path_sans_ext(processOutputFiles[[x]])), sep = "/")))
+            warning("Invalid specification of projectPath, modelName, processID or tableName (most likely tableName). Possible values are \n\t", paste(temp, collapse = ",\n\t"))
         }
     }
     
+    
+    
     # Read the files recursively:
     processOutput <- rapply(
-        processOutputFiles, 
+        selectedProcessOutputFiles, 
         readProcessOutputFile, 
         flatten = flatten, 
         pretty = pretty, 
@@ -3319,7 +3332,6 @@ getProcessOutputTableNames <- function(projectPath, modelName, processID) {
 deleteProcessOutput <- function(projectPath, modelName, processID) {
     # Get the directory holding the output files:
     folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID)
-    print(folderPath)
     unlink(folderPath, recursive = FALSE, force = TRUE)
 }
 
@@ -3353,7 +3365,7 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
     if(length(processOutput)) {
         # Unlist introduces dots, and we replace by underscore:
         processOutput <- unlistToDataType(processOutput)
-        names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)
+        #names(processOutput) <- gsub(".", "_", names(processOutput), fixed = TRUE)
         
         folderPath <- getProjectPaths(
             projectPath = projectPath, 
@@ -3411,7 +3423,7 @@ removeIDsFromGeojson <- function(json) {
 # Function to flatten the list and add names from the levels of the list:
 unlistToDataType <- function(processOutput) {
     
-    # Function to check that all the output elements are of the vvavli classes:
+    # Function to check that all the output elements are of the valid classes:
     areAllValidOutputDataClasses <- function(processOutput) {
         validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
         classes <- sapply(processOutput, firstClass)
@@ -3421,9 +3433,14 @@ unlistToDataType <- function(processOutput) {
     
     
     unlistOne <- function(processOutput) {
+        # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
+        processOutputNames <- lapply(names(l), function(x) paste(x, names(l[[x]]), sep = "_"))
+        
+        # Unlist and add the names:
         if(!areAllValidOutputDataClasses(processOutput)){
             processOutput <- unlist(processOutput, recursive = FALSE)
         }
+        names(processOutput) <- processOutputNames
         processOutput
     }
     

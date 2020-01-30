@@ -1003,29 +1003,35 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     processOutput <- getProcessOutput(
         projectPath = projectPath, 
         modelName = modelName, 
-        processID = processID
+        processID = processID, 
+        tableName = tableName, 
+        drop = TRUE
     )
-    # Convert to a list of tables:
-    processOutput <- unlistToDataType(processOutput)
     
-    # Get a vector of table names:
-    tableNames <- names(processOutput)
-    # Select the requested table:
-    if(! tableName %in% tableNames) {
-        stop("Invalid table. Choose one of the following: ", paste(tableNames, collapse = ", "))
-    }
+    # Convert to a list of tables:
+    #processOutput <- unlistToDataType(processOutput)
+    
+    ## Get a vector of table names:
+    #tableNames <- names(processOutput)
+    ## Select the requested table:
+    #if(! tableName %in% tableNames) {
+    #    stop("Invalid table. Choose one of the following: ", paste(tableNames, collapse = ", "))
+    #}
     
     # Get the column names:
-    name <- names(processOutput[[tableName]])
+    #name <- names(processOutput[[tableName]])
+    name <- names(processOutput)
     
     # Get the data types:
-    type <- sapply(processOutput[[tableName]], firstClass)
+    #type <- sapply(processOutput[[tableName]], firstClass)
+    type <- sapply(processOutput, firstClass)
     
     # Get the operators:
     operators <- getRstoxFrameworkDefinitions("filterOperators")[type]
     
     # Get a list of unique values for each column of each table:
-    options <- getPossibleValuesOneTable(processOutput[[tableName]])
+    #options <- getPossibleValuesOneTable(processOutput[[tableName]])
+    options <- getPossibleValuesOneTable(processOutput)
     options <- lapply(options, getOptionList)
     
      

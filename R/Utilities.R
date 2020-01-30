@@ -331,11 +331,7 @@ expression2list = function(expr, parent = NULL) {
             # rid off surrounding parenthesis (..)
             expr <- substr(expr, 2, nchar(expr) - 1)
             # Add negate and recurse into the groups:
-            res <- #c(
-                #list(negate = negate), 
-                expression2list(expr, parent)
-            #)
-            #res$negate <- negate
+            res <- expression2list(expr, parent)
             if(length(res$negate) == 0) {
                 res <- c(
                     list(negate = negate), 
@@ -349,7 +345,6 @@ expression2list = function(expr, parent = NULL) {
         # Otherwise treat the expression:
         else {
             # Get the negate operator:
-            print(expr)
             thisNegate <- startsWith(expr, '!')
             if(isTRUE(thisNegate)) {
                 expr <- substr(expr, 2, nchar(expr))
@@ -357,7 +352,30 @@ expression2list = function(expr, parent = NULL) {
             expr <- trimws(expr)
             
             # expression field op value
-            s <- unlist(strsplit(gsub('([.^s]*)\\s*(!=|==|<|<=|>|>=|%in%)\\s*([.^s]*)', '\\1;\\2;\\3', expr), ';'))
+            allPossibleOperators <- unique(unlist(getRstoxFrameworkDefinitions("filterOperators")))
+            space <- "\\s*"
+            regularExpression <- paste0(
+                "([.^s]*)", 
+                space, 
+                paste0("(", paste(allPossibleOperators, collapse = "|"), ")"), 
+                space, 
+                "([.^s]*)"
+            )
+            safeSeparator <- ";"
+            groupingKey <- paste0("\\", 1:3, collapse = safeSeparator)
+                
+            
+            #s <- unlist(strsplit(gsub('([.^s]*)\\s*(!=|==|<|<=|>|>=|%in%)\\s*([.^s]*)', '\\1;\\2;\\3', expr), ';'))
+            s <- unlist(
+                strsplit(
+                    gsub(
+                        regularExpression, 
+                        groupingKey, 
+                        expr
+                    ), 
+                    safeSeparator
+                )
+            )
             if(length(s) == 3) {
                 #valid syntax: field op value
                 val <- eval(parse(text = s[[3]]))
@@ -368,9 +386,6 @@ expression2list = function(expr, parent = NULL) {
                     operator = s[[2]], 
                     value = val
                     )
-                print("res")
-                print(res)
-                print("end")
                 if(!is.null(parent)) {
                     parent$group[[length(parent$group) + 1]] <- res
                 }
@@ -383,43 +398,7 @@ expression2list = function(expr, parent = NULL) {
 
 
 
-l <- list(
-    negate = TRUE, 
-    linkOperator = "&", 
-    group = list(
-        list(
-            negate = FALSE, 
-            linkOperator = "|", 
-            group = list(
-                list(
-                    negate = FALSE, 
-                    field = "age", 
-                    operator = "!=", 
-                    value = 1
-                ), 
-                list(
-                    negate = TRUE, 
-                    field = "sttype", 
-                    operator = "<", 
-                    value = 5
-                )
-            )
-        ), 
-        list(
-            negate = FALSE, 
-            field = "name", 
-            operator = "%in%", 
-            value = c(1, 2, 4.5)
-        )
-    )
-)
 
-#ll <- list2expression(l)
-#lll <- expression2list(ll, NULL)
-#names(lll)
-#names(l)
-#identical(lll, l)
-#all.equal(lll, l)
 
 
 #convert from expression to list 

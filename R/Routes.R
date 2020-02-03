@@ -479,7 +479,6 @@ getClickPoints <- function(Log, pos = 0.5) {
 # Function to extract the start, middle and end positions from StoxBiotic:
 getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle", "end"), coordinateNames = c("Longitude", "Latitude")) {
     
-    browser()
     # Get the number of positions of the Log:
     numPositions <- nrow(Log)
     
@@ -491,7 +490,11 @@ getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle"
         array(dim = c(numPositions, length(positionNames)), dimnames = list(NULL, positionNames))
     )
     # Fill in the present data:
-    presentNames <- c(outer(Log[1, c(Origin, Origin2)], c("Longitude", "Latitude"), paste0))
+    if(!all(Log$LogOrigin[1] == Log$LogOrigin && Log$LogOrigin2[1] == Log$LogOrigin2)) {
+        stop("LogOrigin or LogOrigin2 is not constant")
+    }
+    
+    presentNames <- c(outer(Log[1, c(LogOrigin, LogOrigin2)], c("Longitude", "Latitude"), paste0))
     positionsNA[, presentNames] <- Log[, .(Longitude, Longitude2, Latitude, Latitude2)]
     
     # Add the missing positions to the Log:

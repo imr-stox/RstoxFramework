@@ -470,7 +470,6 @@ extrapolateEDSU <- function(Log, pos = 0.5) {
 
 getClickPoints <- function(Log, pos = 0.5) {
     # Create the click points as a weighted average of the start and end points:
-    browser()
     Log$clickLongitude <- (Log$startLongitude * (1 - pos) + Log$endLongitude * pos)
     Log$clickLatitude <- (Log$startLatitude * (1 - pos) + Log$endLatitude * pos)
     Log
@@ -478,6 +477,11 @@ getClickPoints <- function(Log, pos = 0.5) {
 
 # Function to extract the start, middle and end positions from StoxBiotic:
 getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle", "end"), coordinateNames = c("Longitude", "Latitude")) {
+    
+    # Temporary change class of the Longitude2 and Latitude2 to double, due to error in the xsd:
+    warning("The XSD of NMDEchosounderV1 specifies lon_stop and lat_stop as string. This is temporarily fixed in RstoxFramework, but should be fixed in the XSD.")
+    Log$Latitude2 <- as.double(Log$Latitude2)
+    Log$Longitude2 <- as.double(Log$Longitude2)
     
     # Get the number of positions of the Log:
     numPositions <- nrow(Log)
@@ -528,6 +532,7 @@ extrapolateLongitudeLatitude <- function(Log) {
     StartNotEnd <- which(!naStart & naEnd)
     onlyMiddle <- which(naStart & !naMiddle & naEnd)
     EndNotStart <- which(naStart & !naEnd)
+    
     
     # Interpolate:
     if(length(StartNotEnd)) {

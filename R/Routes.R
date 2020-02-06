@@ -143,7 +143,7 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
         "stratum"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("acousticPSUDataType")) {
-        "acoustic"
+        "acousticPSU"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaPSUDataType")) {
         "sweptAreaPSU"
@@ -390,19 +390,24 @@ getAssignmentData <- function(projectPath, modelName, processID) {
 #' 
 getStationData <- function(projectPath, modelName, processID) {
     # Get the station data:
+    Cruise <- getProcessOutput(projectPath, modelName, processID, tableName = "Cruise")$Cruise
     Station <- getProcessOutput(projectPath, modelName, processID, tableName = "Station")$Station
-    Haul <- getProcessOutput(projectPath, modelName, processID, tableName = "Haul")$Haul
-    Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
+    CruiseStation <- merge(Cruise, Station, by = intersect(names(Cruise), names(Station)))
+    #Haul <- getProcessOutput(projectPath, modelName, processID, tableName = "Haul")$Haul
+    #Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
     
     # Split the Station table into the coordinates and the properties:
-    coordinates <- Station[, c("Longitude", "Latitude")]
+    coordinateNames <- c("Longitude", "Latitude")
+    coordinates <- CruiseStation[, ..coordinateNames]
     #rownames(coordinates) <- Station$Station
-    properties <- Station[, !(colnames(Station) %in% c("Longitude", "Latitude")), with = FALSE]
+    infoToKeep <- c("CruiseKey", "Platform", "StationKey", "Station", "CatchPlatform", "DateTime", "BottomDepth")
+    properties <- CruiseStation[, ..infoToKeep]
+    #properties <- Station[, !(colnames(Station) %in% c("Longitude", "Latitude")), with = FALSE]
     #rownames(properties) <- Station$Station
     
     # Add the haul info as a property, wrapped in a JSON string:
-    HaulInfo <- Station_Haul[, .(HaulInfo = jsonlite::toJSON(.SD)), .SDcols = names(Haul), by = Station]
-    properties$HaulInfo <- HaulInfo$HaulInfo
+    #HaulInfo <- Station_Haul[, .(HaulInfo = jsonlite::toJSON(.SD)), .SDcols = names(Haul), by = Station]
+    #properties$HaulInfo <- HaulInfo$HaulInfo
     
     # Create a spatial points data frame and convert to geojson:
     StationData <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)
@@ -415,11 +420,53 @@ getStationData <- function(projectPath, modelName, processID) {
 #' @export
 #' 
 getEDSUData <- function(projectPath, modelName, processID) {
-    # Get the EDSU data:
-    Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
     
-    # Extrapolate 
-    extrapolateEDSU(Log)
+    # Get the Log data:
+    Cruise <- getProcessOutput(projectPath, modelName, processID, tableName = "Cruise")$Cruise
+    Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
+    CruiseLog <- merge(Cruise, Log, by = intersect(names(Cruise), names(Log)))
+    
+    # Extrapolate:  
+    CruiseLog <- extrapolateEDSU(CruiseLog)
+    
+    # Define two feature collections, (1) one for the click points for the EDSUs with properties such as position, time, log etc., and (2) the line segments from start to stop point, with the property 'interpolated':
+    
+    # (1) Click points:
+    # Extract the click points:
+    coordinateNames <- c("Longitude", "Latitude")
+    clickPointNames <- c("clickLongitude", "clickLatitude")
+    clickPoints <- CruiseLog[, ..clickPointNames]
+    data.table::setnames(clickPoints, old = clickPointNames, new = coordinateNames)
+    
+    # ...and define the properties:
+    infoToKeep <- c("CruiseKey", "Platform", "LogKey", "Log", "EDSU", "DateTime", "Longitude", "Latitude", "LogOrigin", "Longitude2", "Latitude2", "LogOrigin2", "LogDuration", "LogDistance", "EffectiveLogDistance", "BottomDepth")
+    warning("We need to decide whether to include BottomDepth in StoxAcoustic")
+    properties <- CruiseLog[, ..infoToKeep]
+    
+    # Create a spatial points data frame and convert to geojson:
+    EDSUPoints <- sp::SpatialPointsDataFrame(clickPoints, properties, match.ID = FALSE)
+    EDSUPoints <- geojsonio::geojson_json(EDSUPoints)
+    
+    # (2) Line segments:
+    #lineStrings <- CruiseLog[, sp::Line(cbind(c(startLongitude, endLongitude), c(startLatitude, endLatitude))), by = EDSU]
+    LineList <- apply(
+        CruiseLog[, c("startLongitude", "endLongitude", "startLatitude", "endLatitude")], 
+        1, 
+        function(x) sp::Line(array(x, dim = c(2, 2)))
+    )
+    LinesList <- lapply(seq_along(LineList), function(ind) sp::Lines(LineList[[ind]], ID = CruiseLog$EDSU[ind]))
+    EDSULines <- sp::SpatialLines(LinesList)
+    EDSULines <- sp::SpatialLinesDataFrame(EDSULines, data = CruiseLog[, "interpolated"], match.ID = FALSE)
+    EDSULines <- geojsonio::geojson_json(EDSULines)
+    
+                                       
+    # List the points and lines and return:
+    EDSUData <- list(
+        EDSUPoints = EDSUPoints, 
+        EDSULines = EDSULines
+    )
+    
+    return(EDSUData)
 }
 
 
@@ -479,7 +526,7 @@ getClickPoints <- function(Log, pos = 0.5) {
 getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle", "end"), coordinateNames = c("Longitude", "Latitude")) {
     
     # Temporary change class of the Longitude2 and Latitude2 to double, due to error in the xsd:
-    warning("The XSD of NMDEchosounderV1 specifies lon_stop and lat_stop as string. This is temporarily fixed in RstoxFramework, but should be fixed in the XSD.")
+    warning("The XSD of NMDEchosounderV1 specifies lon_stop and lat_stop as string. This is temporarily fixed in RstoxFramework, but should be fixed in StoxAcoustic!!!!!!!!!!!.")
     Log$Latitude2 <- as.double(Log$Latitude2)
     Log$Longitude2 <- as.double(Log$Longitude2)
     

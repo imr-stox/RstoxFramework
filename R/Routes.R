@@ -400,7 +400,8 @@ getStationData <- function(projectPath, modelName, processID) {
     coordinateNames <- c("Longitude", "Latitude")
     coordinates <- CruiseStation[, ..coordinateNames]
     #rownames(coordinates) <- Station$Station
-    infoToKeep <- c("CruiseKey", "Platform", "StationKey", "Station", "CatchPlatform", "DateTime", "BottomDepth")
+    #infoToKeep <- c("CruiseKey", "Platform", "StationKey", "Station", "CatchPlatform", "DateTime", "Longitude", "Latitude", "BottomDepth")
+    infoToKeep <- c("Station", "Platform", "DateTime", "Longitude", "Latitude", "BottomDepth")
     properties <- CruiseStation[, ..infoToKeep]
     #properties <- Station[, !(colnames(Station) %in% c("Longitude", "Latitude")), with = FALSE]
     #rownames(properties) <- Station$Station
@@ -439,7 +440,8 @@ getEDSUData <- function(projectPath, modelName, processID) {
     data.table::setnames(clickPoints, old = clickPointNames, new = coordinateNames)
     
     # ...and define the properties:
-    infoToKeep <- c("CruiseKey", "Platform", "LogKey", "Log", "EDSU", "DateTime", "Longitude", "Latitude", "LogOrigin", "Longitude2", "Latitude2", "LogOrigin2", "LogDuration", "LogDistance", "EffectiveLogDistance", "BottomDepth")
+    #infoToKeep <- c("CruiseKey", "Platform", "LogKey", "Log", "EDSU", "DateTime", "Longitude", "Latitude", "LogOrigin", "Longitude2", "Latitude2", "LogOrigin2", "LogDuration", "LogDistance", "EffectiveLogDistance", "BottomDepth")
+    infoToKeep <- c("Platform", "EDSU", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
     warning("We need to decide whether to include BottomDepth in StoxAcoustic")
     properties <- CruiseLog[, ..infoToKeep]
     
@@ -757,7 +759,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         possibleValues = c(
             list(character(0)), 
             # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-            as.list(getAvailableStoxFunctionNames(modelName)), 
+            as.list(sort(getAvailableStoxFunctionNames(modelName))), 
             rep(list(c(FALSE, TRUE)), length(processParameters))
         )
     )

@@ -1295,7 +1295,8 @@ getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL
         thisModelName <- argumentFileTable$modelName[ind]
         thisProcessID <- argumentFileTable$processID[ind]
         thisArgumentName <- argumentFileTable$argumentName[ind]
-        thisArgumentValue <- readRDS(argumentFileTable$argumentFile[[ind]])
+        fullPath <- file.path(projectPath, argumentFileTable$argumentFile[[ind]])
+        thisArgumentValue <- readRDS(fullPath)
         
         projectMemory <- appendProjectDescription(
             projectMemory, 
@@ -1483,7 +1484,11 @@ saveArgumentFile <- function(projectPath, modelName, processID, argumentName, ar
     #     argumentName = argumentName, 
     #     argumentFile = argumentFile
     # )
-    argumentFile
+    
+    # Return the file path relative to the project path:
+    relativePath <- sub(projectPath, "", argumentFile)
+    #argumentFile
+    return(relativePath)
 }
 
 
@@ -1600,7 +1605,7 @@ removeFromArgumentFileTable <- function(argumentFileTable, modelName, processID)
     argumentFileTable
 }
 
-# Funciton for saving an argument file table (defining the process memory files comprising the process memory):
+# Function for saving an argument file table (defining the process memory files comprising the process memory):
 saveProjectMemory <- function(projectPath, argumentFileTable) {
     # Save the list of project argument files to the current project description file and to the new project description file:
     currentProjectMemoryFile <- getCurrentProjectMemoryFile(projectPath)
@@ -1617,13 +1622,14 @@ saveProjectMemory <- function(projectPath, argumentFileTable) {
         unlink(projectMemoryIndex$Path[hasPositiveIndex])
         projectMemoryIndex <- projectMemoryIndex[!hasPositiveIndex, ]
     }
-    # Subtract 1 from the indices, and add the new project description file path:
+    # Subtract 1 from the indices, and add the new project description relative file path:
+    newProjectMemoryFile_relativePath <- sub(projectPath, "", newProjectMemoryFile)
     projectMemoryIndex$Index <- projectMemoryIndex$Index - 1
     projectMemoryIndex <- rbind(
         projectMemoryIndex, 
         data.table::data.table(
             Index = 0, 
-            Path = newProjectMemoryFile
+            Path = newProjectMemoryFile_relativePath
         ), 
         fill = TRUE
     )

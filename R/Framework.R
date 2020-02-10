@@ -1807,7 +1807,7 @@ getStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData
     }
     
     # Evaluate and return:
-    f <- lapply(f, eval)
+    f <- lapply(f, eval)    
     
     # Insert c(FALSE, TRUE) for logicals:
     if(fill.logical) {

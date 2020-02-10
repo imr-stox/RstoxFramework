@@ -211,7 +211,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
             processID = processID
         )
     }
-    else if(interactiveMode == "asouticPSU") {
+    else if(interactiveMode == "acousticPSU") {
         getAcousticPSUData(
             projectPath = projectPath, 
             modelName = modelName, 

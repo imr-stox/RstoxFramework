@@ -442,7 +442,6 @@ getEDSUData <- function(projectPath, modelName, processID) {
     # ...and define the properties:
     #infoToKeep <- c("CruiseKey", "Platform", "LogKey", "Log", "EDSU", "DateTime", "Longitude", "Latitude", "LogOrigin", "Longitude2", "Latitude2", "LogOrigin2", "LogDuration", "LogDistance", "EffectiveLogDistance", "BottomDepth")
     infoToKeep <- c("Platform", "EDSU", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
-    warning("We need to decide whether to include BottomDepth in StoxAcoustic")
     properties <- CruiseLog[, ..infoToKeep]
     
     # Create a spatial points data frame and convert to geojson:
@@ -461,7 +460,6 @@ getEDSUData <- function(projectPath, modelName, processID) {
     EDSULines <- sp::SpatialLinesDataFrame(EDSULines, data = CruiseLog[, "interpolated"], match.ID = FALSE)
     EDSULines <- geojsonio::geojson_json(EDSULines)
     
-                                       
     # List the points and lines and return:
     EDSUData <- list(
         EDSUPoints = EDSUPoints, 
@@ -526,11 +524,6 @@ getClickPoints <- function(Log, pos = 0.5) {
 
 # Function to extract the start, middle and end positions from StoxBiotic:
 getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle", "end"), coordinateNames = c("Longitude", "Latitude")) {
-    
-    # Temporary change class of the Longitude2 and Latitude2 to double, due to error in the xsd:
-    warning("The XSD of NMDEchosounderV1 specifies lon_stop and lat_stop as string. This is temporarily fixed in RstoxFramework, but should be fixed in StoxAcoustic!!!!!!!!!!!.")
-    Log$Latitude2 <- as.double(Log$Latitude2)
-    Log$Longitude2 <- as.double(Log$Longitude2)
     
     # Get the number of positions of the Log:
     numPositions <- nrow(Log)
@@ -759,7 +752,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         possibleValues = c(
             list(character(0)), 
             # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-            as.list(sort(getAvailableStoxFunctionNames(modelName))), 
+            as.list(getAvailableStoxFunctionNames(modelName)), 
             rep(list(c(FALSE, TRUE)), length(processParameters))
         )
     )
@@ -790,9 +783,6 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     functionParameters <- data.table::data.table()
     
     if(length(process$functionName)) {
-        
-        # Get the function argument hierarchy:
-        functionArgumentHierarchy = getStoxFunctionMetaData(process$functionName, "functionArgumentHierarchy", showWarnings = FALSE)
         
         ##############################
         ##### 2. FunctionInputs: #####
@@ -830,8 +820,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
             argumentsToShow <- getArgumentsToShow(
                 functionName = process$functionName, 
-                functionArguments = functionInputs$value, 
-                functionArgumentHierarchy = functionArgumentHierarchy
+                functionArguments = functionInputs$value
             )
             # Select only the items to show in the GUI:
             if(!all(argumentsToShow)) {
@@ -874,8 +863,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
             argumentsToShow <- getArgumentsToShow(
                 functionName = process$functionName, 
-                functionArguments = functionParameters$value, 
-                functionArgumentHierarchy = functionArgumentHierarchy
+                functionArguments = functionParameters$value
             )
             # Select only the items to show in the GUI:
             if(!all(argumentsToShow)) {

@@ -1759,7 +1759,7 @@ getStoxFunctionMetaData <- function(functionName, metaDataName = NULL, showWarni
 getArgumentsToShow <- function(functionName, functionArguments) {
     
     # Get the function argument hierarchy:
-    functionArgumentHierarchy <- getStoxFunctionMetaData(process$functionName, "functionArgumentHierarchy", showWarnings = FALSE)
+    functionArgumentHierarchy <- getStoxFunctionMetaData(functionName, "functionArgumentHierarchy", showWarnings = FALSE)
     
     # Loop through the arguments given by parent tags in the functionArgumentHierarchy, and set toShow to FALSE if not any of the criterias are fulfilled:
     toShow <- !logical(length(functionArguments))

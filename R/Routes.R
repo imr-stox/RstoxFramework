@@ -306,7 +306,8 @@ getAcousticPSUData <- function(projectPath, modelName, processID) {
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of AcousticPSU type:
-    if(!all(names(processData) %in% c("Stratum_PSU", "PSU_EDSU"))){
+    #if(!all(names(processData) %in% c("Stratum_PSU", "EDSU_PSU"))){
+    if(! "EDSU_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
         warning("The process ", processName, " does not return process data of type AcousticPSU")
         return(NULL)
@@ -338,7 +339,7 @@ getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of SweptAreaPSU type:
-    if(names(processData) != "SweptAreaPSU"){
+    if(! "Station_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
         warning("The process ", processName, " does not return process data of type SweptAreaPSU")
         return(NULL)
@@ -355,7 +356,7 @@ getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     ###     PSU_Stratum = PSU_Stratum, 
     ###     Stratum = Stratum
     ### )
-    processData$processData
+    return(processData)
 }
 
 #' 

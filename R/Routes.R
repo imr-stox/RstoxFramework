@@ -198,7 +198,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
     
     # Call the appropriate function depending on the interactive mode:
     if(interactiveMode == "stratum") {
-        getStratumData(
+        getStratumList(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -270,8 +270,6 @@ getMapData  <- function(projectPath, modelName, processID) {
 
 # Individual get data functions:
 #' 
-#' @export
-#' 
 getStratumData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -298,8 +296,6 @@ getStratumData <- function(projectPath, modelName, processID) {
     stratumPolygon
 }
 
-#' 
-#' @export
 #' 
 getAcousticPSUData <- function(projectPath, modelName, processID) {
     
@@ -332,8 +328,6 @@ getAcousticPSUData <- function(projectPath, modelName, processID) {
 }
 
 #' 
-#' @export
-#' 
 getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -360,8 +354,6 @@ getSweptAreaPSUData <- function(projectPath, modelName, processID) {
 }
 
 #' 
-#' @export
-#' 
 getAssignmentData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -387,7 +379,32 @@ getAssignmentData <- function(projectPath, modelName, processID) {
 
 
 #' 
-#' @export
+getStratumList <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Return an empty list if processData is empty:
+    if(length(processData) == 0) {
+        return(list())
+    }
+    
+    # Issue an error of the process data are not of StratumPolygon type:
+    if(names(processData) != "StratumPolygon"){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("The process ", processName, " does not return process data of type StratumPolygon")
+        return(list())
+    }
+    
+    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    stratumList <- getStratumNames(processData$StratumPolygon)
+    #stratum <- data.table::data.table(
+    #    stratum = names(processData), 
+    #    includeInTotal = 
+    #)
+    
+    list(stratumList)
+}
+
 #' 
 getStationData <- function(projectPath, modelName, processID) {
     # Get the station data:
@@ -418,8 +435,6 @@ getStationData <- function(projectPath, modelName, processID) {
     StationData
 }
 
-#' 
-#' @export
 #' 
 getEDSUData <- function(projectPath, modelName, processID) {
     

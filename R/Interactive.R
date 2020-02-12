@@ -196,7 +196,7 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
     }
     # Check whether the acoustic PSU already exists:
     if(any(AcosticPSU$Stratum_PSU$PSU == PSU)) {
-        stop("The name of the Acoustic PSU (", ")")
+        stop("The name of the Acoustic PSU (", PSU, ") already exists.")
     }
     
     # Add the acsoutic PSU:
@@ -238,10 +238,10 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     
     # Add the acsoutic PSU:
     PSUsToKeep <- !AcosticPSU$Stratum_PSU$PSU %in% PSU
-    EDSUsToKeep <- !AcosticPSU$PSU_EDSU$PSU %in% PSU
+    EDSUsToKeep <- !AcosticPSU$EDSU_PSU$PSU %in% PSU
     
     AcosticPSU$Stratum_PSU <- AcosticPSU$Stratum_PSU[PSUsToKeep, ]
-    AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
+    AcosticPSU$EDSU_PSU <- AcosticPSU$EDSU_PSU[EDSUsToKeep, ]
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -254,7 +254,11 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     
     # Revert the active process ID to the previous process:
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
-    return(list(activeProcessID = activeProcessID))
+    return(
+        list(
+            activeProcessID = activeProcessID
+        )
+    )
 }
 #' 
 #' @export
@@ -267,10 +271,10 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
     
     # Add the acsoutic PSU:
     PSUsToRename <- AcosticPSU$Stratum_PSU$PSU %in% PSU
-    EDSUsToRename <- AcosticPSU$PSU_EDSU$PSU %in% PSU
+    EDSUsToRename <- AcosticPSU$EDSU_PSU$PSU %in% PSU
     
     AcosticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
-    AcosticPSU$PSU_EDSU$PSU[EDSUsToRename] <- newPSUName
+    AcosticPSU$EDSU_PSU$PSU[EDSUsToRename] <- newPSUName
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -299,16 +303,19 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
     AcosticPSU <- getProcessData(projectPath, modelName, processID)
     
-    # 
-    # Add the acsoutic PSU:
-    toAdd <- data.table::data.table(
-        PSU = PSU, 
-        EDSU = EDSU
-    )
-    AcosticPSU$PSU_EDSU <- data.table::data.table(
-        AcosticPSU$PSU_EDSU, 
-        toAdd
-    )
+    # Set the PSU column for the given EDSUs:
+    atEDSUs <- AcosticPSU$EDSU_PSU$EDSU %in% EDSU
+    AcosticPSU$EDSU_PSU[atEDSUs, PSU := ..PSU]
+    
+    ## Add the acsoutic PSU:
+    #toAdd <- data.table::data.table(
+    #    PSU = PSU, 
+    #    EDSU = EDSU
+    #)
+    #AcosticPSU$PSU_EDSU <- data.table::data.table(
+    #    AcosticPSU$PSU_EDSU, 
+    #    toAdd
+    #)
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -321,7 +328,11 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     
     # Revert the active process ID to the previous process:
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
-    return(list(activeProcessID = activeProcessID))
+    return(
+        list(
+            activeProcessID = activeProcessID
+        )
+    )
 }
 #' 
 #' @export
@@ -332,10 +343,14 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
     AcosticPSU <- getProcessData(projectPath, modelName, processID)
     
-    # Add the acsoutic PSU:
-    EDSUsToKeep <- !AcosticPSU$PSU_EDSU$EDSU %in% EDSU
+    # Set the PSU column to empty string for the given EDSUs:
+    atEDSUs <- AcosticPSU$EDSU_PSU$EDSU %in% EDSU
+    AcosticPSU$EDSU_PSU[atEDSUs, PSU := ""]
     
-    AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
+    ## Add the acsoutic PSU:
+    #EDSUsToKeep <- !AcosticPSU$PSU_EDSU$EDSU %in% EDSU
+    #
+    #AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -348,7 +363,11 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
     
     # Revert the active process ID to the previous process:
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
-    return(list(activeProcessID = activeProcessID))
+    return(
+        list(
+            activeProcessID = activeProcessID
+        )
+    )
 }
 
 

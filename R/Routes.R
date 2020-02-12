@@ -1089,6 +1089,10 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
         options = options, 
         SIMPLIFY = FALSE
     )
+    # Add the fields level:
+    output <- list(
+        fields = output
+    )
     
     
     # Return a list of the tableNames, columnNames and possibleValues:
@@ -1114,17 +1118,3 @@ getPossibleValuesOneTable <- function(table) {
     lapply(table, sortUnique)
 }
 
-
-#' 
-#' @export
-#' 
-expression2List <- function(expression) {
-    
-}
-
-#' 
-#' @export
-#' 
-listRExpression <- function(list) {
-    
-}

@@ -141,7 +141,7 @@ initiateRstoxFramework <- function(){
             "numeric"
         )
     )
-    # Define the process property formats:
+    # Define the process property formats (should this be used to check for valid format????????????):
     processPropertyFormats <- list(
         default = "none", 
         optional = list(
@@ -3280,6 +3280,13 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
         modelName = modelName, 
         processID = processID
     )
+    
+    # If the folder does not exist, it is a sign that the process does not exist:
+    if(length(folderPath) == 0 || !file.exists(folderPath)) {
+        #processName <- getProcessName(projectPath, modelName, processID)
+        stop("The folder ", folderPath, " does not exist. This is likely due to non-existing process")
+    }
+    
     # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
     folderDepth <- getFolderDepth(folderPath)
     

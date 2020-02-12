@@ -68,29 +68,7 @@ replaceEmptyInDataTable = function(DT, replace = NA) {
     DT     
 }
 
-# Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps:
-expandDT <- function(DT, toExpand = NULL) {
-    # Set the columns to expand:
-    if(length(toExpand) == 0) {
-        lens <- lapply(DT, lengths)
-        lensLargerThan1 <- sapply(lens, function(l) any(l > 1))
-        toExpand <- names(DT)[lensLargerThan1]
-    }
 
-    if(length(toExpand)) {
-        DT <- do.call(
-            cbind, 
-            c(
-                list(
-                    DT[rep(1:.N, lengths(get(toExpand[1]))), !toExpand, with = FALSE]
-                ), 
-                lapply(toExpand, function(x) DT[, unlist(get(x))])
-            )
-        )
-    }
-    
-    DT
-}
 
 # Function to create a rectangular data table from a data table which may contain empty cells and vectors in cells (all vectors must have equal length for one row):
 flattenDataTable <- function(x, replace = NA) {
@@ -103,7 +81,7 @@ flattenDataTable <- function(x, replace = NA) {
     # Replace all empty with NA
     x <- replaceEmptyInDataTable(x, replace = replace)
 
-    x <- expandDT(x)
+    x <- RstoxBase::expandDT(x)
 }
 
 # Function to convert data.table to fixed width:
@@ -278,6 +256,8 @@ list2expression <- function(l) {
 #	lg$entries[[length(lg$entries) + 1]] <- paste(level, s);
 #}
 #writeToLog(1, 'start', l)
+
+# Here, a function expression2json is not neede, since openCPU converts to JSON:
 
 # Parse an R expression to a nested list:
 #' 

@@ -191,18 +191,18 @@ json2expression <- function(json) {
 list2expression <- function(l) {
     # Declare the resulting expression
     result <- NULL
-    # If the current group or expression should be negated, we need to enclose the expression in paretheses:
+    # If the current rules or expression should be negated, we need to enclose the expression in paretheses:
     negate <- isTRUE(l$negate)
     needParentheses <- negate
     
-    # Identify groups by the linkoperator:
-    if(any(names(l) == "linkOperator")) { 
-        # Groups need parentheses, and the link is padded by spaces for readability:
+    # Identify rules by the condition:
+    if(any(names(l) == "condition")) { 
+        # Rules need parentheses, and the link is padded by spaces for readability:
         needParentheses <- TRUE
-        link <- paste('', l$linkOperator, '')
+        link <- paste('', l$condition, '')
         
         # Recurse into the children:
-        result <- paste(lapply(l$group, list2expression), collapse = link)
+        result <- paste(lapply(l$rules, list2expression), collapse = link)
     } 
     # Otherwise build the expression:
     else {
@@ -267,7 +267,7 @@ expression2list = function(expr, parent = NULL) {
     res <- NULL
     if(is.null(parent)) {
         parent <- list(
-            linkOperator = '&', 
+            condition = '&', 
             negate = FALSE, 
             rules = list())
         res <- parent
@@ -285,7 +285,7 @@ expression2list = function(expr, parent = NULL) {
         }
     }
     splitOperator <- NULL
-    groupsList <- NULL
+    rulesList <- NULL
     if(orFoundAtLevel0) {
         splitOperator <- '|'
     } else if(andFoundAtLevel0) {
@@ -293,17 +293,17 @@ expression2list = function(expr, parent = NULL) {
     }
     expr <- trimws(expr)
     
-    # If a splitOperator (| or &) is found, split into a list of groups:
+    # If a splitOperator (| or &) is found, split into a list of rules:
     if(!is.null(splitOperator)) {
-        res$linkOperator = splitOperator
-        groupsList <- unlist(strsplit(expr, splitOperator, fixed = TRUE))
+        res$condition = splitOperator
+        rulesList <- unlist(strsplit(expr, splitOperator, fixed = TRUE))
         
-        res$group <- list()
-        for(grp in groupsList) {
-            res$group[[length(res$group) + 1]] <- expression2list(grp, parent) 
+        res$rules <- list()
+        for(grp in rulesList) {
+            res$rules[[length(res$rules) + 1]] <- expression2list(grp, parent) 
         }
     } 
-    # Otherwise parse to find any groups identifies with parentheses:
+    # Otherwise parse to find any rules identifies with parentheses:
     else {
         # Get the negate operator:
         negate <- startsWith(expr, '!')
@@ -312,11 +312,11 @@ expression2list = function(expr, parent = NULL) {
         }
         expr <- trimws(expr)
         
-        # If there are paretheses, interpret these as groups:
+        # If there are paretheses, interpret these as rules:
         if(startsWith(expr, '(') & endsWith(expr, ')')) {
             # rid off surrounding parenthesis (..)
             expr <- substr(expr, 2, nchar(expr) - 1)
-            # Add negate and recurse into the groups:
+            # Add negate and recurse into the rules:
             res <- expression2list(expr, parent)
             if(length(res$negate) == 0) {
                 res <- c(
@@ -384,7 +384,7 @@ expression2list = function(expr, parent = NULL) {
                     value = val
                     )
                 if(!is.null(parent)) {
-                    parent$group[[length(parent$group) + 1]] <- res
+                    parent$rules[[length(parent$rules) + 1]] <- res
                 }
             }	 
         }

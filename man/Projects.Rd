@@ -10,13 +10,8 @@
 \alias{copyProject}
 \title{Create, open, close, save, saveAs and copy StoX projects.}
 \usage{
-createProject(
-  projectPath,
-  template = "EmptyTemplate",
-  ow = FALSE,
-  showWarnings = FALSE,
-  open = TRUE
-)
+createProject(projectPath, template = "EmptyTemplate", ow = FALSE,
+  showWarnings = FALSE, open = TRUE)
 
 openProject(projectPath, showWarnings = FALSE, force = FALSE)
 

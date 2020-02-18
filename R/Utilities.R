@@ -265,9 +265,12 @@ list2expression <- function(l) {
 #' 
 expression2list = function(expr, generateRuleset=TRUE) {
     res <- NULL
-   
+    expr <- trimws(expr)
+    negate <- startsWith(expr, '!') 
+
     orFoundAtLevel0 <- FALSE
     andFoundAtLevel0 <- FALSE
+    
     level <- 0
     for(c in unlist(strsplit(expr, ''))) {
         andFoundAtLevel0 <- andFoundAtLevel0 | level == 0 & c == '&'
@@ -285,7 +288,6 @@ expression2list = function(expr, generateRuleset=TRUE) {
     } else if(andFoundAtLevel0) {
         splitOperator <- '&'
     }
-    expr <- trimws(expr)
     
     # If a splitOperator (| or &) is found, split into a list of rules:
     if(!is.null(splitOperator)) {
@@ -297,83 +299,63 @@ expression2list = function(expr, generateRuleset=TRUE) {
         for(grp in rulesList) {
           res$rules[[length(res$rules) + 1]] <- expression2list(grp, FALSE) 
         }
+    } else if(isTRUE(negate)) {
+        # Handle negate both outside and inside parenthesis by recursing
+        res <- expression2list(substr(expr, 2, nchar(expr)), generateRuleset)
+        if(!is.null(res)) {
+            if('negate' %in% names(res)) {
+                res$negate = !res$negate
+            } else {
+              res <- c(list(negate = TRUE), res)
+            }
+        }
+    }
+    else if(startsWith(expr, '(') & endsWith(expr, ')')) {
+        # rid off surrounding parenthesis (..)
+        res <- expression2list(substr(expr, 2, nchar(expr) - 1), generateRuleset)
     } 
-    # Otherwise parse to find any rules identifies with parentheses:
+    # rule expression field=value:
     else {
-        # Get the negate operator:
-        negate <- startsWith(expr, '!')
-        if(isTRUE(negate)) {
-            expr <- substr(expr, 2, nchar(expr))
-        }
-        expr <- trimws(expr)
         
-        # If there are paretheses, interpret these as rules:
-        if(startsWith(expr, '(') & endsWith(expr, ')')) {
-            # rid off surrounding parenthesis (..)
-            expr <- substr(expr, 2, nchar(expr) - 1)
-            # Add negate and recurse into the rules:
-            res <- expression2list(expr, generateRuleset)
-            if(length(res$negate) == 0) {
-                res <- c(
-                    list(negate = negate), 
-                    res
-                )
-            }
-            else {
-                res$negate = res$negate != negate
-            }
-        } 
-        # Otherwise treat the expression:
-        else {
-            # Get the negate operator:
-            thisNegate <- startsWith(expr, '!')
-            if(isTRUE(thisNegate)) {
-                expr <- substr(expr, 2, nchar(expr))
-            }
-            expr <- trimws(expr)
-            
-            # expression field op value
-            allPossibleOperators <- unique(unlist(getRstoxFrameworkDefinitions("filterOperators")))
-            space <- "\\s+"
-            regularExpression <- paste0(
-                "([[:alnum:]^\\\\s]+)", 
-                space, 
-                paste0("(", paste(allPossibleOperators, collapse = "|"), ")"), 
-                space, 
-                "(.+)"
-            )
-            safeSeparator <- ";"
-            groupingKey <- paste0("\\", 1:3, collapse = safeSeparator)
-            code <- gsub(
-                regularExpression, 
-                groupingKey, 
-                expr
-            )
-            splittedCode <- strsplit(code, safeSeparator)[[1]]
-            s <- c(
-                splittedCode[1], 
-                splittedCode[2], 
-                paste(splittedCode[-c(1,2)], collapse = safeSeparator)
-            )
+        # expression field op value
+        allPossibleOperators <- unique(unlist(getRstoxFrameworkDefinitions("filterOperators")))
+        space <- "\\s+"
+        regularExpression <- paste0(
+            "([[:alnum:]^\\\\s]+)", 
+            space, 
+            paste0("(", paste(allPossibleOperators, collapse = "|"), ")"), 
+            space, 
+            "(.+)"
+        )
+        safeSeparator <- ";"
+        groupingKey <- paste0("\\", 1:3, collapse = safeSeparator)
+        code <- gsub(
+            regularExpression, 
+            groupingKey, 
+            expr
+        )
+        splittedCode <- strsplit(code, safeSeparator)[[1]]
+        s <- c(
+            splittedCode[1], 
+            splittedCode[2], 
+            paste(splittedCode[-c(1,2)], collapse = safeSeparator)
+        )
 
-            if(length(s) == 3) {
-                #valid syntax: field op value
-                val <- eval(parse(text = s[[3]]))
-                rule <- list(
-                    # Trick to accept one ! outside of the parethesis and one inside, which implies not negate:
-                    negate = negate != thisNegate, 
-                    field = s[[1]], 
-                    operator = s[[2]], 
-                    value = val)
-                if(generateRuleset) {
-                    res <- list(
-                        condition = '&', 
-                        rules = list(rule))
-                } else {
-                    res <- rule
-                }
-            }	 
-        }
+        if(length(s) == 3) {
+            #valid syntax: field op value
+            val <- eval(parse(text = s[[3]]))
+            rule <- list(
+                field = s[[1]], 
+                operator = s[[2]], 
+                value = val)
+            if(generateRuleset) {
+                res <- list(
+                    condition = '&', 
+                    rules = list(rule))
+            } else {
+                res <- rule
+            }
+        }	 
     }
     res
 }

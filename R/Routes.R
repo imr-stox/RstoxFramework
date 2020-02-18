@@ -198,7 +198,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
     
     # Call the appropriate function depending on the interactive mode:
     if(interactiveMode == "stratum") {
-        getStratumData(
+        getStratumList(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -270,8 +270,6 @@ getMapData  <- function(projectPath, modelName, processID) {
 
 # Individual get data functions:
 #' 
-#' @export
-#' 
 getStratumData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -299,14 +297,13 @@ getStratumData <- function(projectPath, modelName, processID) {
 }
 
 #' 
-#' @export
-#' 
 getAcousticPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of AcousticPSU type:
-    if(!all(names(processData) %in% c("Stratum_PSU", "PSU_EDSU"))){
+    #if(!all(names(processData) %in% c("Stratum_PSU", "EDSU_PSU"))){
+    if(! "EDSU_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
         warning("The process ", processName, " does not return process data of type AcousticPSU")
         return(NULL)
@@ -331,14 +328,12 @@ getAcousticPSUData <- function(projectPath, modelName, processID) {
 }
 
 #' 
-#' @export
-#' 
 getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of SweptAreaPSU type:
-    if(names(processData) != "SweptAreaPSU"){
+    if(! "Station_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
         warning("The process ", processName, " does not return process data of type SweptAreaPSU")
         return(NULL)
@@ -355,11 +350,9 @@ getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     ###     PSU_Stratum = PSU_Stratum, 
     ###     Stratum = Stratum
     ### )
-    processData$processData
+    return(processData)
 }
 
-#' 
-#' @export
 #' 
 getAssignmentData <- function(projectPath, modelName, processID) {
     
@@ -386,7 +379,32 @@ getAssignmentData <- function(projectPath, modelName, processID) {
 
 
 #' 
-#' @export
+getStratumList <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Return an empty list if processData is empty:
+    if(length(processData) == 0) {
+        return(list())
+    }
+    
+    # Issue an error of the process data are not of StratumPolygon type:
+    if(names(processData) != "StratumPolygon"){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("The process ", processName, " does not return process data of type StratumPolygon")
+        return(list())
+    }
+    
+    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    stratumList <- getStratumNames(processData$StratumPolygon)
+    #stratum <- data.table::data.table(
+    #    stratum = names(processData), 
+    #    includeInTotal = 
+    #)
+    
+    list(stratumList)
+}
+
 #' 
 getStationData <- function(projectPath, modelName, processID) {
     # Get the station data:
@@ -418,8 +436,6 @@ getStationData <- function(projectPath, modelName, processID) {
 }
 
 #' 
-#' @export
-#' 
 getEDSUData <- function(projectPath, modelName, processID) {
     
     # Get the Log data:
@@ -442,7 +458,6 @@ getEDSUData <- function(projectPath, modelName, processID) {
     # ...and define the properties:
     #infoToKeep <- c("CruiseKey", "Platform", "LogKey", "Log", "EDSU", "DateTime", "Longitude", "Latitude", "LogOrigin", "Longitude2", "Latitude2", "LogOrigin2", "LogDuration", "LogDistance", "EffectiveLogDistance", "BottomDepth")
     infoToKeep <- c("Platform", "EDSU", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
-    warning("We need to decide whether to include BottomDepth in StoxAcoustic")
     properties <- CruiseLog[, ..infoToKeep]
     
     # Create a spatial points data frame and convert to geojson:
@@ -461,7 +476,6 @@ getEDSUData <- function(projectPath, modelName, processID) {
     EDSULines <- sp::SpatialLinesDataFrame(EDSULines, data = CruiseLog[, "interpolated"], match.ID = FALSE)
     EDSULines <- geojsonio::geojson_json(EDSULines)
     
-                                       
     # List the points and lines and return:
     EDSUData <- list(
         EDSUPoints = EDSUPoints, 
@@ -526,11 +540,6 @@ getClickPoints <- function(Log, pos = 0.5) {
 
 # Function to extract the start, middle and end positions from StoxBiotic:
 getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle", "end"), coordinateNames = c("Longitude", "Latitude")) {
-    
-    # Temporary change class of the Longitude2 and Latitude2 to double, due to error in the xsd:
-    warning("The XSD of NMDEchosounderV1 specifies lon_stop and lat_stop as string. This is temporarily fixed in RstoxFramework, but should be fixed in StoxAcoustic!!!!!!!!!!!.")
-    Log$Latitude2 <- as.double(Log$Latitude2)
-    Log$Longitude2 <- as.double(Log$Longitude2)
     
     # Get the number of positions of the Log:
     numPositions <- nrow(Log)
@@ -759,7 +768,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         possibleValues = c(
             list(character(0)), 
             # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-            as.list(sort(getAvailableStoxFunctionNames(modelName))), 
+            as.list(getAvailableStoxFunctionNames(modelName)), 
             rep(list(c(FALSE, TRUE)), length(processParameters))
         )
     )
@@ -790,9 +799,6 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     functionParameters <- data.table::data.table()
     
     if(length(process$functionName)) {
-        
-        # Get the function argument hierarchy:
-        functionArgumentHierarchy = getStoxFunctionMetaData(process$functionName, "functionArgumentHierarchy", showWarnings = FALSE)
         
         ##############################
         ##### 2. FunctionInputs: #####
@@ -830,8 +836,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
             argumentsToShow <- getArgumentsToShow(
                 functionName = process$functionName, 
-                functionArguments = functionInputs$value, 
-                functionArgumentHierarchy = functionArgumentHierarchy
+                functionArguments = functionInputs$value
             )
             # Select only the items to show in the GUI:
             if(!all(argumentsToShow)) {
@@ -874,8 +879,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
             argumentsToShow <- getArgumentsToShow(
                 functionName = process$functionName, 
-                functionArguments = functionParameters$value, 
-                functionArgumentHierarchy = functionArgumentHierarchy
+                functionArguments = functionParameters$value
             )
             # Select only the items to show in the GUI:
             if(!all(argumentsToShow)) {
@@ -1100,6 +1104,10 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
         options = options, 
         SIMPLIFY = FALSE
     )
+    # Add the fields level:
+    output <- list(
+        fields = output
+    )
     
     
     # Return a list of the tableNames, columnNames and possibleValues:
@@ -1125,17 +1133,3 @@ getPossibleValuesOneTable <- function(table) {
     lapply(table, sortUnique)
 }
 
-
-#' 
-#' @export
-#' 
-expression2List <- function(expression) {
-    
-}
-
-#' 
-#' @export
-#' 
-listRExpression <- function(list) {
-    
-}

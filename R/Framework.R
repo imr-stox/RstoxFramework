@@ -141,7 +141,7 @@ initiateRstoxFramework <- function(){
             "numeric"
         )
     )
-    # Define the process property formats:
+    # Define the process property formats (should this be used to check for valid format????????????):
     processPropertyFormats <- list(
         default = "none", 
         optional = list(
@@ -558,27 +558,6 @@ validateStoxLibraryPackage <- function(packageName) {
         warning("The package ", packageName, " specifies functions in the 'stoxFunctionAttributes' object that are not exported:\n", paste(stoxFunctionNames[!stoxFunctionNamesPresent], collapse = ", "))
         return(FALSE)
     }
-    
-    # This is GUI specific, and should not be used for validating a StoX funciton library package:
-    ### # Get the StoX functions:
-    ### stoxFunctionNames <- names(stoxFunctionAttributes)
-    ### # Get the paths to the required single function PDFs:
-    ### pathToSingleFunctionPDF <- getPathToSingleFunctionPDF(packageName, stoxFunctionNames)
-    ### existsSingleFunctionPDF <- file.exists(pathToSingleFunctionPDF)
-    ### # Return FALSE if not all single function PDFs exists:
-    ### if(!all(existsSingleFunctionPDF)) {
-    ###     warning("The package ", packageName, " does not contain PDF of the documentation of each of its exported StoX functions.")
-    ###     return(FALSE)
-    ### }
-    ### 
-    ### # Look also for the single function argument descriptions:
-    ### pathToSingleFunctionArgumentRDS <- getPathToSingleFunctionArgumentRDS(packageName, stoxFunctionNames)
-    ### existsSingleFunctionArgumentRDS <- file.exists(pathToSingleFunctionArgumentRDS)
-    ### # Return FALSE if not all single function PDFs exists:
-    ### if(!all(existsSingleFunctionArgumentRDS)) {
-    ###     warning("The package ", packageName, " does not contain RDS of the documentation of each of its exported StoX functions.")
-    ###     return(FALSE)
-    ### }
     
     TRUE
 }
@@ -1746,6 +1725,8 @@ getAvailableStoxFunctionNames <- function(modelName) {
     # Get the category of each function, and split by category:
     functionCategories <- sapply(stoxLibrary, "[[", "functionCategory")
     availableFunctionsByCategory <-split(availableFunctions, functionCategories)
+    # Sort each category:
+    availableFunctionsByCategory <- lapply(availableFunctionsByCategory, sort)
     
     # Keep only the valid category:
     availableFunctionsByCategory[modelName]
@@ -1775,7 +1756,11 @@ getStoxFunctionMetaData <- function(functionName, metaDataName = NULL, showWarni
 }
 
 
-getArgumentsToShow <- function(functionName, functionArguments, functionArgumentHierarchy) {
+getArgumentsToShow <- function(functionName, functionArguments) {
+    
+    # Get the function argument hierarchy:
+    functionArgumentHierarchy <- getStoxFunctionMetaData(functionName, "functionArgumentHierarchy", showWarnings = FALSE)
+    
     # Loop through the arguments given by parent tags in the functionArgumentHierarchy, and set toShow to FALSE if not any of the criterias are fulfilled:
     toShow <- !logical(length(functionArguments))
     names(toShow) <- names(functionArguments)
@@ -3295,6 +3280,13 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
         modelName = modelName, 
         processID = processID
     )
+    
+    # If the folder does not exist, it is a sign that the process does not exist:
+    if(length(folderPath) == 0 || !file.exists(folderPath)) {
+        #processName <- getProcessName(projectPath, modelName, processID)
+        stop("The folder ", folderPath, " does not exist. This is likely due to non-existing process")
+    }
+    
     # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
     folderDepth <- getFolderDepth(folderPath)
     

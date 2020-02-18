@@ -201,7 +201,7 @@ getNewDefaultName <- function(names, prefix) {
 #' @export
 #' 
 json2expression <- function(json) {
-    l <- parseParameter(json)
+    l <- parseParameter(json, sv=FALSE)
     list2expression(l)
 }
 

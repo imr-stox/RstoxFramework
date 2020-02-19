@@ -8,8 +8,7 @@
 \usage{
 addHaulToAssignment(PSU, Layer, Haul, projectPath, modelName, processID)
 
-removeHaulFromAssignment(PSU, Layer, Haul, projectPath, modelName,
-  processID)
+removeHaulFromAssignment(PSU, Layer, Haul, projectPath, modelName, processID)
 }
 \arguments{
 \item{PSU}{The acoustic primary sampling unit (PSU) for which to remove the haul}

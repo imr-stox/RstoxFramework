@@ -2746,13 +2746,13 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
 #' @export
 #' 
 # Convert JSON input to list:
-parseParameter <- function(parameter, sv=TRUE) {
+parseParameter <- function(parameter, simplifyVector = TRUE) {
     # If the parameter is JSON, convert to list:
     if("json" %in% class(parameter)) {
-        parameter <- jsonlite::fromJSON(parameter, simplifyVector = sv)
+        parameter <- jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
     }
     else if(is.character(parameter) && jsonlite::validate(parameter)) {
-        parameter <- jsonlite::parse_json(parameter, simplifyVector = sv)
+        parameter <- jsonlite::parse_json(parameter, simplifyVector = simplifyVector)
     }
     parameter
 }

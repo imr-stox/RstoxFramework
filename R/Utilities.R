@@ -179,7 +179,7 @@ getNewDefaultName <- function(names, prefix) {
 #' @export
 #' 
 json2expression <- function(json) {
-    l <- parseParameter(json, sv=FALSE)
+    l <- parseParameter(json, simplifyVector = FALSE)
     list2expression(l)
 }
 

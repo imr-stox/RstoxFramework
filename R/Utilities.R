@@ -214,7 +214,7 @@ list2expression <- function(l) {
             value <- paste0('\'', value, '\'')
         }
         # If more than one value, obtain the c(...) notation: 
-        if(length(value) > 1) {
+        if(l$operator %in% c('%in%', '%notin%')) {
             value = paste0('c(', paste(value, collapse=', '), ')')
         }
         
@@ -348,6 +348,9 @@ expression2list = function(expr, generateRuleset=TRUE) {
                 field = s[[1]], 
                 operator = s[[2]], 
                 value = val)
+            if(rule$operator %in% c('%in%', '%notin%') && length(rule$value) == 1) {
+                rule$value <- list(rule$value)
+            }
             if(generateRuleset) {
                 res <- list(
                     condition = '&', 

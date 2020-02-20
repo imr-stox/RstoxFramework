@@ -338,7 +338,7 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
 #' @export
 #' @rdname AcousticPSU
 #' 
-removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
+removeEDSU <- function(EDSU, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
     AcosticPSU <- getProcessData(projectPath, modelName, processID)

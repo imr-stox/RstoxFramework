@@ -653,6 +653,22 @@ getProcessPropertyNames <- function() {
     
 }
 
+
+
+FilterExpression2Character <- function(FilterExpression) {
+    # If already a character, return immediately:
+    if(is.character(FilterExpression)) {
+        return(FilterExpression)
+    }
+    else {
+        return(as.character(jsonlite::toJSON(FilterExpression)))
+    }
+}
+
+
+
+
+
 #' 
 #' @export
 #' 
@@ -927,7 +943,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
 #' 
 setProcessPropertyValue <- function(groupName, name, value, projectPath, modelName, processID) {
     
-    # Parse the value:
+    # Parse the value (this takes care of converting true to TRUE, interpret integers and strings, and even to parse JSON strings to R objects):
     value <- parseParameter(value)
     
     # If the process property 'processArguments' is given, modify the process name, function name or process parameters:

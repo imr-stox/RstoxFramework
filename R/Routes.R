@@ -667,8 +667,8 @@ parameter2JSONString <- function(parameter) {
 
 
 isMultipleParameter <- function(functionName, parameterName) {
-    multiple <- getRstoxFrameworkDefinitions("processPropertyFormats")$multiple
-    format <- getFunctionParameterPropertyFormats(functionName)[parameterName]
+    multiple <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$multiple)
+    format <- unlist(getFunctionParameterPropertyFormats(functionName)[parameterName])
     isMultiple <- format %in% multiple
     return(isMultiple)
 }
@@ -905,8 +905,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             )
             
             # Convert to a JSON string ifs of non-simple type (length >= 1):
-            if(isMultipleParameter(process$functionName, functionParameters$name)) {
-                functionParameters$value = parameter2JSONString(functionParameters$value)
+            nonSimple <- isMultipleParameter(process$functionName, unlist(functionParameters$name))
+            if(any(nonSimple)) {
+                functionParameters$value[nonSimple] = parameter2JSONString(functionParameters$value[nonSimple])
             }
             
             

@@ -1751,7 +1751,7 @@ getStoxFunctionMetaData <- function(functionName, metaDataName = NULL, showWarni
     }
     else {
         if(showWarnings) {
-            warning("The requested meta data ", metaDataName, " is not included in the stoxFunctionAttributes.")
+            warning("The requested meta data ", metaDataName, " is not included in the stoxFunctionAttributes for function ", functionName, ".")
         }
         NULL
     }

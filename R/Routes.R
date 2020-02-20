@@ -655,18 +655,23 @@ getProcessPropertyNames <- function() {
 
 
 
-FilterExpression2Character <- function(FilterExpression) {
+parameter2JSONString <- function(parameter) {
     # If already a character, return immediately:
-    if(is.character(FilterExpression)) {
-        return(FilterExpression)
+    if(is.character(parameter)) {
+        return(parameter)
     }
     else {
-        return(as.character(jsonlite::toJSON(FilterExpression)))
+        return(as.character(jsonlite::toJSON(parameter)))
     }
 }
 
 
-
+isMultipleParameter <- function(functionName, parameterName) {
+    multiple <- getRstoxFrameworkDefinitions("processPropertyFormats")$multiple
+    format <- getFunctionParameterPropertyFormats(functionName)[parameterName]
+    isMultiple <- format %in% multiple
+    return(isMultiple)
+}
 
 
 #' 
@@ -786,15 +791,22 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
             as.list(getAvailableStoxFunctionNames(modelName)), 
             rep(list(c(FALSE, TRUE)), length(processParameters))
+        ), 
+        # 8. value:
+        value <- c(
+            process["processName"], 
+            # Remove the package address and only use the function name:
+            getFunctionNameFromPackageFunctionName(process["functionName"]), 
+            process[["processParameters"]]
         )
     )
-    # 8. value:
-    processArguments$value <- c(
-        process["processName"], 
-        # Remove the package address and only use the function name:
-        getFunctionNameFromPackageFunctionName(process["functionName"]), 
-        process[["processParameters"]]
-    )
+    ## 8. value:
+    #processArguments$value <- c(
+    #    process["processName"], 
+    #    # Remove the package address and only use the function name:
+    #    getFunctionNameFromPackageFunctionName(process["functionName"]), 
+    #    process[["processParameters"]]
+    #)
     
     # Add help on the processArguments:
     #processArguments$help <- NULL
@@ -891,6 +903,12 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 8. value:
                 value = replaceEmpty(process$functionParameters, vector = FALSE)
             )
+            
+            # Convert to a JSON string ifs of non-simple type (length >= 1):
+            if(isMultipleParameter(process$functionName, functionParameters$name)) {
+                functionParameters$value = parameter2JSONString(functionParameters$value)
+            }
+            
             
             # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
             argumentsToShow <- getArgumentsToShow(

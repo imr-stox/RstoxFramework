@@ -211,7 +211,8 @@ list2expression <- function(l) {
         
         # If the value is a character, pad with quotation marks:
         if(is.character(value)) {
-            value <- paste0('\'', value, '\'')
+            #value <- paste0('\'', value, '\'')
+            value <- paste0("\"", value, "\"")
         }
         # If more than one value, obtain the c(...) notation: 
         if(l$operator %in% c('%in%', '%notin%')) {

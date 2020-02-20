@@ -661,7 +661,7 @@ parameter2JSONString <- function(parameter) {
         return(parameter)
     }
     else {
-        return(as.character(jsonlite::toJSON(parameter)))
+        return(as.character(jsonlite::toJSON(parameter, auto_unbox = TRUE)))
     }
 }
 

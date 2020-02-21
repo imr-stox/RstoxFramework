@@ -793,7 +793,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             rep(list(c(FALSE, TRUE)), length(processParameters))
         ), 
         # 8. value:
-        value <- c(
+        value = c(
             process["processName"], 
             # Remove the package address and only use the function name:
             getFunctionNameFromPackageFunctionName(process["functionName"]), 
@@ -861,15 +861,15 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 value = replaceEmpty(process$functionInputs, vector = FALSE)
             )
             
-            # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
-            argumentsToShow <- getArgumentsToShow(
-                functionName = process$functionName, 
-                functionArguments = functionInputs$value
-            )
+            ## Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
+            #argumentsToShow <- getArgumentsToShow(
+            #    functionName = process$functionName, 
+            #    functionArguments = process$functionInputs
+            #)
             # Select only the items to show in the GUI:
-            if(!all(argumentsToShow)) {
-                functionInputs <- lapply(functionInputs, "[[", argumentsToShow)
-            }
+            #if(!all(argumentsToShow)) {
+            #    functionInputs <- subset(functionInputs, argumentsToShow)
+            #}
         }
         ##############################
         
@@ -911,16 +911,35 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             }
             
             
-            # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
-            argumentsToShow <- getArgumentsToShow(
-                functionName = process$functionName, 
-                functionArguments = functionParameters$value
-            )
-            # Select only the items to show in the GUI:
-            if(!all(argumentsToShow)) {
-                functionParameters <- lapply(functionParameters, "[[", argumentsToShow)
-            }
+            # # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
+            # argumentsToShow <- getArgumentsToShow(
+            #     functionName = process$functionName, 
+            #     functionArguments = process$functionParameters
+            # )
+            # # Select only the items to show in the GUI:
+            # if(!all(argumentsToShow)) {
+            #     functionParameters <- subset(functionParameters, argumentsToShow)
+            # }
         }
+        
+        # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
+        argumentsToShow <- getArgumentsToShow(
+            functionName = process$functionName, 
+            functionArguments = c(
+                process$functionInputs, 
+                process$functionParameters
+            )
+        )
+        
+        # Select only the items to show in the GUI:
+        if(length(functionParameters) && any(!functionParameters$name %in% argumentsToShow)) {
+            functionParameters <- subset(functionParameters, name %in% argumentsToShow)
+        }
+        if(length(functionInputs) && any(!functionInputs$name %in% argumentsToShow)) {
+            functionInputs <- subset(functionInputs, name %in% argumentsToShow)
+        }
+        
+        
         ##############################
     }
     

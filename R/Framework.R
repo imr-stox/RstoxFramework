@@ -1764,16 +1764,39 @@ getArgumentsToShow <- function(functionName, functionArguments) {
     functionArgumentHierarchy <- getStoxFunctionMetaData(functionName, "functionArgumentHierarchy", showWarnings = FALSE)
     
     # Loop through the arguments given by parent tags in the functionArgumentHierarchy, and set toShow to FALSE if not any of the criterias are fulfilled:
-    toShow <- !logical(length(functionArguments))
+    toShow <- logical(length(functionArguments))
     names(toShow) <- names(functionArguments)
-    for(argumentName in names(functionArgumentHierarchy)) {
-        # Check the function arguments against the values in the function argument hierarchy:
-        fullfilled <- functionArguments[names(functionArgumentHierarchy[[argumentName]])] == unlist(functionArgumentHierarchy[[argumentName]])
-        if(!any(fullfilled)) {
-            toShow[[argumentName]] <- FALSE
+    
+    for(argumentName in names(toShow)) {
+        # Check whether the argument is given in the functionArgumentHierarchy. If not, it will be shown:
+        if(argumentName %in% names(functionArgumentHierarchy)) {
+            # Loop through the functionArgumentHierarchy of the current argumentName and set to show if at least one condition is fullfilled:
+            for(conditionArgument in names(functionArgumentHierarchy[[argumentName]])) {
+                if(functionArguments[[conditionArgument]] == functionArgumentHierarchy[[argumentName]][[conditionArgument]]) {
+                    toShow[[argumentName]] <- TRUE
+                }
+            }
+        }
+        else {
+            toShow[[argumentName]] <- TRUE
         }
     }
-    toShow
+    
+    
+    
+    #toShow <- !logical(length(functionArguments))
+    #names(toShow) <- names(functionArguments)
+    #
+    #for(argumentName in names(functionArgumentHierarchy)) {
+    #    # Check the function arguments against the values in the function argument hierarchy:
+    #    fullfilled <- functionArguments[names(functionArgumentHierarchy[[argumentName]])] == unlist(functionArgumentHierarchy[[argumen#tName]])
+    #    if(!any(fullfilled)) {
+    #        toShow[[argumentName]] <- FALSE
+    #    }
+    #}
+    
+    # Return only the names of the arguments to show:
+    return(names(toShow)[toShow])
 }
 
 

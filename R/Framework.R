@@ -1838,17 +1838,22 @@ getStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData
     if(fill.logical) {
         areLogicals <- sapply(f, is.logical)
         if(sum(areLogicals)) {
-            f[areLogicals] <- rep(list(c(FALSE, TRUE)), sum(areLogicals))
+            f[areLogicals] <- lapply(f[areLogicals], expandLogical)
+            # f[areLogicals] <- rep(list(c(FALSE, TRUE)), sum(areLogicals))
         }
     }
     
     f
 }
 
+expandLogical <- function(x) {
+    c(x, !x)
+}
+
 # Function which gets the default values of a function:
 getStoxFunctionParameterDefaults <- function(functionName) {
     # Get the possible values of the parameters of a function:
-    functionParameterPossibleValues <- getStoxFunctionParameterPossibleValues(functionName)
+    functionParameterPossibleValues <- getStoxFunctionParameterPossibleValues(functionName, fill.logical = FALSE)
     # The default is the first value:
     defaults <- lapply(functionParameterPossibleValues, utils::head, 1)
     defaults

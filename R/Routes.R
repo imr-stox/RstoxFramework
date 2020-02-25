@@ -972,6 +972,11 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             modelName = modelName, 
             processID = processID, 
             outfile = outfile
+        ), 
+        activeProcessID = resetModel(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
         )
     )
     

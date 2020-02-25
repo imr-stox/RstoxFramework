@@ -3602,7 +3602,7 @@ getProcessOutputMemoryFileNames <- function(processOutput) {
 #' @export
 #' 
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
-runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
+runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force.restart = FALSE) {
         
     ## Get the processIDs:
     #processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -3627,8 +3627,8 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     }
     
     # Chech that none of the models of the project are running:
-    if(isRunning(projectPath) && !force) {
-        warning("The project is running (", projectPath, "). Use force = TRUE to force restart the project.")
+    if(isRunning(projectPath) && !force.restart) {
+        warning("The project is running (", projectPath, "). Use force.restart = TRUE to force restart the project.")
         return(failedVector)
     }
     else {
@@ -3687,7 +3687,28 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
 #' 
 #' @export
 #' 
-runModel <- runProcesses
+runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, run = TRUE, save = TRUE, force.restart = FALSE) {
+    # Un the model if required:
+    if(run) {
+        runProcesses(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            startProcess = startProcess, 
+            endProcess = endProcess, 
+            save = save, 
+            force.restart = force.restart
+        )
+    }
+    # Get the model data:
+    modelData <- getModelData(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        startProcess = startProcess, 
+        endProcess = endProcess
+    )
+    
+    return(modelData)
+}
 
 
 
@@ -3749,7 +3770,7 @@ runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) 
 #' 
 #' @export
 #' 
-getModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf) {
+getModelData <- function(projectPath, modelName, startProcess = 1, endProcess = Inf) {
     
     processTable <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)
     

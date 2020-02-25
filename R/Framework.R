@@ -218,10 +218,10 @@ initiateRstoxFramework <- function(){
     dataTypesToShowInMap <- c(
         StoxBioticData = "StoxBioticData", 
         StoxAcousticData = "StoxAcousticData", 
-        StratumPolygon = "StratumPolygon", 
-        Assignment = "Assignment", 
-        AcousticPSU = "AcousticPSU", 
-        SweptAreaPSU = "SweptAreaPSU"
+        StratumPolygon = "StratumPolygon"#, 
+        #Assignment = "Assignment", 
+        #AcousticPSU = "AcousticPSU", 
+        #SweptAreaPSU = "SweptAreaPSU"
     )
     
     # Define the data types for the interactive modes:
@@ -248,7 +248,7 @@ initiateRstoxFramework <- function(){
     processParametersDisplayNames <- list(
         enabled = "Enabled", 
         showInMap = "Show in map", 
-        fileOutput = "Write to output"
+        fileOutput = "Write output to file"
     )
     processParametersDescriptions <- list(
         enabled = "Whether to execute the process or not", 
@@ -2009,20 +2009,29 @@ checkDataType <- function(dataType, projectPath, modelName, processID) {
     
 
 ##### Functions for manipulating the process index table, which defines the order of the processes. These functions are used by the frontend to delete, add, and reorder processes: #####
-readProcessIndexTable <- function(projectPath, modelName) {
+readProcessIndexTable <- function(projectPath, modelName, startProcess = 1, endProcess = Inf) {
     # Get the path to the process index file:
     processIndexTableFile <- getProjectPaths(projectPath, "processIndexTableFile")
     
     # If missing, create the file as an empty file:
     if(!file.exists(processIndexTableFile)) {
-        data.table::data.table()
+        processIndexTable <- data.table::data.table()
     }
     # Otherwise read the table from the file:
     else {
+        # Read and extract the specified model:
         processIndexTable <- data.table::fread(processIndexTableFile, sep = "\t")
         validRows <- processIndexTable$modelName %in% modelName
-        subset(processIndexTable, validRows)
+        processIndexTable <- subset(processIndexTable, validRows)
+        
+        # Restrict the startProcess and endProcess to the range of process indices:
+        startProcess <- max(1, startProcess)
+        endProcess <- min(nrow(processIndexTable), endProcess)
+        # Extract the requested process IDs:
+        processIndexTable <- processIndexTable[seq(startProcess, endProcess), ]
     }
+    
+    return(processIndexTable)
 }
 
 writeProcessIndexTable <- function(projectPath, modelName, processIndexTable) {
@@ -2122,6 +2131,19 @@ getProcessIDFromProcessName <- function(projectPath, modelName, processName) {
 }
 
 
+#getProcessIDFromStartEnd <- function(projectPath, modelName, startProcess = 1, endProcess = Inf) {
+#    # Get the processIDs:
+#    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+#    # Rstrict the startProcess and endProcess to the range of process indices:
+#    startProcess <- max(1, startProcess)
+#    endProcess <- min(nrow(processIndexTable), endProcess)
+#    # Extract the requested process IDs:
+#    processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
+#    return(processIDs)
+#}
+
+
+
 #' 
 #' @export
 #' 
@@ -2190,6 +2212,18 @@ getProcessTable <- function(projectPath, modelName) {
     
     # Add the data type:
     processTable$dataType <- sapply(functionNames, getStoxFunctionMetaData, "functionOutputDataType")
+    
+    # Add the function inputs:
+    processTable$functionInputs <- functionInputs
+    
+    # Add the function parameters:
+    functionParameters <- mapply(
+        getFunctionParameters, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processIndexTable$processID
+    )
+    processTable$functionParameters <- functionParameters
     
     ### processTable$functionExists <- functionExists(functionNames)
     
@@ -3347,8 +3381,15 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
 #' @export
 #' 
 getProcessOutputTableNames <- function(projectPath, modelName, processID) {
+    # Get the output file names, and add the process name:
+    tableNames <- getProcessOutputFiles(projectPath, modelName, processID, onlyTableNames = TRUE)
+    processName <- getProcessName(projectPath, modelName, processID)
+    tableNames <- paste(processName, tableNames, sep ="_")
+    
     # Ensure that this is a vector in JSON after auto_unbox = TRUE, by using as.list():
-    as.list(getProcessOutputFiles(projectPath, modelName, processID, onlyTableNames = TRUE))
+    tableNames <- as.list(tableNames)
+    print(tableNames)
+    return(tableNames)
 }
 
 
@@ -3397,7 +3438,7 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
         )
         
         processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = process$processID)
-        fileNamesSansExt <- paste(processIndex, names(processOutput), sep = "_")
+        fileNamesSansExt <- paste(processIndex, process$processName, names(processOutput), sep = "_")
         filePathsSansExt <- file.path(folderPath, paste(fileNamesSansExt))
         
         # Set the file name:
@@ -3562,16 +3603,17 @@ getProcessOutputMemoryFileNames <- function(processOutput) {
 #' 
 runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
     
-    # Get the processIDs:
-    processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    # Rstrict the startProcess and endProcess to the range of process indices:
-    startProcess <- max(1, startProcess)
-    endProcess <- min(nrow(processIndexTable), endProcess)
-    # Extract the requested process IDs:
-    processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
+    ## Get the processIDs:
+    #processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    ## Rstrict the startProcess and endProcess to the range of process indices:
+    #startProcess <- max(1, startProcess)
+    #endProcess <- min(nrow(processIndexTable), endProcess)
+    ## Extract the requested process IDs:
+    #processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
+    processIDs <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)$processID
     
     # Check that the project exists:
-    failedVector <- logical(endProcess - startProcess + 1)
+    failedVector <- logical(length(processIDs))
     if(!isProject(projectPath)) {
         warning("The StoX project ", projectPath, " does not exist")
         return(failedVector)
@@ -3696,6 +3738,26 @@ runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) 
         error = as.list(err)
     )
 }
+
+
+#' 
+#' @export
+#' 
+getModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf) {
+    
+    processTable <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)
+    
+    processOutput <- mapply(
+        getProcessOutput, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processTable$processID
+    )
+    names(processOutput) <- processTable$processName
+    
+    return(processOutput)
+}
+
 
 
 ##################################################

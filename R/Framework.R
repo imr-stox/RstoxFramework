@@ -3601,8 +3601,9 @@ getProcessOutputMemoryFileNames <- function(processOutput) {
 #' 
 #' @export
 #' 
-runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
-    
+#runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
+runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
+        
     ## Get the processIDs:
     #processIndexTable <- readProcessIndexTable(projectPath, modelName)
     ## Rstrict the startProcess and endProcess to the range of process indices:
@@ -3682,6 +3683,11 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     )
     
 }
+
+#' 
+#' @export
+#' 
+runModel <- runProcesses
 
 
 

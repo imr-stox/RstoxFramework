@@ -138,8 +138,11 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
         processID = processID
     )
     
-    # Select the type if interactive mode depending on the output data type from the process:
-    if(dataType %in% getRstoxFrameworkDefinitions("stratumDataType")) {
+    # Get also the process parameters to detect whether showInMap is FALSE, in which case interactiveMode should be "none":
+    showInMap <- getProcessParameters(projectPath, modelName, processID)$showInMap
+    
+    # Select the type of interactive mode depending on the output data type from the process:
+    if(dataType %in% getRstoxFrameworkDefinitions("stratumDataType") && showInMap) {
         "stratum"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("acousticPSUDataType")) {
@@ -151,10 +154,10 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataType")) {
         "assignment"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("stationDataType")) {
+    else if(dataType %in% getRstoxFrameworkDefinitions("stationDataType") && showInMap) {
         "station"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType")) {
+    else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType") && showInMap) {
         "EDSU"
     }
     else {

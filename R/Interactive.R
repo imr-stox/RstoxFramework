@@ -83,9 +83,7 @@ removeHaulFromAssignment <- function(PSU, Layer, Haul, projectPath, modelName, p
 modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
     
     # Check that the process returns Assigment process data:
-    if(!checkDataType("Assignment", projectPath, modelName, processID)) {
-        stop("The process ", getProcessName(projectPath, modelName, processID), " does not return Assignment data.")
-    }
+    checkDataType("Assignment", projectPath, modelName, processID)
     
     # Get the process data of the process, a table of PSU, Layer, Haul and HaulWeight:
     Assignment <- getProcessData(projectPath, modelName, processID)$Assignment
@@ -165,7 +163,7 @@ assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
 
 ############################################################
 ############################################################
-#' Add or remove biotic acoustic PSUs and EDSUs
+#' Add or remove acoustic PSUs and EDSUs
 #' 
 #' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
 #' 
@@ -183,16 +181,14 @@ NULL
 addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processID) {
     
     # Check that the process returns Assigment process data:
-    if(!checkDataType("AcosticPSU", projectPath, modelName, processID)) {
-        stop("The process ", getProcessName(projectPath, modelName, processID), " does not return AcosticPSU data.")
-    }
+    checkDataType("AcosticPSU", projectPath, modelName, processID)
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
     AcosticPSU <- getProcessData(projectPath, modelName, processID)
     
     # If the PSU is not given, use the default PSU name:
     if(length(PSU) == 0) {
-        PSU <- getNewDefaultName(AcosticPSU$Stratum_PSU$PSU, "T")
+        PSU <- getNewDefaultName(AcosticPSU$Stratum_PSU$PSU, prefix = RstoxBase::getRstoxBaseDefinitions("AcousticPSUPrefix"))
     }
     # Check whether the acoustic PSU already exists:
     if(any(AcosticPSU$Stratum_PSU$PSU == PSU)) {

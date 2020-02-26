@@ -973,10 +973,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             processID = processID, 
             outfile = outfile
         ), 
-        activeProcessID = resetModel(
+        activeProcessID = getActiveProcessID(
             projectPath = projectPath, 
-            modelName = modelName, 
-            processID = processID
+            modelName = modelName
         )
     )
     
@@ -1041,6 +1040,13 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
             newFunctionParameters = setNames(list(value), name)
         )
     }
+    
+    # Reset the active process ID to the process before the modified process:
+    activeProcessID = resetModel(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
     
     # Return the modified process properties:
     getProcessPropertySheet(

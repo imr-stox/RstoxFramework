@@ -1147,39 +1147,39 @@ writeActiveProcessID <- function(projectPath, modelName, activeProcessID) {
 #' 
 #' @export
 #'
-revertActiveProcessID <- function(projectPath, modelName, step = 1) {
-    # Read the active process ID for the model:
-    activeProcessID <- getActiveProcessID(
-        projectPath = projectPath, 
-        modelName = modelName
-    )
-    
-    
-    # Get the process ID to reset the model to:
-    processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    processIndex <- which(processIndexTable$processID == processID)
-    
-    # Get the active process ID as the process ID of the process before the specified process in the processIndexTable (or NA if processIndex is 1):
-    if(processIndex == 1) {
-        activeProcessID <- NA
-    }
-    else {
-        activeProcessID <- processIndexTable$processID[processIndex - 1]
-    }
-    
-    
-    # Subtract 'step' from the active process ID:
-    activeProcessID <- activeProcessID - step
-    
-    # Write the reverte active process ID:
-    writeActiveProcessID(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        activeProcessID = activeProcessID
-    )
-    
-    activeProcessID
-}
+#revertActiveProcessID <- function(projectPath, modelName, step = 1) {
+#    # Read the active process ID for the model:
+#    activeProcessID <- getActiveProcessID(
+#        projectPath = projectPath, 
+#        modelName = modelName
+#    )
+#    
+#    
+#    # Get the process ID to reset the model to:
+#    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+#    processIndex <- which(processIndexTable$processID == processID)
+#    
+#    # Get the active process ID as the process ID of the process before the specified process in the processIndexTable (or NA if #processIndex is 1):
+#    if(processIndex == 1) {
+#        activeProcessID <- NA
+#    }
+#    else {
+#        activeProcessID <- processIndexTable$processID[processIndex - 1]
+#    }
+#    
+#    
+#    # Subtract 'step' from the active process ID:
+#    activeProcessID <- activeProcessID - step
+#    
+#    # Write the reverte active process ID:
+#    writeActiveProcessID(
+#        projectPath = projectPath, 
+#        modelName = modelName, 
+#        activeProcessID = activeProcessID
+#    )
+#    
+#    activeProcessID
+#}
 
 
 #' 
@@ -1207,16 +1207,6 @@ resetModel <- function(projectPath, modelName, processID = 1) {
     
     return(activeProcessID)
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1600,7 +1590,8 @@ saveProjectMemory <- function(projectPath, argumentFileTable) {
     # Delete any files with positive index:
     hasPositiveIndex <- projectMemoryIndex$Index > 0
     if(any(hasPositiveIndex)) {
-        unlink(projectMemoryIndex$Path[hasPositiveIndex])
+        #unlink(projectMemoryIndex$Path[hasPositiveIndex])
+        deleteProjectMemoryFile(projectPath, projectMemoryIndex$Path[hasPositiveIndex])
         projectMemoryIndex <- projectMemoryIndex[!hasPositiveIndex, ]
     }
     # Subtract 1 from the indices, and add the new project description relative file path:
@@ -1621,6 +1612,11 @@ saveProjectMemory <- function(projectPath, argumentFileTable) {
     newProjectMemoryFile
 }
 
+
+
+deleteProjectMemoryFile <- function(projectPath, projectMemoryFileRelativePath) {
+    unlink(file.path(projectPath, projectMemoryFileRelativePath))
+}
 
 
 
@@ -1692,7 +1688,10 @@ unReDoProject <- function(projectPath, shift = 0) {
     writeProjectMemoryIndex(projectPath, projectMemoryIndex)
     
     # Copy the projectMemory with index = 0 to the currentProjectMemoryFile:
-    fileWithCurrentProjectMemory  <- projectMemoryIndex$Path[projectMemoryIndex$Index == 0]
+    fileWithCurrentProjectMemory  <- file.path(
+        projectPath, 
+        projectMemoryIndex$Path[projectMemoryIndex$Index == 0]
+    )
     file.copy(
         from = fileWithCurrentProjectMemory, 
         to = getProjectPaths(projectPath, "currentProjectMemoryFile"), 
@@ -2004,7 +2003,10 @@ getDataType <- function(projectPath, modelName, processID) {
 }
 
 checkDataType <- function(dataType, projectPath, modelName, processID) {
-    dataType %in% getDataType(projectPath, modelName, processID) 
+    #dataType %in% getDataType(projectPath, modelName, processID)
+    if(!dataType %in% getDataType(projectPath, modelName, processID)) {
+        stop("The process ", getProcessName(projectPath, modelName, processID), " does not return ", dataType, " data.")
+    }
 }
     
 
@@ -2015,7 +2017,7 @@ readProcessIndexTable <- function(projectPath, modelName, startProcess = 1, endP
     
     # If missing, create the file as an empty file:
     if(!file.exists(processIndexTableFile)) {
-        processIndexTable <- data.table::data.table()
+        return(data.table::data.table())
     }
     # Otherwise read the table from the file:
     else {
@@ -2023,6 +2025,11 @@ readProcessIndexTable <- function(projectPath, modelName, startProcess = 1, endP
         processIndexTable <- data.table::fread(processIndexTableFile, sep = "\t")
         validRows <- processIndexTable$modelName %in% modelName
         processIndexTable <- subset(processIndexTable, validRows)
+        
+        # If the model in empty, return an empty data.table:
+        if(nrow(processIndexTable) == 0) {
+            return(data.table::data.table())
+        }
         
         # Restrict the startProcess and endProcess to the range of process indices:
         startProcess <- max(1, startProcess)
@@ -3012,17 +3019,17 @@ removeProcess <- function(projectPath, modelName, processID) {
 
 
 
-# rearrangeProcesses <- function(projectPath, modelName, processNames, MoveTo = NULL) {
-#     
-#     # Get the project description:
-#     projectDescription <- getCurrentProjectDescription(projectPath)
-#     
-#     # Get the names of all processes, and the indices of the selected processes:
-#     originalxProcessNames <- names(projectDescription[[modelName]])
-#     indexOfProcessesToMove <- match(processNames, originalxProcessNames)
-#     
-#     
-# }
+rearrangeProcesses <- function(projectPath, modelName, processNames, MoveTo = NULL) {
+    
+    # Get the project description:
+    projectDescription <- getCurrentProjectDescription(projectPath)
+    
+    # Get the names of all processes, and the indices of the selected processes:
+    originalxProcessNames <- names(projectDescription[[modelName]])
+    indexOfProcessesToMove <- match(processNames, originalxProcessNames)
+    
+    
+}
 
 
 

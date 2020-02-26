@@ -181,17 +181,17 @@ NULL
 addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processID) {
     
     # Check that the process returns Assigment process data:
-    checkDataType("AcosticPSU", projectPath, modelName, processID)
+    checkDataType("AcousticPSU", projectPath, modelName, processID)
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
     # If the PSU is not given, use the default PSU name:
     if(length(PSU) == 0) {
-        PSU <- getNewDefaultName(AcosticPSU$Stratum_PSU$PSU, prefix = RstoxBase::getRstoxBaseDefinitions("AcousticPSUPrefix"))
+        PSU <- getNewDefaultName(AcousticPSU$Stratum_PSU$PSU, prefix = RstoxBase::getRstoxBaseDefinitions("AcousticPSUPrefix"))
     }
     # Check whether the acoustic PSU already exists:
-    if(any(AcosticPSU$Stratum_PSU$PSU == PSU)) {
+    if(any(AcousticPSU$Stratum_PSU$PSU == PSU)) {
         stop("The name of the Acoustic PSU (", PSU, ") already exists.")
     }
     
@@ -200,8 +200,8 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         Stratum = Stratum, 
         PSU = PSU
     )
-    AcosticPSU$Stratum_PSU <- data.table::data.table(
-        AcosticPSU$Stratum_PSU, 
+    AcousticPSU$Stratum_PSU <- data.table::data.table(
+        AcousticPSU$Stratum_PSU, 
         toAdd
     )
     
@@ -211,7 +211,7 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     # Revert the active process ID to the previous process:
@@ -230,14 +230,14 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
 removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
     # Add the acsoutic PSU:
-    PSUsToKeep <- !AcosticPSU$Stratum_PSU$PSU %in% PSU
-    EDSUsToKeep <- !AcosticPSU$EDSU_PSU$PSU %in% PSU
+    PSUsToKeep <- !AcousticPSU$Stratum_PSU$PSU %in% PSU
+    EDSUsToKeep <- !AcousticPSU$EDSU_PSU$PSU %in% PSU
     
-    AcosticPSU$Stratum_PSU <- AcosticPSU$Stratum_PSU[PSUsToKeep, ]
-    AcosticPSU$EDSU_PSU <- AcosticPSU$EDSU_PSU[EDSUsToKeep, ]
+    AcousticPSU$Stratum_PSU <- AcousticPSU$Stratum_PSU[PSUsToKeep, ]
+    AcousticPSU$EDSU_PSU <- AcousticPSU$EDSU_PSU[EDSUsToKeep, ]
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -245,7 +245,7 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     # Revert the active process ID to the previous process:
@@ -263,14 +263,14 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
 renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
     # Add the acsoutic PSU:
-    PSUsToRename <- AcosticPSU$Stratum_PSU$PSU %in% PSU
-    EDSUsToRename <- AcosticPSU$EDSU_PSU$PSU %in% PSU
+    PSUsToRename <- AcousticPSU$Stratum_PSU$PSU %in% PSU
+    EDSUsToRename <- AcousticPSU$EDSU_PSU$PSU %in% PSU
     
-    AcosticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
-    AcosticPSU$EDSU_PSU$PSU[EDSUsToRename] <- newPSUName
+    AcousticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
+    AcousticPSU$EDSU_PSU$PSU[EDSUsToRename] <- newPSUName
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -278,7 +278,7 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     # Revert the active process ID to the previous process:
@@ -297,19 +297,19 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
 addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
     # Set the PSU column for the given EDSUs:
-    atEDSUs <- AcosticPSU$EDSU_PSU$EDSU %in% EDSU
-    AcosticPSU$EDSU_PSU[atEDSUs, PSU := ..PSU]
+    atEDSUs <- AcousticPSU$EDSU_PSU$EDSU %in% EDSU
+    AcousticPSU$EDSU_PSU[atEDSUs, PSU := ..PSU]
     
     ## Add the acsoutic PSU:
     #toAdd <- data.table::data.table(
     #    PSU = PSU, 
     #    EDSU = EDSU
     #)
-    #AcosticPSU$PSU_EDSU <- data.table::data.table(
-    #    AcosticPSU$PSU_EDSU, 
+    #AcousticPSU$PSU_EDSU <- data.table::data.table(
+    #    AcousticPSU$PSU_EDSU, 
     #    toAdd
     #)
     
@@ -319,7 +319,7 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     # Revert the active process ID to the previous process:
@@ -337,16 +337,16 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
 removeEDSU <- function(EDSU, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
     # Set the PSU column to empty string for the given EDSUs:
-    atEDSUs <- AcosticPSU$EDSU_PSU$EDSU %in% EDSU
-    AcosticPSU$EDSU_PSU[atEDSUs, PSU := ""]
+    atEDSUs <- AcousticPSU$EDSU_PSU$EDSU %in% EDSU
+    AcousticPSU$EDSU_PSU[atEDSUs, PSU := ""]
     
     ## Add the acsoutic PSU:
-    #EDSUsToKeep <- !AcosticPSU$PSU_EDSU$EDSU %in% EDSU
+    #EDSUsToKeep <- !AcousticPSU$PSU_EDSU$EDSU %in% EDSU
     #
-    #AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
+    #AcousticPSU$PSU_EDSU <- AcousticPSU$PSU_EDSU[EDSUsToKeep, ]
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -354,7 +354,7 @@ removeEDSU <- function(EDSU, projectPath, modelName, processID) {
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     # Revert the active process ID to the previous process:

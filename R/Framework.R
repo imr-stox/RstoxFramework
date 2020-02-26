@@ -1124,11 +1124,17 @@ resolveProjectPath <- function(filePath) {
 #' 
 #' @export
 #'
-getActiveProcessID <- function(projectPath, modelName) {
+getActiveProcessID <- function(projectPath, modelName = NULL) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
-    activeProcessIDTable[[modelName]]
+    if(length(modelName)) {
+        return(activeProcessIDTable[[modelName]])
+    }
+    else {
+        return(activeProcessIDTable)
+    }
+    
 }
 
 
@@ -1142,6 +1148,15 @@ writeActiveProcessID <- function(projectPath, modelName, activeProcessID) {
     activeProcessIDTable[[modelName]] <- activeProcessID
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
     activeProcessIDFile
+}
+
+writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
+    # Read the active process ID for the model:
+    activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
+    if(!file.exists(activeProcessIDFile)) {
+        warning("The active process ID file has not been initiated.")
+    }
+    data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
 }
 
 #' 
@@ -1376,7 +1391,7 @@ getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL
     # If the projectMemoryFile does not exist, return an empty data.table:
     if(file.exists(projectMemoryFile)) {
         # Read the projectMemoryFile:
-        argumentFileTable <- readRDS(projectMemoryFile)
+        argumentFileTable <- readRDS(projectMemoryFile)$argumentFileTable
         # Subset out the model if requested:
         if(length(modelName)) {
             argumentFileTable <- subset(argumentFileTable, modelName == modelName)
@@ -1581,8 +1596,16 @@ saveProjectMemory <- function(projectPath, argumentFileTable) {
     # Save the list of project argument files to the current project description file and to the new project description file:
     currentProjectMemoryFile <- getCurrentProjectMemoryFile(projectPath)
     newProjectMemoryFile     <- getNewProjectMemoryFile(projectPath)
-    saveRDS(argumentFileTable, file = currentProjectMemoryFile)
-    saveRDS(argumentFileTable, file = newProjectMemoryFile)
+    # Add the processIndexTable, the activeProcessID and the maxProcessIntegerID to the data to write:
+    toWrite <- list(
+        argumentFileTable = argumentFileTable, 
+        processIndexTable = readProcessIndexTable(projectPath),  
+        activeProcessIDTable = getActiveProcessID(projectPath), 
+        maxProcessIntegerIDTable = getMaxProcessIntegerID(projectPath)
+    )
+    # Write the project memory to the current and new file:
+    saveRDS(toWrite, file = currentProjectMemoryFile)
+    saveRDS(toWrite, file = newProjectMemoryFile)
     
     # Update the projectDescriptionIndexFile:
     projectMemoryIndex <- readProjectMemoryIndex(projectPath)
@@ -1688,19 +1711,35 @@ unReDoProject <- function(projectPath, shift = 0) {
     writeProjectMemoryIndex(projectPath, projectMemoryIndex)
     
     # Copy the projectMemory with index = 0 to the currentProjectMemoryFile:
-    fileWithCurrentProjectMemory  <- file.path(
+    fileWithNewCurrentProjectMemory  <- file.path(
         projectPath, 
         projectMemoryIndex$Path[projectMemoryIndex$Index == 0]
     )
     file.copy(
-        from = fileWithCurrentProjectMemory, 
+        from = fileWithNewCurrentProjectMemory, 
         to = getProjectPaths(projectPath, "currentProjectMemoryFile"), 
         overwrite = TRUE, 
         copy.date = TRUE
     )
+    
+    # Rewrite the text file holding processIndexTable, activeProcessIDTable and maxProcessIntegerIDTable:
+    unwrapProjectMemoryFile(fileWithNewCurrentProjectMemory)
 }
 
 
+unwrapProjectMemoryFile <- function(projectMemoryFile) {
+    # Read the project memory to get the data to write to the text files:
+    projectMemory <- readRDS(projectMemoryFile)
+    
+    # Unwrap and overwrite the process index table file:
+    writeProcessIndexTable(projectPath, projectMemory$processIndexTable)
+    
+    # Unwrap and overwrite the active process ID file:
+    writeActiveProcessIDFromTable(projectPath, projectMemory$activeProcessIDTable)
+    
+    # Unwrap and overwrite the maximum process integer ID file:
+    writeMaxProcessIntegerIDTable(projectPath, projectMemory$maxProcessIntegerIDTable)
+}
 
 
 ##################################
@@ -2011,7 +2050,7 @@ checkDataType <- function(dataType, projectPath, modelName, processID) {
     
 
 ##### Functions for manipulating the process index table, which defines the order of the processes. These functions are used by the frontend to delete, add, and reorder processes: #####
-readProcessIndexTable <- function(projectPath, modelName, startProcess = 1, endProcess = Inf) {
+readProcessIndexTable <- function(projectPath, modelName = NULL, startProcess = 1, endProcess = Inf) {
     # Get the path to the process index file:
     processIndexTableFile <- getProjectPaths(projectPath, "processIndexTableFile")
     
@@ -2023,6 +2062,11 @@ readProcessIndexTable <- function(projectPath, modelName, startProcess = 1, endP
     else {
         # Read and extract the specified model:
         processIndexTable <- data.table::fread(processIndexTableFile, sep = "\t")
+        # Return immediately if modelName is empty (returning the entire table):
+        if(length(modelName) == 0) {
+            return(processIndexTable)
+        }
+        
         validRows <- processIndexTable$modelName %in% modelName
         processIndexTable <- subset(processIndexTable, validRows)
         
@@ -2041,7 +2085,7 @@ readProcessIndexTable <- function(projectPath, modelName, startProcess = 1, endP
     return(processIndexTable)
 }
 
-writeProcessIndexTable <- function(projectPath, modelName, processIndexTable) {
+writeProcessIndexTable <- function(projectPath, processIndexTable) {
     # Get the path to the process index file:
     processIndexTableFile <- getProjectPaths(projectPath, "processIndexTableFile")
     # write the file:
@@ -2082,7 +2126,7 @@ addToProcessIndexTable <- function(projectPath, modelName, processID, processNam
     )
     
     # Write the file:
-    writeProcessIndexTable(projectPath = projectPath, modelName = modelName, processIndexTable = processIndexTable)
+    writeProcessIndexTable(projectPath = projectPath, processIndexTable = processIndexTable)
 }
 
 
@@ -2094,7 +2138,7 @@ removeFromProcessIndexTable <- function(projectPath, modelName, processID) {
     processIndexTable <- processIndexTable[processID != processID, ]
     
     # Write the file:
-    writeProcessIndexTable(projectPath = projectPath, modelName = modelName, processIndexTable = processIndexTable)
+    writeProcessIndexTable(projectPath = projectPath, processIndexTable = processIndexTable)
 }
 
 rearrangeProcessIndexTable <- function(projectPath, modelName, processIDs, afterProcessID) {
@@ -2121,7 +2165,7 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processIDs, after
     )
     
     # Write the file:
-    writeProcessIndexTable(projectPath = projectPath, modelName = modelName, processIndexTable = processIndexTable)
+    writeProcessIndexTable(projectPath = projectPath, processIndexTable = processIndexTable)
 }
 
 
@@ -2443,6 +2487,8 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName)
                 argumentValue = newProcessName
             )
         }
+        
+        
         
         # Return a flag TRUE if the process name was changed: 
         return(TRUE)
@@ -2857,7 +2903,7 @@ getNewDefaultProcessName <- function(projectPath, modelName) {
     getNewDefaultName(processNames, getRstoxFrameworkDefinitions("process_Prefix"))
 }
 
-createNewProcessID <- function(projectPath, modelName, n = 1) {
+getMaxProcessIntegerID <- function(projectPath) {
     # Get the file containing the maximum process integer ID:
     maxProcessIntegerIDFile <- getProjectPaths(projectPath, "maxProcessIntegerIDFile")
     
@@ -2871,16 +2917,54 @@ createNewProcessID <- function(projectPath, modelName, n = 1) {
         maxProcessIntegerIDTable <- data.table::fread(maxProcessIntegerIDFile, sep = "\t")
     }
     
+    return(maxProcessIntegerIDTable)
+}
+
+writeMaxProcessIntegerIDTable <- function(projectPath, maxProcessIntegerIDTable) {
+    # Get the file containing the maximum process integer ID:
+    maxProcessIntegerIDFile <- getProjectPaths(projectPath, "maxProcessIntegerIDFile")
+    # Write the new maximum process integer ID:
+    data.table::fwrite(maxProcessIntegerIDTable, maxProcessIntegerIDFile, sep = "\t")
+}
+
+
+
+
+createNewProcessID <- function(projectPath, modelName, n = 1) {
+    ## Get the file containing the maximum process integer ID:
+    #maxProcessIntegerIDFile <- getProjectPaths(projectPath, "maxProcessIntegerIDFile")
+    #
+    ## If missing, create the file as an empty file:
+    #if(!file.exists(maxProcessIntegerIDFile)) {
+    #    stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
+    #    maxProcessIntegerIDTable <- data.table::data.table(array(0, dim = c(1, length(stoxModelNames))))
+    #    names(maxProcessIntegerIDTable) <- stoxModelNames
+    #}
+    #else {
+    #    maxProcessIntegerIDTable <- data.table::fread(maxProcessIntegerIDFile, sep = "\t")
+    #}
+    
+    
+    
+    maxProcessIntegerIDTable <- getMaxProcessIntegerID(projectPath)
+    
     # Add 1 to the current process integer ID of the model
     processIntegerID <- maxProcessIntegerIDTable[[modelName]] + seq_len(n)
     maxProcessIntegerIDTable[[modelName]] <- max(processIntegerID)
     
     # Write the new maximum process integer ID:
-    data.table::fwrite(maxProcessIntegerIDTable, maxProcessIntegerIDFile, sep = "\t")
+    #data.table::fwrite(maxProcessIntegerIDTable, maxProcessIntegerIDFile, sep = "\t")
+    writeMaxProcessIntegerIDTable(
+        projectPath = projectPath, 
+        maxProcessIntegerIDTable = maxProcessIntegerIDTable
+    )
     
     # Create the processID and return this:
     createProcessIDString(processIntegerID)
 }
+
+
+
 
 
 createProcessIDString <- function(integerID) {

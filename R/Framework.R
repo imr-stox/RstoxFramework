@@ -778,10 +778,21 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' @export
 #' @rdname Projects
 #' 
-openProject <- function(projectPath, showWarnings = FALSE, force = FALSE) {
+openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE) {
     
     if(!force && isOpenProject(projectPath)) {
         warning("Project ", projectPath, "is already open.")
+        
+        # Reset the active process if requested:
+        if(reset) {
+            stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
+            lapply(stoxModelNames, function(modelName) resetModel(
+                projectPath = projectPath, 
+                modelName = modelName
+                )
+            )
+        }
+        
         out <- list(
             projectPath = projectPath, 
             projectName = basename(projectPath)
@@ -1204,7 +1215,7 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
 #' 
 #' @export
 #'
-resetModel <- function(projectPath, modelName, processID = 1) {
+resetModel <- function(projectPath, modelName, processID = NA) {
     
     # ??
     ## Delete the output from the processes past the activeProcessID:
@@ -1215,7 +1226,7 @@ resetModel <- function(projectPath, modelName, processID = 1) {
     processIndex <- which(processIndexTable$processID == processID)
     
     # Get the active process ID as the process ID of the process before the specified process in the processIndexTable (or NA if processIndex is 1):
-    if(processIndex == 1) {
+    if(length(processIndex) == 0 || processIndex == 1) {
         activeProcessID <- NA
     }
     else {
@@ -2183,8 +2194,13 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
 
 modifyProcessNameInProcessIndexTable <- function(projectPath, modelName, processName, newProcessName) {
     # Get the process index file:
-    processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
+    processIndexTable <- readProcessIndexTable(projectPath = projectPath)
     
+    toRename <- processIndexTable$modelName %in% modelName & processIndexTable$processName %in% processName
+    processIndexTable[toRename, "processName"] <- newProcessName
+    
+    # Write the file:
+    writeProcessIndexTable(projectPath = projectPath, processIndexTable = processIndexTable)
 }
 
 

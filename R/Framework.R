@@ -975,6 +975,10 @@ readProjectXML <- function(projectXMLFile) {
 }
 
 
+
+
+
+
 ##### UNFINISHED!!!!!!!!!!!!! #####
 processData2JSON <- function(processData, digits = getRstoxFrameworkDefinitions("digits")) {
     if("Stratum" %in% names(processData)) {
@@ -2096,7 +2100,8 @@ writeProcessIndexTable <- function(projectPath, processIndexTable) {
 addToProcessIndexTable <- function(projectPath, modelName, processID, processName, afterIndex = NULL) {
     
     # Get the process index file:
-    processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
+    #processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
+    processIndexTable <- readProcessIndexTable(projectPath = projectPath)
     
     # Get the default 'afterIndex':
     nrowProcessIndexTable <- nrow(processIndexTable)
@@ -2131,26 +2136,33 @@ addToProcessIndexTable <- function(projectPath, modelName, processID, processNam
 
 
 removeFromProcessIndexTable <- function(projectPath, modelName, processID) {
+    
     # Get the process index file:
-    processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
+    processIndexTable <- readProcessIndexTable(projectPath = projectPath)
     
     # Remove the process:
-    processIndexTable <- processIndexTable[processID != processID, ]
+    toRemove <- processIndexTable$modelName == modelName & processIndexTable$processID == processID
+    toKeep <- !toRemove
+    processIndexTable <- subset(processIndexTable, toKeep)
     
     # Write the file:
     writeProcessIndexTable(projectPath = projectPath, processIndexTable = processIndexTable)
 }
 
-rearrangeProcessIndexTable <- function(projectPath, modelName, processIDs, afterProcessID) {
+rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterProcessID) {
+    
     # Get the process index file:
     processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
     
-    # Add the process ID and as the process after 'after':
-    rearranged <- processIndexTable[processIDs %in% processIDs, ]
-    rest <- processIndexTable[!processIDs %in% processIDs, ]
-    afterProcessIndexInRest <- which(rest$processIDs == afterProcessID)
+    # Add the process ID and as the process after 'afterProcessID':
+    toRearrange <- processIndexTable$modelName %in% modelName & processIndexTable$processID %in% processID
+    notToRearrange <- !toRearrange
+    rearranged <- subset(processIndexTable, toRearrange)
+    rest <- subset(processIndexTable, notToRearrange)
+    
+    afterProcessIndexInRest <- which(rest$modelName %in% modelName & rest$processID == afterProcessID)
     before <- rest[seq_len(afterProcessIndexInRest), ]
-    if(after < nrowProcessIndexTable) {
+    if(afterProcessIndexInRest < nrowProcessIndexTable) {
         after <- rest[seq(afterProcessIndexInRest + 1, nrow(rest)), ]
     }
     else {
@@ -2166,6 +2178,13 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processIDs, after
     
     # Write the file:
     writeProcessIndexTable(projectPath = projectPath, processIndexTable = processIndexTable)
+}
+
+
+modifyProcessNameInProcessIndexTable <- function(projectPath, modelName, processName, newProcessName) {
+    # Get the process index file:
+    processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
+    
 }
 
 
@@ -3667,7 +3686,7 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
 getOutputDepth <- function(x) {
     outputDepth <- 1
     validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
-    if(is.list(x[[1]]) && firstClass(x[[1]][[1]]) %in% validOutputDataClasses) {
+    if(is.list(x[[1]]) && length(x[[1]]) && firstClass(x[[1]][[1]]) %in% validOutputDataClasses) {
         outputDepth <- 2
     }
     outputDepth

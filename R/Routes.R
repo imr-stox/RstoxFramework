@@ -967,12 +967,12 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     
     output <- list(
         propertySheet = propertySheet, 
-        help = getFunctionHelpAsHtml(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = processID, 
-            outfile = outfile
-        ), 
+        #help = getFunctionHelpAsHtml(
+        #    projectPath = projectPath, 
+        #    modelName = modelName, 
+        #    processID = processID, 
+        #    outfile = outfile
+        #), 
         activeProcessID = getActiveProcessID(
             projectPath = projectPath, 
             modelName = modelName

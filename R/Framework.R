@@ -298,6 +298,7 @@ initiateRstoxFramework <- function(){
     #### Project description: ####
     projectRDataFile <- file.path(stoxFolders["Process"], "project.RData")
     projectXMLFile <- file.path(stoxFolders["Process"], "project.xml")
+    projectJSONFile <- file.path(stoxFolders["Process"], "project.json")
     projectSavedStatusFile <- file.path(statusFolder, "projectSavedStatus.txt")
     projectIsRunningFile <- file.path(statusFolder, "projectIsRunning.txt")
     #currentProcessFile = file.path(statusFolder, "currentProcess.txt")
@@ -333,6 +334,7 @@ initiateRstoxFramework <- function(){
             # Project description:
             projectRDataFile = projectRDataFile, 
             projectXMLFile = projectXMLFile, 
+            projectJSONFile = projectJSONFile, 
             projectSavedStatusFile = projectSavedStatusFile, 
             projectIsRunningFile = projectIsRunningFile, 
             #currentProcessFile = currentProcessFile, 
@@ -962,11 +964,11 @@ readProjectDescription <- function(projectPath, type = c("RData", "XML")) {
     type <- match.arg(type)
     switch(
         type,
-        RData = readProjectDescriptionRdata(projectPath),
+        RData = readProjectDescriptionRData(projectPath),
         XML = readProjectDescriptionXML(projectPath)
     )
 }
-readProjectDescriptionRdata <- function(projectPath) {
+readProjectDescriptionRData <- function(projectPath) {
     # Get the path to the project description file:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
     load(projectRDataFile) # Creates the object
@@ -991,13 +993,14 @@ readProjectXML <- function(projectXMLFile) {
 
 
 ##### UNFINISHED!!!!!!!!!!!!! #####
-processData2JSON <- function(processData, digits = getRstoxFrameworkDefinitions("digits")) {
-    if("Stratum" %in% names(processData)) {
+processData2JSON <- function(processData, digits = getRstoxFrameworkDefinitions("digits")$JSON) {
+    if("StratumPolygon" %in% names(processData)) {
         #as.character(geojsonio::geojson_json(processData))
-        geojsonio::geojson_json(processData)
+        as.character(geojsonio::geojson_json(processData, lon = "x", lat = "y"))
     }
     else {
-        jsonlite::toJSON(processData, digits = digits)
+        #jsonlite::toJSON(processData, digits = digits, pretty = TRUE, auto_unbox = TRUE)
+        processData
     }
     
 }
@@ -1025,16 +1028,21 @@ JSON2processData <- function(JSON) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-writeProjectDescription <- function(projectPath, type = c("RData", "XML")) {
+writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON")) {
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
-    switch(
-        type,
-        RData = writeProjectDescriptionRdata(projectPath),
-        XML = writeProjectDescriptionXML(projectPath)
-    )
+    
+    functionName <- paste0("writeProjectDescription", type)
+    do.call(functionName, list(projectPath = projectPath))
+    
+    #switch(
+    #    type,
+    #    RData = writeProjectDescriptionRData(projectPath),
+    #    XML = writeProjectDescriptionXML(projectPath),
+    #    JSON = writeProjectDescriptionJSON(projectPath)
+    #)
 }
-writeProjectDescriptionRdata <- function(projectPath) {
+writeProjectDescriptionRData <- function(projectPath) {
     # Get the current project description:
     projectDescription <- getProjectMemoryData(projectPath)
     
@@ -1050,12 +1058,38 @@ writeProjectDescriptionXML <- function(projectPath) {
     projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
     writeProjectXML(projectDescription, projectXMLFile)
 }
-
+writeProjectDescriptionJSON <- function(projectPath) {
+    # Get the current project description:
+    projectDescription <- getProjectMemoryData(projectPath)
+    
+    # Get the path to the project description file, and save the current project description:
+    projectJSONFile <- getProjectPaths(projectPath, "projectJSONFile")
+    writeProjectJSON(projectDescription, projectJSONFile)
+}
 
 writeProjectXML <- function(projectDescription, projectXMLFile) {
     # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
     #saveProject(projectDescription, projectXMLFile)
 }
+
+writeProjectJSON <- function(projectDescription, projectJSONFile) {
+    
+    # Convert all proseddData sp objects to geojson:
+    for(modelName in names(projectDescription)) {
+        for(processID in names(projectDescription[[modelName]])) {
+            print(processID)
+            print(system.time(projectDescription[[modelName]][[processID]]$processData <- processData2JSON(projectDescription[[modelName]][[processID]]$processData)))
+        }
+    }
+    
+    browser()
+    jsonlite::write_json(projectDescription, projectJSONFile, pretty = TRUE)
+    
+    
+}
+
+
+
 
 
 

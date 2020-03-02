@@ -150,9 +150,60 @@ initiateRstoxFramework <- function(){
         ), 
         multiple = list(
             "filePaths", 
-            "parameterTable", 
-            "filterExpressionTable"
+            #"parameterTable", 
+            "filterExpressionTable", 
+            "SpeciesCategoryTable", 
+            "AcousticCategoryTable", 
+            "CatchCompensationTable", 
+            "SelectivityTable", 
+            "SpeciesLinktable", 
+            "AcousticTargetStrengthTable"
         )
+    )
+    
+    # Define the column names of the different parameter tables:
+    parameterTableColumnNames <- list(
+        SpeciesCategoryTable = c(
+            "SpeciesCategory", 
+            "NewSpeciesCategory"
+        ),
+        AcousticCategoryTable = c(
+            "AcousticCategory", 
+            "NewAcousticCategory"
+        ),
+        CatchCompensationTable = c(
+            "SpeciesCategory", 
+            "Alpha", 
+            "Beta", 
+            "LMin", 
+            "LMax"
+        ),
+        SelectivityTable = c(
+            "SpeciesCategory", 
+            "Alpha", 
+            "Beta", 
+            "LMax"
+        ),
+        SpeciesLinktable = c(
+            "AcousticCategory",
+            "SpeciesCategory"
+        ),
+        AcousticTargetStrengthTable = c(
+            "AcousticCategory", 
+            "m", 
+            "a", 
+            "d"
+        )
+    )
+    
+    # Define the titles of the different parameter tables:
+    parameterTableTitle <- list(
+        SpeciesCategoryTable = "Define new species categories",
+        AcousticCategoryTable = "Define new acoustic categories",
+        CatchCompensationTable = "Define parameters for length dependent catch compensation",
+        SelectivityTable = "Define parameters for length dependent selectivity",
+        SpeciesLinktable = "Link acoustic categories and species categories",
+        AcousticTargetStrengthTable = "Define parameters of acoustic target strength by length"
     )
     
     # Define filter operators for the different data types:
@@ -1077,8 +1128,7 @@ writeProjectJSON <- function(projectDescription, projectJSONFile) {
     # Convert all proseddData sp objects to geojson:
     for(modelName in names(projectDescription)) {
         for(processID in names(projectDescription[[modelName]])) {
-            print(processID)
-            print(system.time(projectDescription[[modelName]][[processID]]$processData <- processData2JSON(projectDescription[[modelName]][[processID]]$processData)))
+            projectDescription[[modelName]][[processID]]$processData <- processData2JSON(projectDescription[[modelName]][[processID]]$processData)
         }
     }
     
@@ -1321,6 +1371,12 @@ getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL
     
     # Get the requested files:
     argumentFileTable <- argumentFileTable[requested, ]
+    
+    # Special case if only one file is requested, and drop1 is TRUE:
+    if(drop1 && nrow(argumentFileTable) == 1) {
+        thisArgumentValue <- readRDS(file.path(projectPath, argumentFileTable$argumentFile))
+        return(thisArgumentValue)
+    }
     
     # Create an empty projectDescription and read and insert the files:
     projectMemory <- list()
@@ -1845,7 +1901,13 @@ getStoxFunctionMetaData <- function(functionName, metaDataName = NULL, showWarni
 }
 
 
-getArgumentsToShow <- function(functionName, functionArguments) {
+getArgumentsToShow <- function(projectPath, modelName, processID) {
+    
+    # Get the function name and arguments:
+    functionName <- getFunctionName(projectPath = projectPath, modelName = modelName, processID = processID)
+    functionInputs <- getFunctionInputs(projectPath = projectPath, modelName = modelName, processID = processID)
+    functionParameters <- getFunctionParameters(projectPath = projectPath, modelName = modelName, processID = processID)
+    functionArguments <- c(functionInputs, functionParameters)
     
     # Get the function argument hierarchy:
     functionArgumentHierarchy <- getStoxFunctionMetaData(functionName, "functionArgumentHierarchy", showWarnings = FALSE)
@@ -1868,19 +1930,6 @@ getArgumentsToShow <- function(functionName, functionArguments) {
             toShow[[argumentName]] <- TRUE
         }
     }
-    
-    
-    
-    #toShow <- !logical(length(functionArguments))
-    #names(toShow) <- names(functionArguments)
-    #
-    #for(argumentName in names(functionArgumentHierarchy)) {
-    #    # Check the function arguments against the values in the function argument hierarchy:
-    #    fullfilled <- functionArguments[names(functionArgumentHierarchy[[argumentName]])] == unlist(functionArgumentHierarchy[[argumen#tName]])
-    #    if(!any(fullfilled)) {
-    #        toShow[[argumentName]] <- FALSE
-    #    }
-    #}
     
     # Return only the names of the arguments to show:
     return(names(toShow)[toShow])
@@ -2019,14 +2068,21 @@ getFunctionName <- function(projectPath, modelName, processID) {
     )
 }
 
-getFunctionInputs <- function(projectPath, modelName, processID) {
-    getProjectMemoryData(
+getFunctionInputs <- function(projectPath, modelName, processID, only.valid = FALSE) {
+    functionInputs <- getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "functionInputs", 
         drop1 = TRUE
     )
+    
+    if(only.valid) {
+        argumentsToShow <- getArgumentsToShow(projectPath, modelName, processID)
+        functionInputs <- intersect(argumentsToShow, functionInputs)
+    }
+    
+    return(functionInputs)
 }
 
 getFunctionParameters <- function(projectPath, modelName, processID) {
@@ -2269,21 +2325,21 @@ getProcessIDFromProcessName <- function(projectPath, modelName, processName) {
 #' 
 getProcessTable <- function(projectPath, modelName) {
     
-    # Get a table of process name and ID:
-    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+            # Get the table of process name and ID:
+            processIndexTable <- readProcessIndexTable(projectPath, modelName)
     
     # Return an empty data.table if the processIndexTable is empty:
     if(nrow(processIndexTable) == 0) {
         return(data.table::data.table())
     }
         
-    # Get the function names for use when determining the 'canShowInMap' and 'hasProcessData'
-    functionNames <- mapply(
-        getFunctionName, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processIndexTable$processID
-    )
+            # Get the function names for use when determining the 'canShowInMap' and 'hasProcessData'
+            functionNames <- mapply(
+                getFunctionName, 
+                projectPath = projectPath, 
+                modelName = modelName, 
+                processID = processIndexTable$processID
+            )
     
     # Check whether the data type can be shown in the map:
     canShowInMap <- sapply(functionNames, getCanShowInMap)
@@ -2313,14 +2369,14 @@ getProcessTable <- function(projectPath, modelName) {
             hasProcessData = hasProcessData
         )
     )
-        
-    # Get the funciton inputs (as a list):
-    functionInputs <- mapply(
-        getFunctionInputs, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processIndexTable$processID
-    )
+    
+            # Get the funciton inputs (as a list):
+            functionInputs <- mapply(
+                getFunctionInputs, 
+                projectPath = projectPath, 
+                modelName = modelName, 
+                processID = processIndexTable$processID
+            )
     # Get the processes that has errors:
     hasModelError <- sapply(
         seq_along(processIndexTable$processID), 
@@ -2330,12 +2386,12 @@ getProcessTable <- function(projectPath, modelName) {
     )
     processTable$hasModelError <- hasModelError
     
-    # Add the data type:
-    processTable$dataType <- sapply(functionNames, getStoxFunctionMetaData, "functionOutputDataType")
-    
-    # Add the function inputs:
-    processTable$functionInputs <- functionInputs
-    
+            # Add the data type:
+            processTable$dataType <- sapply(functionNames, getStoxFunctionMetaData, "functionOutputDataType")
+            
+            # Add the function inputs:
+            processTable$functionInputs <- functionInputs
+            
     # Add the function parameters:
     functionParameters <- mapply(
         getFunctionParameters, 
@@ -3548,7 +3604,6 @@ getProcessOutputTableNames <- function(projectPath, modelName, processID) {
     
     # Ensure that this is a vector in JSON after auto_unbox = TRUE, by using as.list():
     tableNames <- as.list(tableNames)
-    print(tableNames)
     return(tableNames)
 }
 

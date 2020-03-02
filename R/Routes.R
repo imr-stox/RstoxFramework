@@ -33,6 +33,102 @@ getAvailableTemplatesDescriptions <- function() {
 ##########
 
 
+#processName
+#processID
+#modelName
+#
+#functionName
+#functionOutputDataType
+#activeFunctionInputs
+
+
+scanForModelError <- function(projectPath, modelName, processID = NULL) {
+    
+    # Get the table of process name and ID:
+    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    # Subset the table to the reuqested processID, if given:
+    if(length(processID)) {
+        atProcessID <- which(processID == processIndexTable$processID)
+        if(length(atProcessID) == 0) {
+            stop("The requested processID does not exist in the model ", modelName, " of projecct ", projectPath, ".")
+        }
+        processIndexTable <- processIndexTable[seq_len(atProcessID), ]
+    }
+    
+    # Add the projectPath:
+    processIndexTable[, projectPath = projectPath]
+    
+    # Add a column logging function input errors:
+    processIndexTable[, functionInputError := FALSE]
+    
+    
+    # Add function names:
+    functionName <- mapply(
+        getFunctionName, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processIndexTable$processID
+    )
+    processIndexTable[, functionName := ..functionName]
+    
+    
+    # Add output data type:
+    processIndexTable[, functionOutputDataType := getStoxFunctionMetaData(functionNames, "functionOutputDataType")]
+    
+    
+    # Get all active function inputs:
+    functionInputs <- lapply(processIndexTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = TRUE))
+    processIndexTable[, functionInputs := ..functionInputs]
+    
+    # Add output data type from each function of the processes specified as function inputs:
+    processIndexTable[, functionInputDataType := ..activeFunctionInputs]
+    
+    
+    
+    
+    # Run through the processes and detect model errors:
+    for(processID in processIndexTable$processID) {
+        # Check that the 
+        
+        
+        #functionInputError[processID] <- 
+    }
+        
+    
+  
+    
+    
+    
+    checkFunctionInput <- function(functionInput, functionInputDataType, processIndexTable) {
+        
+        # (0) Chech that the function input is a string with positive number of characters:
+        if(!is.character(functionInput)) {
+            stop("Function input must be a character string.")
+        }
+        # (1) Error if empty string:
+        else if(nchar(functionInput) == 0) {
+            stop("Function input must be a non-empty character string.")
+        }
+        # (2) Error if not the name of a previous process:
+        else if(! functionInput %in% processIndexTable$processName) {
+            stop("Function input is not the name of a previous process.")
+        }
+        else {
+            atRequestedPriorProcess <- which(functionInput == processIndexTable$processName)
+            outputDataTypeOfRequestedPriorProcess <- getStoxFunctionMetaData(processIndexTable$functionName[atPriorProcess], "functionOutputDataType")
+            
+            # (3) Error if the previous process returns the wrong data type:
+            if(! functionInputDataType %in% outputDataTypeOfRequestedPriorProcess) {
+                stop("Function input the name of a previous process.")
+            }
+            else if(processIndexTable$hasError[atPriorProcess]) {
+                stop("The process ", processIndexTable$processName[atPriorProcess], " has input error.")
+            }
+        }
+    }
+}
+
+
 ##### Processes: #####
 # Function to get whether the process has input data error:
 getFunctionInputErrors <- function(ind, processTable, functionInputs) {
@@ -50,7 +146,7 @@ getFunctionInputErrors <- function(ind, processTable, functionInputs) {
     # Select the prior processes:
     priorProcesses <- processTable$processName[prior]
     
-    # Get the names of the processes from which funciton intpu is requested:
+    # Get the names of the processes from which funciton input is requested:
     requestedProcessNames <- unlist(functionInputs[[ind]])
     requestedFunctionInputDataTypes <- names(requestedProcessNames)
     
@@ -740,11 +836,11 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     ##### 1. Process: #####
     #######################
     
-    process <- getProcess(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID
-    )
+    functionName <- getFunctionName(projectPath = projectPath, modelName = modelName, processID = processID)
+    processName <- getProcessName(projectPath = projectPath, modelName = modelName, processID = processID)
+    processParameters <- getProcessParameters(projectPath = projectPath, modelName = modelName, processID = processID)
+    functionInputs <- getFunctionInputs(projectPath = projectPath, modelName = modelName, processID = processID)
+    functionParameters <- getFunctionParameters(projectPath = projectPath, modelName = modelName, processID = processID)
     
     # Get the process properties depending on the processPropertyName:
     processParameters <- getRstoxFrameworkDefinitions("processParameters")
@@ -797,25 +893,15 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         ), 
         # 8. value:
         value = c(
-            process["processName"], 
+            processName, 
             # Remove the package address and only use the function name:
-            getFunctionNameFromPackageFunctionName(process["functionName"]), 
-            process[["processParameters"]]
+            getFunctionNameFromPackageFunctionName(functionName), 
+            processParameters
         )
     )
-    ## 8. value:
-    #processArguments$value <- c(
-    #    process["processName"], 
-    #    # Remove the package address and only use the function name:
-    #    getFunctionNameFromPackageFunctionName(process["functionName"]), 
-    #    process[["processParameters"]]
-    #)
-    
-    # Add help on the processArguments:
-    #processArguments$help <- NULL
     
     # Remove the showInMap argument if not relevant:
-    if(!getCanShowInMap(process$functionName)) {
+    if(!getCanShowInMap(functionName)) {
         keep <- c(
             TRUE, 
             TRUE, 
@@ -829,18 +915,18 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     functionInputs <- data.table::data.table()
     functionParameters <- data.table::data.table()
     
-    if(length(process$functionName)) {
+    if(length(functionName)) {
         
         ##############################
         ##### 2. FunctionInputs: #####
         ##############################
         # Run only if there are function inputs:
-        if(length(process$functionInputs)) {
+        if(length(functionInputs)) {
             # Get the process table, which is needed to get the output data types from the prior processes for use in the function inputs:
             processTable <- getProcessTable(projectPath, modelName)
             thisProcessIndex <- which(processTable$processID == processID)
             processTable <- processTable[seq_len(thisProcessIndex), ]
-            functionInputNames <- names(process$functionInputs)
+            functionInputNames <- names(functionInputs)
             
             # Define the function inputs:
             functionInputs <- data.table::data.table(
@@ -849,7 +935,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 2. displayName:
                 displayName = as.list(functionInputNames), 
                 # 3. description:
-                description = replaceEmpty(getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionInputNames]), 
+                description = replaceEmpty(getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionInputNames]), 
                 # 4. type:
                 type = as.list(rep("character", length(functionInputNames))),
                 # 5. format:
@@ -861,18 +947,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
                 possibleValues = lapply(lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable), as.list),
                 # 8. value:
-                value = replaceEmpty(process$functionInputs, vector = FALSE)
+                value = replaceEmpty(functionInputs, vector = FALSE)
             )
-            
-            ## Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
-            #argumentsToShow <- getArgumentsToShow(
-            #    functionName = process$functionName, 
-            #    functionArguments = process$functionInputs
-            #)
-            # Select only the items to show in the GUI:
-            #if(!all(argumentsToShow)) {
-            #    functionInputs <- subset(functionInputs, argumentsToShow)
-            #}
         }
         ##############################
         
@@ -882,9 +958,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         ##################################
         
         # Run only if there are function parameters (which there always will be):
-        if(length(process$functionParameters)) {
+        if(length(functionParameters)) {
             # Get the names of the function parameters:
-            functionParameterNames <- names(process$functionParameters)
+            functionParameterNames <- names(functionParameters)
             
             # Define the function parameters:
             functionParameters <- data.table::data.table(
@@ -893,45 +969,32 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 2. displayName:
                 displayName = as.list(functionParameterNames), 
                 # 3. description:
-                description = replaceEmpty(getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionParameterNames]), 
+                description = replaceEmpty(getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionParameterNames]), 
                 # 4. type:
-                type = replaceEmpty(getStoxFunctionParameterPropertyTypes(process$functionName)[functionParameterNames]),
+                type = replaceEmpty(getStoxFunctionParameterPropertyTypes(functionName)[functionParameterNames]),
                 # 5. format:
-                format = replaceEmpty(getFunctionParameterPropertyFormats(process$functionName)[functionParameterNames]),
+                format = replaceEmpty(getFunctionParameterPropertyFormats(functionName)[functionParameterNames]),
                 # 6. default:
-                default = replaceEmpty(getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames], vector = FALSE),
+                default = replaceEmpty(getStoxFunctionParameterDefaults(functionName)[functionParameterNames], vector = FALSE),
                 # 7. possibleValues:
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-                possibleValues = lapply(replaceEmpty(getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames]), as.list),
+                possibleValues = lapply(replaceEmpty(getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames]), as.list),
                 # 8. value:
-                value = replaceEmpty(process$functionParameters, vector = FALSE)
+                value = replaceEmpty(functionParameters, vector = FALSE)
             )
             
             # Convert to a JSON string ifs of non-simple type (length >= 1):
-            nonSimple <- isMultipleParameter(process$functionName, unlist(functionParameters$name))
+            nonSimple <- isMultipleParameter(functionName, unlist(functionParameters$name))
             if(any(nonSimple)) {
                 functionParameters$value[nonSimple] = parameter2JSONString(functionParameters$value[nonSimple])
             }
-            
-            
-            # # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
-            # argumentsToShow <- getArgumentsToShow(
-            #     functionName = process$functionName, 
-            #     functionArguments = process$functionParameters
-            # )
-            # # Select only the items to show in the GUI:
-            # if(!all(argumentsToShow)) {
-            #     functionParameters <- subset(functionParameters, argumentsToShow)
-            # }
         }
         
         # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
         argumentsToShow <- getArgumentsToShow(
-            functionName = process$functionName, 
-            functionArguments = c(
-                process$functionInputs, 
-                process$functionParameters
-            )
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
         )
         
         # Select only the items to show in the GUI:
@@ -1200,4 +1263,28 @@ getPossibleValuesOneTable <- function(table) {
     }
     lapply(table, sortUnique)
 }
+
+
+#' 
+#' @export
+#' 
+getParameterTableTitle <- function(format) {
+    getRstoxFrameworkDefinitions("parameterTableTitle")[[format]]
+}
+
+#' 
+#' @export
+#' 
+getParameterTableColumnNames <- function(format) {
+    getRstoxFrameworkDefinitions("parameterTableColumnNames")[[format]]
+}
+    
+#' 
+#' @export
+#' 
+getParameterTablePossibleValues <- function(format) {
+    getRstoxFrameworkDefinitions("parameterTableColumnNames")[[format]]
+}
+
+
 

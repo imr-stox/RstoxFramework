@@ -152,43 +152,43 @@ initiateRstoxFramework <- function(){
             "filePaths", 
             #"parameterTable", 
             "filterExpressionTable", 
-            "SpeciesCategoryTable", 
-            "AcousticCategoryTable", 
-            "CatchCompensationTable", 
-            "SelectivityTable", 
-            "SpeciesLinktable", 
-            "AcousticTargetStrengthTable"
+            "speciesCategoryTable", 
+            "acousticCategoryTable", 
+            "catchCompensationTable", 
+            "selectivityTable", 
+            "speciesLinktable", 
+            "acousticTargetStrengthTable"
         )
     )
     
     # Define the column names of the different parameter tables:
     parameterTableColumnNames <- list(
-        SpeciesCategoryTable = c(
+        speciesCategoryTable = c(
             "SpeciesCategory", 
             "NewSpeciesCategory"
         ),
-        AcousticCategoryTable = c(
+        acousticCategoryTable = c(
             "AcousticCategory", 
             "NewAcousticCategory"
         ),
-        CatchCompensationTable = c(
+        catchCompensationTable = c(
             "SpeciesCategory", 
             "Alpha", 
             "Beta", 
             "LMin", 
             "LMax"
         ),
-        SelectivityTable = c(
+        selectivityTable = c(
             "SpeciesCategory", 
             "Alpha", 
             "Beta", 
             "LMax"
         ),
-        SpeciesLinktable = c(
+        speciesLinktable = c(
             "AcousticCategory",
             "SpeciesCategory"
         ),
-        AcousticTargetStrengthTable = c(
+        acousticTargetStrengthTable = c(
             "AcousticCategory", 
             "m", 
             "a", 

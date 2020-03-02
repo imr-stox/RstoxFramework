@@ -198,12 +198,12 @@ initiateRstoxFramework <- function(){
     
     # Define the titles of the different parameter tables:
     parameterTableTitle <- list(
-        SpeciesCategoryTable = "Define new species categories",
-        AcousticCategoryTable = "Define new acoustic categories",
-        CatchCompensationTable = "Define parameters for length dependent catch compensation",
-        SelectivityTable = "Define parameters for length dependent selectivity",
-        SpeciesLinktable = "Link acoustic categories and species categories",
-        AcousticTargetStrengthTable = "Define parameters of acoustic target strength by length"
+        speciesCategoryTable = "Define new species categories",
+        acousticCategoryTable = "Define new acoustic categories",
+        catchCompensationTable = "Define parameters for length dependent catch compensation",
+        selectivityTable = "Define parameters for length dependent selectivity",
+        speciesLinktable = "Link acoustic categories and species categories",
+        acousticTargetStrengthTable = "Define parameters of acoustic target strength by length"
     )
     
     # Define filter operators for the different data types:

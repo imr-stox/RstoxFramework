@@ -1282,8 +1282,25 @@ getParameterTableColumnNames <- function(format) {
 #' 
 #' @export
 #' 
-getParameterTablePossibleValues <- function(format) {
-    getRstoxFrameworkDefinitions("parameterTableColumnNames")[[format]]
+getParameterTablePossibleValues <- function(projectPath, modelName, processID, format) {
+    columnNames <- getParameterTableColumnNames(format)
+    vector("list", length(columnNames))
+}
+
+#' 
+#' @export
+#' 
+getParameterTableInfo <- function(projectPath, modelName, processID, format) {
+    list(
+        parameterTableTitle = getParameterTableTitle(format), 
+        parameterTableColumnNames = getParameterTableColumnNames(format), 
+        arameterTablePossibleValues = getParameterTablePossibleValues(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            format = format
+        )
+    )
 }
 
 

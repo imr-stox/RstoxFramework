@@ -935,9 +935,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     }
     #######################
     
-    # Declare functionInputs and functionParameters and 
-    functionInputs <- data.table::data.table()
-    functionParameters <- data.table::data.table()
+    ## Declare functionInputs and functionParameters and 
+    #functionInputs <- data.table::data.table()
+    #functionParameters <- data.table::data.table()
     
     if(length(functionName)) {
         

@@ -336,13 +336,19 @@ initiateRstoxFramework <- function(){
     dataFolder <- file.path(projectSessionFolder, "data")
     GUIFolder <- file.path(projectSessionFolder, "GUI")
     projectMemoryFolder <- file.path(projectSessionFolder, "projectMemory")
+    
+    currentMemoryFolder <- file.path(projectMemoryFolder, "current")
+    historyMemoryFolder <- file.path(projectMemoryFolder, "history")
+    
     statusFolder <- file.path(projectSessionFolder, "status")
     # Return also a vector of all session folders, to generate the folder structure recursively:
     projectSessionFolderStructure <- c(
             dataFolder, 
             GUIFolder, 
             projectMemoryFolder, 
-            statusFolder
+            statusFolder, 
+            currentMemoryFolder, 
+            historyMemoryFolder
     )
     
     
@@ -355,15 +361,15 @@ initiateRstoxFramework <- function(){
     #currentProcessFile = file.path(statusFolder, "currentProcess.txt")
     
     # Memory files:
-    originalProjectMemoryFile <- file.path(projectMemoryFolder, "originalProjectMemory.rds")
-    currentProjectMemoryFile <- file.path(projectMemoryFolder, "currentProjectMemory.rds")
-    projectMemoryIndexFile <- file.path(projectMemoryFolder, "projectMemoryIndex.txt")
+    #originalProjectMemoryFile <- file.path(projectMemoryFolder, "originalProjectMemory.rds")
+    currentProjectMemoryFile <- file.path(currentMemoryFolder, "currentProjectMemory.rds")
+    projectMemoryIndexFile <- file.path(historyMemoryFolder, "projectMemoryIndex.txt")
     # The file containing a table of modelName, processID and processName, where the rows are ordered by the processIndex:
-    processIndexTableFile <- file.path(projectMemoryFolder, "processIndexTable.txt")
+    processIndexTableFile <- file.path(currentMemoryFolder, "processIndexTable.txt")
     # The file containing a table of one row holding the index of the active process for each model (columns named by the model names):
-    activeProcessIDFile <- file.path(projectMemoryFolder, "activeProcessID.txt")
+    activeProcessIDFile <- file.path(currentMemoryFolder, "activeProcessID.txt")
     # The file containing a table of one row holding the maximum process ID (sequential integer starting from 1 at the firstly generated process) for each model (columns named by the model names):
-    maxProcessIntegerIDFile <- file.path(projectMemoryFolder, "maxProcessIntegerID.txt")
+    maxProcessIntegerIDFile <- file.path(currentMemoryFolder, "maxProcessIntegerID.txt")
     
     
     #### Define an object with all path objects for convenience in getProjectPaths(): ####
@@ -379,6 +385,8 @@ initiateRstoxFramework <- function(){
             dataFolder = dataFolder, 
             GUIFolder = GUIFolder, 
             projectMemoryFolder = projectMemoryFolder, 
+            currentMemoryFolder = currentMemoryFolder, 
+            historyMemoryFolder = historyMemoryFolder, 
             statusFolder = statusFolder, 
             projectSessionFolderStructure = projectSessionFolderStructure, 
             
@@ -389,7 +397,7 @@ initiateRstoxFramework <- function(){
             projectSavedStatusFile = projectSavedStatusFile, 
             projectIsRunningFile = projectIsRunningFile, 
             #currentProcessFile = currentProcessFile, 
-            originalProjectMemoryFile = originalProjectMemoryFile, 
+            #originalProjectMemoryFile = originalProjectMemoryFile, 
             currentProjectMemoryFile = currentProjectMemoryFile, 
             projectMemoryIndexFile = projectMemoryIndexFile, 
             processIndexTableFile = processIndexTableFile, 
@@ -1357,10 +1365,10 @@ resetModel <- function(projectPath, modelName, processID = NA) {
 #' 
 #' @export
 #' 
-getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE, type = c("current", "original")) {
+getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE) {
     
     # Get a data.table of process argument file paths split into modelName, processID, argumentName and argumentFilePath:
-    argumentFileTable <- getArgumentFileTable(projectPath, type = type)
+    argumentFileTable <- getArgumentFileTable(projectPath)
     
     # Apply the selected model, process and argument, where NULL indicates all elements:
     TRUEvector <- !logical(nrow(argumentFileTable))
@@ -1488,7 +1496,51 @@ appendProjectDescription <- function(projectDescription, modelName, processID, a
 
 
 # Read the process argument files to a list of the elements modelName, processID, argumentName, argumentValue:
-getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL, type = c("current", "original")) {
+getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL) {
+    
+    # Read the current project memory file, which contains the list of files holding the current process arguments:
+    projectMemoryFile <- getProjectPaths(projectPath, "currentProjectMemoryFile")
+    
+    # If the projectMemoryFile does not exist, return an empty data.table:
+    if(file.exists(projectMemoryFile)) {
+        # Read the projectMemoryFile:
+        argumentFileTable <- readRDS(projectMemoryFile)$argumentFileTable
+        # Subset out the model if requested:
+        if(length(modelName)) {
+            argumentFileTable <- subset(argumentFileTable, modelName == modelName)
+        }
+        if(length(processID)) {
+            argumentFileTable <- subset(argumentFileTable, processID == processID)
+        }
+    }
+    else {
+        argumentFileTable <- data.table::data.table()
+    }
+    
+    argumentFileTable
+}
+
+
+
+getArgumentFiles <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
+    
+    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    
+    # Get all models if none are specified:
+    if(length(modelName) == 0) {
+        modelName <- getRstoxFrameworkDefinitions("stoxModelFolders")
+    }
+    
+    # Get all processes if none are specified:
+    if(length(processID) == 0) {
+        processID <- list.dirs(currentMemoryFolder, full.names = FALSE)
+        processID <- split(processID, dirname(processID))
+        processID <- lapply(processID, basename)
+    }
+    
+    
+    
+    
     
     # Read the current project memory file, which contains the list of files holding the current process arguments:
     projectMemoryFile <- getProjectPaths(projectPath, paste0(type[1], "ProjectMemoryFile"))
@@ -1513,6 +1565,7 @@ getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL
 }
 
 
+
 # Function for getting the file path of one specific process argument rds file:
 getNewArgumentFile <- function(projectPath, modelName, processID, argumentName) {
     
@@ -1532,7 +1585,7 @@ getNewArgumentFile <- function(projectPath, modelName, processID, argumentName) 
 # Function for getting the file path of a new project memory file:
 getNewProjectMemoryFile <- function(projectPath) {
     # Get the folder holding the project descriptions:
-    projectMemoryFolder <- getProjectPaths(projectPath, "projectMemoryFolder")
+    projectMemoryFolder <- getProjectPaths(projectPath, "historyMemoryFolder")
     
     # Define a string with time in ISO 8601 format:
     timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
@@ -1549,10 +1602,10 @@ getCurrentProjectMemoryFile <- function(projectPath) {
 }
 
 
-# Function for getting the file path of a original project memory file:
-getOriginalProjectMemoryFile <- function(projectPath) {
-    getProjectPaths(projectPath, "originalProjectMemoryFile")
-}
+## Function for getting the file path of a original project memory file:
+#getOriginalProjectMemoryFile <- function(projectPath) {
+#    getProjectPaths(projectPath, "originalProjectMemoryFile")
+#}
 
 
 
@@ -1702,15 +1755,18 @@ saveProjectMemory <- function(projectPath, argumentFileTable) {
     currentProjectMemoryFile <- getCurrentProjectMemoryFile(projectPath)
     newProjectMemoryFile     <- getNewProjectMemoryFile(projectPath)
     # Add the processIndexTable, the activeProcessID and the maxProcessIntegerID to the data to write:
-    toWrite <- list(
+    fullProjectMemory <- list(
         argumentFileTable = argumentFileTable, 
         processIndexTable = readProcessIndexTable(projectPath),  
         activeProcessIDTable = getActiveProcessID(projectPath), 
         maxProcessIntegerIDTable = getMaxProcessIntegerID(projectPath)
     )
-    # Write the project memory to the current and new file:
-    saveRDS(toWrite, file = currentProjectMemoryFile)
-    saveRDS(toWrite, file = newProjectMemoryFile)
+    # Write the project memory to the new file:
+    saveRDS(fullProjectMemory, file = newProjectMemoryFile)
+    
+    # Write the project memory for the individual processes:
+    saveRDS(fullProjectMemory, file = currentProjectMemoryFile)
+    # Also write the current project memory as a folder structure of individual files with path to the memory file:
     
     # Update the projectDescriptionIndexFile:
     projectMemoryIndex <- readProjectMemoryIndex(projectPath)

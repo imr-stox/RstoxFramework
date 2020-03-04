@@ -930,12 +930,11 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     }
     
     # Convert all possibleValues and value to character:
-    processArgumentsToReturn[, possibleValues := as.character(possibleValues)]
-    processArgumentsToReturn[, value := as.character(value)]
+    valueAndPorribleValues2JSONString(processArgumentsToReturn)
     #######################
     
     
-    ## Declare functionInputs and functionParameters and 
+    # Declare functionInputs and functionParameters and 
     functionInputsToReturn <- data.table::data.table()
     functionParametersToReturn <- data.table::data.table()
     
@@ -1031,10 +1030,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         }
         
         # Convert all possibleValues and value to character:
-        functionInputsToReturn[, possibleValues := as.character(possibleValues)]
-        functionInputsToReturn[, value := as.character(value)]
-        functionParametersToReturn[, possibleValues := as.character(possibleValues)]
-        functionParametersToReturn[, value := as.character(value)]
+        valueAndPorribleValues2JSONString(functionInputsToReturn)
+        valueAndPorribleValues2JSONString(functionParametersToReturn)
     }
     
     # Create a list of the different properties, adding category and displayName:
@@ -1076,6 +1073,20 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
 }
 
 
+valueAndPorribleValues2JSONString <- function(DT) {
+    toCharacterIfNotCharacter <- function(x) {
+        if(!is.character(x)) {
+            x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+        }
+        return(x)
+    }
+    DT[, possibleValues := lapply(possibleValues, toCharacterIfNotCharacter)]
+    DT[, value := lapply(value, toCharacterIfNotCharacter)]
+    invisible(DT)
+}
+
+
+
 
 #' 
 #' @export
@@ -1084,6 +1095,9 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     
     # Parse the value (this takes care of converting true to TRUE, interpret integers and strings, and even to parse JSON strings to R objects):
     value <- parseParameter(value)
+    
+    # The flag updateHelp is TRUE only if the functionName is changed:
+    updateHelp <- FALSE
     
     # If the process property 'processArguments' is given, modify the process name, function name or process parameters:
     if(groupName == "processArguments") {
@@ -1098,6 +1112,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         }
         # Modify function name:
         else if(name == "functionName") {
+            # Set updateHelp to TRUE, so that the GUI can update the help page only when needed:
+            updateHelp <- TRUE
             # Get the full address to the function using getPackageFunctionName():
             modifyFunctionName(
                 projectPath = projectPath, 
@@ -1108,6 +1124,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         }
         # Modify process parameters:
         else {
+            # All process parameters are logical:
+            value <- as.logical(value)
             modifyProcessParameters(
                 projectPath = projectPath, 
                 modelName = modelName, 
@@ -1127,6 +1145,12 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     }
     # If the process property 'functionInputs' is given, modify the function parameters:
     if(groupName == "functionParameters") {
+        # Convert to R object based on the type:
+        value <- convertFunctionParameter(
+            functionParameterName = name, 
+            functionParameterValue = value, 
+            functionName = getFunctionName(projectPath, modelName, processID))
+        # Modify the process parameter:
         modifyFunctionParameters(
             projectPath = projectPath, 
             modelName = modelName, 
@@ -1143,16 +1167,34 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     )
     
     # Return the modified process properties:
-    getProcessPropertySheet(
+    output <- getProcessPropertySheet(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID
     )
     
-    # Return the flags for changed process data and process property
+    # Add updateHelp:
+    output$updateHelp <- updateHelp
+    
+    # Add the process table, so that the GUI can update the list of processes, and all its symbols:
+    output$processTable <- getProcessTable(projectPath, modelName)
+    
+    return(output)
 }
 
-
+# Convert to the type of the parameters:
+convertFunctionParameter <- function(functionParameterName, functionParameterValue, functionName) {
+    # Get the primitive type:
+    type <- getStoxFunctionParameterPropertyTypes(functionName)[functionParameterName]
+    # If empty string, convert to NULL for non-character type:
+    if(nchar(functionParameterValue) == 0 && type != "character") {
+        functionParameterValue <- NULL
+    }
+    # Apply the conversion function:
+    fun <- paste0("as.", type)
+    out <- do.call(fun, list(functionParameterValue))
+    return(out)
+}
 
 ##########
 

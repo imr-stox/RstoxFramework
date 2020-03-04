@@ -1054,6 +1054,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     
     output <- list(
         propertySheet = propertySheet, 
+        # Removed since it takes 150 ms. Maybe add a flag updateHelp. 
         #help = getFunctionHelpAsHtml(
         #    projectPath = projectPath, 
         #    modelName = modelName, 
@@ -1318,7 +1319,7 @@ getParameterTableInfo <- function(projectPath, modelName, processID, format) {
     list(
         parameterTableTitle = getParameterTableTitle(format), 
         parameterTableColumnNames = getParameterTableColumnNames(format), 
-        arameterTablePossibleValues = getParameterTablePossibleValues(
+        parameterTablePossibleValues = getParameterTablePossibleValues(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 

@@ -930,7 +930,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     }
     
     # Convert all possibleValues and value to character:
-    valueAndPorribleValues2JSONString(processArgumentsToReturn)
+    valueAndPossibleValues2JSONString(processArgumentsToReturn)
     #######################
     
     
@@ -970,6 +970,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 7. value:
                 value = replaceEmpty(functionInputs, vector = FALSE)
             )
+            
+            # Convert all possibleValues and value to character:
+            valueAndPossibleValues2JSONString(functionInputsToReturn)
         }
         ##############################
         
@@ -1012,6 +1015,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             if(any(nonSimple)) {
                 functionParametersToReturn$value[nonSimple] = lapply(functionParametersToReturn$value[nonSimple], parameter2JSONString)
             }
+            
+            # Convert all possibleValues and value to character:
+            valueAndPossibleValues2JSONString(functionParametersToReturn)
         }
         
         # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
@@ -1028,10 +1034,6 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         if(length(functionInputsToReturn) && any(!functionInputsToReturn$name %in% argumentsToShow)) {
             functionInputsToReturn <- subset(functionInputsToReturn, name %in% argumentsToShow)
         }
-        
-        # Convert all possibleValues and value to character:
-        valueAndPorribleValues2JSONString(functionInputsToReturn)
-        valueAndPorribleValues2JSONString(functionParametersToReturn)
     }
     
     # Create a list of the different properties, adding category and displayName:
@@ -1073,7 +1075,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
 }
 
 
-valueAndPorribleValues2JSONString <- function(DT) {
+valueAndPossibleValues2JSONString <- function(DT) {
     toCharacterIfNotCharacter <- function(x) {
         if(!is.character(x)) {
             x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))

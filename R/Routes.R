@@ -1076,16 +1076,29 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
 
 
 valueAndPossibleValues2JSONString <- function(DT) {
-    toCharacterIfNotCharacter <- function(x) {
-        if(!is.character(x)) {
-            x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
-        }
-        return(x)
-    }
     DT[, possibleValues := lapply(possibleValues, toCharacterIfNotCharacter)]
     DT[, value := lapply(value, toCharacterIfNotCharacter)]
     invisible(DT)
 }
+
+
+toCharacterIfNotCharacterOne <- function(x) {
+    if(!is.character(x)) {
+        x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+    }
+    return(x)
+}
+
+toCharacterIfNotCharacter <- function(x) {
+    if(is.list(x)) {
+        x <- lapply(x, toCharacterIfNotCharacter)
+    }
+    else {
+        x <- toCharacterIfNotCharacter(x)
+    }
+    return(x)
+}
+
 
 
 

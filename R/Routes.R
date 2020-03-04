@@ -1091,10 +1091,10 @@ toCharacterIfNotCharacterOne <- function(x) {
 
 toCharacterIfNotCharacter <- function(x) {
     if(is.list(x)) {
-        x <- lapply(x, toCharacterIfNotCharacter)
+        x <- lapply(x, toCharacterIfNotCharacterOne)
     }
     else {
-        x <- toCharacterIfNotCharacter(x)
+        x <- toCharacterIfNotCharacterOne(x)
     }
     return(x)
 }

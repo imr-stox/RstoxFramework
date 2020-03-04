@@ -808,9 +808,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     # 3. description
     # 4. type
     # 5. format
-    # 6. defaultValue
-    # 7. possibleValues
-    # 8. value
+    # 6. possibleValues
+    # 7. value
     
     # Possible values of 'type':
     # "integer"
@@ -860,6 +859,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     ##### 1. Process: #####
     #######################
     
+    # Get the process properties to return, which are all but the proccessData:
     functionName <- getFunctionName(projectPath = projectPath, modelName = modelName, processID = processID)
     processName <- getProcessName(projectPath = projectPath, modelName = modelName, processID = processID)
     processParameters <- getProcessParameters(projectPath = projectPath, modelName = modelName, processID = processID)
@@ -867,13 +867,13 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     functionParameters <- getFunctionParameters(projectPath = projectPath, modelName = modelName, processID = processID)
     
     # Get the process properties depending on the processPropertyName:
-    processParameters <- getRstoxFrameworkDefinitions("processParameters")
+    #processParameters <- getRstoxFrameworkDefinitions("processParameters")
     processParametersDisplayNames <- getRstoxFrameworkDefinitions("processParametersDisplayNames")
     processParametersDescriptions <- getRstoxFrameworkDefinitions("processParametersDescriptions")
     processParameterNames <- names(processParameters)
     
     ##### Define the process name, the function name and the process parameters as the process property "process": #####
-    processArguments <- data.table::data.table(
+    processArgumentsToReturn <- data.table::data.table(
         # 1. name:
         name = as.list(c(
             "processName", 
@@ -896,26 +896,21 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         type = as.list(c(
             "character", 
             "character", 
-            sapply(processParameters, class)
+            sapply(processParameters, firstClass)
         )), 
         # 5. format:
+        # The number 2 is functionName and processName:
         format = as.list(rep("none", 2 + length(processParameters))), 
-        # 6. default:
-        default = c(
-            list(
-                character(1), 
-                character(1)
-            ), 
-            unname(processParameters)
-        ), 
-        # 7. possibleValues:
+        # 6. possibleValues:
         possibleValues = c(
-            list(character(0)), 
+            list(character(1)), 
             # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
             as.list(getAvailableStoxFunctionNames(modelName)), 
-            rep(list(c(FALSE, TRUE)), length(processParameters))
+            # Removed the possible values for logicals, since these are not used as dropdown in the GUI, but rather as a checkbox:
+            #rep(list(c(FALSE, TRUE)), length(processParameters))
+            rep(list(character(1)), length(processParameters))
         ), 
-        # 8. value:
+        # 7. value:
         value = c(
             processName, 
             # Remove the package address and only use the function name:
@@ -931,13 +926,18 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             TRUE, 
             processParameterNames != "showInMap"
         )
-        processArguments <- processArguments[keep, ]
+        processArgumentsToReturn <- processArgumentsToReturn[keep, ]
     }
+    
+    # Convert all possibleValues and value to character:
+    processArgumentsToReturn[, possibleValues := as.character(possibleValues)]
+    processArgumentsToReturn[, value := as.character(value)]
     #######################
     
+    
     ## Declare functionInputs and functionParameters and 
-    #functionInputs <- data.table::data.table()
-    #functionParameters <- data.table::data.table()
+    functionInputsToReturn <- data.table::data.table()
+    functionParametersToReturn <- data.table::data.table()
     
     if(length(functionName)) {
         
@@ -947,13 +947,13 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         # Run only if there are function inputs:
         if(length(functionInputs)) {
             # Get the process table, which is needed to get the output data types from the prior processes for use in the function inputs:
-            processTable <- getProcessTable(projectPath, modelName)
-            thisProcessIndex <- which(processTable$processID == processID)
-            processTable <- processTable[seq_len(thisProcessIndex), ]
+            processTable <- getProcessTable(projectPath, modelName, processID = processID)
+            #thisProcessIndex <- which(processTable$processID == processID)
+            #processTable <- processTable[seq_len(thisProcessIndex), ]
             functionInputNames <- names(functionInputs)
             
             # Define the function inputs:
-            functionInputs <- data.table::data.table(
+            functionInputsToReturn <- data.table::data.table(
                 # 1. name:
                 name = as.list(functionInputNames), 
                 # 2. displayName:
@@ -964,13 +964,11 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 type = as.list(rep("character", length(functionInputNames))),
                 # 5. format:
                 format = as.list(rep("none", length(functionInputNames))),
-                # 6. default:
-                default = rep(list(character(1)), length(functionInputNames)), 
-                # 7. possibleValues:
+                # 6. possibleValues:
                 #possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
                 possibleValues = lapply(lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable), as.list),
-                # 8. value:
+                # 7. value:
                 value = replaceEmpty(functionInputs, vector = FALSE)
             )
         }
@@ -987,7 +985,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             functionParameterNames <- names(functionParameters)
             
             # Define the function parameters:
-            functionParameters <- data.table::data.table(
+            functionParametersToReturn <- data.table::data.table(
                 # 1. name:
                 name = as.list(functionParameterNames), 
                 # 2. displayName:
@@ -998,19 +996,22 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 type = replaceEmpty(getStoxFunctionParameterPropertyTypes(functionName)[functionParameterNames]),
                 # 5. format:
                 format = replaceEmpty(getFunctionParameterPropertyFormats(functionName)[functionParameterNames]),
-                # 6. default:
-                default = replaceEmpty(getStoxFunctionParameterDefaults(functionName)[functionParameterNames], vector = FALSE),
-                # 7. possibleValues:
+                # 6. possibleValues:
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-                possibleValues = lapply(replaceEmpty(getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames]), as.list),
-                # 8. value:
+                possibleValues = lapply(
+                    replaceEmpty(
+                        getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames]
+                    ), 
+                    as.list
+                ),
+                # 7. value:
                 value = replaceEmpty(functionParameters, vector = FALSE)
             )
             
-            # Convert to a JSON string ifs of non-simple type (length >= 1):
-            nonSimple <- isMultipleParameter(functionName, unlist(functionParameters$name))
+            # Convert to a JSON string if of non-simple type (length >= 1):
+            nonSimple <- isMultipleParameter(functionName, unlist(functionParametersToReturn$name))
             if(any(nonSimple)) {
-                functionParameters$value[nonSimple] = parameter2JSONString(functionParameters$value[nonSimple])
+                functionParametersToReturn$value[nonSimple] = lapply(functionParametersToReturn$value[nonSimple], parameter2JSONString)
             }
         }
         
@@ -1022,15 +1023,18 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         )
         
         # Select only the items to show in the GUI:
-        if(length(functionParameters) && any(!functionParameters$name %in% argumentsToShow)) {
-            functionParameters <- subset(functionParameters, name %in% argumentsToShow)
+        if(length(functionParametersToReturn) && any(!functionParametersToReturn$name %in% argumentsToShow)) {
+            functionParametersToReturn <- subset(functionParametersToReturn, name %in% argumentsToShow)
         }
-        if(length(functionInputs) && any(!functionInputs$name %in% argumentsToShow)) {
-            functionInputs <- subset(functionInputs, name %in% argumentsToShow)
+        if(length(functionInputsToReturn) && any(!functionInputsToReturn$name %in% argumentsToShow)) {
+            functionInputsToReturn <- subset(functionInputsToReturn, name %in% argumentsToShow)
         }
         
-        
-        ##############################
+        # Convert all possibleValues and value to character:
+        functionInputsToReturn[, possibleValues := as.character(possibleValues)]
+        functionInputsToReturn[, value := as.character(value)]
+        functionParametersToReturn[, possibleValues := as.character(possibleValues)]
+        functionParametersToReturn[, value := as.character(value)]
     }
     
     # Create a list of the different properties, adding category and displayName:
@@ -1038,17 +1042,17 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         list(
             groupName = "processArguments", 
             displayName = "Process", 
-            properties = processArguments
+            properties = processArgumentsToReturn
         ), 
         list(
             groupName = "functionInputs", 
             displayName = "Function inputs", 
-            properties = functionInputs
+            properties = functionInputsToReturn
         ), 
         list(
             groupName = "functionParameters", 
             displayName = "Function parameters", 
-            properties = functionParameters
+            properties = functionParametersToReturn
         )
     )
     
@@ -1070,6 +1074,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     # Return the list of process property groups (process property sheet):
     output
 }
+
+
 
 #' 
 #' @export

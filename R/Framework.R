@@ -2385,10 +2385,10 @@ getProcessIDFromProcessName <- function(projectPath, modelName, processName) {
 #' 
 #' @export
 #' 
-getProcessTable <- function(projectPath, modelName) {
+getProcessTable <- function(projectPath, modelName, processID = NULL) {
     
     # Get a table of all the processes including function inputs, parameters and input errors:
-    processIndexTable <- scanForModelError(projectPath, modelName, processID = NULL)
+    processIndexTable <- scanForModelError(projectPath, modelName, processID = processID)
     
     # Return an empty data.table if the processIndexTable is empty:
     if(nrow(processIndexTable) == 0) {

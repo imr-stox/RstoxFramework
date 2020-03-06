@@ -3694,7 +3694,7 @@ getProcessOutputTableNames <- function(projectPath, modelName, processID) {
     # Get the output file names, and add the process name:
     tableNames <- getProcessOutputFiles(projectPath, modelName, processID, onlyTableNames = TRUE)
     processName <- getProcessName(projectPath, modelName, processID)
-    tableNames <- paste(processName, tableNames, sep ="_")
+    #tableNames <- paste(processName, tableNames, sep ="_")
     
     # Ensure that this is a vector in JSON after auto_unbox = TRUE, by using as.list():
     tableNames <- as.list(tableNames)
@@ -3852,6 +3852,7 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
         # Get the file paths of the memory files and prepare the processOutput for writing to these files:
         if(outputDepth == 1) {
             fileNames <- getProcessOutputMemoryFileNames(processOutput)
+            #fileNames <- getProcessOutputMemoryFileNames(processOutput, processName = process$processName)
             #filePaths <- file.path(folderPath, fileNames)
             filePaths <- file.path(folderPath, fileNames)
             
@@ -3866,6 +3867,7 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
             
             # Create the file names and add the folder paths to the file names (flattening the output):
             fileNames <- lapply(processOutput, getProcessOutputMemoryFileNames)
+            #fileNames <- lapply(processOutput, getProcessOutputMemoryFileNames)
             #filePaths <- unlist(mapply(file.path, folderPaths, fileNames, SIMPLIFY = FALSE))
             filePaths <- mapply(file.path, folderPaths, fileNames, SIMPLIFY = FALSE)
             
@@ -3901,6 +3903,12 @@ getFolderDepth <- function(folderPath) {
     folderDepth
 }
 
+## Small function to get the file name of a memory file:
+#getProcessOutputMemoryFileNames <- function(processOutput, processName) {
+#    output <- paste(processName, names(processOutput), sep = "_")
+#    output <- paste(output, "rds", sep = ".")
+#    return(output)
+#}
 # Small function to get the file name of a memory file:
 getProcessOutputMemoryFileNames <- function(processOutput) {
     paste(names(processOutput), "rds", sep = ".")

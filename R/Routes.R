@@ -903,12 +903,12 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         format = as.list(rep("none", 2 + length(processParameters))), 
         # 6. possibleValues:
         possibleValues = c(
-            list(character(1)), 
+            list(NULL), 
             # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
             as.list(getAvailableStoxFunctionNames(modelName)), 
             # Removed the possible values for logicals, since these are not used as dropdown in the GUI, but rather as a checkbox:
-            #rep(list(c(FALSE, TRUE)), length(processParameters))
-            rep(list(character(1)), length(processParameters))
+            rep(list(c(FALSE, TRUE)), length(processParameters))
+            #rep(list(character(1)), length(processParameters))
         ), 
         # 7. value:
         value = c(
@@ -930,7 +930,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     }
     
     # Convert all possibleValues and value to character:
-    valueAndPossibleValues2JSONString(processArgumentsToReturn)
+    toJSONString(processArgumentsToReturn)
     #######################
     
     
@@ -958,7 +958,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 2. displayName:
                 displayName = as.list(functionInputNames), 
                 # 3. description:
-                description = replaceEmpty(getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionInputNames]), 
+                description = getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionInputNames], 
                 # 4. type:
                 type = as.list(rep("character", length(functionInputNames))),
                 # 5. format:
@@ -966,13 +966,13 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 6. possibleValues:
                 #possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-                possibleValues = lapply(lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable), as.list),
+                possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # 7. value:
-                value = replaceEmpty(functionInputs, vector = FALSE)
+                value = functionInputs
             )
             
             # Convert all possibleValues and value to character:
-            valueAndPossibleValues2JSONString(functionInputsToReturn)
+            toJSONString(functionInputsToReturn)
         }
         ##############################
         
@@ -993,21 +993,16 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 2. displayName:
                 displayName = as.list(functionParameterNames), 
                 # 3. description:
-                description = replaceEmpty(getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionParameterNames]), 
+                description = getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionParameterNames], 
                 # 4. type:
-                type = replaceEmpty(getStoxFunctionParameterPropertyTypes(functionName)[functionParameterNames]),
+                type = getStoxFunctionParameterPropertyTypes(functionName)[functionParameterNames],
                 # 5. format:
-                format = replaceEmpty(getFunctionParameterPropertyFormats(functionName)[functionParameterNames]),
+                format = getFunctionParameterPropertyFormats(functionName)[functionParameterNames],
                 # 6. possibleValues:
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-                possibleValues = lapply(
-                    replaceEmpty(
-                        getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames]
-                    ), 
-                    as.list
-                ),
+                possibleValues = getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames],
                 # 7. value:
-                value = replaceEmpty(functionParameters, vector = FALSE)
+                value = functionParameters
             )
             
             # Convert to a JSON string if of non-simple type (length >= 1):
@@ -1017,7 +1012,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             }
             
             # Convert all possibleValues and value to character:
-            valueAndPossibleValues2JSONString(functionParametersToReturn)
+            toJSONString(functionParametersToReturn)
         }
         
         # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
@@ -1075,29 +1070,68 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
 }
 
 
-valueAndPossibleValues2JSONString <- function(DT) {
-    DT[, possibleValues := lapply(possibleValues, toCharacterIfNotCharacter)]
-    DT[, value := lapply(value, toCharacterIfNotCharacter)]
-    invisible(DT)
+
+
+# Function to convert to JSON string, used to send only strings and arrays of strings to the GUI:
+toJSONString <- function(DT) {
+    # Convert the possible values, which can have 0 or positive length:
+    possibleValuesToJSONString(DT)
+    # Convert all the other columns, which are required to have length 1:
+    other <- setdiff(names(DT), "possibleValues")
+    valueToJSONString(DT, cols = other)
 }
 
 
-toCharacterIfNotCharacterOne <- function(x) {
+
+valueToJSONString <- function(DT, cols) {
+    DT[, (cols) := lapply(.SD, valueToJSONStringOneColumn), .SDcols = cols]
+}
+valueToJSONStringOne <- function(x) {
+    if(length(x) == 0) {
+        stop("Length 1 required for process properties except possibleValues.")
+    }
     if(!is.character(x)) {
         x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
     }
     return(x)
 }
+valueToJSONStringOneColumn <- function(x) {
+    lapply(x, valueToJSONStringOne)
+}
 
-toCharacterIfNotCharacter <- function(x) {
-    if(is.list(x)) {
-        x <- lapply(x, toCharacterIfNotCharacterOne)
+
+
+
+possibleValuesToJSONString <- function(DT) {
+    DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne)]
+}
+
+
+possibleValuesToJSONStringOne <- function(x) {
+    # Set empty possible values to numeric(), which ensures [] in OpenCPUs conversion to JSON (jsonlite::toJSON with auto_unbox = TRUE):
+    if(length(x) == 0) {
+        x <- numeric()
     }
+    # Convert to JSON string for each element if not already character:
     else {
-        x <- toCharacterIfNotCharacterOne(x)
+        if(!is.character(x)) {
+            x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
+        }
+        # Convert to a list to ensure that if of length 1, OpenCPU still returns an array:
+        if(length(x) == 1) {
+            x <- list(x)
+        }
     }
     return(x)
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1279,6 +1313,8 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 #' 
 getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     
+    # Here we need to accept that the process has not been run, and return empty filter options!!!!!!!!!!!!
+    
     # Get the process output:
     processOutput <- getProcessOutput(
         projectPath = projectPath, 
@@ -1372,7 +1408,7 @@ getParameterTableColumnNames <- function(format) {
 #' 
 getParameterTablePossibleValues <- function(projectPath, modelName, processID, format) {
     columnNames <- getParameterTableColumnNames(format)
-    vector("list", length(columnNames))
+    rep(list(list()), length(columnNames))
 }
 
 #' 

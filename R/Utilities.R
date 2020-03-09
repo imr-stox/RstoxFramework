@@ -119,7 +119,8 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
 # Function to extract the trailing integer of a string (vector):
 getTrailingInteger <- function(x, integer = TRUE) {
     # Get the trailing numerics:
-    trailing <- stringr::str_extract(x, "[^[a-z]]*$")
+    #trailing <- stringr::str_extract(x, "[^[a-z]]*$")
+    trailing <- stringr::str_extract(x, "\\-*\\d+\\.*\\d*")
     
     # Convert to numeric if specified:
     if(integer) {
@@ -133,13 +134,18 @@ getTrailingInteger <- function(x, integer = TRUE) {
 # Function to generate a new name in the sequence of names starting with the prefix:
 getNewDefaultName <- function(names, prefix) {
     
-    # Find the names starting with the prefix:
-    startsWithProcess_Prefix <- which(startsWith(names, prefix))
-    # Get the trailing integers of the names starting with the prefix:
-    trailingIntegerString <- getTrailingInteger(names[startsWithProcess_Prefix], integer = FALSE)
-    trailingInteger <- getTrailingInteger(names[startsWithProcess_Prefix])
-    # Verify that the number of characters equals the sum of the prefix and the number of characters of the numeric string:
-    hasCorrectNumberOfCharacters <- nchar(names[startsWithProcess_Prefix]) == nchar(prefix) + nchar(trailingIntegerString)
+    if(length(names)) {
+        # Find the names starting with the prefix:
+        startsWithProcess_Prefix <- which(startsWith(names, prefix))
+        # Get the trailing integers of the names starting with the prefix:
+        trailingIntegerString <- getTrailingInteger(names[startsWithProcess_Prefix], integer = FALSE)
+        trailingInteger <- getTrailingInteger(names[startsWithProcess_Prefix])
+        # Verify that the number of characters equals the sum of the prefix and the number of characters of the numeric string:
+        hasCorrectNumberOfCharacters <- nchar(names[startsWithProcess_Prefix]) == nchar(prefix) + nchar(trailingIntegerString)
+    }
+    else {
+        hasCorrectNumberOfCharacters <- NULL
+    }
     
     if(length(hasCorrectNumberOfCharacters) == 0) {
         newInteger <- 1

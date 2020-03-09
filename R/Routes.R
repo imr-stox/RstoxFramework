@@ -1087,8 +1087,8 @@ valueToJSONString <- function(DT, cols) {
     DT[, (cols) := lapply(.SD, valueToJSONStringOneColumn), .SDcols = cols]
 }
 valueToJSONStringOne <- function(x) {
+    print(x)
     if(length(x) == 0) {
-        print(x)
         stop("Length 1 required for process properties except possibleValues.")
     }
     if(!is.character(x)) {

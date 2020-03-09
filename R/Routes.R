@@ -1087,9 +1087,9 @@ valueToJSONString <- function(DT, cols) {
     DT[, (cols) := lapply(.SD, valueToJSONStringOneColumn), .SDcols = cols]
 }
 valueToJSONStringOne <- function(x) {
-    print(x)
     if(length(x) == 0) {
-        stop("Length 1 required for process properties except possibleValues.")
+        warning("Length 1 required for process properties except possibleValues.")
+        x <- ""
     }
     if(!is.character(x)) {
         x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))

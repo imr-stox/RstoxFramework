@@ -1088,6 +1088,7 @@ valueToJSONString <- function(DT, cols) {
 }
 valueToJSONStringOne <- function(x) {
     if(length(x) == 0) {
+        print(x)
         stop("Length 1 required for process properties except possibleValues.")
     }
     if(!is.character(x)) {

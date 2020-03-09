@@ -2412,6 +2412,9 @@ getProcessTable <- function(projectPath, modelName, processID = NULL) {
         processParameters
     )
     
+    # Add the data type:
+    processIndexTable$dataType <- sapply(processIndexTable$functionName, getStoxFunctionMetaData, "functionOutputDataType")
+    
     # Check whether the process returns process data:
     processIndexTable[, hasProcessData := lapply(functionName, isProcessDataFunction)]
     #hasProcessData <- sapply(functionNames, isProcessDataFunction)

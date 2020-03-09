@@ -200,7 +200,7 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         Stratum = Stratum, 
         PSU = PSU
     )
-    AcousticPSU$Stratum_PSU <- data.table::data.table(
+    AcousticPSU$Stratum_PSU <- rbind(
         AcousticPSU$Stratum_PSU, 
         toAdd
     )

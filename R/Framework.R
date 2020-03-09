@@ -2995,7 +2995,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     # 1. Process parameters
     # 1. Process data
     if(!isOpenProject(projectPath)) {
-        warning("The project ", projectPath, " is not open.")
+        warning("The project ", projectPath, " is not open. Use openProject() to open the project.")
         return(NULL)
     }
     
@@ -3942,7 +3942,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     # Check that the project is open:
     if(!isOpenProject(projectPath)) {
-        warning("The StoX project ", projectPath, " is not open")
+        warning("The StoX project ", projectPath, " is not open. Use openProject() to open the project.")
         return(failedVector)
     }
     

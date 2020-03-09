@@ -437,17 +437,18 @@ getAcousticPSUData <- function(projectPath, modelName, processID) {
     #PSU_Stratum <- unique(processData$AcousticPSU[, c("PSU", "Stratum")])
     #Stratum = unique(processData$AcousticPSU$Stratum)
     # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    Stratum = data.table::data.table(
-        Stratum = unique(processData$Stratum_PSU$Stratum)
-    )
+    #Stratum = data.table::data.table(
+    #    Stratum = unique(processData$Stratum_PSU$Stratum)
+    #)
     
     # Return the list of data.tables:
-    output <- c(
-        processData, 
-        list(Stratum = Stratum)
-    )
-    
-    return(output)
+    #output <- c(
+    #    processData, 
+    #    list(Stratum = Stratum)
+    #)
+    #
+    #return(output)
+    return(processData)
 }
 
 #' 
@@ -1131,13 +1132,6 @@ possibleValuesToJSONStringOne <- function(x) {
 
 
 
-
-
-
-
-
-
-
 #' 
 #' @export
 #' 
@@ -1195,11 +1189,12 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     }
     # If the process property 'functionInputs' is given, modify the function parameters:
     if(groupName == "functionParameters") {
+        ### This is unnecessary, since jsonlite::fromJSON takes care of the types in parseParmeter() ###
         # Convert to R object based on the type:
-        value <- convertFunctionParameter(
-            functionParameterName = name, 
-            functionParameterValue = value, 
-            functionName = getFunctionName(projectPath, modelName, processID))
+        #value <- convertFunctionParameter(
+        #    functionParameterName = name, 
+        #    functionParameterValue = value, 
+        #    functionName = getFunctionName(projectPath, modelName, processID))
         # Modify the process parameter:
         modifyFunctionParameters(
             projectPath = projectPath, 
@@ -1233,18 +1228,18 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
 }
 
 # Convert to the type of the parameters:
-convertFunctionParameter <- function(functionParameterName, functionParameterValue, functionName) {
-    # Get the primitive type:
-    type <- getStoxFunctionParameterPropertyTypes(functionName)[functionParameterName]
-    # If empty string, convert to NULL for non-character type:
-    if(nchar(functionParameterValue) == 0 && type != "character") {
-        functionParameterValue <- NULL
-    }
-    # Apply the conversion function:
-    fun <- paste0("as.", type)
-    out <- do.call(fun, list(functionParameterValue))
-    return(out)
-}
+#convertFunctionParameter <- function(functionParameterName, functionParameterValue, functionName) {
+#    # Get the primitive type:
+#    type <- getStoxFunctionParameterPropertyTypes(functionName)[functionParameterName]
+#    # If empty string, convert to NULL for non-character type:
+#    if(nchar(functionParameterValue) == 0 && type != "character") {
+#        functionParameterValue <- NULL
+#    }
+#    # Apply the conversion function:
+#    fun <- paste0("as.", type)
+#    out <- do.call(fun, list(functionParameterValue))
+#    return(out)
+#}
 
 ##########
 

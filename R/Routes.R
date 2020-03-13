@@ -33,178 +33,9 @@ getAvailableTemplatesDescriptions <- function() {
 ##########
 
 
-#processName
-#processID
-#modelName
-#
-#functionName
-#functionOutputDataType
-#activeFunctionInputs
 
-#' 
-#' @export
-#' 
-scanForModelError <- function(projectPath, modelName, processID = NULL) {
-    
-    # Get the table of process name and ID:
-    processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    # Return an empty data.table if the processIndexTable is empty:
-    if(nrow(processIndexTable) == 0) {
-        return(data.table::data.table())
-    }
-    
-    # Subset the table to the reuqested processID, if given:
-    if(length(processID)) {
-        atProcessID <- which(processID == processIndexTable$processID)
-        if(length(atProcessID) == 0) {
-            stop("The requested processID does not exist in the model ", modelName, " of projecct ", projectPath, ".")
-        }
-        processIndexTable <- processIndexTable[seq_len(atProcessID), ]
-    }
-    
-    # Add the projectPath:
-    processIndexTable[, projectPath := projectPath]
-    
-    # Add a column logging function input errors:
-    processIndexTable[, functionInputError := FALSE]
-    
-    # Add function names:
-    functionName <- mapply(
-        getFunctionName, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processIndexTable$processID
-    )
-    processIndexTable[, functionName := ..functionName]
-    
-    # Add output data type:
-    processIndexTable[, functionOutputDataType := lapply(functionName, getStoxFunctionMetaData, metaDataName = "functionOutputDataType")]
-    
-    # Get all active function inputs:
-    functionInputs <- lapply(processIndexTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = TRUE))
-    processIndexTable[, functionInputs := ..functionInputs]
-    
-    # Get all active function parameters (not needed in this function but included for consistency):
-    functionParameters <- lapply(processIndexTable$processID, function(processID) getFunctionParameters(projectPath, modelName, processID, only.valid = TRUE))
-    processIndexTable[, functionParameters := ..functionParameters]
-    
-    # Run through the processes and detect model errors:
-    for(processIndex in seq_len(nrow(processIndexTable))) {
-        if(length(processIndexTable$functionInputs[[processIndex]])) {
-            functionInputError <- checkFunctionInputs(processIndexTable[seq_len(processIndex), ])
-        }
-        else {
-            functionInputError <- FALSE
-        }
-        # Do any of the funciton inputs have error?
-        processIndexTable$functionInputError[processIndex] <- any(functionInputError)
-    }
-        
-    return(processIndexTable)
-}
-
-
-checkFunctionInput <- function(functionInput, functionInputDataType, processIndexTable) {
-    # Expect an error, and return FALSE if all checks passes:
-    functionInputError <- TRUE
-    # (0) Chech that the function input is a string with positive number of characters:
-    if(!is.character(functionInput)) {
-        warning("Function input must be a character string (", functionInputDataType, ").")
-    }
-    # (1) Error if empty string:
-    else if(nchar(functionInput) == 0) {
-        warning("Function input must be a non-empty character string (", functionInputDataType, ").")
-    }
-    # (2) Error if not the name of a previous process:
-    else if(! functionInput %in% processIndexTable$processName) {
-        warning("Function input ", functionInput, " is not the name of a previous process (", functionInputDataType, ").")
-    }
-    else {
-        atRequestedPriorProcess <- which(functionInput == processIndexTable$processName)
-        outputDataTypeOfRequestedPriorProcess <- getStoxFunctionMetaData(processIndexTable$functionName[atRequestedPriorProcess], "functionOutputDataType")
-        
-        # (3) Error if the previous process returns the wrong data type:
-        if(! functionInputDataType %in% outputDataTypeOfRequestedPriorProcess) {
-            warning("Function input of process ", processIndexTable$processName[atRequestedPriorProcess], " does not return the correct data type (", functionInputDataType, ").")
-        }
-        else if(processIndexTable$functionInputError[atRequestedPriorProcess]) {
-            warning("The process ", processIndexTable$processName[atRequestedPriorProcess], " has input error.")
-        }
-        else {
-            functionInputError <- FALSE
-        }
-    }
-    return(functionInputError)
-}
-
-checkFunctionInputs <- function(processIndexTable) {
-    # Get the function input name and value paris:
-    functionInput <- processIndexTable$functionInputs[[nrow(processIndexTable)]]
-    functionInputDataType <- names(processIndexTable$functionInputs[[nrow(processIndexTable)]])
-    functionInputError <- mapply(
-        checkFunctionInput, 
-        functionInput = functionInput, 
-        functionInputDataType = functionInputDataType, 
-        MoreArgs = list(processIndexTable = processIndexTable)
-    )
-    
-    return(functionInputError)
-}
 
 ##### Processes: #####
-# Function to get whether the process has input data error:
-getFunctionInputErrors <- function(ind, processTable, functionInputs) {
-
-    #### Check wheter the processes from which process output is requested as funciton input exist prior to the current process: ####
-    if(ind == 1) {
-        return(FALSE)
-    }
-    
-    # Get names of processes prior to the current process:
-    prior <- seq_len(ind - 1)
-    # Discard processes with enabled = FALSE:
-    prior <- subset(prior, processTable$enabled[prior])
-    
-    # Select the prior processes:
-    priorProcesses <- processTable$processName[prior]
-    
-    # Get the names of the processes from which funciton input is requested:
-    requestedProcessNames <- unlist(functionInputs[[ind]])
-    requestedFunctionInputDataTypes <- names(requestedProcessNames)
-    
-    # Are all of the function inputs present in the prior processes?:
-    requestedProcessesExist <- all(requestedProcessNames %in% priorProcesses)
-    correctDataTypeRequested <- FALSE
-    
-    if(!requestedProcessesExist) {
-        warning(
-            "The following requested processes do not exist, or are not enabled, prior to the process ", 
-            processTable$processName[ind], 
-            ": ", 
-            paste(setdiff(requestedProcessNames, priorProcesses), collapse = ", ")
-        )
-    }
-    #### Check also that the processes given by the function inputs acutally return the desired data type: ####
-    else {
-        # Get the indices of these processes in the processTable:
-        indexOfRelevantPriorProcesses <- match(requestedProcessNames, priorProcesses)
-        # Match the output data types of the relevant prior processes:
-        correctDataTypeRequested <- processTable$dataType[indexOfRelevantPriorProcesses] == requestedFunctionInputDataTypes
-        
-        
-        if(!all(correctDataTypeRequested)) {
-            warning(
-                "The following processes do not have the requested data type output: ", 
-                paste(processTable$dataType[indexOfRelevantPriorProcesses][requestedProcessNames], collapse = ", ")
-            )
-        }
-    }
-    
-    # Return TRUE if error:
-    !(requestedProcessesExist && all(correctDataTypeRequested))
-}
-
-
 getCurrentProcessID <- function(projectPath, modelName) {
     # Get the path to the currentProcessFile:
     currentProcessFile <- getProjectPaths(projectPath, "currentProcessFile")
@@ -1223,6 +1054,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     
     # Add the process table, so that the GUI can update the list of processes, and all its symbols:
     output$processTable <- getProcessTable(projectPath, modelName)
+    
+    output$modified <- TRUE
     
     return(output)
 }

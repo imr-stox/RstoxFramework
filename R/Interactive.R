@@ -116,7 +116,12 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
     
     # Revert the active process ID to the previous process:
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
-    return(list(activeProcessID = activeProcessID))
+    return(
+        list(
+            activeProcessID = activeProcessID, 
+            modified = TRUE
+        )
+    )
 }
 
 # Function that adds a haul to the assignment data:
@@ -136,7 +141,12 @@ assignment_addHaul <- function(PSU, Layer, Haul, Assignment) {
     
     # Revert the active process ID to the previous process:
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
-    return(list(activeProcessID = activeProcessID))
+    return(
+        list(
+            activeProcessID = activeProcessID, 
+            modified = TRUE
+        )
+    )
 }
 
 # Function that removes a haul from the assignment data:
@@ -155,7 +165,12 @@ assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
     
     # Revert the active process ID to the previous process:
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
-    return(list(activeProcessID = activeProcessID))
+    return(
+        list(
+            activeProcessID = activeProcessID, 
+            modified = TRUE
+        )
+    )
 }
 
 
@@ -219,6 +234,7 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
     return(
         list(
             activeProcessID = activeProcessID, 
+            modified = TRUE, 
             PSU = PSU
         )
     )
@@ -252,7 +268,8 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
     return(
         list(
-            activeProcessID = activeProcessID
+            activeProcessID = activeProcessID, 
+            modified = TRUE
         )
     )
 }
@@ -286,6 +303,7 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
     return(
         list(
             activeProcessID = activeProcessID, 
+            modified = TRUE, 
             PSU = newPSUName
         )
     )
@@ -326,7 +344,8 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
     return(
         list(
-            activeProcessID = activeProcessID
+            activeProcessID = activeProcessID, 
+            modified = TRUE
         )
     )
 }
@@ -361,7 +380,8 @@ removeEDSU <- function(EDSU, projectPath, modelName, processID) {
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
     return(
         list(
-            activeProcessID = activeProcessID
+            activeProcessID = activeProcessID, 
+            modified = TRUE
         )
     )
 }
@@ -437,7 +457,12 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     
     # Revert the active process ID to the previous process:
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
-    return(list(activeProcessID = activeProcessID))
+    return(
+        list(
+            activeProcessID = activeProcessID, 
+            modified = TRUE
+        )
+    )
 }
 #' 
 #' @export
@@ -469,7 +494,12 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
     
     # Revert the active process ID to the previous process:
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
-    return(list(activeProcessID = activeProcessID))
+    return(
+        list(
+            activeProcessID = activeProcessID, 
+            modified = TRUE
+        )
+    )
 }
 #' 
 #' @export
@@ -509,7 +539,12 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     
     # Revert the active process ID to the previous process:
     activeProcessID <- resetModel(projectPath, modelName, processID = processID)
-    return(list(activeProcessID = activeProcessID))
+    return(
+        list(
+            activeProcessID = activeProcessID, 
+            modified = TRUE
+        )
+    )
 }
 
 # Function to add colnames to the coords slot of a SpatialPolygonsDataFrame:

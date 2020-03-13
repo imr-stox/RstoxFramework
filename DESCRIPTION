@@ -11,7 +11,7 @@ Authors@R: c(
   person(given = "Espen", family = "Johnsen", role = "aut"), 
   person(given = "Atle", family = "Totland", role = "aut"), 
   person(given = "Mikko Juhani", family = "Vihtakari", role = "aut"))
-Depends: R (>= 3.5)
+Depends: R (>= 3.6)
 Description: This package contains all functions and framwork for running a StoX project.
 URL: https://github.com/StoXProject/RstoxFramework
 BugReports: https://github.com/StoXProject/RstoxFramework/issues

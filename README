@@ -1,4 +1,4 @@
-# RstoxFramework version: 1.0.1 (latest alpha, 2020-03-15)
+# RstoxFramework version: 1.1 (latest beta, 2020-03-17)
 # R version: 3.6
 
 
@@ -6,12 +6,12 @@
 
 
 # Install the latest developer version
-devtools::install_github("StoXProject/RstoxFramework")
+devtools::install_github("https://github.com//RstoxFramework@v1.1")
 
 
-# Release notes for RstoxFramework_1.0.1:
+# Release notes for RstoxFramework_1.1:
 # . 
 
-# For historical release notes see https://github.com/StoXProject/RstoxFramework/blob/alpha/NEWS
+# For historical release notes see https://github.com//RstoxFramework/blob/master/NEWS
 
 

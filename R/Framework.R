@@ -1320,7 +1320,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, shift = 0) {
         newActiveProcessID <- NA
     }
     else {
-        # Reset only if the input process ID is lower that the active:
+        # Reset only if the input process ID is before that the active:
         if(processIndex < currentActiveProcessIndex) {
                 newActiveProcessID <- processIndexTable$processID[processIndex]
             }
@@ -4382,87 +4382,9 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
 }
 
-#' 
-#' @export
-#' 
-runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, run = TRUE, save = TRUE, force.restart = FALSE) {
-    # Un the model if required:
-    if(run) {
-        runProcesses(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            startProcess = startProcess, 
-            endProcess = endProcess, 
-            save = save, 
-            force.restart = force.restart
-        )
-    }
-    # Get the model data:
-    modelData <- getModelData(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        startProcess = startProcess, 
-        endProcess = endProcess
-    )
-    
-    return(modelData)
-}
 
 
 
-#' 
-#' @export
-#' 
-runFunction <- function(what, args, removeCall = TRUE, onlyStoxMessages = TRUE) {
-    
-    # Parse the args if given as a JSON string:
-    args <- parseParameter(args)
-    
-    # Reset the warnings:
-    assign("last.warning", NULL, envir = baseenv())
-    
-    # Run the function 'what' and store the warnings and error along with the result:
-    warn <- character(0)
-    err <- NULL
-    msg <- capture.output({
-        value <- withCallingHandlers(
-            tryCatch(
-                do.call(what, args), 
-                error = function(e) {
-                    err <<- if(removeCall) conditionMessage(e) else e
-                    NULL
-                }
-            ), 
-            warning=function(w) {
-                warn <<- append(warn, if(removeCall) conditionMessage(w) else w)
-                invokeRestart("muffleWarning")
-            }
-        )
-    }, type = "message")
-
-    if(length(warn)) {
-        warn <- as.character(warn)
-    }
-    if(length(err)) {
-        err <- as.character(err)
-    }
-    if(onlyStoxMessages) {
-        msg <- trimws(sub("StoX:", "", msg[startsWith(msg, "StoX:")], fixed = TRUE))
-    }
-    
-    
-    # Clean the warnings:
-    #warn <- unname(unlist(warn[names(warn) == "message"]))
-    
-    # Return a list of warnings and error along with the result:
-    list(
-        #value = if(!is.list(value)) as.list(value) else value, 
-        value = value, 
-        message = as.list(msg), 
-        warning = as.list(warn), 
-        error = as.list(err)
-    )
-}
 
 
 #' 

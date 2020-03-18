@@ -891,10 +891,11 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         #    processID = processID, 
         #    outfile = outfile
         #), 
-        activeProcessID = getActiveProcessID(
-            projectPath = projectPath, 
-            modelName = modelName
-        )
+        ##activeProcessID = getActiveProcessID(
+        ##    projectPath = projectPath, 
+        ##    modelName = modelName
+        ##)
+        activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
     )
     
     # Return the list of process property groups (process property sheet):
@@ -1039,7 +1040,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     activeProcessID = resetModel(
         projectPath = projectPath, 
         modelName = modelName, 
-        processID = processID
+        processID = processID, 
+        modified = TRUE
     )
     
     # Return the modified process properties:
@@ -1048,14 +1050,10 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         modelName = modelName, 
         processID = processID
     )
-    
     # Add updateHelp:
     output$updateHelp <- updateHelp
-    
     # Add the process table, so that the GUI can update the list of processes, and all its symbols:
     output$processTable <- getProcessTable(projectPath, modelName)
-    
-    output$modified <- TRUE
     
     return(output)
 }

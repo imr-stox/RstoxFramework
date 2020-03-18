@@ -1166,8 +1166,13 @@ initiateActiveProcessID <- function(projectPath) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     # Initiate with all zeros:
-    activeProcessIDTable <- data.table::as.data.table(matrix(NA, nrow = 1, ncol = 3))
-    colnames(activeProcessIDTable) <- getRstoxFrameworkDefinitions("stoxModelNames")
+    #activeProcessIDTable <- data.table::as.data.table(matrix(NA, nrow = 1, ncol = 3))
+    activeProcessIDTable <- data.table::data.table(
+        modelName = getRstoxFrameworkDefinitions("stoxModelNames"), 
+        processID = NA, 
+        modified = NA
+    )
+    #colnames(activeProcessIDTable) <- getRstoxFrameworkDefinitions("stoxModelNames")
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
     activeProcessIDFile
 }
@@ -1236,7 +1241,8 @@ getActiveProcessID <- function(projectPath, modelName = NULL) {
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
     if(length(modelName)) {
-        return(activeProcessIDTable[[modelName]])
+        #return(activeProcessIDTable[[modelName]])
+        return(activeProcessIDTable[modelName == modelName, ])
     }
     else {
         return(activeProcessIDTable)
@@ -1245,16 +1251,20 @@ getActiveProcessID <- function(projectPath, modelName = NULL) {
 }
 
 
-writeActiveProcessID <- function(projectPath, modelName, activeProcessID) {
+writeActiveProcessID <- function(projectPath, modelName, activeProcessID, modified = FALSE) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     if(!file.exists(activeProcessIDFile)) {
         warning("The active process ID file has not been initiated.")
     }
     activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
-    activeProcessIDTable[[modelName]] <- activeProcessID
+    # Set the active process ID and the modified status:
+    activeProcessIDTable[modelName == modelName, "processID"] <- activeProcessID
+    activeProcessIDTable[modelName == modelName, "modified"] <- modified
+    # Write and return the activeProcessIDTable:
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
-    activeProcessIDFile
+    
+    return(activeProcessIDFile)
 }
 
 writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
@@ -1266,54 +1276,20 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
 }
 
-#' 
-#' @export
-#'
-#revertActiveProcessID <- function(projectPath, modelName, step = 1) {
-#    # Read the active process ID for the model:
-#    activeProcessID <- getActiveProcessID(
-#        projectPath = projectPath, 
-#        modelName = modelName
-#    )
-#    
-#    
-#    # Get the process ID to reset the model to:
-#    processIndexTable <- readProcessIndexTable(projectPath, modelName)
-#    processIndex <- which(processIndexTable$processID == processID)
-#    
-#    # Get the active process ID as the process ID of the process before the specified process in the processIndexTable (or NA if #processIndex is 1):
-#    if(processIndex == 1) {
-#        activeProcessID <- NA
-#    }
-#    else {
-#        activeProcessID <- processIndexTable$processID[processIndex - 1]
-#    }
-#    
-#    
-#    # Subtract 'step' from the active process ID:
-#    activeProcessID <- activeProcessID - step
-#    
-#    # Write the reverte active process ID:
-#    writeActiveProcessID(
-#        projectPath = projectPath, 
-#        modelName = modelName, 
-#        activeProcessID = activeProcessID
-#    )
-#    
-#    activeProcessID
-#}
-
 
 #' 
 #' @export
 #'
-resetModel <- function(projectPath, modelName, processID = NULL, shift = 0) {
+resetModel <- function(projectPath, modelName, processID = NULL, modified = FALSE, shift = 0) {
     
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processIndex <- which(processIndexTable$processID == processID) + shift
     # Read the active proces ID and reset only if the input process ID is lower that the active:
-    currentActiveProcessID <- getActiveProcessID(projectPath = projectPath, modelName = modelName)
+    currentActiveProcessID <- getActiveProcessID(
+        projectPath = projectPath, 
+        modelName = modelName
+    )
     currentActiveProcessIndex <- which(processIndexTable$processID == currentActiveProcessID)
     
     if(length(processID) == 0) {
@@ -1331,7 +1307,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, shift = 0) {
     
     # Write the active process ID:
     if(newActiveProcessID != currentActiveProcessID) {
-        writeActiveProcessID(projectPath, modelName, newActiveProcessID)
+        writeActiveProcessID(projectPath, modelName, newActiveProcessID, modified = modified)
     }
     
     return(newActiveProcessID)
@@ -3819,7 +3795,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
     }
     else{
         # Update the active process ID:
-        writeActiveProcessID(projectPath, modelName, processID)
+        writeActiveProcessID(projectPath, modelName, processID, modified = FALSE)
         
         # If a valid output class wrap the function output to a list named with the data type:
         if(firstClass(processOutput) %in% getRstoxFrameworkDefinitions("validOutputDataClasses")) {
@@ -4376,7 +4352,11 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     #status
     list(
-        activeProcessID = utils::tail(processID, 1), 
+        activeProcess = list(
+            ID = utils::tail(processID, 1), 
+            modified = FALSE
+        ), 
+        #activeProcessID = utils::tail(processID, 1), 
         interactiveMode = getInteractiveMode(projectPath, modelName, processID)
     )
     

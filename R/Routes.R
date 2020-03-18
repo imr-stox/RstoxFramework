@@ -56,7 +56,12 @@ getCanShowInMap <- function(functionName, dataType = NULL) {
     }
     
     # Is the datatype of the dataTypesToShowInMap?:
-    dataType %in% getRstoxFrameworkDefinitions("dataTypesToShowInMap")
+    if(length(dataType) == 0 || nchar(dataType) == 0) {
+        return(FALSE)
+    }
+    else {
+        return(dataType %in% getRstoxFrameworkDefinitions("dataTypesToShowInMap"))
+    }
 }
 
 ##########

@@ -1242,7 +1242,8 @@ getActiveProcessID <- function(projectPath, modelName = NULL) {
     activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
     if(length(modelName)) {
         #return(activeProcessIDTable[[modelName]])
-        return(activeProcessIDTable[modelName == get("modelName", envir = parent.frame()), ])
+        thisModelName <- modelName
+        return(activeProcessIDTable[modelName == thisModelName, ])
         #return(activeProcessIDTable[modelName == modelName, ])
     }
     else {
@@ -1264,8 +1265,9 @@ writeActiveProcessID <- function(projectPath, modelName, activeProcessID, modifi
     if(!is.character(activeProcessIDTable$processID)) {
         activeProcessIDTable[, processID := as.character(processID)]
     }
-    activeProcessIDTable[modelName == get("modelName", envir = parent.frame()), processID := ..activeProcessID]
-    activeProcessIDTable[modelName == get("modelName", envir = parent.frame()), modified := ..modified]
+    thisModelName <- modelName
+    activeProcessIDTable[modelName == thisModelName, processID := ..activeProcessID]
+    activeProcessIDTable[modelName == thisModelName, modified := ..modified]
     
     # Write and return the activeProcessIDTable:
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")

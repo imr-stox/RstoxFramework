@@ -1666,6 +1666,46 @@ setProcessMemory <- function(projectPath, modelName, processID, argumentName, ar
     # Save the project memory:
     saveProjectMemory(projectPath, argumentFileTable)
 }
+
+
+#' 
+#' @export
+#' 
+setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL) {
+    
+    # Get the arguments and argument names from the process:
+    if(length(process)) {
+        argumentName <- names(process)
+        argumentValue <- process
+    }
+    
+    # Save all project arguments to files (shorter repeated to the longest):
+    newArgumentFiles <- mapply(saveArgumentFile, projectPath, modelName, processID, argumentName, argumentValue)
+    
+    # Get the paths to which to save the argument files:
+    memoryPathFiles <- mapply(getMemoryPathFile, projectPath, modelName, processID, argumentName, argumentValue)
+    
+    
+    
+    
+    # Get the current table of process argument files:
+    argumentFileTable <- getArgumentFileTable(projectPath)
+    
+    # Modify the argument file table with the new files:
+    argumentFileTable <- insertToArgumentFileTable(
+        argumentFileTable = argumentFileTable, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = argumentName, 
+        argumentFile = newArgumentFiles
+    )
+    
+    # Save the project memory:
+    saveProjectMemory(projectPath, argumentFileTable)
+}
+
+
+
 #' 
 #' @export
 #' 
@@ -2638,6 +2678,21 @@ getProcessTable <- function(projectPath, modelName, processID = NULL) {
     
     # Check whether the process returns process data:
     processTable[, hasProcessData := lapply(functionName, isProcessDataFunction)]
+    
+    # Add hasBeenRun and modified:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    
+    processTable[, hasBeenRun := FALSE]
+    processTable[, modified := FALSE]
+    if(!is.na(activeProcess$processID)) {
+        activeProcessIndex <- getProcessIndexFromProcessID(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = activeProcess$processID
+        )
+        processTable[seq_len(activeProcessIndex), hasBeenRun := TRUE]
+        processTable[activeProcessIndex, modified := activeProcess$modified]
+    }
     
     return(processTable[])
 }

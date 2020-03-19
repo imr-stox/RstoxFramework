@@ -4308,7 +4308,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     #status
     list(
         activeProcess = list(
-            ID = utils::tail(processID, 1), 
+            processID = utils::tail(processID, 1), 
             modified = FALSE
         ), 
         #activeProcessID = utils::tail(processID, 1), 

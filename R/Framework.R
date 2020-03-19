@@ -1236,14 +1236,16 @@ resolveProjectPath <- function(filePath) {
 #' 
 #' @export
 #'
-getActiveProcessID <- function(projectPath, modelName = NULL) {
+getActiveProcess <- function(projectPath, modelName = NULL) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
     if(length(modelName)) {
         #return(activeProcessIDTable[[modelName]])
         thisModelName <- modelName
-        return(activeProcessIDTable[modelName == thisModelName, ])
+        output <- activeProcessIDTable[modelName == thisModelName, ]
+        output <- output[, modelName := NULL]
+        return(output[])
         #return(activeProcessIDTable[modelName == modelName, ])
     }
     else {
@@ -1293,11 +1295,17 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processIndex <- which(processIndexTable$processID == processID) + shift
+    
     # Read the active proces ID and reset only if the input process ID is lower that the active:
-    currentActiveProcessID <- getActiveProcessID(
+    currentActiveProcessID <- getActiveProcess(
         projectPath = projectPath, 
         modelName = modelName
     )$processID
+    # If activevProcecssID is NA, return it (not writing active process ID):
+    if(is.na(currentActiveProcessID)) {
+        return(currentActiveProcessID)
+    }
+    
     currentActiveProcessIndex <- which(processIndexTable$processID == currentActiveProcessID)
     
     if(length(processID) == 0) {
@@ -1749,7 +1757,7 @@ saveProjectMemory <- function(projectPath, argumentFileTable) {
     fullProjectMemory <- list(
         argumentFileTable = argumentFileTable, 
         processIndexTable = readProcessIndexTable(projectPath),  
-        activeProcessIDTable = getActiveProcessID(projectPath), 
+        activeProcessIDTable = getActiveProcess(projectPath), 
         maxProcessIntegerIDTable = getMaxProcessIntegerID(projectPath)
     )
     # Write the project memory to the new file:
@@ -2631,7 +2639,7 @@ getProcessTable <- function(projectPath, modelName, processID = NULL) {
     # Check whether the process returns process data:
     processTable[, hasProcessData := lapply(functionName, isProcessDataFunction)]
     
-    return(processTable)
+    return(processTable[])
 }
 
 

@@ -118,7 +118,7 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(list(activeProcess = activeProcess))
 }
 
@@ -141,7 +141,7 @@ assignment_addHaul <- function(PSU, Layer, Haul, Assignment) {
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(list(activeProcess = activeProcess))
 }
 
@@ -163,7 +163,7 @@ assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(list(activeProcess = activeProcess))
 }
 
@@ -227,7 +227,7 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(
         list(
             activeProcess = activeProcess, 
@@ -264,7 +264,7 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(list(activeProcess = activeProcess))
 }
 #' 
@@ -296,7 +296,7 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(
         list(
             activeProcess = activeProcess, 
@@ -340,7 +340,7 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(list(activeProcess = activeProcess))
 }
 #' 
@@ -374,7 +374,7 @@ removeEDSU <- function(EDSU, projectPath, modelName, processID) {
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(list(activeProcess = activeProcess))
 }
 
@@ -451,7 +451,7 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(list(activeProcess = activeProcess))
 }
 #' 
@@ -486,7 +486,7 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(list(activeProcess = activeProcess))
 }
 #' 
@@ -529,7 +529,7 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
-    activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     return(list(activeProcess = activeProcess))
 }
 

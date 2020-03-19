@@ -4362,11 +4362,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     #status
     list(
-        activeProcess = list(
-            processID = utils::tail(processID, 1), 
-            modified = FALSE
-        ), 
-        #activeProcessID = utils::tail(processID, 1), 
+        activeProcess = getActiveProcess(projectPath, modelName = modelName), 
         interactiveMode = getInteractiveMode(projectPath, modelName, processID)
     )
     

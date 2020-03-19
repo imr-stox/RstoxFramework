@@ -840,7 +840,6 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' @rdname Projects
 #' 
 openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE) {
-    browser()
     if(!force && isOpenProject(projectPath)) {
         warning("Project ", projectPath, "is already open.")
         
@@ -1292,7 +1291,6 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
 #'
 resetModel <- function(projectPath, modelName, processID = NULL, modified = FALSE, shift = 0) {
     
-    browser()
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processIndex <- which(processIndexTable$processID == processID) + shift
@@ -1323,7 +1321,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     }
     
     # Write the active process ID:
-    if(newActiveProcessID != currentActiveProcessID) {
+    if(is.na(newActiveProcessID) || newActiveProcessID != currentActiveProcessID) {
         writeActiveProcessID(projectPath, modelName, newActiveProcessID, modified = modified)
     }
     
@@ -2376,7 +2374,8 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     rearranged <- processIndexTable[toRearrange, ]
     rest <- processIndexTable[notToRearrange, ]
     
-    afterProcessIndexInRest <- which(rest$modelName %in% modelName & rest$processID == afterProcessID)
+    afterProcessIndexInRest <- max(0, which(rest$modelName %in% modelName & rest$processID %in% afterProcessID))
+    
     before <- rest[seq_len(afterProcessIndexInRest), ]
     if(afterProcessIndexInRest < nrow(processIndexTable)) {
         after <- rest[seq(afterProcessIndexInRest + 1, nrow(rest)), ]
@@ -2386,14 +2385,21 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     }
     
     # Build the new processIndexTable:
-    processIndexTable <- rbind(
+    newProcessIndexTable <- rbind(
         before, 
         rearranged, 
         after
     )
     
     # Write the file:
-    writeProcessIndexTable(projectPath = projectPath, processIndexTable = processIndexTable)
+    writeProcessIndexTable(projectPath = projectPath, processIndexTable = newProcessIndexTable)
+    
+    # Return the last unchanged process:
+    changed <- which(processIndexTable$processID != newProcessIndexTable$processID)
+    # Set the activev process index as the first changed process minus 1:
+    activeProcessIndex <- min(changed) - 1
+    activeProcessID <- processIndexTable$processID[activeProcessIndex]
+    return(activeProcessID)
 }
 
 
@@ -3687,12 +3693,12 @@ removeProcess <- function(projectPath, modelName, processID) {
 #' 
 rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID = NULL) {
     # Rearrange the process index table defining the order of the processes:
-    if(length(afterProcessID)) {
-        rearrangeProcessIndexTable(projectPath, modelName, processID, afterProcessID)
-    }
+    #if(length(afterProcessID)) {
+    activeProcessID <- rearrangeProcessIndexTable(projectPath, modelName, processID, afterProcessID)
+    #}
     
-    # Reset the model to the afterProcessID:
-    resetModel(projectPath, modelName, processID = afterProcessID)
+    # Reset the model to the first of afterProcessID and the processes to be rearranged:
+    resetModel(projectPath, modelName, processID = activeProcessID)
     
     # Return the process table:
     processTable <- getProcessTable(projectPath, modelName)

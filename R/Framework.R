@@ -1292,6 +1292,7 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
 #'
 resetModel <- function(projectPath, modelName, processID = NULL, modified = FALSE, shift = 0) {
     
+    browser()
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processIndex <- which(processIndexTable$processID == processID) + shift
@@ -3656,7 +3657,7 @@ addProcess <- function(projectPath, modelName, values) {
     
     # Return the process table:
     processTable <- getProcessTable(projectPath, modelName)
-    return(processTable)
+    return(list(processTable = processTable))
 }
 #' 
 #' @export
@@ -3677,7 +3678,7 @@ removeProcess <- function(projectPath, modelName, processID) {
     
     # Return the process table:
     processTable <- getProcessTable(projectPath, modelName)
-    return(processTable)
+    return(list(processTable = processTable))
 }
 
 
@@ -3695,7 +3696,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
     
     # Return the process table:
     processTable <- getProcessTable(projectPath, modelName)
-    return(processTable)
+    return(list(processTable = processTable))
 }
 
 

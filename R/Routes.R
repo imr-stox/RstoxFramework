@@ -846,8 +846,6 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 7. value:
                 value = functionParameters
             )
-            print(functionParametersToReturn$value)
-            
             
             # Convert to a JSON string if the parameter has a format:
             hasFormat <- functionParametersToReturn$format != "none"
@@ -855,20 +853,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 functionParametersToReturn$value[hasFormat] = lapply(functionParametersToReturn$value[hasFormat], formatJSONString)
             }
             
-            
-            
-            
-            ## Convert to a JSON string if of non-simple type (length >= 1):
-            #nonSimple <- isMultipleParameter(functionName, unlist(functionParametersToReturn$name))
-            #print(nonSimple)
-            #if(any(nonSimple)) {
-            #    functionParametersToReturn$value[nonSimple] = lapply(functionParametersToReturn$value[nonSimple], parameter2JS#ONString)
-            #}
-            
             # Convert all possibleValues and value to character:
             toJSONString(functionParametersToReturn)
-            print(functionParametersToReturn$value)
-            print("........")
         }
         
         # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):

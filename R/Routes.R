@@ -626,6 +626,11 @@ parameter2JSONString <- function(parameter) {
 }
 
 
+formatJSONString <- function(parameter) {
+    as.character(jsonlite::toJSON(parameter, auto_unbox = TRUE))
+}
+
+
 isMultipleParameter <- function(functionName, parameterName) {
     multiple <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$multiple)
     format <- unlist(getFunctionParameterPropertyFormats(functionName)[parameterName])
@@ -841,15 +846,29 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 7. value:
                 value = functionParameters
             )
+            print(functionParametersToReturn$value)
             
-            # Convert to a JSON string if of non-simple type (length >= 1):
-            nonSimple <- isMultipleParameter(functionName, unlist(functionParametersToReturn$name))
-            if(any(nonSimple)) {
-                functionParametersToReturn$value[nonSimple] = lapply(functionParametersToReturn$value[nonSimple], parameter2JSONString)
+            
+            # Convert to a JSON string if the parameter has a format:
+            hasFormat <- functionParametersToReturn$format != "none"
+            if(any(hasFormat)) {
+                functionParametersToReturn$value[hasFormat] = lapply(functionParametersToReturn$value[hasFormat], formatJSONString)
             }
+            
+            
+            
+            
+            ## Convert to a JSON string if of non-simple type (length >= 1):
+            #nonSimple <- isMultipleParameter(functionName, unlist(functionParametersToReturn$name))
+            #print(nonSimple)
+            #if(any(nonSimple)) {
+            #    functionParametersToReturn$value[nonSimple] = lapply(functionParametersToReturn$value[nonSimple], parameter2JS#ONString)
+            #}
             
             # Convert all possibleValues and value to character:
             toJSONString(functionParametersToReturn)
+            print(functionParametersToReturn$value)
+            print("........")
         }
         
         # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
@@ -889,18 +908,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     
     output <- list(
         propertySheet = propertySheet, 
-        # Removed since it takes 150 ms. Maybe add a flag updateHelp. 
-        #help = getFunctionHelpAsHtml(
-        #    projectPath = projectPath, 
-        #    modelName = modelName, 
-        #    processID = processID, 
-        #    outfile = outfile
-        #), 
-        ##activeProcessID = getActiveProcessID(
-        ##    projectPath = projectPath, 
-        ##    modelName = modelName
-        ##)
-        activeProcess <- getActiveProcessID(projectPath, modelName = modelName)
+        activeProcess <- getActiveProcess(projectPath, modelName = modelName)
     )
     
     # Return the list of process property groups (process property sheet):

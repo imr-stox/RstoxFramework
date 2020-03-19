@@ -1326,7 +1326,10 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
         writeActiveProcessID(projectPath, modelName, newActiveProcessID, modified = modified)
     }
     
-    return(newActiveProcessID)
+    output <- list(
+        processTable = getProcessTable(projectPath, modelName)
+    )
+    return(output)
 }
 
 
@@ -1541,26 +1544,7 @@ getArgumentFiles <- function(projectPath, modelName = NULL, processID = NULL, ar
     
     
     
-    # Read the current project memory file, which contains the list of files holding the current process arguments:
-    projectMemoryFile <- getProjectPaths(projectPath, paste0(type[1], "ProjectMemoryFile"))
-    
-    # If the projectMemoryFile does not exist, return an empty data.table:
-    if(file.exists(projectMemoryFile)) {
-        # Read the projectMemoryFile:
-        argumentFileTable <- readRDS(projectMemoryFile)$argumentFileTable
-        # Subset out the model if requested:
-        if(length(modelName)) {
-            argumentFileTable <- subset(argumentFileTable, modelName == modelName)
-        }
-        if(length(processID)) {
-            argumentFileTable <- subset(argumentFileTable, processID == processID)
-        }
-    }
-    else {
-        argumentFileTable <- data.table::data.table()
-    }
-    
-    argumentFileTable
+   
 }
 
 
@@ -1680,30 +1664,43 @@ setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName,
     }
     
     # Save all project arguments to files (shorter repeated to the longest):
-    newArgumentFiles <- mapply(saveArgumentFile, projectPath, modelName, processID, argumentName, argumentValue)
-    
-    # Get the paths to which to save the argument files:
-    memoryPathFiles <- mapply(getMemoryPathFile, projectPath, modelName, processID, argumentName, argumentValue)
-    
-    
-    
-    
-    # Get the current table of process argument files:
-    argumentFileTable <- getArgumentFileTable(projectPath)
-    
-    # Modify the argument file table with the new files:
-    argumentFileTable <- insertToArgumentFileTable(
-        argumentFileTable = argumentFileTable, 
+    newArgumentFiles <- mapply(
+        saveArgumentFile, 
+        projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = argumentName, 
-        argumentFile = newArgumentFiles
+        argumentValue = argumentValue
     )
     
-    # Save the project memory:
-    saveProjectMemory(projectPath, argumentFileTable)
+    # Get the paths of the files to which to save the argument files:
+    memoryPathFiles <- mapply(
+        getMemoryPathFile, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = argumentName
+    )
+    
+    # Create the folder holding the files:
+    folderPath <- dirname(memoryPathFiles[1])
+    dir.create(folderPath, recursive = TRUE, showWarnings = FALSE)
+    
+    # Write the memory path files:
+    mapply(
+        saveRDS, 
+        newArgumentFiles, 
+        file = memoryPathFiles
+    )
 }
 
+getMemoryPathFile <- function(projectPath, modelName, processID, argumentName) {
+    # Get the folder of the current memory:
+    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    # Build the path to the memory path file:
+    memoryPathFile <- file.path(currentMemoryFolder, modelName, processID, paste0(argumentName, ".rds"))
+    return(memoryPathFile)
+}
 
 
 #' 
@@ -4362,6 +4359,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     #status
     list(
+        processTable = getProcessTable(projectPath, modelName), 
         activeProcess = getActiveProcess(projectPath, modelName = modelName), 
         interactiveMode = getInteractiveMode(projectPath, modelName, processID)
     )

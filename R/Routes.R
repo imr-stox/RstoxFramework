@@ -908,7 +908,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     
     output <- list(
         propertySheet = propertySheet, 
-        activeProcess <- getActiveProcess(projectPath, modelName = modelName)
+        activeProcess = getActiveProcess(projectPath, modelName = modelName)
     )
     
     # Return the list of process property groups (process property sheet):

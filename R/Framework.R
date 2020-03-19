@@ -840,7 +840,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' @rdname Projects
 #' 
 openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE) {
-    
+    browser()
     if(!force && isOpenProject(projectPath)) {
         warning("Project ", projectPath, "is already open.")
         
@@ -1244,7 +1244,7 @@ getActiveProcess <- function(projectPath, modelName = NULL) {
         #return(activeProcessIDTable[[modelName]])
         thisModelName <- modelName
         output <- activeProcessIDTable[modelName == thisModelName, ]
-        output <- output[, modelName := NULL]
+        output <- as.list(output[, modelName := NULL])
         return(output[])
         #return(activeProcessIDTable[modelName == modelName, ])
     }
@@ -3605,7 +3605,6 @@ addProcess <- function(projectPath, modelName, values) {
     # Return the process table:
     processTable <- getProcessTable(projectPath, modelName)
     return(processTable)
-    #return(process)
 }
 #' 
 #' @export

@@ -1036,7 +1036,7 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     }
     
     # Reset the active process ID to the process before the modified process:
-    activeProcessID = resetModel(
+    resetModel(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
@@ -1053,6 +1053,9 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     output$updateHelp <- updateHelp
     # Add the process table, so that the GUI can update the list of processes, and all its symbols:
     output$processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
+    
+    # Add also the saved status:
+    output$saved <- isSaved(projectPath)
     
     return(output)
 }

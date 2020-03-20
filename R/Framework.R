@@ -1294,32 +1294,37 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processIndex <- which(processIndexTable$processID == processID) + shift
+    # Error if the process does not exist:
+    if(length(processID) && length(processIndex) == 0) {
+        stop("processID not regocnized")
+    }
     
-    # Read the active proces ID and reset only if the input process ID is lower that the active:
+    # Read the active proces ID and reset if that is not NA:
     currentActiveProcessID <- getActiveProcess(projectPath = projectPath, modelName = modelName)$processID
-    # If activevProcecssID is NA, return it (not writing active process ID):
-    if(is.na(currentActiveProcessID)) {
-        return(currentActiveProcessID)
-    }
     
-    currentActiveProcessIndex <- which(processIndexTable$processID == currentActiveProcessID)
-    
-    if(length(processID) == 0) {
-        newActiveProcessID <- NA
-    }
-    else {
-        # Reset only if the input process ID is before that the active:
-        if(processIndex < currentActiveProcessIndex) {
-                newActiveProcessID <- processIndexTable$processID[processIndex]
-            }
-        else {
-            newActiveProcessID <- currentActiveProcessID
+    # If activevProcecssID is NA, do nothing:
+    if(!is.na(currentActiveProcessID)) {
+        # Get the current active process index:
+        currentActiveProcessIndex <- which(processIndexTable$processID == currentActiveProcessID)
+        
+        # If the processIndex is 0 or processID not given, reset to the start of the model (activeProcessID = NA):
+        if(processIndex == 0 || length(processID) == 0) {
+            newActiveProcessID <- NA
         }
-    }
-    
-    # Write the active process ID:
-    if(is.na(newActiveProcessID) || newActiveProcessID != currentActiveProcessID) {
-        writeActiveProcessID(projectPath, modelName, newActiveProcessID, modified = modified)
+        else {
+            # Reset only if the input process ID is before that the active:
+            if(processIndex < currentActiveProcessIndex) {
+                    newActiveProcessID <- processIndexTable$processID[processIndex]
+                }
+            else {
+                newActiveProcessID <- currentActiveProcessID
+            }
+        }
+        
+        # Write the active process ID:
+        if(is.na(newActiveProcessID) || newActiveProcessID != currentActiveProcessID) {
+            writeActiveProcessID(projectPath, modelName, newActiveProcessID, modified = modified)
+        }
     }
     
     output <- list(
@@ -1764,6 +1769,9 @@ setProcessMemory <- function(projectPath, modelName, processID, argumentName, ar
         argumentName = argumentName, 
         argumentFile = newArgumentFiles
     )
+    
+    # Set the status as not saved (saving is done when running a process):
+    setSavedStatus(projectPath, status = FALSE)
     
     # Save the project memory:
     saveProjectMemory(projectPath, argumentFileTable)
@@ -2510,15 +2518,22 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
         after
     )
     
-    # Write the file:
-    writeProcessIndexTable(projectPath = projectPath, processIndexTable = newProcessIndexTable)
-    
-    # Return the last unchanged process:
+    # Was there any change?:
     changed <- which(processIndexTable$processID != newProcessIndexTable$processID)
-    # Set the activev process index as the first changed process minus 1:
-    activeProcessIndex <- min(changed) - 1
-    activeProcessID <- processIndexTable$processID[activeProcessIndex]
-    return(activeProcessID)
+    
+    # Write the file:
+    if(any(changed)) {
+        writeProcessIndexTable(projectPath = projectPath, processIndexTable = newProcessIndexTable)
+        
+        # Set the activev process index as the first changed process minus 1:
+        activeProcessIndex <- min(changed) - 1
+        activeProcessID <- processIndexTable$processID[activeProcessIndex]
+        return(activeProcessID)
+    }
+    else {
+        return(NULL)
+    }
+    
 }
 
 
@@ -3541,16 +3556,6 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
         )
     }
     
-    # Set the status as not saved (saving is done when running a process):
-    setSavedStatus(projectPath, status = FALSE)
-    
-    ### # Return the process:
-    ### getProcess(
-    ###     projectPath = projectPath, 
-    ###     modelName = modelName, 
-    ###     processID = processID
-    ### )
-    
     return(modified)
 }
 #' 
@@ -3751,9 +3756,12 @@ addProcesses <- function(projectPath, modelName, projectMemory) {
     
     # Return the process table:
     processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
-    return(processTable)
-    ## Return the processes:
-    #processes
+    return(
+        list(
+            processTable = processTable, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 #' 
@@ -3783,9 +3791,17 @@ addProcess <- function(projectPath, modelName, values) {
         processID = process$processID
     )
     
+    # Set the status as not saved (saving is done when running a process):
+    setSavedStatus(projectPath, status = FALSE)
+    
     # Return the process table:
     processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
-    return(list(processTable = processTable))
+    return(
+        list(
+            processTable = processTable, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 #' 
 #' @export
@@ -3804,9 +3820,17 @@ removeProcess <- function(projectPath, modelName, processID) {
     # Reset the model to the process just before the removed process:
     resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1)
     
+    # Set the status as not saved (saving is done when running a process):
+    setSavedStatus(projectPath, status = FALSE)
+    
     # Return the process table:
     processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
-    return(list(processTable = processTable))
+    return(
+        list(
+            processTable = processTable, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 
@@ -3819,12 +3843,21 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
     activeProcessID <- rearrangeProcessIndexTable(projectPath, modelName, processID, afterProcessID)
     #}
     
-    # Reset the model to the first of afterProcessID and the processes to be rearranged:
-    resetModel(projectPath, modelName, processID = activeProcessID)
+    # Reset the model to the first of afterProcessID and the processes to be rearranged, but only if there was any change:
+    if(length(activeProcessID)) {
+        resetModel(projectPath, modelName, processID = activeProcessID)
+        # Set the status as not saved (saving is done when running a process):
+        setSavedStatus(projectPath, status = FALSE)
+    }
     
     # Return the process table:
     processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
-    return(list(processTable = processTable))
+    return(
+        list(
+            processTable = processTable, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 
@@ -4493,9 +4526,9 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     list(
         processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
         activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
-        interactiveMode = getInteractiveMode(projectPath = projectPath, modelName = modelName, processID = processID)
+        interactiveMode = getInteractiveMode(projectPath = projectPath, modelName = modelName, processID = processID), 
+        saved = isSaved(projectPath)
     )
-    
 }
 
 

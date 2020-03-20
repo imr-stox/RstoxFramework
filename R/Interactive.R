@@ -119,7 +119,12 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(list(activeProcess = activeProcess))
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 # Function that adds a haul to the assignment data:
@@ -137,12 +142,26 @@ assignment_addHaul <- function(PSU, Layer, Haul, Assignment) {
         toAdd
     )
     
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(list(Assignment = Assignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
+    
     # Revert the active process ID to the previous process:
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(list(activeProcess = activeProcess))
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 # Function that removes a haul from the assignment data:
@@ -159,12 +178,26 @@ assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
     # Remove the hauls:
     Assignment <- Assignment[-at[atHauls], ]
     
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(list(Assignment = Assignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
+    
     # Revert the active process ID to the previous process:
     resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(list(activeProcess = activeProcess))
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 
@@ -231,6 +264,7 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
     return(
         list(
             activeProcess = activeProcess, 
+            saved = isSaved(projectPath), 
             PSU = PSU
         )
     )
@@ -265,7 +299,12 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(list(activeProcess = activeProcess))
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 #' 
 #' @export
@@ -300,6 +339,7 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
     return(
         list(
             activeProcess = activeProcess, 
+            saved = isSaved(projectPath), 
             PSU = PSU
         )
     )
@@ -341,7 +381,12 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(list(activeProcess = activeProcess))
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 #' 
 #' @export
@@ -375,7 +420,12 @@ removeEDSU <- function(EDSU, projectPath, modelName, processID) {
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(list(activeProcess = activeProcess))
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 
@@ -452,7 +502,12 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(list(activeProcess = activeProcess))
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 #' 
 #' @export
@@ -487,7 +542,12 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(list(activeProcess = activeProcess))
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 #' 
 #' @export
@@ -530,7 +590,12 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(list(activeProcess = activeProcess))
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 # Function to add colnames to the coords slot of a SpatialPolygonsDataFrame:
@@ -575,4 +640,5 @@ setEmptyID <- function(stratum) {
     
     return(stratum)
 }
+
 

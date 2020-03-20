@@ -1296,10 +1296,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     processIndex <- which(processIndexTable$processID == processID) + shift
     
     # Read the active proces ID and reset only if the input process ID is lower that the active:
-    currentActiveProcessID <- getActiveProcess(
-        projectPath = projectPath, 
-        modelName = modelName
-    )$processID
+    currentActiveProcessID <- getActiveProcess(projectPath = projectPath, modelName = modelName)$processID
     # If activevProcecssID is NA, return it (not writing active process ID):
     if(is.na(currentActiveProcessID)) {
         return(currentActiveProcessID)
@@ -1326,7 +1323,8 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     }
     
     output <- list(
-        processTable = getProcessTable(projectPath, modelName)
+        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
+        processTable = getProcessTable(projectPath = projectPath, modelName = modelName)
     )
     return(output)
 }
@@ -1523,21 +1521,123 @@ getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL
 
 
 
-getArgumentFiles <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
+getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
+    
+    listFilesWithBasenamesAsNames <- function(path) {
+        basenames <- list.files(path)
+        out <- as.list(file.path(path, basenames))
+        names(out) <- tools::file_path_sans_ext(basenames)
+        return(out)
+    }
+    verifyPaths <- function(x) {
+        valid <- file.exists(x)
+        if(any(!valid)) {
+            warning("The following files do not exist: ", paste(x[!vavlid], collapse = ", "), ".")
+        }
+        return(x[vavlid])
+    }
     
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     
+    
+    if(length(modelName) == 1 && length(processID) == 1 && length(argumentName) > 0) {
+        # Create a list named by the modelName:
+        argumentFilePaths <- structure(
+            list(
+                # Create a list named by the processID:
+                structure(
+                    list(
+                        # Create a list named by the argumentName:
+                        structure(
+                            as.list(
+                                # Return only the existing files:
+                                verifyPaths(
+                                    # Build the paths:
+                                    file.path(currentMemoryFolder, modelName, processID, argumentName)
+                                )
+                            ), 
+                            names = argumentName
+                        ) 
+                    ), 
+                    names = processID
+                )
+            ), 
+            names = modelName
+        )
+    }
+    else if(length(modelName) == 1 && length(processID) >= 1 && length(argumentName) == 0) {
+        argumentFilePaths <- structure(
+            list(
+                sapply(
+                    processID, 
+                    function(x) listFilesWithBasenamesAsNames(file.path(currentMemoryFolder, modelName, x)), 
+                    simplify = FALSE
+                )
+            ), 
+            names = modelName
+        )
+    }
+    else if(length(modelName) >= 1 && length(processID) == 0 && length(argumentName) == 0) {
+        argumentFilePaths <- structure(
+            list(
+                sapply(
+                    processID, 
+                    function(x) listFilesWithBasenamesAsNames(file.path(currentMemoryFolder, modelName, x)), 
+                    simplify = FALSE
+                )
+            ), 
+            names = modelName
+        )
+    }
+    else if(length(modelName) == 0 && length(processID) == 0 && length(argumentName) == 0) {
+        argumentFilePaths <- file.path(modelName, processID, argumentName)
+    }
+    else {
+        stop("modelName must be given if any of processID and argumentName are given, and processID must be given if argumentName is given. Also when rewuesting more than one modelName or processID, the following parameter must be empty.")
+    }
+    
+    
+    
     # Get all models if none are specified:
     if(length(modelName) == 0) {
+        if(length(processID)) {
+            stop("modelName must be given if processID is given.")
+        }
+        if(length(argumentName)) {
+            stop("modelName must be given if argumentName is given.")
+        }
         modelName <- getRstoxFrameworkDefinitions("stoxModelFolders")
+    }
+    else if(length(modelName) > 1 && length(processID)) {
+        stop("If modelName is given as a vector, processID must be empty, implying to return all processes from those models.")
+    }
+    
+    # Check that all requested models are present:
+    presentModels <- list.dirs(currentMemoryFolder, recursive = FALSE, full.names = FALSE)
+    if(!all(modelName %in% presentModels)) {
+        notPresent <- setdiff(presentModels, modelName)
+        modelName <- intersect(presentModels, modelName)
+        warning("The following requested models do not have processes: ", paste(notPresent, collapse = ", "), " (returning ", paste(present, collapse = ", "), ").")
     }
     
     # Get all processes if none are specified:
     if(length(processID) == 0) {
-        processID <- list.dirs(currentMemoryFolder, full.names = FALSE)
-        processID <- split(processID, dirname(processID))
-        processID <- lapply(processID, basename)
+        processID <- lapply(modelName, function(x) list.dirs(file.path(currentMemoryFolder, x), recursive = FALSE, full.names = FALSE))
     }
+    else {
+        processID <- list(processID)
+    }
+    names(processID) <- modelName
+    
+    # Create the file paths of the files to read: 
+    
+    
+    
+    lapply()
+    
+    
+    
+    filePaths <- file.path(currentMemoryFolder, )
     
     
     
@@ -3628,7 +3728,7 @@ addProcesses <- function(projectPath, modelName, projectMemory) {
     }
     
     # Return the process table:
-    processTable <- getProcessTable(projectPath, modelName)
+    processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
     return(processTable)
     ## Return the processes:
     #processes
@@ -3662,7 +3762,7 @@ addProcess <- function(projectPath, modelName, values) {
     )
     
     # Return the process table:
-    processTable <- getProcessTable(projectPath, modelName)
+    processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
     return(list(processTable = processTable))
 }
 #' 
@@ -3683,7 +3783,7 @@ removeProcess <- function(projectPath, modelName, processID) {
     resetModel(projectPath, modelName, processID = processID, shift = -1)
     
     # Return the process table:
-    processTable <- getProcessTable(projectPath, modelName)
+    processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
     return(list(processTable = processTable))
 }
 
@@ -3701,7 +3801,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
     resetModel(projectPath, modelName, processID = activeProcessID)
     
     # Return the process table:
-    processTable <- getProcessTable(projectPath, modelName)
+    processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
     return(list(processTable = processTable))
 }
 
@@ -4366,9 +4466,9 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     #status
     list(
-        processTable = getProcessTable(projectPath, modelName), 
-        activeProcess = getActiveProcess(projectPath, modelName = modelName), 
-        interactiveMode = getInteractiveMode(projectPath, modelName, processID)
+        processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
+        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
+        interactiveMode = getInteractiveMode(projectPath = projectPath, modelName = modelName, processID = processID)
     )
     
 }

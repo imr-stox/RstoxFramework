@@ -788,7 +788,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         # Run only if there are function inputs:
         if(length(functionInputs)) {
             # Get the process table, which is needed to get the output data types from the prior processes for use in the function inputs:
-            processTable <- getProcessTable(projectPath, modelName, processID = processID)
+            processTable <- getProcessTable(projectPath = projectPath, modelName = modelName, processID = processID)
             #thisProcessIndex <- which(processTable$processID == processID)
             #processTable <- processTable[seq_len(thisProcessIndex), ]
             functionInputNames <- names(functionInputs)
@@ -894,7 +894,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     
     output <- list(
         propertySheet = propertySheet, 
-        activeProcess = getActiveProcess(projectPath, modelName = modelName)
+        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
     )
     
     # Return the list of process property groups (process property sheet):
@@ -1052,7 +1052,7 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     # Add updateHelp:
     output$updateHelp <- updateHelp
     # Add the process table, so that the GUI can update the list of processes, and all its symbols:
-    output$processTable <- getProcessTable(projectPath, modelName)
+    output$processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
     
     return(output)
 }

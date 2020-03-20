@@ -1523,12 +1523,29 @@ getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL
 
 getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
     
-    listFilesWithBasenamesAsNames <- function(path) {
-        basenames <- list.files(path)
-        out <- as.list(file.path(path, basenames))
-        names(out) <- tools::file_path_sans_ext(basenames)
-        return(out)
+    #listArgumentFiles <- function(path) {
+    #    basenames <- list.files(path)
+    #    out <- as.list(file.path(path, basenames))
+    #    names(out) <- tools::file_path_sans_ext(basenames)
+    #    return(out)
+    #}
+    
+    listArgumentFiles <- function(dir, processID = NULL) {
+        # Get processIDs:
+        if(length(processID) == 0) {
+            processIDs <- list.dirs(dir, recursive = FALSE, full.names = FALSE)
+        }
+        
+        # Loop through the processIDs and list the argument files:
+        sapply(
+            processID, 
+            function(x) listArgumentFiles(file.path(dir, modelName, x)), 
+            simplify = FALSE
+        )
     }
+    
+    
+    
     verifyPaths <- function(x) {
         valid <- file.exists(x)
         if(any(!valid)) {
@@ -1537,8 +1554,12 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
         return(x[vavlid])
     }
     
+    browser()
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     
+    if(length(modelName) == 0 && length(processID) == 0 && length(argumentName) == 0) {
+        modelName <- list.dirs(currentMemoryFolder, recursive = FALSE, full.names = FALSE)
+    }
     
     if(length(modelName) == 1 && length(processID) == 1 && length(argumentName) > 0) {
         # Create a list named by the modelName:
@@ -1566,31 +1587,29 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
         )
     }
     else if(length(modelName) == 1 && length(processID) >= 1 && length(argumentName) == 0) {
+        # Create a list named by the modelName:
+        dir <- file.path(currentMemoryFolder, modelName)
         argumentFilePaths <- structure(
             list(
-                sapply(
-                    processID, 
-                    function(x) listFilesWithBasenamesAsNames(file.path(currentMemoryFolder, modelName, x)), 
-                    simplify = FALSE
-                )
+                # Loop through the processIDs and list the argument files:
+                listArgumentFiles(dir, processID = processID)
+                #sapply(
+                #    processID, 
+                #    function(x) listArgumentFiles(file.path(currentMemoryFolder, modelName, x)), 
+                #    simplify = FALSE
+                #)
             ), 
             names = modelName
         )
     }
     else if(length(modelName) >= 1 && length(processID) == 0 && length(argumentName) == 0) {
-        argumentFilePaths <- structure(
-            list(
-                sapply(
-                    processID, 
-                    function(x) listFilesWithBasenamesAsNames(file.path(currentMemoryFolder, modelName, x)), 
-                    simplify = FALSE
-                )
-            ), 
-            names = modelName
-        )
-    }
-    else if(length(modelName) == 0 && length(processID) == 0 && length(argumentName) == 0) {
-        argumentFilePaths <- file.path(modelName, processID, argumentName)
+        # Create a list named by the modelName:
+        dirs <- file.path(currentMemoryFolder, modelName)
+        argumentFilePaths <- sapply(
+            modelName, 
+            function(dir) listArgumentFiles(dir, processID = processID), 
+            simplify = FALSE
+            )
     }
     else {
         stop("modelName must be given if any of processID and argumentName are given, and processID must be given if argumentName is given. Also when rewuesting more than one modelName or processID, the following parameter must be empty.")
@@ -1598,52 +1617,52 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     
     
     
-    # Get all models if none are specified:
-    if(length(modelName) == 0) {
-        if(length(processID)) {
-            stop("modelName must be given if processID is given.")
-        }
-        if(length(argumentName)) {
-            stop("modelName must be given if argumentName is given.")
-        }
-        modelName <- getRstoxFrameworkDefinitions("stoxModelFolders")
-    }
-    else if(length(modelName) > 1 && length(processID)) {
-        stop("If modelName is given as a vector, processID must be empty, implying to return all processes from those models.")
-    }
+    ## Get all models if none are specified:
+    #if(length(modelName) == 0) {
+    #    if(length(processID)) {
+    #        stop("modelName must be given if processID is given.")
+    #    }
+    #    if(length(argumentName)) {
+    #        stop("modelName must be given if argumentName is given.")
+    #    }
+    #    modelName <- getRstoxFrameworkDefinitions("stoxModelFolders")
+    #}
+    #else if(length(modelName) > 1 && length(processID)) {
+    #    stop("If modelName is given as a vector, processID must be empty, implying to return all processes from those models.")
+    #}
+    #
+    ## Check that all requested models are present:
+    #presentModels <- list.dirs(currentMemoryFolder, recursive = FALSE, full.names = FALSE)
+    #if(!all(modelName %in% presentModels)) {
+    #    notPresent <- setdiff(presentModels, modelName)
+    #    modelName <- intersect(presentModels, modelName)
+    #    warning("The following requested models do not have processes: ", paste(notPresent, collapse = ", "), " (returning ", past#e(present, collapse = ", "), ").")
+    #}
+    #
+    ## Get all processes if none are specified:
+    #if(length(processID) == 0) {
+    #    processID <- lapply(modelName, function(x) list.dirs(file.path(currentMemoryFolder, x), recursive = FALSE, full.names = FALS#E))
+    #}
+    #else {
+    #    processID <- list(processID)
+    #}
+    #names(processID) <- modelName
+    #
+    ## Create the file paths of the files to read: 
+    #
+    #
+    #
+    #lapply()
+    #
+    #
+    #
+    #filePaths <- file.path(currentMemoryFolder, )
+    #
+    #
+    #
+    #
     
-    # Check that all requested models are present:
-    presentModels <- list.dirs(currentMemoryFolder, recursive = FALSE, full.names = FALSE)
-    if(!all(modelName %in% presentModels)) {
-        notPresent <- setdiff(presentModels, modelName)
-        modelName <- intersect(presentModels, modelName)
-        warning("The following requested models do not have processes: ", paste(notPresent, collapse = ", "), " (returning ", paste(present, collapse = ", "), ").")
-    }
-    
-    # Get all processes if none are specified:
-    if(length(processID) == 0) {
-        processID <- lapply(modelName, function(x) list.dirs(file.path(currentMemoryFolder, x), recursive = FALSE, full.names = FALSE))
-    }
-    else {
-        processID <- list(processID)
-    }
-    names(processID) <- modelName
-    
-    # Create the file paths of the files to read: 
-    
-    
-    
-    lapply()
-    
-    
-    
-    filePaths <- file.path(currentMemoryFolder, )
-    
-    
-    
-    
-    
-   
+   return(argumentFilePaths)
 }
 
 
@@ -2788,14 +2807,17 @@ getProcessTable <- function(projectPath, modelName, processID = NULL) {
     
     processTable[, hasBeenRun := FALSE]
     processTable[, modified := FALSE]
+
     if(!is.na(activeProcess$processID)) {
         activeProcessIndex <- getProcessIndexFromProcessID(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = activeProcess$processID
         )
-        processTable[seq_len(activeProcessIndex), hasBeenRun := TRUE]
-        processTable[activeProcessIndex, modified := activeProcess$modified]
+        processTable[seq_len(min(activeProcessIndex, nrow(processTable))), hasBeenRun := TRUE]
+        if(activeProcessIndex <= nrow(processTable)) {
+            processTable[activeProcessIndex, modified := activeProcess$modified]
+        }
     }
     
     return(processTable[])
@@ -3777,10 +3799,10 @@ removeProcess <- function(projectPath, modelName, processID) {
     )
     
     # Update the process index table:
-    removeFromProcessIndexTable(projectPath, modelName, processID)
+    removeFromProcessIndexTable(projectPath = projectPath, modelName = modelName, processID = processID)
     
     # Reset the model to the process just before the removed process:
-    resetModel(projectPath, modelName, processID = processID, shift = -1)
+    resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1)
     
     # Return the process table:
     processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
@@ -4433,6 +4455,9 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     #names(status) <- processIDs
     
     #err <- NULL
+    
+    # Reset the model to the process just before the removed process:
+    resetModel(projectPath = projectPath, modelName = modelName, processID = processIDs[1], shift = -1)
     
     # Try running the processes, and retun the failedVector if craching:
     #tryCatch(

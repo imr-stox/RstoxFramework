@@ -1,3 +1,17 @@
+# The RstoxFramework memory file system works as follows:
+#
+# 1. All memory is saved, and only deleted if the project is closed. This involves the six process arguments "functionName", "processName", "processParameters", "processData", "functionInputs" and "functionParameters". A folder structure is created for each model, holding one folder for each process, which in turn contains one folder for each of the process arguments. These folders store the actual memory, and one new file is added every time there is a change in a particular process argument. These files are named argument files.
+#
+# 2. The state of a project is saved by pointer files holding the paths to the argument files comprising the project memory. These pointer files are saved in a folder structure similar to the argument files, with one folder per model, holding the folders of each process, which contains 6 pointer files "functionName.rds", "processName.rds", "processParameters.rds", "processData.rds", "functionInputs.rds" and "functionParameters.rds". When a process argument is modified, a new argument file is created and the pointer file is updated with the path to the new argument file. If a process is removed, the corresponding folder of pointer files is deleted.
+#
+# 3. Every time an argument file 
+
+
+
+
+
+
+
 listArgumentFilesWithBasenamesAsNames <- function(path) {
     basenames <- list.files(path)
     out <- as.list(file.path(path, basenames))
@@ -111,7 +125,7 @@ setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName,
         argumentValue <- process
     }
     
-    # Save all project arguments to files (shorter repeated to the longest):
+    # Save all the argument files (shorter repeated to the longest). Usually this is just one file, but when a project is created the archiving of memory takes one process at the time:
     newArgumentFiles <- mapply(
         saveArgumentFile, 
         projectPath = projectPath, 
@@ -121,34 +135,104 @@ setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName,
         argumentValue = argumentValue
     )
     
-    # Get the paths of the files to which to save the argument files:
-    memoryPathFiles <- mapply(
-        getMemoryPathFile, 
+    # Save all the pointer files:
+    mapply(
+        savePointerFile, 
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
-        argumentName = argumentName
+        argumentName = argumentName, 
+        argumentFilePath = newArgumentFiles
     )
     
-    # Create the folder holding the files:
-    folderPath <- dirname(memoryPathFiles[1])
-    dir.create(folderPath, recursive = TRUE, showWarnings = FALSE)
-    
-    # Write the memory path files:
-    mapply(
-        saveRDS, 
-        newArgumentFiles, 
-        file = memoryPathFiles
-    )
+                # Set the status as not saved (saving is done when running a process):
+                setSavedStatus(projectPath, status = FALSE)
+                
+                # Save the project memory:
+                saveProjectMemoryNew(projectPath, argumentFileTable)
 }
 
 
-getMemoryPathFile <- function(projectPath, modelName, processID, argumentName) {
+
+# Function for saving an argument file table (defining the process memory files comprising the process memory):
+archiveProject <- function(projectPath) {
+    
+    # Save the list of project argument files to the current project description file and to the new project description file:
+    currentProjectMemoryFile <- getCurrentProjectMemoryFile(projectPath)
+    newProjectMemoryFile     <- getNewProjectMemoryFile(projectPath)
+    # Add the processIndexTable, the activeProcessID and the maxProcessIntegerID to the data to write:
+    fullProjectMemory <- list(
+        argumentFileTable = argumentFileTable, 
+        processIndexTable = readProcessIndexTable(projectPath),  
+        activeProcessIDTable = getActiveProcess(projectPath), 
+        maxProcessIntegerIDTable = getMaxProcessIntegerID(projectPath)
+    )
+    # Write the project memory to the new file:
+    saveRDS(fullProjectMemory, file = newProjectMemoryFile)
+    
+    # Write the project memory for the individual processes:
+    saveRDS(fullProjectMemory, file = currentProjectMemoryFile)
+    # Also write the current project memory as a folder structure of individual files with path to the memory file:
+    
+    # Update the projectDescriptionIndexFile:
+    projectMemoryIndex <- readProjectMemoryIndex(projectPath)
+    
+    # Delete any files with positive index:
+    hasPositiveIndex <- projectMemoryIndex$Index > 0
+    if(any(hasPositiveIndex)) {
+        #unlink(projectMemoryIndex$Path[hasPositiveIndex])
+        deleteProjectMemoryFile(projectPath, projectMemoryIndex$Path[hasPositiveIndex])
+        projectMemoryIndex <- projectMemoryIndex[!hasPositiveIndex, ]
+    }
+    # Subtract 1 from the indices, and add the new project description relative file path:
+    newProjectMemoryFile_relativePath <- sub(projectPath, "", newProjectMemoryFile)
+    projectMemoryIndex$Index <- projectMemoryIndex$Index - 1
+    projectMemoryIndex <- rbind(
+        projectMemoryIndex, 
+        data.table::data.table(
+            Index = 0, 
+            Path = newProjectMemoryFile_relativePath
+        ), 
+        fill = TRUE
+    )
+    # Write the projectDescriptionIndex to file:
+    writeProjectMemoryIndex(projectPath, projectMemoryIndex)
+    
+    # Return the new project description file path:
+    newProjectMemoryFile
+}
+
+
+
+
+
+##### NEW: #####
+# Function to save a single pointer file:
+savePointerFile <- function(projectPath, modelName, processID, argumentName, argumentFilePath) {
+    # Get the path to the pointer file:
+    pointerFile <- getPointerFile(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = argumentName 
+    )
+    
+    # Create the folder holding the files if missing:
+    folderPath <- dirname(pointerFile)
+    dir.create(folderPath, recursive = TRUE, showWarnings = FALSE)
+    
+    # Save the pointer file:
+    saveRDS(argumentFilePath, pointerFile)
+}
+
+##### NEW: #####
+# Function to get the path to a single pointer file:
+getPointerFile <- function(projectPath, modelName, processID, argumentName) {
     # Get the folder of the current memory:
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     # Build the path to the memory path file:
-    memoryPathFile <- file.path(currentMemoryFolder, modelName, processID, paste0(argumentName, ".rds"))
-    return(memoryPathFile)
+    pointerFile <- file.path(currentMemoryFolder, modelName, processID, paste0(argumentName, ".rds"))
+    return(pointerFile)
 }
 
 

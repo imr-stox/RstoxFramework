@@ -830,9 +830,11 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
         closeProject(projectPath, save = TRUE)
     }
     
+    # Return the project path project name and saved status:
     list(
         projectPath = projectPath, 
-        projectName = basename(projectPath)
+        projectName = basename(projectPath), 
+        saved = isSaved(projectPath)
     )
 }
 #' 
@@ -889,9 +891,11 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     
+    # Return the project path project name and saved status:
     list(
         projectPath = projectPath, 
-        projectName = basename(projectPath)
+        projectName = basename(projectPath), 
+        saved = isSaved(projectPath)
     )
 }
 #' 
@@ -926,6 +930,13 @@ saveProject <- function(projectPath) {
     writeProjectDescription(projectPath)
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
+    
+    # Return the project path project name and saved status:
+    list(
+        projectPath = projectPath, 
+        projectName = basename(projectPath), 
+        saved = isSaved(projectPath)
+    )
 }
 #' 
 #' @export
@@ -940,7 +951,12 @@ saveAsProject <- function(projectPath, newProjectPath, ow = FALSE) {
     # Close the current project without saving
     closeProject(projectPath, save = FALSE)
     
-    newProjectPath
+    # Return the project path project name and saved status:
+    list(
+        projectPath = newProjectPath, 
+        projectName = basename(newProjectPath), 
+        saved = isSaved(newProjectPath)
+    )
 }
 #' 
 #' @export
@@ -1524,42 +1540,46 @@ getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL
     argumentFileTable
 }
 
+listArgumentFilesWithBasenamesAsNames <- function(path) {
+    basenames <- list.files(path)
+    out <- as.list(file.path(path, basenames))
+    names(out) <- tools::file_path_sans_ext(basenames)
+    return(out)
+}
+
+listArgumentFiles <- function(dir, processID = NULL) {
+    # Get processIDs:
+    if(length(processID) == 0) {
+        processID <- list.dirs(dir, recursive = FALSE, full.names = FALSE)
+    }
+    
+    # Loop through the processIDs and list the argument files:
+    sapply(
+        processID, 
+        function(x) listArgumentFilesWithBasenamesAsNames(file.path(dir, x)), 
+        simplify = FALSE
+    )
+}
+
+verifyPaths <- function(x) {
+    valid <- file.exists(x)
+    if(any(!valid)) {
+        warning("The following files do not exist: ", paste(x[!valid], collapse = ", "), ".")
+    }
+    return(x[valid])
+}
+
+getArgumentFilesDir <- function(projectPath, modelName, processID) {
+    # Get the folder of files holding the memory file paths:
+    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    # Get and return the directory of one process:
+    dir <- file.path(currentMemoryFolder, modelName, processID)
+    return(dir)
+}
 
 
 getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
-    
-    #listArgumentFiles <- function(path) {
-    #    basenames <- list.files(path)
-    #    out <- as.list(file.path(path, basenames))
-    #    names(out) <- tools::file_path_sans_ext(basenames)
-    #    return(out)
-    #}
-    
-    listArgumentFiles <- function(dir, processID = NULL) {
-        # Get processIDs:
-        if(length(processID) == 0) {
-            processIDs <- list.dirs(dir, recursive = FALSE, full.names = FALSE)
-        }
-        
-        # Loop through the processIDs and list the argument files:
-        sapply(
-            processID, 
-            function(x) listArgumentFiles(file.path(dir, modelName, x)), 
-            simplify = FALSE
-        )
-    }
-    
-    
-    
-    verifyPaths <- function(x) {
-        valid <- file.exists(x)
-        if(any(!valid)) {
-            warning("The following files do not exist: ", paste(x[!vavlid], collapse = ", "), ".")
-        }
-        return(x[vavlid])
-    }
-    
-    browser()
+    # Get the folder of files holding the memory file paths:
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     
     if(length(modelName) == 0 && length(processID) == 0 && length(argumentName) == 0) {
@@ -1579,7 +1599,7 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
                                 # Return only the existing files:
                                 verifyPaths(
                                     # Build the paths:
-                                    file.path(currentMemoryFolder, modelName, processID, argumentName)
+                                    file.path(currentMemoryFolder, modelName, processID, paste0(argumentName, ".rds"))
                                 )
                             ), 
                             names = argumentName
@@ -1598,11 +1618,6 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
             list(
                 # Loop through the processIDs and list the argument files:
                 listArgumentFiles(dir, processID = processID)
-                #sapply(
-                #    processID, 
-                #    function(x) listArgumentFiles(file.path(currentMemoryFolder, modelName, x)), 
-                #    simplify = FALSE
-                #)
             ), 
             names = modelName
         )
@@ -1610,66 +1625,20 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     else if(length(modelName) >= 1 && length(processID) == 0 && length(argumentName) == 0) {
         # Create a list named by the modelName:
         dirs <- file.path(currentMemoryFolder, modelName)
-        argumentFilePaths <- sapply(
-            modelName, 
-            function(dir) listArgumentFiles(dir, processID = processID), 
-            simplify = FALSE
-            )
+        argumentFilePaths <- structure(
+            lapply(
+                dirs, 
+                function(dir) listArgumentFiles(dir, processID = processID)
+            ), 
+            names = modelName
+        )
     }
     else {
         stop("modelName must be given if any of processID and argumentName are given, and processID must be given if argumentName is given. Also when rewuesting more than one modelName or processID, the following parameter must be empty.")
     }
     
-    
-    
-    ## Get all models if none are specified:
-    #if(length(modelName) == 0) {
-    #    if(length(processID)) {
-    #        stop("modelName must be given if processID is given.")
-    #    }
-    #    if(length(argumentName)) {
-    #        stop("modelName must be given if argumentName is given.")
-    #    }
-    #    modelName <- getRstoxFrameworkDefinitions("stoxModelFolders")
-    #}
-    #else if(length(modelName) > 1 && length(processID)) {
-    #    stop("If modelName is given as a vector, processID must be empty, implying to return all processes from those models.")
-    #}
-    #
-    ## Check that all requested models are present:
-    #presentModels <- list.dirs(currentMemoryFolder, recursive = FALSE, full.names = FALSE)
-    #if(!all(modelName %in% presentModels)) {
-    #    notPresent <- setdiff(presentModels, modelName)
-    #    modelName <- intersect(presentModels, modelName)
-    #    warning("The following requested models do not have processes: ", paste(notPresent, collapse = ", "), " (returning ", past#e(present, collapse = ", "), ").")
-    #}
-    #
-    ## Get all processes if none are specified:
-    #if(length(processID) == 0) {
-    #    processID <- lapply(modelName, function(x) list.dirs(file.path(currentMemoryFolder, x), recursive = FALSE, full.names = FALS#E))
-    #}
-    #else {
-    #    processID <- list(processID)
-    #}
-    #names(processID) <- modelName
-    #
-    ## Create the file paths of the files to read: 
-    #
-    #
-    #
-    #lapply()
-    #
-    #
-    #
-    #filePaths <- file.path(currentMemoryFolder, )
-    #
-    #
-    #
-    #
-    
-   return(argumentFilePaths)
+    return(argumentFilePaths)
 }
-
 
 
 # Function for getting the file path of one specific process argument rds file:
@@ -1833,6 +1802,29 @@ getMemoryPathFile <- function(projectPath, modelName, processID, argumentName) {
 #' @export
 #' 
 removeProcessMemory <- function(projectPath, modelName, processID) {
+    
+    # Get the current table of process argument files:
+    argumentFileTable <- getArgumentFileTable(projectPath)
+    
+    # Remove the process from the argument file table:
+    argumentFileTable <- removeFromArgumentFileTable(argumentFileTable, modelName, processID)
+    
+    # Save the project memory:
+    saveProjectMemory(projectPath, argumentFileTable)
+}
+
+
+#' 
+#' @export
+#' 
+removeProcessMemory_New <- function(projectPath, modelName, processID) {
+    # Get the path to the directory of the process:
+    dir <- getArgumentFilesDir(projectPath = projectPath, modelName = modelName, processID = processID)
+    # Delete the process:
+    unlink(dir, recursive = TRUE, force = TRUE)
+    
+    argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName, processID = processID, argumentName = NULL)
+    file
     
     # Get the current table of process argument files:
     argumentFileTable <- getArgumentFileTable(projectPath)
@@ -2062,6 +2054,47 @@ unwrapProjectMemoryFile <- function(projectMemoryFile) {
     
     # Unwrap and overwrite the maximum process integer ID file:
     writeMaxProcessIntegerIDTable(projectPath, projectMemory$maxProcessIntegerIDTable)
+}
+
+
+
+memoryAddressTableToFiles <- function(projectPath, projectMemoryTable) {
+    # Get the folder of files holding the memory file paths:
+    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    # Get the paths to the files holding the memory file paths:
+    filePaths <- file.path(
+        currentMemoryFolder, 
+        projectMemoryTable$modelname, 
+        projectMemoryTable$processID, 
+        paste0(projectMemoryTable$argumentName, ".rds"), 
+    )
+    
+    # Write the files with memory file paths:
+    lapply(projectMemoryTable$argumentFile, projectMemoryTable, saveRDS)
+}
+
+memoryAddressFilesToTable <- function(projectPath, projectMemoryTable) {
+    # Get the folder of files holding the memory file paths:
+    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    
+    # Get the paths to the files holding the memory file paths:
+    filePaths <- list.files(currentMemoryFolder, full.names = TRUE, recursive = TRUE)
+    fileparts <- strsplit(filePaths, "/")
+    filepartsRev <- lapply(fileparts, rev)
+    modelname <- sapply(filepartsRev, "[", 3)
+    processID <- sapply(filepartsRev, "[", 2)
+    argumentName <- sapply(filepartsRev, "[", 1)
+    argumentName <- sub(".rds", "", argumentName, fixed = TRUE)
+    
+    # Write the files with memory file paths:
+    table <- data.table::data.table(
+        argumentFile = filePaths,
+        modelName = modelname,
+        processID = processID,
+        argumentName = argumentName
+    )
+    
+    return(table)
 }
 
 

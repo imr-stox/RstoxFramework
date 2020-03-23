@@ -21,7 +21,7 @@ isOpenProject(projectPath)
 
 readProjectDescription(projectPath, type = c("RData", "XML"))
 
-writeProjectDescription(projectPath, type = c("RData", "XML"))
+writeProjectDescription(projectPath, type = c("RData", "XML", "JSON"))
 
 initiateActiveProcessID(projectPath)
 

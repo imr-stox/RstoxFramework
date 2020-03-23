@@ -33,56 +33,9 @@ getAvailableTemplatesDescriptions <- function() {
 ##########
 
 
+
+
 ##### Processes: #####
-# Function to get whether the process has input data error:
-getFunctionInputErrors <- function(ind, processTable, functionInputs) {
-    
-    #### Check wheter the processes from which process output is requested as funciton input exist prior to the current process: ####
-    # Get names of processes prior to the current process:
-    prior <- seq_len(ind - 1)
-    # Discard processes with enabled = FALSE:
-    prior <- subset(prior, processTable$enabled[prior])
-    
-    # Select the prior processes:
-    priorProcesses <- processTable$processName[prior]
-    
-    # Get the names of the processes from which funciton intpu is requested:
-    requestedProcessNames <- unlist(functionInputs[[ind]])
-    requestedFunctionInputDataTypes <- names(requestedProcessNames)
-    
-    # Are all of the function inputs present in the prior processes?:
-    requestedProcessesExist <- all(requestedProcessNames %in% priorProcesses)
-    correctDataTypeRequested <- FALSE
-    
-    if(!requestedProcessesExist) {
-        warning(
-            "The following requested processes do not exist, or are not enabled, prior to the process ", 
-            processTable$processName[ind], 
-            ": ", 
-            paste(setdiff(requestedProcessNames, priorProcesses), collapse = ", ")
-        )
-    }
-    #### Check also that the processes given by the function inputs acutally return the desired data type: ####
-    else {
-        # Get the indices of these processes in the processTable:
-        indexOfRelevantPriorProcesses <- match(requestedProcessNames, priorProcesses)
-        # Match the output data types of the relevant prior processes:
-        correctDataTypeRequested <- processTable$dataType[indexOfRelevantPriorProcesses] == requestedFunctionInputDataTypes
-        
-        
-        if(!all(correctDataTypeRequested)) {
-            warning(
-                "The following processes do not have the requested data type output: ", 
-                paste(processTable$dataType[indexOfRelevantPriorProcesses][requestedProcessNames], collapse = ", ")
-            )
-        }
-    }
-    
-    # Return TRUE if error:
-    !(requestedProcessesExist && all(correctDataTypeRequested))
-}
-
-
 getCurrentProcessID <- function(projectPath, modelName) {
     # Get the path to the currentProcessFile:
     currentProcessFile <- getProjectPaths(projectPath, "currentProcessFile")
@@ -96,12 +49,19 @@ getCurrentProcessID <- function(projectPath, modelName) {
 }
 
 
-getCanShowInMap <- function(functionNames) {
+getCanShowInMap <- function(functionName, dataType = NULL) {
     # Get the data types returned by the functions of the processes:
-    dataTypes <- sapply(functionNames, getStoxFunctionMetaData, metaDataName = "functionOutputDataType")
+    if(length(dataType) == 0) {
+        dataType <- getStoxFunctionMetaData(functionName, metaDataName = "functionOutputDataType")
+    }
     
-    # Are the datatypes of the dataTypesToShowInMap?:
-    isTRUE(dataTypes %in% getRstoxFrameworkDefinitions("dataTypesToShowInMap"))
+    # Is the datatype of the dataTypesToShowInMap?:
+    if(length(dataType) == 0 || nchar(dataType) == 0) {
+        return(FALSE)
+    }
+    else {
+        return(dataType %in% getRstoxFrameworkDefinitions("dataTypesToShowInMap"))
+    }
 }
 
 ##########
@@ -134,12 +94,15 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
         processID = processID
     )
     
-    # Select the type if interactive mode depending on the output data type from the process:
-    if(dataType %in% getRstoxFrameworkDefinitions("stratumDataType")) {
+    # Get also the process parameters to detect whether showInMap is FALSE, in which case interactiveMode should be "none":
+    showInMap <- getProcessParameters(projectPath, modelName, processID)$showInMap
+    
+    # Select the type of interactive mode depending on the output data type from the process:
+    if(dataType %in% getRstoxFrameworkDefinitions("stratumDataType") && showInMap) {
         "stratum"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("asouticPSUDataType")) {
-        "asouticPSU"
+    else if(dataType %in% getRstoxFrameworkDefinitions("acousticPSUDataType")) {
+        "acousticPSU"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaPSUDataType")) {
         "sweptAreaPSU"
@@ -147,10 +110,10 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataType")) {
         "assignment"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("stationDataType")) {
+    else if(dataType %in% getRstoxFrameworkDefinitions("stationDataType") && showInMap) {
         "station"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType")) {
+    else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType") && showInMap) {
         "EDSU"
     }
     else {
@@ -194,7 +157,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
     
     # Call the appropriate function depending on the interactive mode:
     if(interactiveMode == "stratum") {
-        getStratumData(
+        getStratumList(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -207,7 +170,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
             processID = processID
         )
     }
-    else if(interactiveMode == "asouticPSU") {
+    else if(interactiveMode == "acousticPSU") {
         getAcousticPSUData(
             projectPath = projectPath, 
             modelName = modelName, 
@@ -266,8 +229,6 @@ getMapData  <- function(projectPath, modelName, processID) {
 
 # Individual get data functions:
 #' 
-#' @export
-#' 
 getStratumData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -295,41 +256,44 @@ getStratumData <- function(projectPath, modelName, processID) {
 }
 
 #' 
-#' @export
-#' 
 getAcousticPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of AcousticPSU type:
-    if(names(processData) != "AcousticPSU"){
+    #if(!all(names(processData) %in% c("Stratum_PSU", "EDSU_PSU"))){
+    if(! "EDSU_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
         warning("The process ", processName, " does not return process data of type AcousticPSU")
         return(NULL)
     }
     
+    ## Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    #EDSU_PSU <- processData$AcousticPSU[, c("EDSU", "PSU")]
+    #PSU_Stratum <- unique(processData$AcousticPSU[, c("PSU", "Stratum")])
+    #Stratum = unique(processData$AcousticPSU$Stratum)
     # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    EDSU_PSU <- processData$AcousticPSU[, c("EDSU", "PSU")]
-    PSU_Stratum <- unique(processData$AcousticPSU[, c("PSU", "Stratum")])
-    Stratum = unique(processData$AcousticPSU$Stratum)
+    #Stratum = data.table::data.table(
+    #    Stratum = unique(processData$Stratum_PSU$Stratum)
+    #)
     
     # Return the list of data.tables:
-    list(
-        EDSU_PSU = EDSU_PSU, 
-        PSU_Stratum = PSU_Stratum, 
-        Stratum = Stratum
-    )
+    #output <- c(
+    #    processData, 
+    #    list(Stratum = Stratum)
+    #)
+    #
+    #return(output)
+    return(processData)
 }
 
-#' 
-#' @export
 #' 
 getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of SweptAreaPSU type:
-    if(names(processData) != "SweptAreaPSU"){
+    if(! "Station_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
         warning("The process ", processName, " does not return process data of type SweptAreaPSU")
         return(NULL)
@@ -346,11 +310,9 @@ getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     ###     PSU_Stratum = PSU_Stratum, 
     ###     Stratum = Stratum
     ### )
-    processData$processData
+    return(processData)
 }
 
-#' 
-#' @export
 #' 
 getAssignmentData <- function(projectPath, modelName, processID) {
     
@@ -377,23 +339,54 @@ getAssignmentData <- function(projectPath, modelName, processID) {
 
 
 #' 
-#' @export
+getStratumList <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Return an empty list if processData is empty:
+    if(length(processData) == 0) {
+        return(list())
+    }
+    
+    # Issue an error of the process data are not of StratumPolygon type:
+    if(names(processData) != "StratumPolygon"){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("The process ", processName, " does not return process data of type StratumPolygon")
+        return(list())
+    }
+    
+    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
+    stratumList <- getStratumNames(processData$StratumPolygon)
+    #stratum <- data.table::data.table(
+    #    stratum = names(processData), 
+    #    includeInTotal = 
+    #)
+    
+    list(stratumList)
+}
+
 #' 
 getStationData <- function(projectPath, modelName, processID) {
     # Get the station data:
+    Cruise <- getProcessOutput(projectPath, modelName, processID, tableName = "Cruise")$Cruise
     Station <- getProcessOutput(projectPath, modelName, processID, tableName = "Station")$Station
-    Haul <- getProcessOutput(projectPath, modelName, processID, tableName = "Haul")$Haul
-    Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
+    CruiseStation <- merge(Cruise, Station, by = intersect(names(Cruise), names(Station)))
+    #Haul <- getProcessOutput(projectPath, modelName, processID, tableName = "Haul")$Haul
+    #Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
     
     # Split the Station table into the coordinates and the properties:
-    coordinates <- Station[, c("Longitude", "Latitude")]
+    coordinateNames <- c("Longitude", "Latitude")
+    coordinates <- CruiseStation[, ..coordinateNames]
     #rownames(coordinates) <- Station$Station
-    properties <- Station[, !(colnames(Station) %in% c("Longitude", "Latitude")), with = FALSE]
+    #infoToKeep <- c("CruiseKey", "Platform", "StationKey", "Station", "CatchPlatform", "DateTime", "Longitude", "Latitude", "BottomDepth")
+    infoToKeep <- c("Station", "Platform", "DateTime", "Longitude", "Latitude", "BottomDepth")
+    properties <- CruiseStation[, ..infoToKeep]
+    #properties <- Station[, !(colnames(Station) %in% c("Longitude", "Latitude")), with = FALSE]
     #rownames(properties) <- Station$Station
     
     # Add the haul info as a property, wrapped in a JSON string:
-    HaulInfo <- Station_Haul[, .(HaulInfo = jsonlite::toJSON(.SD)), .SDcols = names(Haul), by = Station]
-    properties$HaulInfo <- HaulInfo$HaulInfo
+    #HaulInfo <- Station_Haul[, .(HaulInfo = jsonlite::toJSON(.SD)), .SDcols = names(Haul), by = Station]
+    #properties$HaulInfo <- HaulInfo$HaulInfo
     
     # Create a spatial points data frame and convert to geojson:
     StationData <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)
@@ -402,46 +395,88 @@ getStationData <- function(projectPath, modelName, processID) {
     StationData
 }
 
+#' 
 getEDSUData <- function(projectPath, modelName, processID) {
-    # Get the EDSU data:
+    
+    # Get the Log data:
+    Cruise <- getProcessOutput(projectPath, modelName, processID, tableName = "Cruise")$Cruise
     Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
+    CruiseLog <- merge(Cruise, Log, by = intersect(names(Cruise), names(Log)))
     
-    # Extrapolate 
-    extrapolateEDSU(Log)
+    # Extrapolate:  
+    CruiseLog <- extrapolateEDSU(CruiseLog)
+    
+    # Define two feature collections, (1) one for the click points for the EDSUs with properties such as position, time, log etc., and (2) the line segments from start to stop point, with the property 'interpolated':
+    
+    # (1) Click points:
+    # Extract the click points:
+    coordinateNames <- c("Longitude", "Latitude")
+    clickPointNames <- c("clickLongitude", "clickLatitude")
+    clickPoints <- CruiseLog[, ..clickPointNames]
+    data.table::setnames(clickPoints, old = clickPointNames, new = coordinateNames)
+    
+    # ...and define the properties:
+    #infoToKeep <- c("CruiseKey", "Platform", "LogKey", "Log", "EDSU", "DateTime", "Longitude", "Latitude", "LogOrigin", "Longitude2", "Latitude2", "LogOrigin2", "LogDuration", "LogDistance", "EffectiveLogDistance", "BottomDepth")
+    infoToKeep <- c("Platform", "EDSU", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
+    properties <- CruiseLog[, ..infoToKeep]
+    
+    # Create a spatial points data frame and convert to geojson:
+    EDSUPoints <- sp::SpatialPointsDataFrame(clickPoints, properties, match.ID = FALSE)
+    EDSUPoints <- geojsonio::geojson_json(EDSUPoints)
+    
+    # (2) Line segments:
+    #lineStrings <- CruiseLog[, sp::Line(cbind(c(startLongitude, endLongitude), c(startLatitude, endLatitude))), by = EDSU]
+    LineList <- apply(
+        CruiseLog[, c("startLongitude", "endLongitude", "startLatitude", "endLatitude")], 
+        1, 
+        function(x) sp::Line(array(x, dim = c(2, 2)))
+    )
+    LinesList <- lapply(seq_along(LineList), function(ind) sp::Lines(LineList[[ind]], ID = CruiseLog$EDSU[ind]))
+    EDSULines <- sp::SpatialLines(LinesList)
+    EDSULines <- sp::SpatialLinesDataFrame(EDSULines, data = CruiseLog[, "interpolated"], match.ID = FALSE)
+    EDSULines <- geojsonio::geojson_json(EDSULines)
+    
+    # List the points and lines and return:
+    EDSUData <- list(
+        EDSUPoints = EDSUPoints, 
+        EDSULines = EDSULines
+    )
+    
+    return(EDSUData)
 }
 
 
-Log2SpatialLinesPolygon <- function(Log) {
-    
-    getLine <- function(Log) {
-        l <- cbind(
-            c(Log$startLongitude, Log$endLongitude), 
-            c(Log$startLatitude, Log$endLatitude)
-        )
-        L <- Line(l)
-        Lines(list(L), ID = Log$EDSU)
-        
-    }
-    segments <- Log[, getLine(.SD), .SDcols = names(Log)]
-    
-    
-        
-            
-    
-    ## from the sp vignette:
-    l1 <- cbind(c(1, 2, 3), c(3, 2, 2))
-    l2 <- cbind(c(1, 2, 3), c(1, 1.5, 1))
-    
-    Sl1 <- Line(l1)
-    Sl2 <- Line(l2)
-    
-    S1 <- Lines(list(Sl1), ID = "a")
-    S2 <- Lines(list(Sl2), ID = "b")
-    
-    Sl <- SpatialLines(list(S1, S2))
-    
-    
-}
+#Log2SpatialLinesPolygon <- function(Log) {
+#    
+#    getLine <- function(Log) {
+#        l <- cbind(
+#            c(Log$startLongitude, Log$endLongitude), 
+#            c(Log$startLatitude, Log$endLatitude)
+#        )
+#        L <- Line(l)
+#        Lines(list(L), ID = Log$EDSU)
+#        
+#    }
+#    segments <- Log[, getLine(.SD), .SDcols = names(Log)]
+#    
+#    
+#        
+#            
+#    
+#    ## from the sp vignette:
+#    l1 <- cbind(c(1, 2, 3), c(3, 2, 2))
+#    l2 <- cbind(c(1, 2, 3), c(1, 1.5, 1))
+#    
+#    Sl1 <- Line(l1)
+#    Sl2 <- Line(l2)
+#    
+#    S1 <- Lines(list(Sl1), ID = "a")
+#    S2 <- Lines(list(Sl2), ID = "b")
+#    
+#    Sl <- SpatialLines(list(S1, S2))
+#    
+#    
+#}
  
 
 
@@ -458,7 +493,6 @@ extrapolateEDSU <- function(Log, pos = 0.5) {
 
 getClickPoints <- function(Log, pos = 0.5) {
     # Create the click points as a weighted average of the start and end points:
-    browser()
     Log$clickLongitude <- (Log$startLongitude * (1 - pos) + Log$endLongitude * pos)
     Log$clickLatitude <- (Log$startLatitude * (1 - pos) + Log$endLatitude * pos)
     Log
@@ -467,7 +501,6 @@ getClickPoints <- function(Log, pos = 0.5) {
 # Function to extract the start, middle and end positions from StoxBiotic:
 getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle", "end"), coordinateNames = c("Longitude", "Latitude")) {
     
-    browser()
     # Get the number of positions of the Log:
     numPositions <- nrow(Log)
     
@@ -479,7 +512,11 @@ getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle"
         array(dim = c(numPositions, length(positionNames)), dimnames = list(NULL, positionNames))
     )
     # Fill in the present data:
-    presentNames <- c(outer(Log[1, c(Origin, Origin2)], c("Longitude", "Latitude"), paste0))
+    if(!all(Log$LogOrigin[1] == Log$LogOrigin && Log$LogOrigin2[1] == Log$LogOrigin2)) {
+        stop("LogOrigin or LogOrigin2 is not constant")
+    }
+    
+    presentNames <- c(outer(Log[1, c(LogOrigin, LogOrigin2)], c("Longitude", "Latitude"), paste0))
     positionsNA[, presentNames] <- Log[, .(Longitude, Longitude2, Latitude, Latitude2)]
     
     # Add the missing positions to the Log:
@@ -513,6 +550,7 @@ extrapolateLongitudeLatitude <- function(Log) {
     StartNotEnd <- which(!naStart & naEnd)
     onlyMiddle <- which(naStart & !naMiddle & naEnd)
     EndNotStart <- which(naStart & !naEnd)
+    
     
     # Interpolate:
     if(length(StartNotEnd)) {
@@ -575,6 +613,32 @@ getProcessPropertyNames <- function() {
     
 }
 
+
+
+parameter2JSONString <- function(parameter) {
+    # If already a character, return immediately:
+    if(is.character(parameter)) {
+        return(parameter)
+    }
+    else {
+        return(as.character(jsonlite::toJSON(parameter, auto_unbox = TRUE)))
+    }
+}
+
+
+formatJSONString <- function(parameter) {
+    as.character(jsonlite::toJSON(parameter, auto_unbox = TRUE))
+}
+
+
+isMultipleParameter <- function(functionName, parameterName) {
+    multiple <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$multiple)
+    format <- unlist(getFunctionParameterPropertyFormats(functionName)[parameterName])
+    isMultiple <- format %in% multiple
+    return(isMultiple)
+}
+
+
 #' 
 #' @export
 #' 
@@ -586,9 +650,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     # 3. description
     # 4. type
     # 5. format
-    # 6. defaultValue
-    # 7. possibleValues
-    # 8. value
+    # 6. possibleValues
+    # 7. value
     
     # Possible values of 'type':
     # "integer"
@@ -638,20 +701,21 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     ##### 1. Process: #####
     #######################
     
-    process <- getProcess(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID
-    )
+    # Get the process properties to return, which are all but the proccessData:
+    functionName <- getFunctionName(projectPath = projectPath, modelName = modelName, processID = processID)
+    processName <- getProcessName(projectPath = projectPath, modelName = modelName, processID = processID)
+    processParameters <- getProcessParameters(projectPath = projectPath, modelName = modelName, processID = processID)
+    functionInputs <- getFunctionInputs(projectPath = projectPath, modelName = modelName, processID = processID)
+    functionParameters <- getFunctionParameters(projectPath = projectPath, modelName = modelName, processID = processID)
     
     # Get the process properties depending on the processPropertyName:
-    processParameters <- getRstoxFrameworkDefinitions("processParameters")
+    #processParameters <- getRstoxFrameworkDefinitions("processParameters")
     processParametersDisplayNames <- getRstoxFrameworkDefinitions("processParametersDisplayNames")
     processParametersDescriptions <- getRstoxFrameworkDefinitions("processParametersDescriptions")
     processParameterNames <- names(processParameters)
     
     ##### Define the process name, the function name and the process parameters as the process property "process": #####
-    processArguments <- data.table::data.table(
+    processArgumentsToReturn <- data.table::data.table(
         # 1. name:
         name = as.list(c(
             "processName", 
@@ -674,100 +738,83 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         type = as.list(c(
             "character", 
             "character", 
-            sapply(processParameters, class)
+            sapply(processParameters, firstClass)
         )), 
         # 5. format:
+        # The number 2 is functionName and processName:
         format = as.list(rep("none", 2 + length(processParameters))), 
-        # 6. default:
-        default = c(
-            list(
-                character(1), 
-                character(1)
-            ), 
-            unname(processParameters)
-        ), 
-        # 7. possibleValues:
+        # 6. possibleValues:
         possibleValues = c(
-            list(character(0)), 
+            list(NULL), 
             # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
             as.list(getAvailableStoxFunctionNames(modelName)), 
+            # Removed the possible values for logicals, since these are not used as dropdown in the GUI, but rather as a checkbox:
             rep(list(c(FALSE, TRUE)), length(processParameters))
+            #rep(list(character(1)), length(processParameters))
+        ), 
+        # 7. value:
+        value = c(
+            processName, 
+            # Remove the package address and only use the function name:
+            getFunctionNameFromPackageFunctionName(functionName), 
+            processParameters
         )
     )
-    # 8. value:
-    processArguments$value <- c(
-        process["processName"], 
-        # Remove the package address and only use the function name:
-        getFunctionNameFromPackageFunctionName(process["functionName"]), 
-        process[["processParameters"]]
-    )
-    
-    # Add help on the processArguments:
-    #processArguments$help <- NULL
     
     # Remove the showInMap argument if not relevant:
-    if(!getCanShowInMap(process$functionName)) {
+    if(!getCanShowInMap(functionName)) {
         keep <- c(
             TRUE, 
             TRUE, 
             processParameterNames != "showInMap"
         )
-        processArguments <- processArguments[keep, ]
+        processArgumentsToReturn <- processArgumentsToReturn[keep, ]
     }
+    
+    # Convert all possibleValues and value to character:
+    toJSONString(processArgumentsToReturn)
     #######################
     
-    # Declare functionInputs and functionParameters and 
-    functionInputs <- data.table::data.table()
-    functionParameters <- data.table::data.table()
     
-    if(length(process$functionName)) {
-        
-        # Get the function argument hierarchy:
-        functionArgumentHierarchy = getStoxFunctionMetaData(process$functionName, "functionArgumentHierarchy", showWarnings = FALSE)
+    # Declare functionInputs and functionParameters and 
+    functionInputsToReturn <- data.table::data.table()
+    functionParametersToReturn <- data.table::data.table()
+    
+    if(length(functionName)) {
         
         ##############################
         ##### 2. FunctionInputs: #####
         ##############################
         # Run only if there are function inputs:
-        if(length(process$functionInputs)) {
+        if(length(functionInputs)) {
             # Get the process table, which is needed to get the output data types from the prior processes for use in the function inputs:
-            processTable <- getProcessTable(projectPath, modelName)
-            thisProcessIndex <- which(processTable$processID == processID)
-            processTable <- processTable[seq_len(thisProcessIndex), ]
-            functionInputNames <- names(process$functionInputs)
+            processTable <- getProcessTable(projectPath = projectPath, modelName = modelName, processID = processID)
+            #thisProcessIndex <- which(processTable$processID == processID)
+            #processTable <- processTable[seq_len(thisProcessIndex), ]
+            functionInputNames <- names(functionInputs)
             
             # Define the function inputs:
-            functionInputs <- data.table::data.table(
+            functionInputsToReturn <- data.table::data.table(
                 # 1. name:
                 name = as.list(functionInputNames), 
                 # 2. displayName:
                 displayName = as.list(functionInputNames), 
                 # 3. description:
-                description = replaceEmpty(getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionInputNames]), 
+                description = getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionInputNames], 
                 # 4. type:
                 type = as.list(rep("character", length(functionInputNames))),
                 # 5. format:
                 format = as.list(rep("none", length(functionInputNames))),
-                # 6. default:
-                default = rep(list(character(1)), length(functionInputNames)), 
-                # 7. possibleValues:
+                # 6. possibleValues:
                 #possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-                possibleValues = lapply(lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable), as.list),
-                # 8. value:
-                value = replaceEmpty(process$functionInputs, vector = FALSE)
+                possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
+                # 7. value:
+                value = functionInputs
             )
             
-            # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
-            argumentsToShow <- getArgumentsToShow(
-                functionName = process$functionName, 
-                functionArguments = functionInputs$value, 
-                functionArgumentHierarchy = functionArgumentHierarchy
-            )
-            # Select only the items to show in the GUI:
-            if(!all(argumentsToShow)) {
-                functionInputs <- lapply(functionInputs, "[[", argumentsToShow)
-            }
+            # Convert all possibleValues and value to character:
+            toJSONString(functionInputsToReturn)
         }
         ##############################
         
@@ -777,43 +824,53 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         ##################################
         
         # Run only if there are function parameters (which there always will be):
-        if(length(process$functionParameters)) {
+        if(length(functionParameters)) {
             # Get the names of the function parameters:
-            functionParameterNames <- names(process$functionParameters)
+            functionParameterNames <- names(functionParameters)
             
             # Define the function parameters:
-            functionParameters <- data.table::data.table(
+            functionParametersToReturn <- data.table::data.table(
                 # 1. name:
                 name = as.list(functionParameterNames), 
                 # 2. displayName:
                 displayName = as.list(functionParameterNames), 
                 # 3. description:
-                description = replaceEmpty(getStoxFunctionMetaData(process$functionName, "functionArgumentDescription")[functionParameterNames]), 
+                description = getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionParameterNames], 
                 # 4. type:
-                type = replaceEmpty(getStoxFunctionParameterPropertyTypes(process$functionName)[functionParameterNames]),
+                type = getStoxFunctionParameterPropertyTypes(functionName)[functionParameterNames],
                 # 5. format:
-                format = replaceEmpty(getFunctionParameterPropertyFormats(process$functionName)[functionParameterNames]),
-                # 6. default:
-                default = replaceEmpty(getStoxFunctionParameterDefaults(process$functionName)[functionParameterNames], vector = FALSE),
-                # 7. possibleValues:
+                format = getFunctionParameterPropertyFormats(functionName)[functionParameterNames],
+                # 6. possibleValues:
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-                possibleValues = lapply(replaceEmpty(getStoxFunctionParameterPossibleValues(process$functionName)[functionParameterNames]), as.list),
-                # 8. value:
-                value = replaceEmpty(process$functionParameters, vector = FALSE)
+                possibleValues = getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames],
+                # 7. value:
+                value = functionParameters
             )
             
-            # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
-            argumentsToShow <- getArgumentsToShow(
-                functionName = process$functionName, 
-                functionArguments = functionParameters$value, 
-                functionArgumentHierarchy = functionArgumentHierarchy
-            )
-            # Select only the items to show in the GUI:
-            if(!all(argumentsToShow)) {
-                functionParameters <- lapply(functionParameters, "[[", argumentsToShow)
+            # Convert to a JSON string if the parameter has a format:
+            hasFormat <- functionParametersToReturn$format != "none"
+            if(any(hasFormat)) {
+                functionParametersToReturn$value[hasFormat] = lapply(functionParametersToReturn$value[hasFormat], formatJSONString)
             }
+            
+            # Convert all possibleValues and value to character:
+            toJSONString(functionParametersToReturn)
         }
-        ##############################
+        
+        # Apply the StoX funciton argument hierarcy here using getStoxFunctionMetaData("functionArgumentHierarchy"):
+        argumentsToShow <- getArgumentsToShow(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+        
+        # Select only the items to show in the GUI:
+        if(length(functionParametersToReturn) && any(!functionParametersToReturn$name %in% argumentsToShow)) {
+            functionParametersToReturn <- subset(functionParametersToReturn, name %in% argumentsToShow)
+        }
+        if(length(functionInputsToReturn) && any(!functionInputsToReturn$name %in% argumentsToShow)) {
+            functionInputsToReturn <- subset(functionInputsToReturn, name %in% argumentsToShow)
+        }
     }
     
     # Create a list of the different properties, adding category and displayName:
@@ -821,41 +878,101 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         list(
             groupName = "processArguments", 
             displayName = "Process", 
-            properties = processArguments
+            properties = processArgumentsToReturn
         ), 
         list(
             groupName = "functionInputs", 
             displayName = "Function inputs", 
-            properties = functionInputs
+            properties = functionInputsToReturn
         ), 
         list(
             groupName = "functionParameters", 
             displayName = "Function parameters", 
-            properties = functionParameters
+            properties = functionParametersToReturn
         )
     )
     
     output <- list(
         propertySheet = propertySheet, 
-        help = getFunctionHelpAsHtml(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = processID, 
-            outfile = outfile
-        )
+        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
     )
     
     # Return the list of process property groups (process property sheet):
     output
 }
 
+
+
+
+# Function to convert to JSON string, used to send only strings and arrays of strings to the GUI:
+toJSONString <- function(DT) {
+    # Convert the possible values, which can have 0 or positive length:
+    possibleValuesToJSONString(DT)
+    # Convert all the other columns, which are required to have length 1:
+    other <- setdiff(names(DT), "possibleValues")
+    valueToJSONString(DT, cols = other)
+}
+
+
+
+valueToJSONString <- function(DT, cols) {
+    DT[, (cols) := lapply(.SD, valueToJSONStringOneColumn), .SDcols = cols]
+}
+valueToJSONStringOne <- function(x) {
+    if(length(x) == 0) {
+        warning("Length 1 required for process properties except possibleValues.")
+        x <- ""
+    }
+    if(!is.character(x)) {
+        x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+    }
+    return(x)
+}
+valueToJSONStringOneColumn <- function(x) {
+    lapply(x, valueToJSONStringOne)
+}
+
+
+
+
+possibleValuesToJSONString <- function(DT) {
+    DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne)]
+}
+
+
+possibleValuesToJSONStringOne <- function(x) {
+    # Set empty possible values to numeric(), which ensures [] in OpenCPUs conversion to JSON (jsonlite::toJSON with auto_unbox = TRUE):
+    if(length(x) == 0) {
+        x <- numeric()
+    }
+    # Convert to JSON string for each element if not already character:
+    else {
+        if(!is.character(x)) {
+            x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
+        }
+        # Convert to a list to ensure that if of length 1, OpenCPU still returns an array:
+        if(length(x) == 1) {
+            x <- list(x)
+        }
+    }
+    return(x)
+}
+
+
+
+
+
+
 #' 
 #' @export
 #' 
 setProcessPropertyValue <- function(groupName, name, value, projectPath, modelName, processID) {
     
-    # Parse the value:
+    # Parse the value (this takes care of converting true to TRUE, interpret integers and strings, and even to parse JSON strings to R objects):
     value <- parseParameter(value)
+    
+    # The flag updateHelp is TRUE only if the functionName is changed:
+    updateHelp <- FALSE
     
     # If the process property 'processArguments' is given, modify the process name, function name or process parameters:
     if(groupName == "processArguments") {
@@ -870,6 +987,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         }
         # Modify function name:
         else if(name == "functionName") {
+            # Set updateHelp to TRUE, so that the GUI can update the help page only when needed:
+            updateHelp <- TRUE
             # Get the full address to the function using getPackageFunctionName():
             modifyFunctionName(
                 projectPath = projectPath, 
@@ -880,6 +999,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         }
         # Modify process parameters:
         else {
+            # All process parameters are logical:
+            value <- as.logical(value)
             modifyProcessParameters(
                 projectPath = projectPath, 
                 modelName = modelName, 
@@ -899,6 +1020,13 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     }
     # If the process property 'functionInputs' is given, modify the function parameters:
     if(groupName == "functionParameters") {
+        ### This is unnecessary, since jsonlite::fromJSON takes care of the types in parseParmeter() ###
+        # Convert to R object based on the type:
+        #value <- convertFunctionParameter(
+        #    functionParameterName = name, 
+        #    functionParameterValue = value, 
+        #    functionName = getFunctionName(projectPath, modelName, processID))
+        # Modify the process parameter:
         modifyFunctionParameters(
             projectPath = projectPath, 
             modelName = modelName, 
@@ -907,17 +1035,44 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         )
     }
     
+    # Reset the active process ID to the process before the modified process:
+    resetModel(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        modified = TRUE
+    )
+    
     # Return the modified process properties:
-    getProcessPropertySheet(
+    output <- getProcessPropertySheet(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID
     )
+    # Add updateHelp:
+    output$updateHelp <- updateHelp
+    # Add the process table, so that the GUI can update the list of processes, and all its symbols:
+    output$processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
     
-    # Return the flags for changed process data and process property
+    # Add also the saved status:
+    output$saved <- isSaved(projectPath)
+    
+    return(output)
 }
 
-
+# Convert to the type of the parameters:
+#convertFunctionParameter <- function(functionParameterName, functionParameterValue, functionName) {
+#    # Get the primitive type:
+#    type <- getStoxFunctionParameterPropertyTypes(functionName)[functionParameterName]
+#    # If empty string, convert to NULL for non-character type:
+#    if(nchar(functionParameterValue) == 0 && type != "character") {
+#        functionParameterValue <- NULL
+#    }
+#    # Apply the conversion function:
+#    fun <- paste0("as.", type)
+#    out <- do.call(fun, list(functionParameterValue))
+#    return(out)
+#}
 
 ##########
 
@@ -980,3 +1135,126 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
     unlink(outfile, force = TRUE)
     html
 }
+
+
+#' 
+#' @export
+#' 
+getFilterOptions <- function(projectPath, modelName, processID, tableName) {
+    
+    # Here we need to accept that the process has not been run, and return empty filter options!!!!!!!!!!!!
+    
+    # Get the process output:
+    processOutput <- getProcessOutput(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        tableName = tableName, 
+        drop = TRUE
+    )
+    
+    # Convert to a list of tables:
+    #processOutput <- unlistToDataType(processOutput)
+    
+    ## Get a vector of table names:
+    #tableNames <- names(processOutput)
+    ## Select the requested table:
+    #if(! tableName %in% tableNames) {
+    #    stop("Invalid table. Choose one of the following: ", paste(tableNames, collapse = ", "))
+    #}
+    
+    # Get the column names:
+    #name <- names(processOutput[[tableName]])
+    name <- names(processOutput)
+    
+    # Get the data types:
+    #type <- sapply(processOutput[[tableName]], firstClass)
+    type <- sapply(processOutput, firstClass)
+    
+    # Get the operators:
+    operators <- getRstoxFrameworkDefinitions("filterOperators")[type]
+    
+    # Get a list of unique values for each column of each table:
+    #options <- getPossibleValuesOneTable(processOutput[[tableName]])
+    options <- getPossibleValuesOneTable(processOutput)
+    options <- lapply(options, getOptionList)
+    
+     
+    output <- mapply(
+        list, 
+        name = name, 
+        type = type, 
+        operators = operators, 
+        options = options, 
+        SIMPLIFY = FALSE
+    )
+    # Add the fields level:
+    output <- list(
+        fields = output
+    )
+    
+    
+    # Return a list of the tableNames, columnNames and possibleValues:
+    return(output)
+}
+
+getOptionList <- function(option, digits = 6) {
+    option <- data.table::data.table(
+        name = format(option, digits = digits), 
+        value = option
+    )
+    output <- unname(split(option, seq_len(nrow(option))))
+    output <- lapply(output, as.list)
+    return(output)
+}
+
+
+getPossibleValuesOneTable <- function(table) {
+    # Unique and then sort each column:
+    sortUnique <- function(y) {
+        sort(unique(y))
+    }
+    lapply(table, sortUnique)
+}
+
+
+#' 
+#' @export
+#' 
+getParameterTableTitle <- function(format) {
+    getRstoxFrameworkDefinitions("parameterTableTitle")[[format]]
+}
+
+#' 
+#' @export
+#' 
+getParameterTableColumnNames <- function(format) {
+    getRstoxFrameworkDefinitions("parameterTableColumnNames")[[format]]
+}
+    
+#' 
+#' @export
+#' 
+getParameterTablePossibleValues <- function(projectPath, modelName, processID, format) {
+    columnNames <- getParameterTableColumnNames(format)
+    rep(list(list()), length(columnNames))
+}
+
+#' 
+#' @export
+#' 
+getParameterTableInfo <- function(projectPath, modelName, processID, format) {
+    list(
+        parameterTableTitle = getParameterTableTitle(format), 
+        parameterTableColumnNames = getParameterTableColumnNames(format), 
+        parameterTablePossibleValues = getParameterTablePossibleValues(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            format = format
+        )
+    )
+}
+
+
+

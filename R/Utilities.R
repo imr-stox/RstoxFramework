@@ -68,29 +68,7 @@ replaceEmptyInDataTable = function(DT, replace = NA) {
     DT     
 }
 
-# Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps:
-expandDT <- function(DT, toExpand = NULL) {
-    # Set the columns to expand:
-    if(length(toExpand) == 0) {
-        lens <- lapply(DT, lengths)
-        lensLargerThan1 <- sapply(lens, function(l) any(l > 1))
-        toExpand <- names(DT)[lensLargerThan1]
-    }
 
-    if(length(toExpand)) {
-        DT <- do.call(
-            cbind, 
-            c(
-                list(
-                    DT[rep(1:.N, lengths(get(toExpand[1]))), !toExpand, with = FALSE]
-                ), 
-                lapply(toExpand, function(x) DT[, unlist(get(x))])
-            )
-        )
-    }
-    
-    DT
-}
 
 # Function to create a rectangular data table from a data table which may contain empty cells and vectors in cells (all vectors must have equal length for one row):
 flattenDataTable <- function(x, replace = NA) {
@@ -103,7 +81,7 @@ flattenDataTable <- function(x, replace = NA) {
     # Replace all empty with NA
     x <- replaceEmptyInDataTable(x, replace = replace)
 
-    x <- expandDT(x)
+    x <- RstoxBase::expandDT(x)
 }
 
 # Function to convert data.table to fixed width:
@@ -141,7 +119,8 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
 # Function to extract the trailing integer of a string (vector):
 getTrailingInteger <- function(x, integer = TRUE) {
     # Get the trailing numerics:
-    trailing <- stringr::str_extract(x, "[^[a-z]]*$")
+    #trailing <- stringr::str_extract(x, "[^[a-z]]*$")
+    trailing <- stringr::str_extract(x, "\\-*\\d+\\.*\\d*")
     
     # Convert to numeric if specified:
     if(integer) {
@@ -155,13 +134,18 @@ getTrailingInteger <- function(x, integer = TRUE) {
 # Function to generate a new name in the sequence of names starting with the prefix:
 getNewDefaultName <- function(names, prefix) {
     
-    # Find the names starting with the prefix:
-    startsWithProcess_Prefix <- which(startsWith(names, prefix))
-    # Get the trailing integers of the names starting with the prefix:
-    trailingIntegerString <- getTrailingInteger(names[startsWithProcess_Prefix], integer = FALSE)
-    trailingInteger <- getTrailingInteger(names[startsWithProcess_Prefix])
-    # Verify that the number of characters equals the sum of the prefix and the number of characters of the numeric string:
-    hasCorrectNumberOfCharacters <- nchar(names[startsWithProcess_Prefix]) == nchar(prefix) + nchar(trailingIntegerString)
+    if(length(names)) {
+        # Find the names starting with the prefix:
+        startsWithProcess_Prefix <- which(startsWith(names, prefix))
+        # Get the trailing integers of the names starting with the prefix:
+        trailingIntegerString <- getTrailingInteger(names[startsWithProcess_Prefix], integer = FALSE)
+        trailingInteger <- getTrailingInteger(names[startsWithProcess_Prefix])
+        # Verify that the number of characters equals the sum of the prefix and the number of characters of the numeric string:
+        hasCorrectNumberOfCharacters <- nchar(names[startsWithProcess_Prefix]) == nchar(prefix) + nchar(trailingIntegerString)
+    }
+    else {
+        hasCorrectNumberOfCharacters <- NULL
+    }
     
     if(length(hasCorrectNumberOfCharacters) == 0) {
         newInteger <- 1
@@ -196,5 +180,216 @@ getNewDefaultName <- function(names, prefix) {
     #potentialNames[latest + 1]
 }
 
+# Function to convert from json to R expression:
+#' 
+#' @export
+#' 
+json2expression <- function(json) {
+    l <- parseParameter(json, simplifyVector = FALSE)
+    list2expression(l)
+}
 
+
+# Function to convert from R list to R expression:
+#' 
+#' @export
+#' 
+list2expression <- function(l) {
+    # Declare the resulting expression
+    result <- NULL
+    # If the current rules or expression should be negated, we need to enclose the expression in paretheses:
+    negate <- isTRUE(l$negate)
+    needParentheses <- negate
+    
+    # Identify rules by the condition:
+    if(any(names(l) == "condition")) { 
+        # Rules need parentheses, and the link is padded by spaces for readability:
+        needParentheses <- TRUE
+        link <- paste('', l$condition, '')
+        
+        # Recurse into the children:
+        result <- paste(lapply(l$rules, list2expression), collapse = link)
+    } 
+    # Otherwise build the expression:
+    else {
+        # Extract the value for some processing:
+        value <- l$value
+        
+        # If the value is a character, pad with quotation marks:
+        if(is.character(value)) {
+            #value <- paste0('\'', value, '\'')
+            value <- paste0("\"", value, "\"")
+        }
+        # If more than one value, obtain the c(...) notation: 
+        if(l$operator %in% c('%in%', '%notin%')) {
+            value = paste0('c(', paste(value, collapse=', '), ')')
+        }
+        
+        # Paste field, operator and value:
+        result <- paste(l$field, l$operator, value)
+    }
+    
+    # Enclose in parentheses if there was a link operator or a negation:
+    if(needParentheses) {
+        result <- paste0('(', result, ')')
+    }
+    
+    # Add the exclamation mark to apply negation:
+    if(negate) {
+        result <- paste0('!', result)
+    }
+    
+    return(result)
+}
+
+
+
+
+
+
+
+#j2expr = function(json_str) {
+#    #convert from json to list
+#    json_l <- jsonlite::fromJSON(json_str, simplifyVector = F)
+#    
+#    l2expr(json_l)
+#}
+
+#expr <- j2expr(json_str)
+
+#setRefClass("Log", fields=list(entries="list"))
+#log <- new("Log",entries=list())
+#writeToLog = function(level, s, lg) {
+#	lg$entries[[length(lg$entries) + 1]] <- paste(level, s);
+#}
+#writeToLog(1, 'start', l)
+
+# Here, a function expression2json is not neede, since openCPU converts to JSON:
+
+# Parse an R expression to a nested list:
+#' 
+#' @export
+#' 
+expression2list = function(expr, generateRuleset=TRUE) {
+    res <- NULL
+    expr <- trimws(expr)
+    negate <- startsWith(expr, '!') 
+
+    orFoundAtLevel0 <- FALSE
+    andFoundAtLevel0 <- FALSE
+    
+    level <- 0
+    for(c in unlist(strsplit(expr, ''))) {
+        andFoundAtLevel0 <- andFoundAtLevel0 | level == 0 & c == '&'
+        orFoundAtLevel0 <- orFoundAtLevel0 | level == 0 & c == '|'
+        if (c == '(') {
+            level <- level + 1
+        } else if (c == ')') {
+            level <- level -1
+        }
+    }
+    splitOperator <- NULL
+    rulesList <- NULL
+    if(orFoundAtLevel0) {
+        splitOperator <- '|'
+    } else if(andFoundAtLevel0) {
+        splitOperator <- '&'
+    }
+    
+    # If a splitOperator (| or &) is found, split into a list of rules:
+    if(!is.null(splitOperator)) {
+        res = list()
+        res$condition = splitOperator
+        rulesList <- unlist(strsplit(expr, splitOperator, fixed = TRUE))
+        
+        res$rules <- list()
+        for(grp in rulesList) {
+          res$rules[[length(res$rules) + 1]] <- expression2list(grp, FALSE) 
+        }
+    } else if(isTRUE(negate)) {
+        # Handle negate both outside and inside parenthesis by recursing
+        res <- expression2list(substr(expr, 2, nchar(expr)), generateRuleset)
+        if(!is.null(res)) {
+            if('negate' %in% names(res)) {
+                res$negate = !res$negate
+            } else {
+              res <- c(list(negate = TRUE), res)
+            }
+        }
+    }
+    else if(startsWith(expr, '(') & endsWith(expr, ')')) {
+        # rid off surrounding parenthesis (..)
+        res <- expression2list(substr(expr, 2, nchar(expr) - 1), generateRuleset)
+    } 
+    # rule expression field=value:
+    else {
+        
+        # expression field op value
+        allPossibleOperators <- unique(unlist(getRstoxFrameworkDefinitions("filterOperators")))
+        space <- "\\s+"
+        regularExpression <- paste0(
+            "([[:alnum:]^\\\\s]+)", 
+            space, 
+            paste0("(", paste(allPossibleOperators, collapse = "|"), ")"), 
+            space, 
+            "(.+)"
+        )
+        safeSeparator <- ";"
+        groupingKey <- paste0("\\", 1:3, collapse = safeSeparator)
+        code <- gsub(
+            regularExpression, 
+            groupingKey, 
+            expr
+        )
+        splittedCode <- strsplit(code, safeSeparator)[[1]]
+        s <- c(
+            splittedCode[1], 
+            splittedCode[2], 
+            paste(splittedCode[-c(1,2)], collapse = safeSeparator)
+        )
+
+        if(length(s) == 3) {
+            #valid syntax: field op value
+            val <- eval(parse(text = s[[3]]))
+            rule <- list(
+                field = s[[1]], 
+                operator = s[[2]], 
+                value = val)
+            if(rule$operator %in% c('%in%', '%notin%') && length(rule$value) == 1) {
+                rule$value <- list(rule$value)
+            }
+            if(generateRuleset) {
+                res <- list(
+                    condition = '&', 
+                    rules = list(rule))
+            } else {
+                res <- rule
+            }
+        }	 
+    }
+    res
+}
+
+
+
+
+
+
+
+
+#convert from expression to list 
+#expr2j = function(expr) {
+#    
+#    json_l <- expr2l(expr, NULL, 0, log)
+#    jsonlite::toJSON(json_l, auto_unbox = T, pretty=T)
+#}
+#j2expr(expr2j(expr))
+    
+verifyPaths <- function(x) {
+    valid <- file.exists(x)
+    if(any(!valid)) {
+        warning("The following files do not exist: ", paste(x[!valid], collapse = ", "), ".")
+    }
+    return(x[valid])
+}
 

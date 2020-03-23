@@ -83,9 +83,7 @@ removeHaulFromAssignment <- function(PSU, Layer, Haul, projectPath, modelName, p
 modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
     
     # Check that the process returns Assigment process data:
-    if(!checkDataType("Assignment", projectPath, modelName, processID)) {
-        stop("The process ", getProcessName(projectPath, modelName, processID), " does not return Assignment data.")
-    }
+    checkDataType("Assignment", projectPath, modelName, processID)
     
     # Get the process data of the process, a table of PSU, Layer, Haul and HaulWeight:
     Assignment <- getProcessData(projectPath, modelName, processID)$Assignment
@@ -116,8 +114,17 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
         argumentValue = list(list(Assignment = Assignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    # Return the assignments:
-    Assignment
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 # Function that adds a haul to the assignment data:
@@ -135,8 +142,26 @@ assignment_addHaul <- function(PSU, Layer, Haul, Assignment) {
         toAdd
     )
     
-    # Return the assignments:
-    Assignment
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(list(Assignment = Assignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
+    
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 # Function that removes a haul from the assignment data:
@@ -153,8 +178,26 @@ assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
     # Remove the hauls:
     Assignment <- Assignment[-at[atHauls], ]
     
-    # Return the assignments:
-    Assignment
+    # Set the Assignment back to the process data of the process:
+    setProcessMemory(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        argumentName = "processData", 
+        argumentValue = list(list(Assignment = Assignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+    )
+    
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 
@@ -162,7 +205,7 @@ assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
 
 ############################################################
 ############################################################
-#' Add or remove biotic acoustic PSUs and EDSUs
+#' Add or remove acoustic PSUs and EDSUs
 #' 
 #' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
 #' 
@@ -180,20 +223,18 @@ NULL
 addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processID) {
     
     # Check that the process returns Assigment process data:
-    if(!checkDataType("AcosticPSU", projectPath, modelName, processID)) {
-        stop("The process ", getProcessName(projectPath, modelName, processID), " does not return AcosticPSU data.")
-    }
+    checkDataType("AcousticPSU", projectPath, modelName, processID)
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
     # If the PSU is not given, use the default PSU name:
     if(length(PSU) == 0) {
-        PSU <- getNewDefaultName(AcosticPSU$Stratum_PSU$PSU, "T")
+        PSU <- getNewDefaultName(AcousticPSU$Stratum_PSU$PSU, prefix = RstoxBase::getRstoxBaseDefinitions("AcousticPSUPrefix"))
     }
     # Check whether the acoustic PSU already exists:
-    if(any(AcosticPSU$Stratum_PSU$PSU == PSU)) {
-        stop("The name of the Acoustic PSU (", ")")
+    if(any(AcousticPSU$Stratum_PSU$PSU == PSU)) {
+        stop("The name of the Acoustic PSU (", PSU, ") already exists.")
     }
     
     # Add the acsoutic PSU:
@@ -201,8 +242,8 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         Stratum = Stratum, 
         PSU = PSU
     )
-    AcosticPSU$Stratum_PSU <- data.table::data.table(
-        AcosticPSU$Stratum_PSU, 
+    AcousticPSU$Stratum_PSU <- rbind(
+        AcousticPSU$Stratum_PSU, 
         toAdd
     )
     
@@ -212,10 +253,21 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath), 
+            PSU = PSU
+        )
+    )
 }
 #' 
 #' @export
@@ -224,14 +276,14 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
 removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
     # Add the acsoutic PSU:
-    PSUsToKeep <- !AcosticPSU$Stratum_PSU$PSU %in% PSU
-    EDSUsToKeep <- !AcosticPSU$PSU_EDSU$PSU %in% PSU
+    PSUsToKeep <- !AcousticPSU$Stratum_PSU$PSU %in% PSU
+    EDSUsToKeep <- !AcousticPSU$EDSU_PSU$PSU %in% PSU
     
-    AcosticPSU$Stratum_PSU <- AcosticPSU$Stratum_PSU[PSUsToKeep, ]
-    AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
+    AcousticPSU$Stratum_PSU <- AcousticPSU$Stratum_PSU[PSUsToKeep, ]
+    AcousticPSU$EDSU_PSU <- AcousticPSU$EDSU_PSU[EDSUsToKeep, ]
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -239,10 +291,20 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 #' 
 #' @export
@@ -251,14 +313,14 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
 renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
     # Add the acsoutic PSU:
-    PSUsToRename <- AcosticPSU$Stratum_PSU$PSU %in% PSU
-    EDSUsToRename <- AcosticPSU$PSU_EDSU$PSU %in% PSU
+    PSUsToRename <- AcousticPSU$Stratum_PSU$PSU %in% PSU
+    EDSUsToRename <- AcousticPSU$EDSU_PSU$PSU %in% PSU
     
-    AcosticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
-    AcosticPSU$PSU_EDSU$PSU[EDSUsToRename] <- newPSUName
+    AcousticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
+    AcousticPSU$EDSU_PSU$PSU[EDSUsToRename] <- newPSUName
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -266,11 +328,21 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
     
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath), 
+            PSU = PSU
+        )
+    )
 }
 #' 
 #' @export
@@ -279,17 +351,21 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
 addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
-    # Add the acsoutic PSU:
-    toAdd <- data.table::data.table(
-        PSU = PSU, 
-        EDSU = EDSU
-    )
-    AcosticPSU$PSU_EDSU <- data.table::data.table(
-        AcosticPSU$PSU_EDSU, 
-        toAdd
-    )
+    # Set the PSU column for the given EDSUs:
+    atEDSUs <- AcousticPSU$EDSU_PSU$EDSU %in% EDSU
+    AcousticPSU$EDSU_PSU[atEDSUs, PSU := ..PSU]
+    
+    ## Add the acsoutic PSU:
+    #toAdd <- data.table::data.table(
+    #    PSU = PSU, 
+    #    EDSU = EDSU
+    #)
+    #AcousticPSU$PSU_EDSU <- data.table::data.table(
+    #    AcousticPSU$PSU_EDSU, 
+    #    toAdd
+    #)
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -297,24 +373,38 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 #' 
 #' @export
 #' @rdname AcousticPSU
 #' 
-removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
+removeEDSU <- function(EDSU, projectPath, modelName, processID) {
     
     # Get the process data of the process, a table of PSU, Layer, AssignmentID, Haul and HaulWeight:
-    AcosticPSU <- getProcessData(projectPath, modelName, processID)
+    AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
-    # Add the acsoutic PSU:
-    EDSUsToKeep <- !AcosticPSU$PSU_EDSU$EDSU %in% EDSU
+    # Set the PSU column to empty string for the given EDSUs:
+    atEDSUs <- AcousticPSU$EDSU_PSU$EDSU %in% EDSU
+    AcousticPSU$EDSU_PSU[atEDSUs, PSU := ""]
     
-    AcosticPSU$PSU_EDSU <- AcosticPSU$PSU_EDSU[EDSUsToKeep, ]
+    ## Add the acsoutic PSU:
+    #EDSUsToKeep <- !AcousticPSU$PSU_EDSU$EDSU %in% EDSU
+    #
+    #AcousticPSU$PSU_EDSU <- AcousticPSU$PSU_EDSU[EDSUsToKeep, ]
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(
@@ -322,10 +412,20 @@ removeEDSU <- function(acousticPSU, EDSU, projectPath, modelName, processID) {
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(AcosticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(AcousticPSU) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    AcosticPSU
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 
@@ -358,7 +458,12 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     # If given as a GeoJSON string, parse to a SpatialPolygonsDataFrame object:
     if(is.character(stratum)) {
         #stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
-        stratum <- rgdal::readOGR(stratum)
+        stratum <- rgdal::readOGR(stratum, stringsAsFactors = FALSE)
+        stratum <- copyPolygonNameToID(stratum)
+        # Add "x", "y" as column names of the coords, since readOGR() does not do this:
+        stratum <- addCoordsNames(stratum)
+        # added by aasmund: Set projection to empty by default, rbind will then work.
+        stratum@proj4string <- sp::CRS()
     }
     
     # Add the new strata, but check that the stratum names are not in use:
@@ -369,10 +474,18 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     if(length(usedStratumNames)) {
         stop("The stratum name ", usedStratumNames, " already exist. Choose a different name")
     }
+    if(length(RstoxBase::getStratumNames(stratum)) == 0) {
+        stop("The new stratum must have a name")
+    }
+    
     #toAdd <- list(Polygons(list(Polygon(coordinates)), ID = stratumName))
-    StratumPolygon$StratumPolygon@polygons <- c(
-        StratumPolygon$StratumPolygon@polygons, 
-        stratum@polygons
+    #StratumPolygon$StratumPolygon@polygons <- c(
+    #    StratumPolygon$StratumPolygon@polygons, 
+    #    stratum@polygons
+    #)
+    StratumPolygon$StratumPolygon <- rbind(
+        StratumPolygon$StratumPolygon, 
+        stratum
     )
     
     # Set the Assignment back to the process data of the process:
@@ -384,7 +497,17 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
         argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    TRUE
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 #' 
 #' @export
@@ -414,7 +537,17 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
         argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    TRUE
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 #' 
 #' @export
@@ -429,6 +562,8 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     if(is.character(stratum)) {
         #stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
         stratum <- rgdal::readOGR(stratum)
+        # Add "x", "y" as column names of the coords, since readOGR() does not do this:
+        stratum <- addCoordsNames(stratum)
     }
     
     # Modify the coordinates:
@@ -450,5 +585,60 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
         argumentValue = list(StratumPolygon) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
-    TRUE
+    # Revert the active process ID to the previous process:
+    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
+    
+    # Return the active process:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            activeProcess = activeProcess, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
+
+# Function to add colnames to the coords slot of a SpatialPolygonsDataFrame:
+addCoordsNames <- function(stratum, names = c("x", "y")) {
+    # Hack to change the names of the coords to "x" and "y":
+    for(i in seq_along(stratum@polygons)) {
+        for(j in seq_along(stratum@polygons[[i]]@Polygons)) {
+            colnames(stratum@polygons[[i]]@Polygons[[j]]@coords) <- names
+        }
+    }
+    
+    return(stratum)
+}
+
+# Function to rename the IDs to the column polygonNames of a SpatialPolygonsDataFrame:
+copyPolygonNameToID <- function(stratum) {
+    
+    # Get the polygon names and IDs:
+    polygonName <- stratum$polygonName
+    
+    # Rename all IDs to the polygon names:
+    for (ind in seq_along(stratum@polygons)) {
+        stratum@polygons[[ind]]@ID <- polygonName[ind]
+    }
+    
+    # Update rownames of the data slot:
+    rownames(slot(stratum, "data")) <- polygonName
+    
+    return(stratum)
+}
+
+# Function to rename the IDs to the column polygonNames of a SpatialPolygonsDataFrame:
+setEmptyID <- function(stratum) {
+    
+    # Get the polygon names and IDs:
+    polygonName <- stratum$polygonName
+    
+    # Rename all IDs to the polygon names:
+    for (ind in seq_along(stratum@polygons)) {
+        stratum@polygons[[ind]]@ID <- ""
+    }
+    
+    return(stratum)
+}
+
+

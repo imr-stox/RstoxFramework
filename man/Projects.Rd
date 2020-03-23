@@ -18,7 +18,7 @@ createProject(
   open = TRUE
 )
 
-openProject(projectPath, showWarnings = FALSE, force = FALSE)
+openProject(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE)
 
 closeProject(projectPath, save = NULL)
 

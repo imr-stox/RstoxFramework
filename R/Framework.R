@@ -2532,7 +2532,7 @@ getProcessesSansProcessDataOne <- function(projectPath, modelName, processID) {
     return(output)
 }
 
-getProcessesSansProcessData <- function(projectPath, modelName, processID = NULL) {
+getProcessesSansProcessData <- function(projectPath, modelName, beforeProcessID = NULL) {
     
     ##### (1) Get the table of process name and ID: #####
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -2541,13 +2541,13 @@ getProcessesSansProcessData <- function(projectPath, modelName, processID = NULL
         return(data.table::data.table())
     }
     
-    # Subset the table to the reuqested processID, if given:
-    if(length(processID)) {
-        atProcessID <- which(processID == processIndexTable$processID)
+    # Subset the table to up until the reuqested beforeProcessID, if given:
+    if(length(beforeProcessID)) {
+        atProcessID <- which(beforeProcessID == processIndexTable$processID)
         if(length(atProcessID) == 0) {
-            stop("The requested processID does not exist in the model ", modelName, " of projecct ", projectPath, ".")
+            stop("The processID specified in 'beforeProcessID' does not exist in the model ", modelName, " of projecct ", projectPath, ".")
         }
-        processIndexTable <- processIndexTable[seq_len(atProcessID), ]
+        processIndexTable <- processIndexTable[seq_len(atProcessID - 1), ]
     }
     
     # Add the projectPath:
@@ -2592,13 +2592,13 @@ getProcessesSansProcessData <- function(projectPath, modelName, processID = NULL
 #' 
 #' @export
 #' 
-scanForModelError <- function(projectPath, modelName, processID = NULL) {
+scanForModelError <- function(projectPath, modelName, beforeProcessID = NULL) {
     
     # Get the processes:
     processTable <- getProcessesSansProcessData(
         projectPath = projectPath, 
         modelName = modelName, 
-        processID = processID
+        beforeProcessID = beforeProcessID
     )
     # Return an empty data.table if the processTable is empty:
     if(nrow(processTable) == 0) {
@@ -2635,10 +2635,10 @@ scanForModelError <- function(projectPath, modelName, processID = NULL) {
 #' 
 #' @export
 #' 
-getProcessTable <- function(projectPath, modelName, processID = NULL) {
+getProcessTable <- function(projectPath, modelName, beforeProcessID = NULL) {
     
     # Get a table of all the processes including function inputs, parameters and input errors:
-    processTable <- scanForModelError(projectPath, modelName, processID = processID)
+    processTable <- scanForModelError(projectPath, modelName, beforeProcessID = beforeProcessID)
     # Return an empty data.table if the processTable is empty:
     if(nrow(processTable) == 0) {
         return(data.table::data.table())
@@ -2671,149 +2671,6 @@ getProcessTable <- function(projectPath, modelName, processID = NULL) {
     return(processTable[])
 }
 
-
-
-
-#' 
-#' @export
-#' 
-getProcessTableOld <- function(projectPath, modelName, processID = NULL) {
-    
-    # Get a table of all the processes including function inputs, parameters and input errors:
-    processIndexTable <- scanForModelError(projectPath, modelName, processID = processID)
-    
-    # Return an empty data.table if the processIndexTable is empty:
-    if(nrow(processIndexTable) == 0) {
-        return(data.table::data.table())
-    }
-    
-    # Check whether the data type can be shown in the map:
-    processIndexTable[, canShowInMap := getCanShowInMap(dataType = functionOutputDataType)]
-    
-    # Get enabled, showInMap and fileOutput:
-    processParameters <- mapply(
-        getProcessParameters, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processIndexTable$processID, 
-        SIMPLIFY = FALSE
-    )
-    processParameters <- data.table::rbindlist(processParameters)
-    processIndexTable <- data.table::data.table(
-        processIndexTable, 
-        processParameters
-    )
-    
-    # Add the data type:
-    #processIndexTable$dataType <- sapply(processIndexTable$functionName, getStoxFunctionMetaData, "functionOutputDataType")
-    processIndexTable$dataType <- mapply(
-        getDataType, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processIndexTable$processID, 
-        SIMPLIFY = TRUE
-    )
-    
-    
-    # Check whether the process returns process data:
-    processIndexTable[, hasProcessData := lapply(functionName, isProcessDataFunction)]
-    #hasProcessData <- sapply(functionNames, isProcessDataFunction)
-    
-    return(processIndexTable)
-    
-    ###
-    ###        # Get the table of process name and ID:
-    ###        processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    ###
-    ###        # Return an empty data.table if the processIndexTable is empty:
-    ###        if(nrow(processIndexTable) == 0) {
-    ###            return(data.table::data.table())
-    ###        }
-    ###    
-    ###        # Get the function names for use when determining the 'canShowInMap' and 'hasProcessData'
-    ###        functionNames <- mapply(
-    ###            getFunctionName, 
-    ###            projectPath = projectPath, 
-    ###            modelName = modelName, 
-    ###            processID = processIndexTable$processID
-    ###        )
-    ###
-    #### Check whether the data type can be shown in the map:
-    ###canShowInMap <- sapply(functionNames, getCanShowInMap)
-    ###
-    #### Check whether the user has defined that the data from the process should be shown in the map:
-    ###processParameters <- mapply(
-    ###    getProcessParameters, 
-    ###    projectPath = projectPath, 
-    ###    modelName = modelName, 
-    ###    processID = processIndexTable$processID, 
-    ###    SIMPLIFY = FALSE
-    ###)
-    ###processParameters <- data.table::rbindlist(processParameters)
-    ###
-    #### Check whether the process returns process data:
-    ###hasProcessData <- sapply(functionNames, isProcessDataFunction)
-    ###
-    #### Group the info to a table for now:
-    ###processTable <- cbind(
-    ###    processIndexTable, # Contains processName and processID
-    ###    data.table::data.table(
-    ###        functionName = functionNames, 
-    ###        canShowInMap = canShowInMap
-    ###    ), 
-    ###    processParameters, 
-    ###    data.table::data.table(
-    ###        hasProcessData = hasProcessData
-    ###    )
-    ###)
-    ###
-    ###        # Get the funciton inputs (as a list):
-    ###        functionInputs <- mapply(
-    ###            getFunctionInputs, 
-    ###            projectPath = projectPath, 
-    ###            modelName = modelName, 
-    ###            processID = processIndexTable$processID
-    ###        )
-    #### Get the processes that has errors:
-    ###hasModelError <- sapply(
-    ###    seq_along(processIndexTable$processID), 
-    ###    getFunctionInputErrors, 
-    ###    processTable = processTable, 
-    ###    functionInputs = functionInputs
-    ###)
-    ###processTable$hasModelError <- hasModelError
-    ###
-    ###        # Add the data type:
-    ###        processTable$dataType <- sapply(functionNames, getStoxFunctionMetaData, "functionOutputDataType")
-    ###        
-    ###        # Add the function inputs:
-    ###        processTable$functionInputs <- functionInputs
-    ###        
-    #### Add the function parameters:
-    ###functionParameters <- mapply(
-    ###    getFunctionParameters, 
-    ###    projectPath = projectPath, 
-    ###    modelName = modelName, 
-    ###    processID = processIndexTable$processID
-    ###)
-    ###processTable$functionParameters <- functionParameters
-    
-    ### processTable$functionExists <- functionExists(functionNames)
-    
-    # Reads a table of the following columns:
-    # 1. processName
-    # 4. canShowInMap
-    # 5. hasProcessData
-    # 6. doShowInMap
-    
-    # 2. hasBeenRun
-    # 3. hasError
-    
-    # 
-    # There are two different types of actions, changing processes and changing parameters. Changing processes iduces reset of current process, whereas changing parameters do not. This will be added to the projectDescriptionIndex.txt. Errors given by HasError only occur when there are missing inputs, that is that the processes requersted in funciton inputs do not exist BEFORE the actual function. This will be a check to run in the route-funcitons Add-, Delete- and MoreProcess, which call the corresponding add-, delete- and moreProcess in Framework.R, and then calls getProjectList.
-    
-    #processTable
-}
 
 
 

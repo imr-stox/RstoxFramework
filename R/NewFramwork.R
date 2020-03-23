@@ -157,6 +157,14 @@ setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName,
 # Function for saving an argument file table (defining the process memory files comprising the process memory):
 archiveProject <- function(projectPath) {
     
+    # 1. Collect the current memory and other files into one list, and write this as a project memory file:
+    getPointerFilesTable
+    
+    # 2. Update the projectMemoryIndex file:
+    
+    
+    
+    
     # Save the list of project argument files to the current project description file and to the new project description file:
     currentProjectMemoryFile <- getCurrentProjectMemoryFile(projectPath)
     newProjectMemoryFile     <- getNewProjectMemoryFile(projectPath)
@@ -261,22 +269,23 @@ removeProcessMemory_New <- function(projectPath, modelName, processID) {
 
 
 
-memoryAddressTableToFiles <- function(projectPath, projectMemoryTable) {
+memoryAddressTableToFiles <- function(projectPath, pointerFilesTable) {
     # Get the folder of files holding the memory file paths:
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     # Get the paths to the files holding the memory file paths:
     filePaths <- file.path(
         currentMemoryFolder, 
-        projectMemoryTable$modelname, 
-        projectMemoryTable$processID, 
+        pointerFilesTable$modelname, 
+        pointerFilesTable$processID, 
         paste0(projectMemoryTable$argumentName, ".rds"), 
     )
     
     # Write the files with memory file paths:
-    lapply(projectMemoryTable$argumentFile, projectMemoryTable, saveRDS)
+    lapply(pointerFilesTable$argumentFile, pointerFilesTable, saveRDS)
 }
 
-memoryAddressFilesToTable <- function(projectPath, projectMemoryTable) {
+getPointerFilesTable <- function(projectPath) {
+    
     # Get the folder of files holding the memory file paths:
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     
@@ -290,55 +299,12 @@ memoryAddressFilesToTable <- function(projectPath, projectMemoryTable) {
     argumentName <- sub(".rds", "", argumentName, fixed = TRUE)
     
     # Write the files with memory file paths:
-    table <- data.table::data.table(
+    pointerFilesTable <- data.table::data.table(
         argumentFile = filePaths,
         modelName = modelname,
         processID = processID,
         argumentName = argumentName
     )
     
-    return(table)
+    return(pointerFilesTable)
 }
-
-memoryAddressTableToFiles <- function(projectPath, projectMemoryTable) {
-    # Get the folder of files holding the memory file paths:
-    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
-    # Get the paths to the files holding the memory file paths:
-    filePaths <- file.path(
-        currentMemoryFolder, 
-        projectMemoryTable$modelname, 
-        projectMemoryTable$processID, 
-        paste0(projectMemoryTable$argumentName, ".rds"), 
-    )
-    
-    # Write the files with memory file paths:
-    lapply(projectMemoryTable$argumentFile, projectMemoryTable, saveRDS)
-}
-
-memoryAddressFilesToTable <- function(projectPath, projectMemoryTable) {
-    # Get the folder of files holding the memory file paths:
-    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
-    
-    # Get the paths to the files holding the memory file paths:
-    filePaths <- list.files(currentMemoryFolder, full.names = TRUE, recursive = TRUE)
-    fileparts <- strsplit(filePaths, "/")
-    filepartsRev <- lapply(fileparts, rev)
-    modelname <- sapply(filepartsRev, "[", 3)
-    processID <- sapply(filepartsRev, "[", 2)
-    argumentName <- sapply(filepartsRev, "[", 1)
-    argumentName <- sub(".rds", "", argumentName, fixed = TRUE)
-    
-    # Write the files with memory file paths:
-    table <- data.table::data.table(
-        argumentFile = filePaths,
-        modelName = modelname,
-        processID = processID,
-        argumentName = argumentName
-    )
-    
-    return(table)
-}
-
-
-
-

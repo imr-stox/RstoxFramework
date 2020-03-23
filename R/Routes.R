@@ -639,6 +639,9 @@ isMultipleParameter <- function(functionName, parameterName) {
 }
 
 
+
+
+
 #' 
 #' @export
 #' 
@@ -670,32 +673,6 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     # "length2TSTable" 
     # "speciesCategoryTable"
     # "acousticCategoryTable" 
-    
-    
-    # Function that gets the process names of the processes returning the specified data type
-    getProcessNamesByDataType <- function(dataType, processTable) {
-        hasRequestedDataType <- processTable$dataType == dataType
-        if(any(hasRequestedDataType)) {
-            processTable$processName[hasRequestedDataType]
-        }
-        else {
-            NULL
-        }
-    }
-    
-    # Function to replace an empty object by double(0) or character(1), which results in [] in JSON (since OpenCPU uses auto-unbox = TRUE):
-    replaceEmpty <- function(x, vector = TRUE) {
-        areEmpty <- lengths(x) == 0
-        if(any(areEmpty)) {
-            if(vector) {
-                x[areEmpty] <- rep(list(double(0)), sum(areEmpty))
-            }
-            else {
-                x[areEmpty] <- rep(list(character(1)), sum(areEmpty))
-            }
-        }
-        x   
-    }
     
     #######################
     ##### 1. Process: #####
@@ -788,7 +765,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         # Run only if there are function inputs:
         if(length(functionInputs)) {
             # Get the process table, which is needed to get the output data types from the prior processes for use in the function inputs:
-            processTable <- getProcessTable(projectPath = projectPath, modelName = modelName, processID = processID)
+            processTable <- getProcessTable(projectPath = projectPath, modelName = modelName, beforeProcessID = processID)
             #thisProcessIndex <- which(processTable$processID == processID)
             #processTable <- processTable[seq_len(thisProcessIndex), ]
             functionInputNames <- names(functionInputs)
@@ -808,6 +785,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 6. possibleValues:
                 #possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
+                #possibleValues = lapply(lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable), as.list),
                 possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # 7. value:
                 value = functionInputs
@@ -902,6 +880,34 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
 }
 
 
+# Function that gets the process names of the processes returning the specified data type
+getProcessNamesByDataType <- function(dataType, processTable) {
+    hasRequestedDataType <- processTable$functionOutputDataType == dataType
+    if(any(hasRequestedDataType)) {
+        output <- processTable$processName[hasRequestedDataType]
+    }
+    else {
+        output <- NULL
+    }
+    
+    ### This is a trick to keep arrays through jsonlite::toJSON, and must happen here (before the data.table is created):
+    #as.list(output)
+    return(output)
+}
+
+# Function to replace an empty object by double(0) or character(1), which results in [] in JSON (since OpenCPU uses auto-unbox = TRUE):
+replaceEmpty <- function(x, vector = TRUE) {
+    areEmpty <- lengths(x) == 0
+    if(any(areEmpty)) {
+        if(vector) {
+            x[areEmpty] <- rep(list(double(0)), sum(areEmpty))
+        }
+        else {
+            x[areEmpty] <- rep(list(character(1)), sum(areEmpty))
+        }
+    }
+    x   
+}
 
 
 # Function to convert to JSON string, used to send only strings and arrays of strings to the GUI:
@@ -936,7 +942,8 @@ valueToJSONStringOneColumn <- function(x) {
 
 
 possibleValuesToJSONString <- function(DT) {
-    DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne)]
+    output <- DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne)]
+    return(output)
 }
 
 
@@ -950,9 +957,8 @@ possibleValuesToJSONStringOne <- function(x) {
         if(!is.character(x)) {
             x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
         }
-        # Convert to a list to ensure that if of length 1, OpenCPU still returns an array:
         if(length(x) == 1) {
-            x <- list(x)
+            x <- list(list(x))
         }
     }
     return(x)

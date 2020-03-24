@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1</span>
       </span>
     </div>
 
@@ -87,7 +87,7 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/StoXProject/RstoxFramework">
+  <a href="https://github.com/NA/NA">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -106,7 +106,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Get RstoxFramework definitions</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/NA/NA/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
     <div class="hidden name"><code>getRstoxFrameworkDefinitions.Rd</code></div>
     </div>
 
@@ -134,17 +134,15 @@
     <p>A list of definitions.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>getRstoxFrameworkDefinitions</span>()</div><div class='output co'>#&gt; $asouticPSUDataType
+    <pre class="examples"><div class='input'><span class='fu'>getRstoxFrameworkDefinitions</span>()</div><div class='output co'>#&gt; $acousticPSUDataType
 #&gt; [1] "AcousticPSU"
 #&gt; 
 #&gt; $assignmentDataType
 #&gt; [1] "Assignment"
 #&gt; 
 #&gt; $dataTypesToShowInMap
-#&gt;     StoxBioticData   StoxAcousticData     StratumPolygon         Assignment 
-#&gt;   "StoxBioticData" "StoxAcousticData"   "StratumPolygon"       "Assignment" 
-#&gt;        AcousticPSU       SweptAreaPSU 
-#&gt;      "AcousticPSU"     "SweptAreaPSU" 
+#&gt;     StoxBioticData   StoxAcousticData     StratumPolygon 
+#&gt;   "StoxBioticData" "StoxAcousticData"   "StratumPolygon" 
 #&gt; 
 #&gt; $digits
 #&gt; $digits$JSON
@@ -174,11 +172,84 @@
 #&gt; CRS arguments: NA 
 #&gt; 
 #&gt; 
+#&gt; $filterOperators
+#&gt; $filterOperators$character
+#&gt; [1] "=="      "!="      "%in%"    "%notin%"
+#&gt; 
+#&gt; $filterOperators$logical
+#&gt; [1] "==" "!="
+#&gt; 
+#&gt; $filterOperators$integer
+#&gt; [1] "&lt;"       "&lt;="      "=="      "!="      "&gt;="      "&gt;"       "%in%"   
+#&gt; [8] "%notin%"
+#&gt; 
+#&gt; $filterOperators$double
+#&gt; [1] "&lt;"       "&lt;="      "=="      "!="      "&gt;="      "&gt;"       "%in%"   
+#&gt; [8] "%notin%"
+#&gt; 
+#&gt; $filterOperators$numeric
+#&gt; [1] "&lt;"       "&lt;="      "=="      "!="      "&gt;="      "&gt;"       "%in%"   
+#&gt; [8] "%notin%"
+#&gt; 
+#&gt; $filterOperators$POSIXct
+#&gt; [1] "&lt;"       "&lt;="      "=="      "!="      "&gt;="      "&gt;"       "%in%"   
+#&gt; [8] "%notin%"
+#&gt; 
+#&gt; 
 #&gt; $numDigitsOfProcessIntegerID
 #&gt; [1] 3
 #&gt; 
 #&gt; $officialStoxLibraryPackages
 #&gt; [1] "RstoxBase" "RstoxData"
+#&gt; 
+#&gt; $oldStoxModelDataTypes
+#&gt;  [1] "AcousticData"           "BioticData"             "LandingData"           
+#&gt;  [4] "NASC"                   "LengthDist"             "Density"               
+#&gt;  [7] "Abundance"              "IndividualDataStations" "IndividualData"        
+#&gt; [10] "SuperIndividuals"       "PolygonArea"            "StationSpecCatDensity" 
+#&gt; [13] "BioticCovData"          "LandingCovData"         "LandingWeightCovData"  
+#&gt; [16] "ProcessData"           
+#&gt; 
+#&gt; $parameterTableColumnNames
+#&gt; $parameterTableColumnNames$speciesCategoryTable
+#&gt; [1] "SpeciesCategory"    "NewSpeciesCategory"
+#&gt; 
+#&gt; $parameterTableColumnNames$acousticCategoryTable
+#&gt; [1] "AcousticCategory"    "NewAcousticCategory"
+#&gt; 
+#&gt; $parameterTableColumnNames$catchCompensationTable
+#&gt; [1] "SpeciesCategory" "Alpha"           "Beta"            "LMin"           
+#&gt; [5] "LMax"           
+#&gt; 
+#&gt; $parameterTableColumnNames$selectivityTable
+#&gt; [1] "SpeciesCategory" "Alpha"           "Beta"            "LMax"           
+#&gt; 
+#&gt; $parameterTableColumnNames$speciesLinktable
+#&gt; [1] "AcousticCategory" "SpeciesCategory" 
+#&gt; 
+#&gt; $parameterTableColumnNames$acousticTargetStrengthTable
+#&gt; [1] "AcousticCategory" "m"                "a"                "d"               
+#&gt; 
+#&gt; 
+#&gt; $parameterTableTitle
+#&gt; $parameterTableTitle$speciesCategoryTable
+#&gt; [1] "Define new species categories"
+#&gt; 
+#&gt; $parameterTableTitle$acousticCategoryTable
+#&gt; [1] "Define new acoustic categories"
+#&gt; 
+#&gt; $parameterTableTitle$catchCompensationTable
+#&gt; [1] "Define parameters for length dependent catch compensation"
+#&gt; 
+#&gt; $parameterTableTitle$selectivityTable
+#&gt; [1] "Define parameters for length dependent selectivity"
+#&gt; 
+#&gt; $parameterTableTitle$speciesLinktable
+#&gt; [1] "Link acoustic categories and species categories"
+#&gt; 
+#&gt; $parameterTableTitle$acousticTargetStrengthTable
+#&gt; [1] "Define parameters of acoustic target strength by length"
+#&gt; 
 #&gt; 
 #&gt; $paths
 #&gt; $paths$Acoustic
@@ -190,13 +261,13 @@
 #&gt; $paths$Landing
 #&gt; [1] "input/landing"
 #&gt; 
-#&gt; $paths$Baseline
+#&gt; $paths$baseline
 #&gt; [1] "output/baseline"
 #&gt; 
-#&gt; $paths$Analysis
+#&gt; $paths$analysis
 #&gt; [1] "output/analysis"
 #&gt; 
-#&gt; $paths$Report
+#&gt; $paths$report
 #&gt; [1] "output/report"
 #&gt; 
 #&gt; $paths$Process
@@ -207,9 +278,9 @@
 #&gt;   "input"  "output" "process" 
 #&gt; 
 #&gt; $paths$stoxFolderStructure
-#&gt;          Acoustic            Biotic           Landing          Baseline 
+#&gt;          Acoustic            Biotic           Landing          baseline 
 #&gt;  "input/acoustic"    "input/biotic"   "input/landing" "output/baseline" 
-#&gt;          Analysis            Report           Process 
+#&gt;          analysis            report           Process 
 #&gt; "output/analysis"   "output/report"         "process" 
 #&gt; 
 #&gt; $paths$projectSessionFolder
@@ -224,14 +295,22 @@
 #&gt; $paths$projectMemoryFolder
 #&gt; [1] "process/projectSession/projectMemory"
 #&gt; 
+#&gt; $paths$currentMemoryFolder
+#&gt; [1] "process/projectSession/projectMemory/current"
+#&gt; 
+#&gt; $paths$historyMemoryFolder
+#&gt; [1] "process/projectSession/projectMemory/history"
+#&gt; 
 #&gt; $paths$statusFolder
 #&gt; [1] "process/projectSession/status"
 #&gt; 
 #&gt; $paths$projectSessionFolderStructure
-#&gt; [1] "process/projectSession/data"         
-#&gt; [2] "process/projectSession/GUI"          
-#&gt; [3] "process/projectSession/projectMemory"
-#&gt; [4] "process/projectSession/status"       
+#&gt; [1] "process/projectSession/data"                 
+#&gt; [2] "process/projectSession/GUI"                  
+#&gt; [3] "process/projectSession/projectMemory"        
+#&gt; [4] "process/projectSession/status"               
+#&gt; [5] "process/projectSession/projectMemory/current"
+#&gt; [6] "process/projectSession/projectMemory/history"
 #&gt; 
 #&gt; $paths$projectRDataFile
 #&gt; [1] "process/project.RData"
@@ -239,110 +318,110 @@
 #&gt; $paths$projectXMLFile
 #&gt; [1] "process/project.xml"
 #&gt; 
+#&gt; $paths$projectJSONFile
+#&gt; [1] "process/project.json"
+#&gt; 
 #&gt; $paths$projectSavedStatusFile
 #&gt; [1] "process/projectSession/status/projectSavedStatus.txt"
 #&gt; 
 #&gt; $paths$projectIsRunningFile
 #&gt; [1] "process/projectSession/status/projectIsRunning.txt"
 #&gt; 
-#&gt; $paths$originalProjectMemoryFile
-#&gt; [1] "process/projectSession/projectMemory/originalProjectMemory.rds"
-#&gt; 
 #&gt; $paths$currentProjectMemoryFile
-#&gt; [1] "process/projectSession/projectMemory/currentProjectMemory.rds"
+#&gt; [1] "process/projectSession/projectMemory/current/currentProjectMemory.rds"
 #&gt; 
 #&gt; $paths$projectMemoryIndexFile
-#&gt; [1] "process/projectSession/projectMemory/projectMemoryIndex.txt"
+#&gt; [1] "process/projectSession/projectMemory/history/projectMemoryIndex.txt"
 #&gt; 
 #&gt; $paths$processIndexTableFile
-#&gt; [1] "process/projectSession/projectMemory/processIndexTable.txt"
+#&gt; [1] "process/projectSession/projectMemory/current/processIndexTable.txt"
 #&gt; 
 #&gt; $paths$activeProcessIDFile
-#&gt; [1] "process/projectSession/projectMemory/activeProcessID.txt"
+#&gt; [1] "process/projectSession/projectMemory/current/activeProcessID.txt"
 #&gt; 
 #&gt; $paths$maxProcessIntegerIDFile
-#&gt; [1] "process/projectSession/projectMemory/maxProcessIntegerID.txt"
+#&gt; [1] "process/projectSession/projectMemory/current/maxProcessIntegerID.txt"
 #&gt; 
 #&gt; 
 #&gt; $process_Prefix
 #&gt; [1] "Process_"
 #&gt; 
 #&gt; $processDefault
-#&gt; $processDefault$Baseline
-#&gt; $processDefault$Baseline$processName
+#&gt; $processDefault$baseline
+#&gt; $processDefault$baseline$processName
 #&gt; NULL
 #&gt; 
-#&gt; $processDefault$Baseline$functionName
+#&gt; $processDefault$baseline$functionName
 #&gt; NULL
 #&gt; 
-#&gt; $processDefault$Baseline$processParameters
-#&gt; $processDefault$Baseline$processParameters$enabled
+#&gt; $processDefault$baseline$processParameters
+#&gt; $processDefault$baseline$processParameters$enabled
 #&gt; [1] TRUE
 #&gt; 
-#&gt; $processDefault$Baseline$processParameters$showInMap
+#&gt; $processDefault$baseline$processParameters$showInMap
 #&gt; [1] FALSE
 #&gt; 
-#&gt; $processDefault$Baseline$processParameters$fileOutput
+#&gt; $processDefault$baseline$processParameters$fileOutput
 #&gt; [1] TRUE
 #&gt; 
 #&gt; 
-#&gt; $processDefault$Baseline$processData
+#&gt; $processDefault$baseline$processData
 #&gt; list()
 #&gt; 
-#&gt; $processDefault$Baseline$functionParameters
+#&gt; $processDefault$baseline$functionParameters
 #&gt; list()
 #&gt; 
-#&gt; $processDefault$Baseline$functionInputs
+#&gt; $processDefault$baseline$functionInputs
 #&gt; list()
 #&gt; 
 #&gt; 
-#&gt; $processDefault$Analysis
-#&gt; $processDefault$Analysis$processName
+#&gt; $processDefault$analysis
+#&gt; $processDefault$analysis$processName
 #&gt; NULL
 #&gt; 
-#&gt; $processDefault$Analysis$functionName
+#&gt; $processDefault$analysis$functionName
 #&gt; NULL
 #&gt; 
-#&gt; $processDefault$Analysis$processParameters
-#&gt; $processDefault$Analysis$processParameters$enabled
+#&gt; $processDefault$analysis$processParameters
+#&gt; $processDefault$analysis$processParameters$enabled
 #&gt; [1] TRUE
 #&gt; 
-#&gt; $processDefault$Analysis$processParameters$showInMap
+#&gt; $processDefault$analysis$processParameters$showInMap
 #&gt; [1] FALSE
 #&gt; 
-#&gt; $processDefault$Analysis$processParameters$fileOutput
+#&gt; $processDefault$analysis$processParameters$fileOutput
 #&gt; [1] TRUE
 #&gt; 
 #&gt; 
-#&gt; $processDefault$Analysis$functionParameters
+#&gt; $processDefault$analysis$functionParameters
 #&gt; list()
 #&gt; 
-#&gt; $processDefault$Analysis$functionInputs
+#&gt; $processDefault$analysis$functionInputs
 #&gt; list()
 #&gt; 
 #&gt; 
-#&gt; $processDefault$Report
-#&gt; $processDefault$Report$processName
+#&gt; $processDefault$report
+#&gt; $processDefault$report$processName
 #&gt; NULL
 #&gt; 
-#&gt; $processDefault$Report$functionName
+#&gt; $processDefault$report$functionName
 #&gt; NULL
 #&gt; 
-#&gt; $processDefault$Report$processParameters
-#&gt; $processDefault$Report$processParameters$enabled
+#&gt; $processDefault$report$processParameters
+#&gt; $processDefault$report$processParameters$enabled
 #&gt; [1] TRUE
 #&gt; 
-#&gt; $processDefault$Report$processParameters$showInMap
+#&gt; $processDefault$report$processParameters$showInMap
 #&gt; [1] FALSE
 #&gt; 
-#&gt; $processDefault$Report$processParameters$fileOutput
+#&gt; $processDefault$report$processParameters$fileOutput
 #&gt; [1] TRUE
 #&gt; 
 #&gt; 
-#&gt; $processDefault$Report$functionParameters
+#&gt; $processDefault$report$functionParameters
 #&gt; list()
 #&gt; 
-#&gt; $processDefault$Report$functionInputs
+#&gt; $processDefault$report$functionInputs
 #&gt; list()
 #&gt; 
 #&gt; 
@@ -430,28 +509,45 @@
 #&gt; [1] "Show in map"
 #&gt; 
 #&gt; $processParametersDisplayNames$fileOutput
-#&gt; [1] "Write to output"
+#&gt; [1] "Write output to file"
 #&gt; 
 #&gt; 
 #&gt; $processPropertyFormats
 #&gt; $processPropertyFormats$default
 #&gt; [1] "none"
 #&gt; 
-#&gt; $processPropertyFormats$optional
-#&gt; $processPropertyFormats$optional[[1]]
+#&gt; $processPropertyFormats$single
+#&gt; $processPropertyFormats$single[[1]]
 #&gt; [1] "filePath"
 #&gt; 
-#&gt; $processPropertyFormats$optional[[2]]
-#&gt; [1] "filePaths"
-#&gt; 
-#&gt; $processPropertyFormats$optional[[3]]
+#&gt; $processPropertyFormats$single[[2]]
 #&gt; [1] "directoryPath"
 #&gt; 
-#&gt; $processPropertyFormats$optional[[4]]
-#&gt; [1] "table"
 #&gt; 
-#&gt; $processPropertyFormats$optional[[5]]
+#&gt; $processPropertyFormats$multiple
+#&gt; $processPropertyFormats$multiple[[1]]
+#&gt; [1] "filePaths"
+#&gt; 
+#&gt; $processPropertyFormats$multiple[[2]]
 #&gt; [1] "filterExpressionTable"
+#&gt; 
+#&gt; $processPropertyFormats$multiple[[3]]
+#&gt; [1] "speciesCategoryTable"
+#&gt; 
+#&gt; $processPropertyFormats$multiple[[4]]
+#&gt; [1] "acousticCategoryTable"
+#&gt; 
+#&gt; $processPropertyFormats$multiple[[5]]
+#&gt; [1] "catchCompensationTable"
+#&gt; 
+#&gt; $processPropertyFormats$multiple[[6]]
+#&gt; [1] "selectivityTable"
+#&gt; 
+#&gt; $processPropertyFormats$multiple[[7]]
+#&gt; [1] "speciesLinktable"
+#&gt; 
+#&gt; $processPropertyFormats$multiple[[8]]
+#&gt; [1] "acousticTargetStrengthTable"
 #&gt; 
 #&gt; 
 #&gt; 
@@ -505,21 +601,42 @@
 #&gt; "acoustic"   "biotic"  "landing" 
 #&gt; 
 #&gt; $stoxDataTypes
-#&gt;     functionOutputDataType functionType
-#&gt;  1:         StratumPolygon  processData
-#&gt;  2:            StratumArea    modelData
-#&gt;  3:            AcousticPSU  processData
-#&gt;  4:           SweptAreaPSU  processData
-#&gt;  5:          AcousticLayer  processData
-#&gt;  6:         SweptAreaLayer  processData
-#&gt;  7:       BioticAssignment  processData
-#&gt;  8:     LengthDistribution    modelData
-#&gt;  9:     LengthDistribution    modelData
-#&gt; 10:               NASCData    modelData
-#&gt; 11:             BioticData    modelData
-#&gt; 12:           AcousticData    modelData
-#&gt; 13:       StoxAcousticData    modelData
-#&gt; 14:         StoxBioticData    modelData
+#&gt;               functionOutputDataType functionType
+#&gt;  1:                   StratumPolygon  processData
+#&gt;  2:                      StratumArea    modelData
+#&gt;  3:                      AcousticPSU  processData
+#&gt;  4:                     SweptAreaPSU  processData
+#&gt;  5:                    AcousticLayer  processData
+#&gt;  6:                   SweptAreaLayer  processData
+#&gt;  7:                 BioticAssignment  processData
+#&gt;  8:           LengthDistributionData    modelData
+#&gt;  9:           LengthDistributionData    modelData
+#&gt; 10:           LengthDistributionData    modelData
+#&gt; 11:           LengthDistributionData    modelData
+#&gt; 12:           LengthDistributionData    modelData
+#&gt; 13:           LengthDistributionData    modelData
+#&gt; 14: AssignmentLengthDistributionData    modelData
+#&gt; 15:                         NASCData    modelData
+#&gt; 16:                         NASCData    modelData
+#&gt; 17:                         NASCData    modelData
+#&gt; 18:                      DensityData    modelData
+#&gt; 19:                      DensityData    modelData
+#&gt; 20:                    AbundanceData    modelData
+#&gt; 21:                  IndividualsData    modelData
+#&gt; 22:             SuperIndividualsData    modelData
+#&gt; 23:           AcousticTargetStrength  processData
+#&gt; 24:                       BioticData    modelData
+#&gt; 25:                     AcousticData    modelData
+#&gt; 26:                 StoxAcousticData    modelData
+#&gt; 27:                   StoxBioticData    modelData
+#&gt; 28:                  StoxLandingData    modelData
+#&gt; 29:                       BioticData    modelData
+#&gt; 30:                     AcousticData    modelData
+#&gt; 31:                   StoxBioticData    modelData
+#&gt; 32:                 StoxAcousticData    modelData
+#&gt; 33:           MergedStoxAcousticData    modelData
+#&gt; 34:             MergedStoxBioticData    modelData
+#&gt;               functionOutputDataType functionType
 #&gt; 
 #&gt; $stoxFolderStructureList
 #&gt; $stoxFolderStructureList$Acoustic
@@ -531,13 +648,13 @@
 #&gt; $stoxFolderStructureList$Landing
 #&gt; [1] "input/landing"
 #&gt; 
-#&gt; $stoxFolderStructureList$Baseline
+#&gt; $stoxFolderStructureList$baseline
 #&gt; [1] "output/baseline"
 #&gt; 
-#&gt; $stoxFolderStructureList$Analysis
+#&gt; $stoxFolderStructureList$analysis
 #&gt; [1] "output/analysis"
 #&gt; 
-#&gt; $stoxFolderStructureList$Report
+#&gt; $stoxFolderStructureList$report
 #&gt; [1] "output/report"
 #&gt; 
 #&gt; $stoxFolderStructureList$Process
@@ -545,7 +662,7 @@
 #&gt; 
 #&gt; 
 #&gt; $stoxFolderStructureNames
-#&gt; [1] "Acoustic" "Biotic"   "Landing"  "Baseline" "Analysis" "Report"   "Process" 
+#&gt; [1] "Acoustic" "Biotic"   "Landing"  "baseline" "analysis" "report"   "Process" 
 #&gt; 
 #&gt; $stoxLibrary
 #&gt; $stoxLibrary$DefineStrata
@@ -559,7 +676,7 @@
 #&gt; [1] "processData"
 #&gt; 
 #&gt; $stoxLibrary$DefineStrata$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$DefineStrata$functionOutputDataType
 #&gt; [1] "StratumPolygon"
@@ -573,17 +690,17 @@
 #&gt; 
 #&gt; 
 #&gt; $stoxLibrary$DefineStrata$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineStrata$functionArgumentDescription
+#&gt; $stoxLibrary$DefineStrata$functionArgumentDescription$FileName
+#&gt; [1] "The path to a geoJSON file, shape file (folder) or a Stox multipolygon WKT file. Must include file extension."
+#&gt; 
 #&gt; $stoxLibrary$DefineStrata$functionArgumentDescription$processData
 #&gt; [1] "The current data produced by a previous instance of the function."
 #&gt; 
-#&gt; $stoxLibrary$DefineStrata$functionArgumentDescription$FileName
-#&gt; [1] "The path to a goejson file, shape file (folder) or a Stox multipolygon WKT file."
-#&gt; 
 #&gt; $stoxLibrary$DefineStrata$functionArgumentDescription$UseProcessData
-#&gt; [1] "Logical: If TRUE use the existing funciton output in the process."
+#&gt; [1] "Logical: If TRUE use the existing function output in the process."
 #&gt; 
 #&gt; 
 #&gt; 
@@ -598,7 +715,7 @@
 #&gt; [1] "modelData"
 #&gt; 
 #&gt; $stoxLibrary$StratumArea$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$StratumArea$functionOutputDataType
 #&gt; [1] "StratumArea"
@@ -610,7 +727,7 @@
 #&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$StratumArea$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$StratumArea$functionArgumentDescription
 #&gt; $stoxLibrary$StratumArea$functionArgumentDescription$StratumPolygon
@@ -618,9 +735,6 @@
 #&gt; 
 #&gt; $stoxLibrary$StratumArea$functionArgumentDescription$AreaMethod
 #&gt; [1] "The method to use for the area calculation, defaulted to \"Accurate\", which applied a lambert azimuthal equal area projection."
-#&gt; 
-#&gt; $stoxLibrary$StratumArea$functionArgumentDescription$parameterName
-#&gt; [1] "Parameter descrption."
 #&gt; 
 #&gt; 
 #&gt; 
@@ -635,7 +749,7 @@
 #&gt; [1] "processData"
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticPSU$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticPSU$functionOutputDataType
 #&gt; [1] "AcousticPSU"
@@ -647,7 +761,7 @@
 #&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticPSU$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticPSU$functionArgumentDescription
 #&gt; $stoxLibrary$DefineAcousticPSU$functionArgumentDescription$processData
@@ -663,7 +777,7 @@
 #&gt; [1] "Character: A string naming the method to use, one of \"EDSUToPSU\", which sets each EDSU as a PSU, and \"None\" for pure manual actions by the user."
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticPSU$functionArgumentDescription$UseProcessData
-#&gt; [1] "Logical: If TRUE use the existing funciton output in the process."
+#&gt; [1] "Logical: If TRUE use the existing function output in the process."
 #&gt; 
 #&gt; 
 #&gt; 
@@ -678,7 +792,7 @@
 #&gt; [1] "processData"
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaPSU$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaPSU$functionOutputDataType
 #&gt; [1] "SweptAreaPSU"
@@ -690,7 +804,7 @@
 #&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaPSU$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaPSU$functionArgumentDescription
 #&gt; $stoxLibrary$DefineSweptAreaPSU$functionArgumentDescription$processData
@@ -706,7 +820,7 @@
 #&gt; [1] "Character: A string naming the method to use, one of \"StationToPSU\", which sets each Station as a PSU, and \"None\" for pure manual actions by the user."
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaPSU$functionArgumentDescription$UseProcessData
-#&gt; [1] "Logical: If TRUE use the existing funciton output in the process."
+#&gt; [1] "Logical: If TRUE use the existing function output in the process."
 #&gt; 
 #&gt; 
 #&gt; 
@@ -721,7 +835,7 @@
 #&gt; [1] "processData"
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticLayer$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticLayer$functionOutputDataType
 #&gt; [1] "AcousticLayer"
@@ -733,7 +847,7 @@
 #&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticLayer$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticLayer$functionArgumentDescription
 #&gt; $stoxLibrary$DefineAcousticLayer$functionArgumentDescription$processData
@@ -746,7 +860,7 @@
 #&gt; [1] "Character: A string naming the method to use, one of \"EDSUToPSU\", which sets each EDSU as a PSU, and \"None\" for pure manual actions by the user."
 #&gt; 
 #&gt; $stoxLibrary$DefineAcousticLayer$functionArgumentDescription$UseProcessData
-#&gt; [1] "Logical: If TRUE use the existing funciton output in the process."
+#&gt; [1] "Logical: If TRUE use the existing function output in the process."
 #&gt; 
 #&gt; 
 #&gt; 
@@ -761,7 +875,7 @@
 #&gt; [1] "processData"
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaLayer$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaLayer$functionOutputDataType
 #&gt; [1] "SweptAreaLayer"
@@ -773,7 +887,7 @@
 #&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaLayer$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaLayer$functionArgumentDescription
 #&gt; $stoxLibrary$DefineSweptAreaLayer$functionArgumentDescription$processData
@@ -786,7 +900,7 @@
 #&gt; [1] "Character: A string naming the method to use, one of \"EDSUToPSU\", which sets each EDSU as a PSU, and \"None\" for pure manual actions by the user."
 #&gt; 
 #&gt; $stoxLibrary$DefineSweptAreaLayer$functionArgumentDescription$UseProcessData
-#&gt; [1] "Logical: If TRUE use the existing funciton output in the process."
+#&gt; [1] "Logical: If TRUE use the existing function output in the process."
 #&gt; 
 #&gt; 
 #&gt; 
@@ -801,7 +915,7 @@
 #&gt; [1] "processData"
 #&gt; 
 #&gt; $stoxLibrary$DefineBioticAssignment$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$DefineBioticAssignment$functionOutputDataType
 #&gt; [1] "BioticAssignment"
@@ -813,7 +927,51 @@
 #&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy
-#&gt; NULL
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$StratumPolygon
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$StratumPolygon$DefinitionMethod
+#&gt; [1] "Stratum"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$StoxAcousticData
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$StoxAcousticData$DefinitionMethod
+#&gt; [1] "Radius"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$Radius
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$Radius$DefinitionMethod
+#&gt; [1] "Radius"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$MinNumStations
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$MinNumStations$DefinitionMethod
+#&gt; [1] "EllipsoidalDistance"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefGCDistance
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefGCDistance$DefinitionMethod
+#&gt; [1] "EllipsoidalDistance"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefTime
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefTime$DefinitionMethod
+#&gt; [1] "EllipsoidalDistance"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefBotDepth
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefBotDepth$DefinitionMethod
+#&gt; [1] "EllipsoidalDistance"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefLatitude
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefLatitude$DefinitionMethod
+#&gt; [1] "EllipsoidalDistance"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefLongitude
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentHierarchy$RefLongitude$DefinitionMethod
+#&gt; [1] "EllipsoidalDistance"
+#&gt; 
+#&gt; 
 #&gt; 
 #&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentDescription
 #&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentDescription$processData
@@ -825,14 +983,14 @@
 #&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentDescription$DefinitionMethod
 #&gt; [1] "Character: A string naming the method to use, one of \"Stratum\", which assigns all Hauls to every PSU of each stratum; \"Radius\", which selects Hauls inside a radius around each PSU????; and \"EllipsoidalDistance\", which selects Hauls within an ellipsoid defined by axes in space, time, bottom depth *************."
 #&gt; 
+#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentDescription$AcousticPSU
+#&gt; [1] "A list of  AcousticPSU  process data."
+#&gt; 
 #&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentDescription$StratumPolygon
 #&gt; [1] "A list of  StratumPolygon  process data."
 #&gt; 
 #&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentDescription$UseProcessData
-#&gt; [1] "Logical: If TRUE use the existing funciton output in the process."
-#&gt; 
-#&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentDescription$AcousticPSU
-#&gt; [1] "A list of  AcousticPSU  process data."
+#&gt; [1] "Logical: If TRUE use the existing function output in the process."
 #&gt; 
 #&gt; $stoxLibrary$DefineBioticAssignment$functionArgumentDescription$AcousticLayer
 #&gt; [1] "A list of  AcousticLayer  process data."
@@ -850,10 +1008,10 @@
 #&gt; [1] "modelData"
 #&gt; 
 #&gt; $stoxLibrary$LengthDistribution$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$LengthDistribution$functionOutputDataType
-#&gt; [1] "LengthDistribution"
+#&gt; [1] "LengthDistributionData"
 #&gt; 
 #&gt; $stoxLibrary$LengthDistribution$functionParameterType
 #&gt; NULL
@@ -862,7 +1020,7 @@
 #&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$LengthDistribution$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$LengthDistribution$functionArgumentDescription
 #&gt; $stoxLibrary$LengthDistribution$functionArgumentDescription$StoxBioticData
@@ -893,10 +1051,10 @@
 #&gt; [1] "modelData"
 #&gt; 
 #&gt; $stoxLibrary$RegroupLengthDistribution$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$RegroupLengthDistribution$functionOutputDataType
-#&gt; [1] "LengthDistribution"
+#&gt; [1] "LengthDistributionData"
 #&gt; 
 #&gt; $stoxLibrary$RegroupLengthDistribution$functionParameterType
 #&gt; NULL
@@ -905,14 +1063,201 @@
 #&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$RegroupLengthDistribution$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$RegroupLengthDistribution$functionArgumentDescription
-#&gt; $stoxLibrary$RegroupLengthDistribution$functionArgumentDescription$LengthDistribution
+#&gt; $stoxLibrary$RegroupLengthDistribution$functionArgumentDescription$LengthDistributionData
 #&gt; [1] "The length distribution data."
 #&gt; 
 #&gt; $stoxLibrary$RegroupLengthDistribution$functionArgumentDescription$LengthInterval
-#&gt; [1] "The new length intervals, either given as a vector of interval breaks, or a single numeric value, in which case a vector of intervavl breaks is created covering the range of the original length interval breaks."
+#&gt; [1] "Specifies the new length intervals, either given as a single numeric value representing the constant length interval widths, (starting from 0), or a vector of the interval breaks."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution
+#&gt; $stoxLibrary$MeanLengthDistribution$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution$functionName
+#&gt; [1] "RstoxBase::MeanLengthDistribution"
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution$functionOutputDataType
+#&gt; [1] "LengthDistributionData"
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution$functionParameterFormat
+#&gt; list()
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution$functionArgumentHierarchy
+#&gt; list()
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution$functionArgumentDescription
+#&gt; $stoxLibrary$MeanLengthDistribution$functionArgumentDescription$LengthDistributionData
+#&gt; [1] "The length distribution data."
+#&gt; 
+#&gt; $stoxLibrary$MeanLengthDistribution$functionArgumentDescription$TargetResolution
+#&gt; [1] "The horizontal resolution of the output."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution
+#&gt; $stoxLibrary$SumLengthDistribution$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution$functionName
+#&gt; [1] "RstoxBase::SumLengthDistribution"
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution$functionOutputDataType
+#&gt; [1] "LengthDistributionData"
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution$functionParameterFormat
+#&gt; list()
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution$functionArgumentHierarchy
+#&gt; list()
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution$functionArgumentDescription
+#&gt; $stoxLibrary$SumLengthDistribution$functionArgumentDescription$LengthDistributionData
+#&gt; [1] "The length distribution data."
+#&gt; 
+#&gt; $stoxLibrary$SumLengthDistribution$functionArgumentDescription$TargetResolution
+#&gt; [1] "The vertical resolution of the output."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionName
+#&gt; [1] "RstoxBase::LengthDependentCatchCompensation"
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionOutputDataType
+#&gt; [1] "LengthDistributionData"
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionParameterFormat
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionParameterFormat$LengthDependentSweepWidthParameters
+#&gt; [1] "catchCompensationTable"
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionParameterFormat$LengthDependentSelectivityParameters
+#&gt; [1] "selectivityTable"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentHierarchy
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentHierarchy$LengthDependentSweepWidthParameters
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentHierarchy$LengthDependentSweepWidthParameters$CompensationMethod
+#&gt; [1] "LengthDependentSweepWidth"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentHierarchy$LengthDependentSelectivityParameters
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentHierarchy$LengthDependentSelectivityParameters$CompensationMethod
+#&gt; [1] "LengthDependentSelectivity"
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentDescription
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentDescription$LengthDistributionData
+#&gt; [1] "The length distribution data."
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentDescription$CompensationMethod
+#&gt; [1] "Parameter descrption."
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentDescription$LengthDependentSweepWidthParameters
+#&gt; [1] "A data.frame or data.table of parameters of the LengthDependentSweepWidth method, containing the columns SpeciesCategory, LMin, LMax, Alpha and Beta (see details)."
+#&gt; 
+#&gt; $stoxLibrary$LengthDependentCatchCompensation$functionArgumentDescription$LengthDependentSelectivityParameters
+#&gt; [1] "A data.frame or data.table of parameters of the LengthDependentSelectivity method, containing the columns SpeciesCategory, LMax, Alpha and Beta (see details)."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$RelativeLengthDistribution
+#&gt; $stoxLibrary$RelativeLengthDistribution$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$RelativeLengthDistribution$functionName
+#&gt; [1] "RstoxBase::RelativeLengthDistribution"
+#&gt; 
+#&gt; $stoxLibrary$RelativeLengthDistribution$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$RelativeLengthDistribution$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$RelativeLengthDistribution$functionOutputDataType
+#&gt; [1] "LengthDistributionData"
+#&gt; 
+#&gt; $stoxLibrary$RelativeLengthDistribution$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$RelativeLengthDistribution$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$RelativeLengthDistribution$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$RelativeLengthDistribution$functionArgumentDescription
+#&gt; $stoxLibrary$RelativeLengthDistribution$functionArgumentDescription$LengthDistributionData
+#&gt; [1] "The length distribution data."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution
+#&gt; $stoxLibrary$AssignmentLengthDistribution$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionName
+#&gt; [1] "RstoxBase::AssignmentLengthDistribution"
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionOutputDataType
+#&gt; [1] "AssignmentLengthDistributionData"
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionArgumentDescription
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionArgumentDescription$LengthDistributionData
+#&gt; [1] "A list of  LengthDistributionData  data."
+#&gt; 
+#&gt; $stoxLibrary$AssignmentLengthDistribution$functionArgumentDescription$BioticAssignment
+#&gt; [1] "A list of  BioticAssignment  data."
 #&gt; 
 #&gt; 
 #&gt; 
@@ -927,7 +1272,7 @@
 #&gt; [1] "modelData"
 #&gt; 
 #&gt; $stoxLibrary$NASC$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$NASC$functionOutputDataType
 #&gt; [1] "NASCData"
@@ -947,6 +1292,313 @@
 #&gt; 
 #&gt; 
 #&gt; 
+#&gt; $stoxLibrary$SumNASC
+#&gt; $stoxLibrary$SumNASC$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$SumNASC$functionName
+#&gt; [1] "RstoxBase::SumNASC"
+#&gt; 
+#&gt; $stoxLibrary$SumNASC$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$SumNASC$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$SumNASC$functionOutputDataType
+#&gt; [1] "NASCData"
+#&gt; 
+#&gt; $stoxLibrary$SumNASC$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$SumNASC$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$SumNASC$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$SumNASC$functionArgumentDescription
+#&gt; $stoxLibrary$SumNASC$functionArgumentDescription$NASCData
+#&gt; [1] "The NASC data."
+#&gt; 
+#&gt; $stoxLibrary$SumNASC$functionArgumentDescription$TargetResolution
+#&gt; [1] "The vertical resolution of the output."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC
+#&gt; $stoxLibrary$MeanNASC$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC$functionName
+#&gt; [1] "RstoxBase::MeanNASC"
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC$functionOutputDataType
+#&gt; [1] "NASCData"
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC$functionArgumentDescription
+#&gt; $stoxLibrary$MeanNASC$functionArgumentDescription$NASCData
+#&gt; [1] "The NASC data."
+#&gt; 
+#&gt; $stoxLibrary$MeanNASC$functionArgumentDescription$TargetResolution
+#&gt; [1] "The vertical resolution of the output."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity
+#&gt; $stoxLibrary$SweptAreaDensity$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionName
+#&gt; [1] "RstoxBase::SweptAreaDensity"
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionOutputDataType
+#&gt; [1] "DensityData"
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentHierarchy
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentHierarchy$SweepWidth
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentHierarchy$SweepWidth$SweepWidthMethod
+#&gt; [1] "Constant"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentHierarchy$SweepWidthExpr
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentHierarchy$SweepWidthExpr$SweepWidthMethod
+#&gt; [1] "CruiseDependent"
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentDescription
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentDescription$LengthDistributionData
+#&gt; [1] "The length distribution data."
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentDescription$SweptAreaMethod
+#&gt; [1] "The method used to calculate the density, one of \"LengthDependent\" and \"TotalCatch\" (the latter is not )"
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentDescription$SweepWidthMethod
+#&gt; [1] "Parameter descrption."
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentDescription$SweepWidthExpr
+#&gt; [1] "Parameter descrption."
+#&gt; 
+#&gt; $stoxLibrary$SweptAreaDensity$functionArgumentDescription$SweepWidthSweepWidth
+#&gt; [1] "Parameter descrption."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity
+#&gt; $stoxLibrary$MeanDensity$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity$functionName
+#&gt; [1] "RstoxBase::MeanDensity"
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity$functionOutputDataType
+#&gt; [1] "DensityData"
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity$functionArgumentDescription
+#&gt; $stoxLibrary$MeanDensity$functionArgumentDescription$DensityData
+#&gt; [1] "An object of  DensityData  data."
+#&gt; 
+#&gt; $stoxLibrary$MeanDensity$functionArgumentDescription$TargetResolution
+#&gt; [1] "The vertical resolution of the output."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$Abundance
+#&gt; $stoxLibrary$Abundance$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$Abundance$functionName
+#&gt; [1] "RstoxBase::Abundance"
+#&gt; 
+#&gt; $stoxLibrary$Abundance$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$Abundance$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$Abundance$functionOutputDataType
+#&gt; [1] "AbundanceData"
+#&gt; 
+#&gt; $stoxLibrary$Abundance$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$Abundance$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$Abundance$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$Abundance$functionArgumentDescription
+#&gt; $stoxLibrary$Abundance$functionArgumentDescription$parameterName
+#&gt; [1] "Parameter descrption."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$Individuals
+#&gt; $stoxLibrary$Individuals$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$Individuals$functionName
+#&gt; [1] "RstoxBase::Individuals"
+#&gt; 
+#&gt; $stoxLibrary$Individuals$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$Individuals$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$Individuals$functionOutputDataType
+#&gt; [1] "IndividualsData"
+#&gt; 
+#&gt; $stoxLibrary$Individuals$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$Individuals$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$Individuals$functionArgumentHierarchy
+#&gt; $stoxLibrary$Individuals$functionArgumentHierarchy$BioticAssignment
+#&gt; $stoxLibrary$Individuals$functionArgumentHierarchy$BioticAssignment$DensityType
+#&gt; [1] "Acoustic"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$Individuals$functionArgumentHierarchy$LengthDistributionData
+#&gt; $stoxLibrary$Individuals$functionArgumentHierarchy$LengthDistributionData$DensityType
+#&gt; [1] "SweptArea"
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$Individuals$functionArgumentDescription
+#&gt; $stoxLibrary$Individuals$functionArgumentDescription$parameterName
+#&gt; [1] "Parameter descrption."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$SuperIndividuals
+#&gt; $stoxLibrary$SuperIndividuals$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$SuperIndividuals$functionName
+#&gt; [1] "RstoxBase::SuperIndividuals"
+#&gt; 
+#&gt; $stoxLibrary$SuperIndividuals$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$SuperIndividuals$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$SuperIndividuals$functionOutputDataType
+#&gt; [1] "SuperIndividualsData"
+#&gt; 
+#&gt; $stoxLibrary$SuperIndividuals$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$SuperIndividuals$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$SuperIndividuals$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$SuperIndividuals$functionArgumentDescription
+#&gt; $stoxLibrary$SuperIndividuals$functionArgumentDescription$parameterName
+#&gt; [1] "Parameter descrption."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$packageName
+#&gt; [1] "RstoxBase"
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionName
+#&gt; [1] "RstoxBase::DefineAcousticTargetStrength"
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionType
+#&gt; [1] "processData"
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionOutputDataType
+#&gt; [1] "AcousticTargetStrength"
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionParameterFormat
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionParameterFormat$ParameterTable
+#&gt; [1] "acousticTargetStrengthTable"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentHierarchy
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentHierarchy$ParameterTable
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentHierarchy$ParameterTable$DefinitionMethod
+#&gt; [1] "Table"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentHierarchy$FileName
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentHierarchy$FileName$DefinitionMethod
+#&gt; [1] "ResourceFile"
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentDescription
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentDescription$processData
+#&gt; [1] "The current data produced by a previous instance of the function."
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentDescription$ParameterTable
+#&gt; [1] "A table of target strength to length equation parameters, including the column  EquationType  and  m  and  a  for  EquationType = \"Standard\"  and  m ,  a  and  d  for  EquationType = \"DepthDependent\" . Also allowed are columns representing variables in the  NASCData , such as \"SpeciesCategory\" and \"Frequency\"."
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentDescription$FileName
+#&gt; [1] "The path to a geoJSON file, shape file (folder) or a Stox multipolygon WKT file. Must include file extension."
+#&gt; 
+#&gt; $stoxLibrary$DefineAcousticTargetStrength$functionArgumentDescription$UseProcessData
+#&gt; [1] "Logical: If TRUE use the existing function output in the process."
+#&gt; 
+#&gt; 
+#&gt; 
 #&gt; $stoxLibrary$ReadBiotic
 #&gt; $stoxLibrary$ReadBiotic$packageName
 #&gt; [1] "RstoxData"
@@ -958,7 +1610,7 @@
 #&gt; [1] "modelData"
 #&gt; 
 #&gt; $stoxLibrary$ReadBiotic$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$ReadBiotic$functionOutputDataType
 #&gt; [1] "BioticData"
@@ -991,7 +1643,7 @@
 #&gt; [1] "modelData"
 #&gt; 
 #&gt; $stoxLibrary$ReadAcoustic$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$ReadAcoustic$functionOutputDataType
 #&gt; [1] "AcousticData"
@@ -1024,7 +1676,7 @@
 #&gt; [1] "modelData"
 #&gt; 
 #&gt; $stoxLibrary$StoxAcoustic$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$StoxAcoustic$functionOutputDataType
 #&gt; [1] "StoxAcousticData"
@@ -1036,7 +1688,7 @@
 #&gt; NULL
 #&gt; 
 #&gt; $stoxLibrary$StoxAcoustic$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$StoxAcoustic$functionArgumentDescription
 #&gt; $stoxLibrary$StoxAcoustic$functionArgumentDescription$AcousticData
@@ -1055,7 +1707,7 @@
 #&gt; [1] "modelData"
 #&gt; 
 #&gt; $stoxLibrary$StoxBiotic$functionCategory
-#&gt; [1] "Baseline"
+#&gt; [1] "baseline"
 #&gt; 
 #&gt; $stoxLibrary$StoxBiotic$functionOutputDataType
 #&gt; [1] "StoxBioticData"
@@ -1067,7 +1719,7 @@
 #&gt; NULL
 #&gt; 
 #&gt; $stoxLibrary$StoxBiotic$functionArgumentHierarchy
-#&gt; NULL
+#&gt; list()
 #&gt; 
 #&gt; $stoxLibrary$StoxBiotic$functionArgumentDescription
 #&gt; $stoxLibrary$StoxBiotic$functionArgumentDescription$BioticData
@@ -1075,36 +1727,311 @@
 #&gt; 
 #&gt; 
 #&gt; 
+#&gt; $stoxLibrary$StoxLanding
+#&gt; $stoxLibrary$StoxLanding$packageName
+#&gt; [1] "RstoxData"
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionName
+#&gt; [1] "RstoxData::StoxLanding"
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionOutputDataType
+#&gt; [1] "StoxLandingData"
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionParameterType
+#&gt; $stoxLibrary$StoxLanding$functionParameterType$StoxLanding
+#&gt; [1] "character"
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionParameterType$appendColumns
+#&gt; [1] "character"
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionParameterType$appendColumnsNames
+#&gt; [1] "character"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionArgumentHierarchy
+#&gt; list()
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionArgumentDescription
+#&gt; $stoxLibrary$StoxLanding$functionArgumentDescription$LandingData
+#&gt; [1] "Sales-notes data. See  LandingData"
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionArgumentDescription$appendColumns
+#&gt; [1] "character() vector that identifies additional columns in  LandingData  to append to  StoxLandingData ."
+#&gt; 
+#&gt; $stoxLibrary$StoxLanding$functionArgumentDescription$appendColumnsNames
+#&gt; [1] "character() vector that defines the names of the columns in 'appendColumns' in the output."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic
+#&gt; $stoxLibrary$FilterBiotic$packageName
+#&gt; [1] "RstoxData"
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionName
+#&gt; [1] "RstoxData::FilterBiotic"
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionOutputDataType
+#&gt; [1] "BioticData"
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionParameterFormat
+#&gt; $stoxLibrary$FilterBiotic$functionParameterFormat$FilterExpression
+#&gt; [1] "filterExpressionTable"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionArgumentDescription
+#&gt; $stoxLibrary$FilterBiotic$functionArgumentDescription$BioticData
+#&gt; [1] "Input  BioticData  data."
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionArgumentDescription$FilterExpression
+#&gt; [1] "Filter expression in list of strings. The name of the list and structures should be identical to the names of the input data list."
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionArgumentDescription$PropagateDownwards
+#&gt; [1] "Whether the filter action will propagate in the downwards direction. Default to TRUE."
+#&gt; 
+#&gt; $stoxLibrary$FilterBiotic$functionArgumentDescription$PropagateUpwards
+#&gt; [1] "Whether the filter action will propagate in the upwards direction. Default to FALSE."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic
+#&gt; $stoxLibrary$FilterAcoustic$packageName
+#&gt; [1] "RstoxData"
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionName
+#&gt; [1] "RstoxData::FilterAcoustic"
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionOutputDataType
+#&gt; [1] "AcousticData"
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionParameterFormat
+#&gt; $stoxLibrary$FilterAcoustic$functionParameterFormat$FilterExpression
+#&gt; [1] "filterExpressionTable"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionArgumentDescription
+#&gt; $stoxLibrary$FilterAcoustic$functionArgumentDescription$AcousticData
+#&gt; [1] "Input  AcousticData  data."
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionArgumentDescription$FilterExpression
+#&gt; [1] "Filter expression in list of strings. The name of the list and structures should be identical to the names of the input data list."
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionArgumentDescription$PropagateDownwards
+#&gt; [1] "Whether the filter action will propagate in the downwards direction. Default to TRUE."
+#&gt; 
+#&gt; $stoxLibrary$FilterAcoustic$functionArgumentDescription$PropagateUpwards
+#&gt; [1] "Whether the filter action will propagate in the upwards direction. Default to FALSE."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic
+#&gt; $stoxLibrary$FilterStoxBiotic$packageName
+#&gt; [1] "RstoxData"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionName
+#&gt; [1] "RstoxData::FilterStoxBiotic"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionOutputDataType
+#&gt; [1] "StoxBioticData"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionParameterFormat
+#&gt; $stoxLibrary$FilterStoxBiotic$functionParameterFormat$FilterExpression
+#&gt; [1] "filterExpressionTable"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionArgumentDescription
+#&gt; $stoxLibrary$FilterStoxBiotic$functionArgumentDescription$StoxBioticData
+#&gt; [1] "Input  StoxBioticData  data."
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionArgumentDescription$FilterExpression
+#&gt; [1] "Filter expression in list of strings. The name of the list and structures should be identical to the names of the input data list."
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionArgumentDescription$PropagateDownwards
+#&gt; [1] "Whether the filter action will propagate in the downwards direction. Default to TRUE."
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxBiotic$functionArgumentDescription$PropagateUpwards
+#&gt; [1] "Whether the filter action will propagate in the upwards direction. Default to FALSE."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic
+#&gt; $stoxLibrary$FilterStoxAcoustic$packageName
+#&gt; [1] "RstoxData"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionName
+#&gt; [1] "RstoxData::FilterStoxAcoustic"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionOutputDataType
+#&gt; [1] "StoxAcousticData"
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionParameterFormat
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionParameterFormat$FilterExpression
+#&gt; [1] "filterExpressionTable"
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionArgumentHierarchy
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionArgumentDescription
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionArgumentDescription$FilterExpression
+#&gt; [1] "Filter expression in list of strings. The name of the list and structures should be identical to the names of the input data list."
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionArgumentDescription$PropagateDownwards
+#&gt; [1] "Whether the filter action will propagate in the downwards direction. Default to TRUE."
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionArgumentDescription$PropagateUpwards
+#&gt; [1] "Whether the filter action will propagate in the upwards direction. Default to FALSE."
+#&gt; 
+#&gt; $stoxLibrary$FilterStoxAcoustic$functionArgumentDescription$StoxBioticData
+#&gt; [1] "Input  StoxAcousticData  data."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxAcoustic
+#&gt; $stoxLibrary$MergeStoxAcoustic$packageName
+#&gt; [1] "RstoxData"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxAcoustic$functionName
+#&gt; [1] "RstoxData::MergeStoxAcoustic"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxAcoustic$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxAcoustic$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxAcoustic$functionOutputDataType
+#&gt; [1] "MergedStoxAcousticData"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxAcoustic$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxAcoustic$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxAcoustic$functionArgumentHierarchy
+#&gt; list()
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxAcoustic$functionArgumentDescription
+#&gt; $stoxLibrary$MergeStoxAcoustic$functionArgumentDescription$StoxBioticData
+#&gt; [1] "A list of StoX acoustic data (StoX data type  StoxAcousticData )."
+#&gt; 
+#&gt; 
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxBiotic
+#&gt; $stoxLibrary$MergeStoxBiotic$packageName
+#&gt; [1] "RstoxData"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxBiotic$functionName
+#&gt; [1] "RstoxData::MergeStoxBiotic"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxBiotic$functionType
+#&gt; [1] "modelData"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxBiotic$functionCategory
+#&gt; [1] "baseline"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxBiotic$functionOutputDataType
+#&gt; [1] "MergedStoxBioticData"
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxBiotic$functionParameterType
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxBiotic$functionParameterFormat
+#&gt; NULL
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxBiotic$functionArgumentHierarchy
+#&gt; list()
+#&gt; 
+#&gt; $stoxLibrary$MergeStoxBiotic$functionArgumentDescription
+#&gt; $stoxLibrary$MergeStoxBiotic$functionArgumentDescription$StoxBioticData
+#&gt; [1] "A list of StoX biotic data (StoX data type  StoxBioticData )."
+#&gt; 
+#&gt; 
+#&gt; 
 #&gt; 
 #&gt; $stoxModelDescriptions
-#&gt;                                                                              Baseline 
+#&gt;                                                                              baseline 
 #&gt;                                                      "Baseline: The estimation model" 
-#&gt;                                                                              Analysis 
+#&gt;                                                                              analysis 
 #&gt; "Analysis: Processes that run Baseline for analysis, such as estimation of variation" 
-#&gt;                                                                                Report 
+#&gt;                                                                                report 
 #&gt;       "Report: Processes that run Baseline or Analysis processes to generate reports" 
 #&gt; 
 #&gt; $stoxModelDisplayNames
-#&gt;   Baseline   Analysis     Report 
+#&gt;   baseline   analysis     report 
 #&gt; "Baseline" "Analysis"   "Report" 
 #&gt; 
 #&gt; $stoxModelFolders
-#&gt;   Baseline   Analysis     Report 
+#&gt;   baseline   analysis     report 
 #&gt; "baseline" "analysis"   "report" 
 #&gt; 
 #&gt; $stoxModelInfo
 #&gt;    modelName displayName
-#&gt; 1:  Baseline    Baseline
-#&gt; 2:  Analysis    Analysis
-#&gt; 3:    Report      Report
+#&gt; 1:  baseline    Baseline
+#&gt; 2:  analysis    Analysis
+#&gt; 3:    report      Report
 #&gt;                                                                            description
 #&gt; 1:                                                      Baseline: The estimation model
 #&gt; 2: Analysis: Processes that run Baseline for analysis, such as estimation of variation
 #&gt; 3:       Report: Processes that run Baseline or Analysis processes to generate reports
 #&gt; 
 #&gt; $stoxModelNames
-#&gt;   Baseline   Analysis     Report 
-#&gt; "Baseline" "Analysis"   "Report" 
+#&gt;   baseline   analysis     report 
+#&gt; "baseline" "analysis"   "report" 
 #&gt; 
 #&gt; $stratumDataType
 #&gt; [1] "StratumPolygon"

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get output of a StoX process. — getProcessOutput • RstoxFramework</title>
+<title>Parses covariate definitions from xml — process_covardef • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -35,8 +35,8 @@
 
 
 
-<meta property="og:title" content="Get output of a StoX process. — getProcessOutput" />
-<meta property="og:description" content="Gets the output of a process that has been run." />
+<meta property="og:title" content="Parses covariate definitions from xml — process_covardef" />
+<meta property="og:description" content="Parses covariate definitions from xml" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -105,60 +105,23 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get output of a StoX process.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/NA/NA/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
-    <div class="hidden name"><code>getProcessOutput.Rd</code></div>
+    <h1>Parses covariate definitions from xml</h1>
+    <small class="dont-index">Source: <a href='https://github.com/NA/NA/blob/master/R/ProjectIO.R'><code>R/ProjectIO.R</code></a></small>
+    <div class="hidden name"><code>process_covardef.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Gets the output of a process that has been run.</p>
+    <p>Parses covariate definitions from xml</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getProcessOutput</span>(
-  <span class='no'>projectPath</span>,
-  <span class='no'>modelName</span>,
-  <span class='no'>processID</span>,
-  <span class='kw'>tableName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>subFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>flatten</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>linesPerPage</span> <span class='kw'>=</span> <span class='fl'>1000L</span>,
-  <span class='kw'>pageindex</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>integer</a></span>(<span class='fl'>0</span>),
-  <span class='kw'>columnSeparator</span> <span class='kw'>=</span> <span class='st'>" "</span>,
-  <span class='kw'>lineSeparator</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>na</span> <span class='kw'>=</span> <span class='st'>"-"</span>,
-  <span class='kw'>list.pretty</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>drop</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>drop.datatype</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>process_covardef</span>(<span class='no'>node</span>)</pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>projectPath</th>
-      <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
-    </tr>
-    <tr>
-      <th>modelName</th>
-      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
-    </tr>
-    <tr>
-      <th>processID</th>
-      <td><p>The ID of the process.</p></td>
-    </tr>
-    <tr>
-      <th>tableName</th>
-      <td><p>The name of the table to extract from the process.</p></td>
-    </tr>
-    </table>
 
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
     </ul>
 
   </div>

@@ -50,7 +50,7 @@ getArgumentFilesDir <- function(projectPath, modelName, processID) {
 }
 
 
-getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE) {
+getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
     # Get the folder of files holding the memory file paths:
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     
@@ -66,7 +66,7 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     
     if(length(modelName) == 1 && length(processID) == 1 && length(argumentName) > 0) {
         # Create a list named by the modelName:
-        argumentFilePaths <- structure(
+        pointerFilePaths <- structure(
             list(
                 # Create a list named by the processID:
                 structure(
@@ -92,7 +92,7 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     else if(length(modelName) == 1 && length(processID) >= 1 && length(argumentName) == 0) {
         # Create a list named by the modelName:
         dir <- file.path(currentMemoryFolder, modelName)
-        argumentFilePaths <- structure(
+        pointerFilePaths <- structure(
             list(
                 # Loop through the processIDs and list the argument files:
                 listArgumentFiles(dir, processID = processID)
@@ -103,7 +103,7 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     else if(length(modelName) >= 1 && length(processID) == 0 && length(argumentName) == 0) {
         # Create a list named by the modelName:
         dirs <- file.path(currentMemoryFolder, modelName)
-        argumentFilePaths <- structure(
+        pointerFilePaths <- structure(
             lapply(
                 dirs, 
                 function(dir) listArgumentFiles(dir, processID = processID)
@@ -115,19 +115,9 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
         stop("modelName must be given if any of processID and argumentName are given, and processID must be given if argumentName is given. Also when rewuesting more than one modelName or processID, the following parameter must be empty.")
     }
     
-    # Drop the levels with only one elements if requested:
-    if(drop1) {
-        if(length(modelName) == 1) {
-            argumentFilePaths <- argumentFilePaths[[modelName]]
-        }
-        if(length(processID) == 1) {
-            argumentFilePaths <- argumentFilePaths[[processID]]
-        }
-        if(length(argumentName) == 1) {
-            argumentFilePaths <- argumentFilePaths[[argumentName]]
-        }
-        #projectMemory <- unlist1(projectMemory)
-    }
+    # Read the pointer files:
+    argumentFilePaths <- rapply(pointerFilePaths, readPointerFile, projectPath = projectPath, how = "replace")
+    
     
     return(argumentFilePaths)
 }
@@ -138,28 +128,35 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
 
 
 
-getProjectMemoryDataNew <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE) {
+getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE, argumentFilePaths = NULL) {
     
     # Get the argument files:
-    browser()
-    argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName, processID = processID, argumentName = argumentName, drop1 = drop1)
-    
-    if(is.list(argumentFilePaths)) {
-        memoryFilePaths <- rapply(argumentFilePaths, readPointerFile, projectPath = projectPath, how = "replace")
+    if(length(argumentFilePaths) > 0 && length(modelName) == 1 && length(processID) == 1 && length(argumentName) == 1 ) {
+        # Select the requested argument file path(s):
+        argumentFilePaths <- argumentFilePaths[modelName]
+        argumentFilePaths[[modelName]] <- argumentFilePaths[[modelName]][processID]
+        argumentFilePaths[[modelName]][[processID]] <- argumentFilePaths[[modelName]][[processID]][argumentName]
     }
     else {
-        memoryFilePaths <- sapply(argumentFilePaths, readPointerFile, projectPath = projectPath)
+        argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName, processID = processID, argumentName = argumentName)
     }
     
     # Read the memory files:
-    if(is.list(memoryFilePaths)) {
-        output <- rapply(memoryFilePaths, readRDS, how = "replace")
-    }
-    else {
-        output <- sapply(memoryFilePaths, readRDS)
-    }
-    
+    output <- rapply(argumentFilePaths, readRDS, how = "replace")
         
+    # Drop the levels with only one elements if requested:
+    if(drop1) {
+        if(length(modelName) == 1) {
+            output <- output[[modelName]]
+        }
+        if(length(processID) == 1) {
+            output <- output[[processID]]
+        }
+        if(length(argumentName) == 1) {
+            output <- output[[argumentName]]
+        }
+    }
+
     return(output)
 }
 
@@ -173,19 +170,10 @@ readPointerFile <- function(pointerFile, projectPath) {
 
 
 
-
-
-
-
-
-
-
-
-
 #' 
 #' @export
 #' 
-setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL) {
+setProcessMemory <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL) {
     
     # Get the arguments and argument names from the process:
     if(length(process)) {

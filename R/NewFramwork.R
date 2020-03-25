@@ -141,6 +141,7 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
 getProjectMemoryDataNew <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE) {
     
     # Get the argument files:
+    browser()
     argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName, processID = processID, argumentName = argumentName, drop1 = drop1)
     
     if(is.list(argumentFilePaths)) {

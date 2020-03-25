@@ -3311,7 +3311,7 @@ getNewDefaultProcessName <- function(projectPath, modelName) {
     
     # Get all process names of the specified model:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    processNames <- processIndexTable$processNames
+    processNames <- processIndexTable$processName
     
     ## Identify all process names starting with the process_Prefix:
     #process_Prefix <- getRstoxFrameworkDefinitions("process_Prefix")

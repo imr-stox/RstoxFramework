@@ -942,12 +942,12 @@ valueToJSONStringOneColumn <- function(x) {
 
 
 possibleValuesToJSONString <- function(DT) {
-    output <- DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne)]
+    output <- DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne, nrow = nrow(DT))]
     return(output)
 }
 
-
-possibleValuesToJSONStringOne <- function(x) {
+# The parameter nrow is needed to ensure that data.table does not intruduce an extra list when there is more than one row and one of the cells has only one element:
+possibleValuesToJSONStringOne <- function(x, nrow) {
     # Set empty possible values to numeric(), which ensures [] in OpenCPUs conversion to JSON (jsonlite::toJSON with auto_unbox = TRUE):
     if(length(x) == 0) {
         x <- numeric()
@@ -959,7 +959,12 @@ possibleValuesToJSONStringOne <- function(x) {
         }
         if(length(x) == 1) {
             # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):
-            x <- list(list(x))
+            if(nrow == 1) {
+                x <- list(list(x))
+            }
+            else {
+                x <- list(x)
+            }
         }
     }
     return(x)
@@ -1107,6 +1112,11 @@ getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = N
         modelName = modelName, 
         processID = processID
     )
+    # Return empty string if the function name is missing:
+    if(length(packageName_functionName) == 0) {
+        return("")
+    }
+    
     # Get the package and function name:
     packageName <- getPackageNameFromPackageFunctionName(packageName_functionName)
     functionName <- getFunctionNameFromPackageFunctionName(packageName_functionName)

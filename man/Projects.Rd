@@ -5,6 +5,7 @@
 \alias{createProject}
 \alias{openProject}
 \alias{closeProject}
+\alias{reopenProject}
 \alias{saveProject}
 \alias{saveAsProject}
 \alias{copyProject}
@@ -21,6 +22,8 @@ createProject(
 openProject(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE)
 
 closeProject(projectPath, save = NULL)
+
+reopenProject(projectPath, save = NULL)
 
 saveProject(projectPath)
 

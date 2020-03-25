@@ -13,7 +13,7 @@
 
 
 listArgumentFilesWithBasenamesAsNames <- function(path) {
-    basenames <- list.files(path)
+    basenames <- list.files(path, full.names = FALSE)
     out <- as.list(file.path(path, basenames))
     names(out) <- tools::file_path_sans_ext(basenames)
     return(out)
@@ -50,12 +50,18 @@ getArgumentFilesDir <- function(projectPath, modelName, processID) {
 }
 
 
-getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
+getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE) {
     # Get the folder of files holding the memory file paths:
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     
+    # The default is to get all models:
     if(length(modelName) == 0 && length(processID) == 0 && length(argumentName) == 0) {
         modelName <- list.dirs(currentMemoryFolder, recursive = FALSE, full.names = FALSE)
+    }
+    
+    # If no models were detected, return an empty list:
+    if(length(modelName) == 0 && length(processID) == 0 && length(argumentName) == 0) {
+        return(list())
     }
     
     if(length(modelName) == 1 && length(processID) == 1 && length(argumentName) > 0) {
@@ -109,8 +115,69 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
         stop("modelName must be given if any of processID and argumentName are given, and processID must be given if argumentName is given. Also when rewuesting more than one modelName or processID, the following parameter must be empty.")
     }
     
+    # Drop the levels with only one elements if requested:
+    if(drop1) {
+        if(length(modelName) == 1) {
+            argumentFilePaths <- argumentFilePaths[[modelName]]
+        }
+        if(length(processID) == 1) {
+            argumentFilePaths <- argumentFilePaths[[processID]]
+        }
+        if(length(argumentName) == 1) {
+            argumentFilePaths <- argumentFilePaths[[argumentName]]
+        }
+        #projectMemory <- unlist1(projectMemory)
+    }
+    
     return(argumentFilePaths)
 }
+
+
+
+
+
+
+
+getProjectMemoryDataNew <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE) {
+    
+    # Get the argument files:
+    argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName, processID = processID, argumentName = argumentName, drop1 = drop1)
+    
+    if(is.list(argumentFilePaths)) {
+        memoryFilePaths <- rapply(argumentFilePaths, readPointerFile, projectPath = projectPath, how = "replace")
+    }
+    else {
+        memoryFilePaths <- sapply(argumentFilePaths, readPointerFile, projectPath = projectPath)
+    }
+    
+    # Read the memory files:
+    if(is.list(memoryFilePaths)) {
+        output <- rapply(memoryFilePaths, readRDS, how = "replace")
+    }
+    else {
+        output <- sapply(memoryFilePaths, readRDS)
+    }
+    
+        
+    return(output)
+}
+
+
+# Read the pointer files:
+readPointerFile <- function(pointerFile, projectPath) {
+    file.path(projectPath, readRDS(pointerFile))
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -134,7 +201,7 @@ setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName,
         argumentName = argumentName, 
         argumentValue = argumentValue
     )
-    
+
     # Save all the pointer files:
     mapply(
         savePointerFile, 
@@ -145,11 +212,11 @@ setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName,
         argumentFilePath = newArgumentFiles
     )
     
-                # Set the status as not saved (saving is done when running a process):
-                setSavedStatus(projectPath, status = FALSE)
-                
-                # Save the project memory:
-                saveProjectMemoryNew(projectPath, argumentFileTable)
+    # Set the status as not saved (saving is done when running a process):
+    setSavedStatus(projectPath, status = FALSE)
+    
+    # Save the project memory:
+    archiveProject(projectPath)
 }
 
 
@@ -158,37 +225,25 @@ setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName,
 archiveProject <- function(projectPath) {
     
     # 1. Collect the current memory and other files into one list, and write this as a project memory file:
-    getPointerFilesTable
-    
-    # 2. Update the projectMemoryIndex file:
-    
-    
-    
-    
-    # Save the list of project argument files to the current project description file and to the new project description file:
-    currentProjectMemoryFile <- getCurrentProjectMemoryFile(projectPath)
-    newProjectMemoryFile     <- getNewProjectMemoryFile(projectPath)
-    # Add the processIndexTable, the activeProcessID and the maxProcessIntegerID to the data to write:
     fullProjectMemory <- list(
-        argumentFileTable = argumentFileTable, 
+        pointerFilesTable = getPointerFilesTable(projectPath), 
         processIndexTable = readProcessIndexTable(projectPath),  
         activeProcessIDTable = getActiveProcess(projectPath), 
         maxProcessIntegerIDTable = getMaxProcessIntegerID(projectPath)
     )
+    
     # Write the project memory to the new file:
+    newProjectMemoryFile <- getNewProjectMemoryFile(projectPath)
     saveRDS(fullProjectMemory, file = newProjectMemoryFile)
     
-    # Write the project memory for the individual processes:
-    saveRDS(fullProjectMemory, file = currentProjectMemoryFile)
-    # Also write the current project memory as a folder structure of individual files with path to the memory file:
     
-    # Update the projectDescriptionIndexFile:
+    # 2. Update the projectMemoryIndex file:
+    # Read the list of process memory files:
     projectMemoryIndex <- readProjectMemoryIndex(projectPath)
     
-    # Delete any files with positive index:
+    # Delete any states with positive index:
     hasPositiveIndex <- projectMemoryIndex$Index > 0
     if(any(hasPositiveIndex)) {
-        #unlink(projectMemoryIndex$Path[hasPositiveIndex])
         deleteProjectMemoryFile(projectPath, projectMemoryIndex$Path[hasPositiveIndex])
         projectMemoryIndex <- projectMemoryIndex[!hasPositiveIndex, ]
     }
@@ -207,7 +262,7 @@ archiveProject <- function(projectPath) {
     writeProjectMemoryIndex(projectPath, projectMemoryIndex)
     
     # Return the new project description file path:
-    newProjectMemoryFile
+    return(newProjectMemoryFile)
 }
 
 
@@ -253,23 +308,14 @@ removeProcessMemory_New <- function(projectPath, modelName, processID) {
     # Delete the process:
     unlink(dir, recursive = TRUE, force = TRUE)
     
-    argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName, processID = processID, argumentName = NULL)
-    file
-    
-    # Get the current table of process argument files:
-    argumentFileTable <- getArgumentFileTable(projectPath)
-    
-    # Remove the process from the argument file table:
-    argumentFileTable <- removeFromArgumentFileTable(argumentFileTable, modelName, processID)
-    
-    # Save the project memory:
-    saveProjectMemory(projectPath, argumentFileTable)
+    # Archive the project:
+    archiveProject(projectPath)
 }
 
 
 
 
-memoryAddressTableToFiles <- function(projectPath, pointerFilesTable) {
+savePointerFilesTableAsPointerFiles <- function(projectPath, pointerFilesTable) {
     # Get the folder of files holding the memory file paths:
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     # Get the paths to the files holding the memory file paths:

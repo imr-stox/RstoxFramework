@@ -926,6 +926,14 @@ closeProject <- function(projectPath, save = NULL) {
 #' @export
 #' @rdname Projects
 #' 
+reopenProject <- function(projectPath, save = NULL) {
+    closeProject(projectPath, save = save)
+    openProject(projectPath, showWarnings = FALSE, force = TRUE)
+}
+#' 
+#' @export
+#' @rdname Projects
+#' 
 saveProject <- function(projectPath) {
     # Get the current project description and save it to the project.RData file:
     writeProjectDescription(projectPath)
@@ -1156,7 +1164,6 @@ writeProjectJSON <- function(projectDescription, projectJSONFile) {
         }
     }
     
-    browser()
     jsonlite::write_json(projectDescription, projectJSONFile, pretty = TRUE)
     
     
@@ -1321,6 +1328,8 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     
     # If activevProcecssID is NA, do nothing:
     if(!is.na(currentActiveProcessID)) {
+        
+        ##### (1) Set active process: #####
         # Get the current active process index:
         currentActiveProcessIndex <- which(processIndexTable$processID == currentActiveProcessID)
         
@@ -1342,8 +1351,41 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
         if(is.na(newActiveProcessID) || newActiveProcessID != currentActiveProcessID) {
             writeActiveProcessID(projectPath, modelName, newActiveProcessID, modified = modified)
         }
+        
+        ##### (2) Delete process output of the processes from the new active process: #####
+        if(currentActiveProcessIndex > processIndex) {
+            # Get all processes from the process to reset to and on:
+            allProcessIndex <- getProcessIndexFromProcessID(
+                projectPath = projectPath, 
+                modelName = modelName, 
+                processIndexTable$processID
+            )
+            processIDsToDelete <- processIndexTable$processID[allProcessIndex > processIndex]
+            foldersToDelete <- sapply(
+                processIDsToDelete, 
+                function(thisProcessID) getProcessOutputFolder(
+                    projectPath = projectPath, 
+                    modelName = modelName, 
+                    processID = thisProcessID
+                )
+            )
+            unlink(foldersToDelete, recursive = TRUE, force = TRUE)
+            
+            ##### (3) Delete process output text files: #####
+            # Get the list of output text files:
+            folderPath <- getProjectPaths(projectPath = projectPath, name = modelName)
+            outputTextFiles <- list.files(folderPath, full.names = TRUE)
+            
+            # Identify the output file with prefix later than the index of the process to reset to:
+            prefix <- as.numeric(sub("\\_.*", "", basename(outputTextFiles)))
+            filesToDelete <- outputTextFiles[prefix > processIndex]
+            
+            # Delete the files:
+            unlink(filesToDelete, recursive = TRUE, force = TRUE)
+        }
     }
     
+    # Return a list of the active process and the process table:
     output <- list(
         activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
         processTable = getProcessTable(projectPath = projectPath, modelName = modelName)
@@ -2906,7 +2948,7 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         modelName = modelName, 
         processID = processID
     )
-    
+
     # Modify any file or directory paths to relative paths if possible, and issue a warning if the projectPath is not in the path:
     newFunctionParameters <- getRelativePaths(
         functionParameters = newFunctionParameters, 
@@ -3457,7 +3499,7 @@ addProcesses <- function(projectPath, modelName, projectMemory) {
 #' 
 #' @export
 #' 
-addProcess <- function(projectPath, modelName, values) {
+addProcess <- function(projectPath, modelName, values = NULL) {
     
     # Create an empty process:
     process <- addEmptyProcess(
@@ -3467,11 +3509,12 @@ addProcess <- function(projectPath, modelName, values) {
     )
     
     # Apply the arguments:
+    valuesSansProcessName <- values[names(values) != "processName"]
     modifyProcess(
         projectPath = projectPath, 
         modelName = modelName, 
         processName = process$processName, 
-        newValues = values
+        newValues = valuesSansProcessName
     )
     
     # Return the process:
@@ -3497,6 +3540,10 @@ addProcess <- function(projectPath, modelName, values) {
 #' @export
 #' 
 removeProcess <- function(projectPath, modelName, processID) {
+    
+    # Reset the model to the process just before the removed process:
+    resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1)
+    
     # Update the project memory:
     removeProcessMemory(
         projectPath = projectPath, 
@@ -3506,9 +3553,6 @@ removeProcess <- function(projectPath, modelName, processID) {
     
     # Update the process index table:
     removeFromProcessIndexTable(projectPath = projectPath, modelName = modelName, processID = processID)
-    
-    # Reset the model to the process just before the removed process:
-    resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1)
     
     # Set the status as not saved (saving is done when running a process):
     setSavedStatus(projectPath, status = FALSE)
@@ -3566,6 +3610,11 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
         processID = processID
     )
     process$processID <- processID
+    
+    # Check that the function name is given:
+    if(length(process$functionName) == 0 || nchar(process$functionName) == 0) {
+        stop("The process with process ID ", processID, " does not specify a function name.")
+    }
     
     # If not not enabled, return immediately:
     if(!process$processParameters$enabled) {
@@ -3958,7 +4007,6 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
         
         folderPath <- getProjectPaths(
             projectPath = projectPath, 
-            #name = paste(getRstoxFrameworkDefinitions("paths")$stoxFolders["Output"], modelName, sep = "_")
             name = modelName
         )
         

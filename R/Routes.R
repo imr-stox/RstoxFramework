@@ -958,6 +958,7 @@ possibleValuesToJSONStringOne <- function(x) {
             x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
         }
         if(length(x) == 1) {
+            # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):
             x <- list(list(x))
         }
     }

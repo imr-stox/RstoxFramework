@@ -279,7 +279,7 @@ initiateRstoxFramework <- function(){
     stratumDataType <- "StratumPolygon"
     acousticPSUDataType <- "AcousticPSU"
     sweptAreaPSUDataType <- "SweptAreaPSU"
-    assignmentDataType <- "Assignment"
+    assignmentDataType <- "BioticAssignment"
     stationDataType <- "StoxBioticData"
     EDSUDataType <- "StoxAcousticData"
     
@@ -630,7 +630,13 @@ getPackageNameFromPackageFunctionName <- function(functionName) {
     sub("\\::.*", "", functionName)
 }
 getFunctionNameFromPackageFunctionName <- function(functionName) {
-    substring(functionName, regexpr("::", functionName) + 2)
+    functionName <- substring(functionName, regexpr("::", functionName) + 2)
+    if(length(functionName) == 0) {
+        return("")
+    }
+    else {
+        functionName
+    }
 }
 getPackageFunctionName <- function(functionName) {
     if(grepl("::", functionName, fixed = TRUE)) {
@@ -643,7 +649,6 @@ getPackageFunctionName <- function(functionName) {
     else {
         ""
     }
-    
 }
 getPackageNameFromFunctionName <- function(functionName) {
     getPackageNameFromPackageFunctionName(getPackageFunctionName(functionName))
@@ -821,7 +826,8 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     temp <- addProcesses(
         projectPath = projectPath, 
         modelName = modelName, 
-        projectMemory = thisTemplate
+        projectMemory = thisTemplate, 
+        returnProcessTable = FALSE
     )
     
     # Save the project, close it, and open:
@@ -830,9 +836,11 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
         closeProject(projectPath, save = TRUE)
     }
     
+    # Return the project path project name and saved status:
     list(
         projectPath = projectPath, 
-        projectName = basename(projectPath)
+        projectName = basename(projectPath), 
+        saved = isSaved(projectPath)
     )
 }
 #' 
@@ -840,7 +848,6 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' @rdname Projects
 #' 
 openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE) {
-    browser()
     if(!force && isOpenProject(projectPath)) {
         warning("Project ", projectPath, "is already open.")
         
@@ -856,7 +863,8 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
         
         out <- list(
             projectPath = projectPath, 
-            projectName = basename(projectPath)
+            projectName = basename(projectPath), 
+            saved = isSaved(projectPath)
         )
         return(out)
     }
@@ -884,15 +892,18 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     temp <- addProcesses(
         projectPath = projectPath, 
         modelName = names(projectMemory), 
-        projectMemory = projectMemory
+        projectMemory = projectMemory, 
+        returnProcessTable = FALSE
     )
     
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     
+    # Return the project path project name and saved status:
     list(
         projectPath = projectPath, 
-        projectName = basename(projectPath)
+        projectName = basename(projectPath), 
+        saved = isSaved(projectPath)
     )
 }
 #' 
@@ -922,11 +933,26 @@ closeProject <- function(projectPath, save = NULL) {
 #' @export
 #' @rdname Projects
 #' 
+resetProject <- function(projectPath, save = NULL) {
+    #closeProject(projectPath, save = save)
+    openProject(projectPath, showWarnings = FALSE, force = TRUE)
+}
+#' 
+#' @export
+#' @rdname Projects
+#' 
 saveProject <- function(projectPath) {
     # Get the current project description and save it to the project.RData file:
     writeProjectDescription(projectPath)
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
+    
+    # Return the project path project name and saved status:
+    list(
+        projectPath = projectPath, 
+        projectName = basename(projectPath), 
+        saved = isSaved(projectPath)
+    )
 }
 #' 
 #' @export
@@ -941,7 +967,12 @@ saveAsProject <- function(projectPath, newProjectPath, ow = FALSE) {
     # Close the current project without saving
     closeProject(projectPath, save = FALSE)
     
-    newProjectPath
+    # Return the project path project name and saved status:
+    list(
+        projectPath = newProjectPath, 
+        projectName = basename(newProjectPath), 
+        saved = isSaved(newProjectPath)
+    )
 }
 #' 
 #' @export
@@ -1140,7 +1171,6 @@ writeProjectJSON <- function(projectDescription, projectJSONFile) {
         }
     }
     
-    browser()
     jsonlite::write_json(projectDescription, projectJSONFile, pretty = TRUE)
     
     
@@ -1294,39 +1324,87 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    processIndex <- which(processIndexTable$processID == processID) + shift
     
-    # Read the active proces ID and reset only if the input process ID is lower that the active:
-    currentActiveProcessID <- getActiveProcess(
-        projectPath = projectPath, 
-        modelName = modelName
-    )$processID
-    # If activevProcecssID is NA, return it (not writing active process ID):
-    if(is.na(currentActiveProcessID)) {
-        return(currentActiveProcessID)
-    }
-    
-    currentActiveProcessIndex <- which(processIndexTable$processID == currentActiveProcessID)
-    
+    # Get the processIndex, that is the index of the process to reset to:
     if(length(processID) == 0) {
-        newActiveProcessID <- NA
+        processIndex <- 0
     }
     else {
-        # Reset only if the input process ID is before that the active:
-        if(processIndex < currentActiveProcessIndex) {
-                newActiveProcessID <- processIndexTable$processID[processIndex]
-            }
-        else {
-            newActiveProcessID <- currentActiveProcessID
+        processIndex <- which(processIndexTable$processID == processID) + shift
+        # Error if the process does not exist
+        if(length(processIndex) == 0) {
+            stop("processID not regocnized")
         }
     }
     
-    # Write the active process ID:
-    if(newActiveProcessID != currentActiveProcessID) {
-        writeActiveProcessID(projectPath, modelName, newActiveProcessID, modified = modified)
+    # Read the active proces ID and reset if that is not NA:
+    currentActiveProcessID <- getActiveProcess(projectPath = projectPath, modelName = modelName)$processID
+    
+    # If activevProcecssID is NA, do nothing, as this indicates that the model has not been run:
+    if(!is.na(currentActiveProcessID)) {
+        
+        ##### (1) Set active process: #####
+        # Get the current active process index:
+        currentActiveProcessIndex <- which(processIndexTable$processID == currentActiveProcessID)
+        
+        # If the processIndex is 0 or processID not given, reset to the start of the model (activeProcessID = NA):
+        if(processIndex == 0 || length(processID) == 0) {
+            newActiveProcessID <- NA
+        }
+        else {
+            # Reset only if the input process ID is before that the active:
+            if(processIndex < currentActiveProcessIndex) {
+                    newActiveProcessID <- processIndexTable$processID[processIndex]
+                }
+            else {
+                newActiveProcessID <- currentActiveProcessID
+            }
+        }
+        
+        # Write the active process ID:
+        if(is.na(newActiveProcessID) || newActiveProcessID != currentActiveProcessID) {
+            writeActiveProcessID(projectPath, modelName, newActiveProcessID, modified = modified)
+        }
+        
+        ##### (2) Delete process output of the processes from the new active process: #####
+        if(currentActiveProcessIndex > processIndex) {
+            # Get all processes from the process to reset to and on:
+            allProcessIndex <- getProcessIndexFromProcessID(
+                projectPath = projectPath, 
+                modelName = modelName, 
+                processIndexTable$processID
+            )
+            processIDsToDelete <- processIndexTable$processID[allProcessIndex > processIndex]
+            foldersToDelete <- sapply(
+                processIDsToDelete, 
+                function(thisProcessID) getProcessOutputFolder(
+                    projectPath = projectPath, 
+                    modelName = modelName, 
+                    processID = thisProcessID
+                )
+            )
+            unlink(foldersToDelete, recursive = TRUE, force = TRUE)
+            
+            ##### (3) Delete process output text files: #####
+            # Get the list of output text files:
+            folderPath <- getProjectPaths(projectPath = projectPath, name = modelName)
+            outputTextFiles <- list.files(folderPath, full.names = TRUE)
+            
+            # Identify the output file with prefix later than the index of the process to reset to:
+            prefix <- as.numeric(sub("\\_.*", "", basename(outputTextFiles)))
+            filesToDelete <- outputTextFiles[prefix > processIndex]
+            
+            # Delete the files:
+            unlink(filesToDelete, recursive = TRUE, force = TRUE)
+        }
     }
     
-    return(newActiveProcessID)
+    # Return a list of the active process and the process table:
+    output <- list(
+        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
+        processTable = getProcessTable(projectPath = projectPath, modelName = modelName)
+    )
+    return(output)
 }
 
 
@@ -1364,7 +1442,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
 #' 
 #' @export
 #' 
-getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE) {
+getProjectMemoryDataOld <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE) {
     
     # Get a data.table of process argument file paths split into modelName, processID, argumentName and argumentFilePath:
     argumentFileTable <- getArgumentFileTable(projectPath)
@@ -1521,50 +1599,6 @@ getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL
 
 
 
-getArgumentFiles <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
-    
-    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
-    
-    # Get all models if none are specified:
-    if(length(modelName) == 0) {
-        modelName <- getRstoxFrameworkDefinitions("stoxModelFolders")
-    }
-    
-    # Get all processes if none are specified:
-    if(length(processID) == 0) {
-        processID <- list.dirs(currentMemoryFolder, full.names = FALSE)
-        processID <- split(processID, dirname(processID))
-        processID <- lapply(processID, basename)
-    }
-    
-    
-    
-    
-    
-    # Read the current project memory file, which contains the list of files holding the current process arguments:
-    projectMemoryFile <- getProjectPaths(projectPath, paste0(type[1], "ProjectMemoryFile"))
-    
-    # If the projectMemoryFile does not exist, return an empty data.table:
-    if(file.exists(projectMemoryFile)) {
-        # Read the projectMemoryFile:
-        argumentFileTable <- readRDS(projectMemoryFile)$argumentFileTable
-        # Subset out the model if requested:
-        if(length(modelName)) {
-            argumentFileTable <- subset(argumentFileTable, modelName == modelName)
-        }
-        if(length(processID)) {
-            argumentFileTable <- subset(argumentFileTable, processID == processID)
-        }
-    }
-    else {
-        argumentFileTable <- data.table::data.table()
-    }
-    
-    argumentFileTable
-}
-
-
-
 # Function for getting the file path of one specific process argument rds file:
 getNewArgumentFile <- function(projectPath, modelName, processID, argumentName) {
     
@@ -1640,7 +1674,7 @@ saveArgumentFile <- function(projectPath, modelName, processID, argumentName, ar
 #' 
 #' @export
 #' 
-setProcessMemory <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL) {
+setProcessMemoryOld <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL) {
     
     # Get the arguments and argument names from the process:
     if(length(process)) {
@@ -1663,46 +1697,16 @@ setProcessMemory <- function(projectPath, modelName, processID, argumentName, ar
         argumentFile = newArgumentFiles
     )
     
+    # Set the status as not saved (saving is done when running a process):
+    setSavedStatus(projectPath, status = FALSE)
+    
     # Save the project memory:
     saveProjectMemory(projectPath, argumentFileTable)
 }
 
 
-#' 
-#' @export
-#' 
-setProcessMemoryNew <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL) {
-    
-    # Get the arguments and argument names from the process:
-    if(length(process)) {
-        argumentName <- names(process)
-        argumentValue <- process
-    }
-    
-    # Save all project arguments to files (shorter repeated to the longest):
-    newArgumentFiles <- mapply(saveArgumentFile, projectPath, modelName, processID, argumentName, argumentValue)
-    
-    # Get the paths to which to save the argument files:
-    memoryPathFiles <- mapply(getMemoryPathFile, projectPath, modelName, processID, argumentName, argumentValue)
-    
-    
-    
-    
-    # Get the current table of process argument files:
-    argumentFileTable <- getArgumentFileTable(projectPath)
-    
-    # Modify the argument file table with the new files:
-    argumentFileTable <- insertToArgumentFileTable(
-        argumentFileTable = argumentFileTable, 
-        modelName = modelName, 
-        processID = processID, 
-        argumentName = argumentName, 
-        argumentFile = newArgumentFiles
-    )
-    
-    # Save the project memory:
-    saveProjectMemory(projectPath, argumentFileTable)
-}
+
+
 
 
 
@@ -1720,6 +1724,9 @@ removeProcessMemory <- function(projectPath, modelName, processID) {
     # Save the project memory:
     saveProjectMemory(projectPath, argumentFileTable)
 }
+
+
+
 
 
 insertToArgumentFileTable <- function(argumentFileTable, modelName, processID, argumentName, argumentFile) {
@@ -1942,6 +1949,23 @@ unwrapProjectMemoryFile <- function(projectMemoryFile) {
 }
 
 
+unwrapProjectMemoryFile <- function(projectMemoryFile) {
+    # Read the project memory to get the data to write to the text files:
+    projectMemory <- readRDS(projectMemoryFile)
+    
+    # Unwrap and overwrite the process index table file:
+    writeProcessIndexTable(projectPath, projectMemory$processIndexTable)
+    
+    # Unwrap and overwrite the active process ID file:
+    writeActiveProcessIDFromTable(projectPath, projectMemory$activeProcessIDTable)
+    
+    # Unwrap and overwrite the maximum process integer ID file:
+    writeMaxProcessIntegerIDTable(projectPath, projectMemory$maxProcessIntegerIDTable)
+}
+
+
+
+
 ##################################
 ##### StoX function library: #####
 ##################################
@@ -2006,12 +2030,12 @@ getStoxFunctionMetaData <- function(functionName, metaDataName = NULL, showWarni
 }
 
 
-getArgumentsToShow <- function(projectPath, modelName, processID) {
+getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     
     # Get the function name and arguments:
-    functionName <- getFunctionName(projectPath = projectPath, modelName = modelName, processID = processID)
-    functionInputs <- getFunctionInputs(projectPath = projectPath, modelName = modelName, processID = processID)
-    functionParameters <- getFunctionParameters(projectPath = projectPath, modelName = modelName, processID = processID)
+    functionName <- getFunctionName(projectPath = projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
+    functionInputs <- getFunctionInputs(projectPath = projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
+    functionParameters <- getFunctionParameters(projectPath = projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
     functionArguments <- c(functionInputs, functionParameters)
     
     # Get the function argument hierarchy:
@@ -2162,96 +2186,104 @@ getFunctionParameterPropertyFormats <- function(functionName) {
 #############################################################
 ##### Functions for extracting properties of processes: #####
 #############################################################
-getFunctionName <- function(projectPath, modelName, processID) {
+getFunctionName <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "functionName", 
-        drop1 = TRUE
+        drop1 = TRUE, 
+        argumentFilePaths = argumentFilePaths
     )
 }
 
-getFunctionInputs <- function(projectPath, modelName, processID, only.valid = FALSE) {
+getFunctionInputs <- function(projectPath, modelName, processID, only.valid = FALSE, argumentFilePaths = NULL) {
     functionInputs <- getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "functionInputs", 
-        drop1 = TRUE
+        drop1 = TRUE, 
+        argumentFilePaths = argumentFilePaths
     )
     
     if(only.valid) {
-        argumentsToShow <- getArgumentsToShow(projectPath, modelName, processID)
+        argumentsToShow <- getArgumentsToShow(projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
         functionInputs <- functionInputs[intersect(names(functionInputs), argumentsToShow)]
     }
     
     return(functionInputs)
 }
 
-getFunctionParameters <- function(projectPath, modelName, processID, only.valid = FALSE) {
+getFunctionParameters <- function(projectPath, modelName, processID, only.valid = FALSE, argumentFilePaths = NULL) {
     functionParameters <- getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "functionParameters", 
-        drop1 = TRUE
+        drop1 = TRUE, 
+        argumentFilePaths = argumentFilePaths
     )
     
     if(only.valid) {
-        argumentsToShow <- getArgumentsToShow(projectPath, modelName, processID)
+        argumentsToShow <- getArgumentsToShow(projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
         functionParameters <- functionParameters[intersect(names(functionParameters), argumentsToShow)]
     }
     
     return(functionParameters)
 }
 
-getProcessName <- function(projectPath, modelName, processID) {
+getProcessName <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "processName", 
-        drop1 = TRUE
+        drop1 = TRUE, 
+        argumentFilePaths = argumentFilePaths
     )
 }
 
-getProcessParameters <- function(projectPath, modelName, processID) {
+getProcessParameters <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "processParameters", 
-        drop1 = TRUE
+        drop1 = TRUE, 
+        argumentFilePaths = argumentFilePaths
     )
 }
 
 # This function gets the process data as stored in the process memory files. These process data may diffre from the process data output from the process, stored in the output data files, particularly if interactive functions have been used. In this case, the process must be run again with UseProcessData = TRUE (automatically set by RstoxFramework) to update the process output, which is used in runProcess() using getProcessOutput(). 
-getProcessData <- function(projectPath, modelName, processID) {
+getProcessData <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        drop1 = TRUE
+        drop1 = TRUE, 
+        argumentFilePaths = argumentFilePaths
     )
 }
 
-getProcess <- function(projectPath, modelName, processID) {
+getProcess <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
         processID = processID, 
-        drop1 = TRUE
+        drop1 = TRUE, 
+        argumentFilePaths = argumentFilePaths
     )
 }
 
-getDataType <- function(projectPath, modelName, processID) {
+getDataType <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     # Get the function name:
     functionName <- getFunctionName(
         projectPath = projectPath, 
         modelName = modelName, 
-        processID = processID
+        processID = processID, 
+        argumentFilePaths = argumentFilePaths
     )
     # Get the data type from the function name:
     functionOutputDataType <- getStoxFunctionMetaData(functionName, "functionOutputDataType")
@@ -2378,7 +2410,8 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     rearranged <- processIndexTable[toRearrange, ]
     rest <- processIndexTable[notToRearrange, ]
     
-    afterProcessIndexInRest <- which(rest$modelName %in% modelName & rest$processID == afterProcessID)
+    afterProcessIndexInRest <- max(0, which(rest$modelName %in% modelName & rest$processID %in% afterProcessID))
+    
     before <- rest[seq_len(afterProcessIndexInRest), ]
     if(afterProcessIndexInRest < nrow(processIndexTable)) {
         after <- rest[seq(afterProcessIndexInRest + 1, nrow(rest)), ]
@@ -2388,14 +2421,28 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     }
     
     # Build the new processIndexTable:
-    processIndexTable <- rbind(
+    newProcessIndexTable <- rbind(
         before, 
         rearranged, 
         after
     )
     
+    # Was there any change?:
+    changed <- which(processIndexTable$processID != newProcessIndexTable$processID)
+    
     # Write the file:
-    writeProcessIndexTable(projectPath = projectPath, processIndexTable = processIndexTable)
+    if(any(changed)) {
+        writeProcessIndexTable(projectPath = projectPath, processIndexTable = newProcessIndexTable)
+        
+        # Set the activev process index as the first changed process minus 1:
+        activeProcessIndex <- min(changed) - 1
+        activeProcessID <- processIndexTable$processID[activeProcessIndex]
+        return(activeProcessID)
+    }
+    else {
+        return(NULL)
+    }
+    
 }
 
 
@@ -2475,6 +2522,7 @@ getProcessIDFromProcessName <- function(projectPath, modelName, processName) {
 ##### Process table: #####
 
 checkFunctionInput <- function(functionInput, functionInputDataType, processIndexTable) {
+    
     # Expect an error, and return FALSE if all checks passes:
     functionInputError <- TRUE
     # (0) Chech that the function input is a string with positive number of characters:
@@ -2528,40 +2576,8 @@ checkFunctionInputs <- function(processIndexTable) {
     return(functionInputError)
 }
 
-getProcessesSansProcessDataOne <- function(projectPath, modelName, processID) {
-    
-    # Define the functions to request data by:
-    funs <- c(
-        getProcessName, 
-        getFunctionName, 
-        getProcessParameters, 
-        getFunctionInputs, 
-        getFunctionParameters
-    )
-    
-    # Run each function:
-    output <- lapply(
-        funs, 
-        do.call, 
-        args = list(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = processID
-        )
-    )
-    
-    names(output) <- c(
-        "processName", 
-        "functionName", 
-        "processParameters", 
-        "functionInputs", 
-        "functionParameters"
-    )
-    
-    return(output)
-}
 
-getProcessesSansProcessData <- function(projectPath, modelName, processID = NULL) {
+getProcessesSansProcessData <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
     ##### (1) Get the table of process name and ID: #####
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -2570,13 +2586,13 @@ getProcessesSansProcessData <- function(projectPath, modelName, processID = NULL
         return(data.table::data.table())
     }
     
-    # Subset the table to the reuqested processID, if given:
-    if(length(processID)) {
-        atProcessID <- which(processID == processIndexTable$processID)
+    # Subset the table to up until the reuqested beforeProcessID, if given:
+    if(length(beforeProcessID)) {
+        atProcessID <- which(beforeProcessID == processIndexTable$processID)
         if(length(atProcessID) == 0) {
-            stop("The requested processID does not exist in the model ", modelName, " of projecct ", projectPath, ".")
+            stop("The processID specified in 'beforeProcessID' does not exist in the model ", modelName, " of projecct ", projectPath, ".")
         }
-        processIndexTable <- processIndexTable[seq_len(atProcessID), ]
+        processIndexTable <- processIndexTable[seq_len(atProcessID - 1), ]
     }
     
     # Add the projectPath:
@@ -2587,7 +2603,8 @@ getProcessesSansProcessData <- function(projectPath, modelName, processID = NULL
         getFunctionName, 
         projectPath = projectPath, 
         modelName = modelName, 
-        processID = processIndexTable$processID
+        processID = processIndexTable$processID, 
+        MoreArgs = list(argumentFilePaths = argumentFilePaths)
     )
     processIndexTable[, functionName := ..functionName]
     
@@ -2597,6 +2614,7 @@ getProcessesSansProcessData <- function(projectPath, modelName, processID = NULL
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processIndexTable$processID, 
+        MoreArgs = list(argumentFilePaths = argumentFilePaths), 
         SIMPLIFY = FALSE
     )
     processParameters <- data.table::rbindlist(processParameters)
@@ -2606,28 +2624,27 @@ getProcessesSansProcessData <- function(projectPath, modelName, processID = NULL
     )
     
     ##### (4) Add function inputs: #####
-    functionInputs <- lapply(processIndexTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = TRUE))
+    functionInputs <- lapply(processIndexTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = TRUE, argumentFilePaths = argumentFilePaths))
     processIndexTable[, functionInputs := ..functionInputs]
     
     ##### (5) Add function parameters: #####
-    functionParameters <- lapply(processIndexTable$processID, function(processID) getFunctionParameters(projectPath, modelName, processID, only.valid = TRUE))
+    functionParameters <- lapply(processIndexTable$processID, function(processID) getFunctionParameters(projectPath, modelName, processID, only.valid = TRUE, argumentFilePaths = argumentFilePaths))
     processIndexTable[, functionParameters := ..functionParameters]
     
     return(processIndexTable)
 }
 
-
-
 #' 
 #' @export
 #' 
-scanForModelError <- function(projectPath, modelName, processID = NULL) {
+scanForModelError <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
     # Get the processes:
     processTable <- getProcessesSansProcessData(
         projectPath = projectPath, 
         modelName = modelName, 
-        processID = processID
+        beforeProcessID = beforeProcessID, 
+        argumentFilePaths = argumentFilePaths
     )
     # Return an empty data.table if the processTable is empty:
     if(nrow(processTable) == 0) {
@@ -2640,6 +2657,7 @@ scanForModelError <- function(projectPath, modelName, processID = NULL) {
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processTable$processID, 
+        MoreArgs = list(argumentFilePaths = argumentFilePaths), 
         SIMPLIFY = TRUE
     )
     
@@ -2664,10 +2682,15 @@ scanForModelError <- function(projectPath, modelName, processID = NULL) {
 #' 
 #' @export
 #' 
-getProcessTable <- function(projectPath, modelName, processID = NULL) {
+getProcessTable <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
+    
+    # Read the memory file paths once, and insert to the get* functions below to speed things up:
+    if(length(argumentFilePaths) == 0) {
+        argumentFilePaths <- getArgumentFilePaths(projectPath)
+    }
     
     # Get a table of all the processes including function inputs, parameters and input errors:
-    processTable <- scanForModelError(projectPath, modelName, processID = processID)
+    processTable <- scanForModelError(projectPath, modelName, beforeProcessID = beforeProcessID, argumentFilePaths = argumentFilePaths)
     # Return an empty data.table if the processTable is empty:
     if(nrow(processTable) == 0) {
         return(data.table::data.table())
@@ -2684,162 +2707,22 @@ getProcessTable <- function(projectPath, modelName, processID = NULL) {
     
     processTable[, hasBeenRun := FALSE]
     processTable[, modified := FALSE]
+
     if(!is.na(activeProcess$processID)) {
         activeProcessIndex <- getProcessIndexFromProcessID(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = activeProcess$processID
         )
-        processTable[seq_len(activeProcessIndex), hasBeenRun := TRUE]
-        processTable[activeProcessIndex, modified := activeProcess$modified]
+        processTable[seq_len(min(activeProcessIndex, nrow(processTable))), hasBeenRun := TRUE]
+        if(activeProcessIndex <= nrow(processTable)) {
+            processTable[activeProcessIndex, modified := activeProcess$modified]
+        }
     }
     
     return(processTable[])
 }
 
-
-
-
-#' 
-#' @export
-#' 
-getProcessTableOld <- function(projectPath, modelName, processID = NULL) {
-    
-    # Get a table of all the processes including function inputs, parameters and input errors:
-    processIndexTable <- scanForModelError(projectPath, modelName, processID = processID)
-    
-    # Return an empty data.table if the processIndexTable is empty:
-    if(nrow(processIndexTable) == 0) {
-        return(data.table::data.table())
-    }
-    
-    # Check whether the data type can be shown in the map:
-    processIndexTable[, canShowInMap := getCanShowInMap(dataType = functionOutputDataType)]
-    
-    # Get enabled, showInMap and fileOutput:
-    processParameters <- mapply(
-        getProcessParameters, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processIndexTable$processID, 
-        SIMPLIFY = FALSE
-    )
-    processParameters <- data.table::rbindlist(processParameters)
-    processIndexTable <- data.table::data.table(
-        processIndexTable, 
-        processParameters
-    )
-    
-    # Add the data type:
-    #processIndexTable$dataType <- sapply(processIndexTable$functionName, getStoxFunctionMetaData, "functionOutputDataType")
-    processIndexTable$dataType <- mapply(
-        getDataType, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processIndexTable$processID, 
-        SIMPLIFY = TRUE
-    )
-    
-    
-    # Check whether the process returns process data:
-    processIndexTable[, hasProcessData := lapply(functionName, isProcessDataFunction)]
-    #hasProcessData <- sapply(functionNames, isProcessDataFunction)
-    
-    return(processIndexTable)
-    
-    ###
-    ###        # Get the table of process name and ID:
-    ###        processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    ###
-    ###        # Return an empty data.table if the processIndexTable is empty:
-    ###        if(nrow(processIndexTable) == 0) {
-    ###            return(data.table::data.table())
-    ###        }
-    ###    
-    ###        # Get the function names for use when determining the 'canShowInMap' and 'hasProcessData'
-    ###        functionNames <- mapply(
-    ###            getFunctionName, 
-    ###            projectPath = projectPath, 
-    ###            modelName = modelName, 
-    ###            processID = processIndexTable$processID
-    ###        )
-    ###
-    #### Check whether the data type can be shown in the map:
-    ###canShowInMap <- sapply(functionNames, getCanShowInMap)
-    ###
-    #### Check whether the user has defined that the data from the process should be shown in the map:
-    ###processParameters <- mapply(
-    ###    getProcessParameters, 
-    ###    projectPath = projectPath, 
-    ###    modelName = modelName, 
-    ###    processID = processIndexTable$processID, 
-    ###    SIMPLIFY = FALSE
-    ###)
-    ###processParameters <- data.table::rbindlist(processParameters)
-    ###
-    #### Check whether the process returns process data:
-    ###hasProcessData <- sapply(functionNames, isProcessDataFunction)
-    ###
-    #### Group the info to a table for now:
-    ###processTable <- cbind(
-    ###    processIndexTable, # Contains processName and processID
-    ###    data.table::data.table(
-    ###        functionName = functionNames, 
-    ###        canShowInMap = canShowInMap
-    ###    ), 
-    ###    processParameters, 
-    ###    data.table::data.table(
-    ###        hasProcessData = hasProcessData
-    ###    )
-    ###)
-    ###
-    ###        # Get the funciton inputs (as a list):
-    ###        functionInputs <- mapply(
-    ###            getFunctionInputs, 
-    ###            projectPath = projectPath, 
-    ###            modelName = modelName, 
-    ###            processID = processIndexTable$processID
-    ###        )
-    #### Get the processes that has errors:
-    ###hasModelError <- sapply(
-    ###    seq_along(processIndexTable$processID), 
-    ###    getFunctionInputErrors, 
-    ###    processTable = processTable, 
-    ###    functionInputs = functionInputs
-    ###)
-    ###processTable$hasModelError <- hasModelError
-    ###
-    ###        # Add the data type:
-    ###        processTable$dataType <- sapply(functionNames, getStoxFunctionMetaData, "functionOutputDataType")
-    ###        
-    ###        # Add the function inputs:
-    ###        processTable$functionInputs <- functionInputs
-    ###        
-    #### Add the function parameters:
-    ###functionParameters <- mapply(
-    ###    getFunctionParameters, 
-    ###    projectPath = projectPath, 
-    ###    modelName = modelName, 
-    ###    processID = processIndexTable$processID
-    ###)
-    ###processTable$functionParameters <- functionParameters
-    
-    ### processTable$functionExists <- functionExists(functionNames)
-    
-    # Reads a table of the following columns:
-    # 1. processName
-    # 4. canShowInMap
-    # 5. hasProcessData
-    # 6. doShowInMap
-    
-    # 2. hasBeenRun
-    # 3. hasError
-    
-    # 
-    # There are two different types of actions, changing processes and changing parameters. Changing processes iduces reset of current process, whereas changing parameters do not. This will be added to the projectDescriptionIndex.txt. Errors given by HasError only occur when there are missing inputs, that is that the processes requersted in funciton inputs do not exist BEFORE the actual function. This will be a check to run in the route-funcitons Add-, Delete- and MoreProcess, which call the corresponding add-, delete- and moreProcess in Framework.R, and then calls getProjectList.
-    
-    #processTable
-}
 
 
 
@@ -3075,7 +2958,7 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         modelName = modelName, 
         processID = processID
     )
-    
+
     # Modify any file or directory paths to relative paths if possible, and issue a warning if the projectPath is not in the path:
     newFunctionParameters <- getRelativePaths(
         functionParameters = newFunctionParameters, 
@@ -3415,16 +3298,6 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
         )
     }
     
-    # Set the status as not saved (saving is done when running a process):
-    setSavedStatus(projectPath, status = FALSE)
-    
-    ### # Return the process:
-    ### getProcess(
-    ###     projectPath = projectPath, 
-    ###     modelName = modelName, 
-    ###     processID = processID
-    ### )
-    
     return(modified)
 }
 #' 
@@ -3448,7 +3321,7 @@ getNewDefaultProcessName <- function(projectPath, modelName) {
     
     # Get all process names of the specified model:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    processNames <- processIndexTable$processNames
+    processNames <- processIndexTable$processName
     
     ## Identify all process names starting with the process_Prefix:
     #process_Prefix <- getRstoxFrameworkDefinitions("process_Prefix")
@@ -3604,7 +3477,7 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL) {
 }
 
 # Function to add all processes of template or project description:
-addProcesses <- function(projectPath, modelName, projectMemory) {
+addProcesses <- function(projectPath, modelName, projectMemory, returnProcessTable = TRUE) {
     # Get the possible models:
     stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
     
@@ -3618,22 +3491,32 @@ addProcesses <- function(projectPath, modelName, projectMemory) {
             temp <- addProcess(
                 projectPath = projectPath, 
                 modelName = modelName, 
-                values = projectMemory[[modelName]][[ind]]
+                values = projectMemory[[modelName]][[ind]], 
+                returnProcessTable = returnProcessTable
             )
         }
     }
     
     # Return the process table:
-    processTable <- getProcessTable(projectPath, modelName)
-    return(processTable)
-    ## Return the processes:
-    #processes
+    if(returnProcessTable) {
+        processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
+        return(
+            list(
+                processTable = processTable, 
+                saved = isSaved(projectPath)
+            )
+        )
+    }
+    else {
+        return(TRUE)
+    }
+    
 }
 
 #' 
 #' @export
 #' 
-addProcess <- function(projectPath, modelName, values) {
+addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable = TRUE) {
     
     # Create an empty process:
     process <- addEmptyProcess(
@@ -3643,11 +3526,12 @@ addProcess <- function(projectPath, modelName, values) {
     )
     
     # Apply the arguments:
+    valuesSansProcessName <- values[names(values) != "processName"]
     modifyProcess(
         projectPath = projectPath, 
         modelName = modelName, 
         processName = process$processName, 
-        newValues = values
+        newValues = valuesSansProcessName
     )
     
     # Return the process:
@@ -3657,14 +3541,31 @@ addProcess <- function(projectPath, modelName, values) {
         processID = process$processID
     )
     
-    # Return the process table:
-    processTable <- getProcessTable(projectPath, modelName)
-    return(processTable)
+    # Set the status as not saved (saving is done when running a process):
+    setSavedStatus(projectPath, status = FALSE)
+    
+    # Return the process table if requested:
+    if(returnProcessTable) {
+        processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
+        return(
+            list(
+                processTable = processTable, 
+                saved = isSaved(projectPath)
+            )
+        )
+    }
+    else {
+        return(TRUE)
+    }
 }
 #' 
 #' @export
 #' 
 removeProcess <- function(projectPath, modelName, processID) {
+    
+    # Reset the model to the process just before the removed process:
+    resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1)
+    
     # Update the project memory:
     removeProcessMemory(
         projectPath = projectPath, 
@@ -3673,14 +3574,19 @@ removeProcess <- function(projectPath, modelName, processID) {
     )
     
     # Update the process index table:
-    removeFromProcessIndexTable(projectPath, modelName, processID)
+    removeFromProcessIndexTable(projectPath = projectPath, modelName = modelName, processID = processID)
     
-    # Reset the model to the process just before the removed process:
-    resetModel(projectPath, modelName, processID = processID, shift = -1)
+    # Set the status as not saved (saving is done when running a process):
+    setSavedStatus(projectPath, status = FALSE)
     
     # Return the process table:
-    processTable <- getProcessTable(projectPath, modelName)
-    return(processTable)
+    processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            processTable = processTable, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 
@@ -3689,16 +3595,25 @@ removeProcess <- function(projectPath, modelName, processID) {
 #' 
 rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID = NULL) {
     # Rearrange the process index table defining the order of the processes:
-    if(length(afterProcessID)) {
-        rearrangeProcessIndexTable(projectPath, modelName, processID, afterProcessID)
+    #if(length(afterProcessID)) {
+    activeProcessID <- rearrangeProcessIndexTable(projectPath, modelName, processID, afterProcessID)
+    #}
+    
+    # Reset the model to the first of afterProcessID and the processes to be rearranged, but only if there was any change:
+    if(length(activeProcessID)) {
+        resetModel(projectPath, modelName, processID = activeProcessID)
+        # Set the status as not saved (saving is done when running a process):
+        setSavedStatus(projectPath, status = FALSE)
     }
     
-    # Reset the model to the afterProcessID:
-    resetModel(projectPath, modelName, processID = afterProcessID)
-    
     # Return the process table:
-    processTable <- getProcessTable(projectPath, modelName)
-    return(processTable)
+    processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
+    return(
+        list(
+            processTable = processTable, 
+            saved = isSaved(projectPath)
+        )
+    )
 }
 
 
@@ -3717,6 +3632,11 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE) {
         processID = processID
     )
     process$processID <- processID
+    
+    # Check that the function name is given:
+    if(length(process$functionName) == 0 || nchar(process$functionName) == 0) {
+        stop("The process with process ID ", processID, " does not specify a function name.")
+    }
     
     # If not not enabled, return immediately:
     if(!process$processParameters$enabled) {
@@ -4109,7 +4029,6 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
         
         folderPath <- getProjectPaths(
             projectPath = projectPath, 
-            #name = paste(getRstoxFrameworkDefinitions("paths")$stoxFolders["Output"], modelName, sep = "_")
             name = modelName
         )
         
@@ -4330,6 +4249,9 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     #err <- NULL
     
+    # Reset the model to the process just before the removed process:
+    resetModel(projectPath = projectPath, modelName = modelName, processID = processIDs[1], shift = -1)
+    
     # Try running the processes, and retun the failedVector if craching:
     #tryCatch(
     #    {
@@ -4362,14 +4284,11 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     #status
     list(
-        activeProcess = list(
-            ID = utils::tail(processID, 1), 
-            modified = FALSE
-        ), 
-        #activeProcessID = utils::tail(processID, 1), 
-        interactiveMode = getInteractiveMode(projectPath, modelName, processID)
+        processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
+        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
+        interactiveMode = getInteractiveMode(projectPath = projectPath, modelName = modelName, processID = processID), 
+        saved = isSaved(projectPath)
     )
-    
 }
 
 
@@ -4455,6 +4374,7 @@ convertProjectDescription1.92 <- function(projectDescription) {
     
     
 }
+
 
 
 ##################################################

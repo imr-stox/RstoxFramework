@@ -69,10 +69,7 @@ export(removeProcessMemory_New)
 export(removeStratum)
 export(renameAcousticPSU)
 export(resetModel)
-<<<<<<< HEAD
-=======
 export(resetProject)
->>>>>>> 170053d96097a3267f10aca9e7058df71cc181b7
 export(runProcess)
 export(runProcesses)
 export(saveAsProject)

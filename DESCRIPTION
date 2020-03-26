@@ -28,6 +28,6 @@ Imports:
 Suggests: 
     testthat
 Remotes: 
-	 StoXProject/RstoxData
+	 StoXProject/RstoxData, 
 	 StoXProject/RstoxBase
 RoxygenNote: 7.0.2

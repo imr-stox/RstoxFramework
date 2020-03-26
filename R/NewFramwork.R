@@ -127,7 +127,9 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
 
 
 
-
+#' 
+#' @export
+#'
 getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE, argumentFilePaths = NULL) {
     
     # Get the argument files:

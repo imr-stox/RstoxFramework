@@ -1324,16 +1324,23 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    processIndex <- which(processIndexTable$processID == processID) + shift
-    # Error if the process does not exist:
-    if(length(processID) && length(processIndex) == 0) {
-        stop("processID not regocnized")
+    
+    # Get the processIndex, that is the index of the process to reset to:
+    if(length(processID) == 0) {
+        processIndex <- 0
+    }
+    else {
+        processIndex <- which(processIndexTable$processID == processID) + shift
+        # Error if the process does not exist
+        if(length(processIndex) == 0) {
+            stop("processID not regocnized")
+        }
     }
     
     # Read the active proces ID and reset if that is not NA:
     currentActiveProcessID <- getActiveProcess(projectPath = projectPath, modelName = modelName)$processID
     
-    # If activevProcecssID is NA, do nothing:
+    # If activevProcecssID is NA, do nothing, as this indicates that the model has not been run:
     if(!is.na(currentActiveProcessID)) {
         
         ##### (1) Set active process: #####

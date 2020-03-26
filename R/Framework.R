@@ -1599,7 +1599,6 @@ getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL
 
 
 
-
 # Function for getting the file path of one specific process argument rds file:
 getNewArgumentFile <- function(projectPath, modelName, processID, argumentName) {
     
@@ -1950,6 +1949,19 @@ unwrapProjectMemoryFile <- function(projectMemoryFile) {
 }
 
 
+unwrapProjectMemoryFile <- function(projectMemoryFile) {
+    # Read the project memory to get the data to write to the text files:
+    projectMemory <- readRDS(projectMemoryFile)
+    
+    # Unwrap and overwrite the process index table file:
+    writeProcessIndexTable(projectPath, projectMemory$processIndexTable)
+    
+    # Unwrap and overwrite the active process ID file:
+    writeActiveProcessIDFromTable(projectPath, projectMemory$activeProcessIDTable)
+    
+    # Unwrap and overwrite the maximum process integer ID file:
+    writeMaxProcessIntegerIDTable(projectPath, projectMemory$maxProcessIntegerIDTable)
+}
 
 
 
@@ -4362,6 +4374,7 @@ convertProjectDescription1.92 <- function(projectDescription) {
     
     
 }
+
 
 
 ##################################################

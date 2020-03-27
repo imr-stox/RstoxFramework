@@ -1713,7 +1713,7 @@ setProcessMemoryOld <- function(projectPath, modelName, processID, argumentName,
 #' 
 #' @export
 #' 
-removeProcessMemory <- function(projectPath, modelName, processID) {
+removeProcessMemoryOld <- function(projectPath, modelName, processID) {
     
     # Get the current table of process argument files:
     argumentFileTable <- getArgumentFileTable(projectPath)
@@ -3517,6 +3517,11 @@ addProcesses <- function(projectPath, modelName, projectMemory, returnProcessTab
 #' @export
 #' 
 addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable = TRUE) {
+    
+    # values must be a list:
+    if(length(values) && !is.list(values)) {
+        stop("values must be a list of specifics of the process.")
+    }
     
     # Create an empty process:
     process <- addEmptyProcess(

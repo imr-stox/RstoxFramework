@@ -293,7 +293,7 @@ getPointerFile <- function(projectPath, modelName, processID, argumentName) {
 #' 
 #' @export
 #' 
-removeProcessMemory_New <- function(projectPath, modelName, processID) {
+removeProcessMemory <- function(projectPath, modelName, processID) {
     # Get the path to the directory of the process:
     dir <- getArgumentFilesDir(projectPath = projectPath, modelName = modelName, processID = processID)
     # Delete the process:

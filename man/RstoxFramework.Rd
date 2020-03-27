@@ -18,8 +18,8 @@ The package replaces the old Java library in StoX versions prior to StoX 4.0.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com//RstoxFramework}
-  \item Report bugs at \url{https://github.com//RstoxFramework/issues}
+  \item \url{https://github.com/StoXProject/RstoxFramework}
+  \item Report bugs at \url{https://github.com/StoXProject/RstoxFramework/issues}
 }
 
 }

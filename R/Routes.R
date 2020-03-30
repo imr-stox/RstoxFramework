@@ -631,11 +631,16 @@ formatJSONString <- function(parameter) {
 }
 
 
-isMultipleParameter <- function(functionName, parameterName) {
-    multiple <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$multiple)
-    format <- unlist(getFunctionParameterPropertyFormats(functionName)[parameterName])
-    isMultiple <- format %in% multiple
-    return(isMultiple)
+#isMultipleParameter <- function(functionName, parameterName) {
+#    multiple <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$multiple)
+#    format <- unlist(getFunctionParameterPropertyFormats(functionName)[parameterName])
+#    isMultiple <- format %in% multiple
+#    return(isMultiple)
+#}
+isVectorParameter <- function(format) {
+    vector <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$vector)
+    isVector <- format %in% vector
+    return(isVector)
 }
 
 
@@ -828,9 +833,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             
             # Convert to a JSON string if the parameter has a format:
             hasFormat <- functionParametersToReturn$format != "none"
-            if(any(hasFormat)) {
-                functionParametersToReturn$value[hasFormat] = lapply(functionParametersToReturn$value[hasFormat], formatJSONString)
-            }
+            #if(any(hasFormat)) {
+            #    functionParametersToReturn$value[hasFormat] = lapply(functionParametersToReturn$value[hasFormat], formatJSONString)
+            #}
             
             # Convert all possibleValues and value to character:
             toJSONString(functionParametersToReturn)
@@ -914,18 +919,27 @@ replaceEmpty <- function(x, vector = TRUE) {
 # Function to convert to JSON string, used to send only strings and arrays of strings to the GUI:
 toJSONString <- function(DT) {
     # Convert the possible values, which can have 0 or positive length:
-    possibleValuesToJSONString(DT)
+    #possibleValuesToJSONString(DT)
+    DT[, possibleValues := lapply(possibleValues, vectorToJSONStringOne)]
+    
+    # Convert vector value:
+    atVector <- isVectorParameter(DT$format)
+    if(any(atVector)) {
+        DT[atVector, value := lapply(value, vectorToJSONStringOne)]
+    }
+    
     # Convert all the other columns, which are required to have length 1:
     other <- setdiff(names(DT), "possibleValues")
-    valueToJSONString(DT, cols = other)
+    cellToJSONString(DT, cols = other)
+    DT[]
 }
 
 
 
-valueToJSONString <- function(DT, cols) {
-    DT[, (cols) := lapply(.SD, valueToJSONStringOneColumn), .SDcols = cols]
+cellToJSONString <- function(DT, cols) {
+    DT[, (cols) := lapply(.SD, cellToJSONStringOneColumn), .SDcols = cols]
 }
-valueToJSONStringOne <- function(x) {
+cellToJSONStringOne <- function(x) {
     if(length(x) == 0) {
         warning("Length 1 required for process properties except possibleValues.")
         x <- ""
@@ -935,24 +949,31 @@ valueToJSONStringOne <- function(x) {
     }
     return(x)
 }
-valueToJSONStringOneColumn <- function(x) {
-    lapply(x, valueToJSONStringOne)
+cellToJSONStringOneColumn <- function(x) {
+    lapply(x, cellToJSONStringOne)
 }
 
 
 
 
-possibleValuesToJSONString <- function(DT) {
-    output <- DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne, nrow = nrow(DT))]
-    return(output)
-}
+#vectorToJSONString <- function(DT) {
+#    output <- DT[, possibleValues := lapply(possibleValues, vectorToJSONStringOne, nrow = nrow(DT))]
+#    return(output)
+#}
 
 # The parameter nrow is needed to ensure that data.table does not intruduce an extra list when there is more than one row and one of the cells has only one element:
-possibleValuesToJSONStringOne <- function(x, nrow) {
+vectorToJSONStringOne <- function(x) {
     # Set empty possible values to numeric(), which ensures [] in OpenCPUs conversion to JSON (jsonlite::toJSON with auto_unbox = TRUE):
     if(length(x) == 0) {
         x <- numeric()
+        as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
     }
+    
+    # If data.table, simply convert to JSON string:
+    else if(data.table::is.data.table(x)) {
+        as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+    }
+    
     # Convert to JSON string for each element if not already character:
     else {
         if(!is.character(x)) {
@@ -960,13 +981,9 @@ possibleValuesToJSONStringOne <- function(x, nrow) {
         }
         if(length(x) == 1) {
             # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):
-            if(nrow == 1) {
-                x <- list(list(x))
-            }
-            else {
-                x <- list(x)
-            }
+            x <- list(x)
         }
+        x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
     }
     return(x)
 }

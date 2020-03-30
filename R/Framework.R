@@ -141,16 +141,17 @@ initiateRstoxFramework <- function(){
             "numeric"
         )
     )
-    # Define the process property formats (should this be used to check for valid format????????????):
+    # Define the process property formats:
     processPropertyFormats <- list(
         default = "none", 
         single = list(
             "filePath", 
             "directoryPath"
         ), 
-        multiple = list(
-            "filePaths", 
-            #"parameterTable", 
+        vector = list(
+            "filePaths"
+        ), 
+        table = list(
             "filterExpressionTable", 
             "speciesCategoryTable", 
             "acousticCategoryTable", 

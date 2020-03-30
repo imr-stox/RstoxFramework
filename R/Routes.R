@@ -920,7 +920,7 @@ replaceEmpty <- function(x, vector = TRUE) {
 toJSONString <- function(DT) {
     # Convert the possible values, which can have 0 or positive length:
     #possibleValuesToJSONString(DT)
-    DT[, possibleValues := lapply(possibleValues, vectorToJSONStringOne)]
+    DT[, possibleValues := lapply(possibleValues, vectorToJSONStringOne, stringifyVector = FALSE)]
     
     # Convert vector value:
     atVector <- isVectorParameter(DT$format)
@@ -962,20 +962,20 @@ cellToJSONStringOneColumn <- function(x) {
 #}
 
 # The parameter nrow is needed to ensure that data.table does not intruduce an extra list when there is more than one row and one of the cells has only one element:
-vectorToJSONStringOne <- function(x) {
+vectorToJSONStringOne <- function(x, stringifyVector = TRUE) {
     # Set empty possible values to numeric(), which ensures [] in OpenCPUs conversion to JSON (jsonlite::toJSON with auto_unbox = TRUE):
     if(length(x) == 0) {
         x <- numeric()
-        as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+        #as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
     }
     
-    # If data.table, simply convert to JSON string:
-    else if(data.table::is.data.table(x)) {
-        as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
-    }
+    ## If data.table, simply convert to JSON string:
+    #else if(data.table::is.data.table(x)) {
+    #    as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+    #}
     
     # Convert to JSON string for each element if not already character:
-    else {
+    else if(!data.table::is.data.table(x)) {
         if(!is.character(x)) {
             x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
         }
@@ -983,6 +983,9 @@ vectorToJSONStringOne <- function(x) {
             # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):
             x <- list(x)
         }
+    }
+    
+    if(stringifyVector) {
         x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
     }
     return(x)

@@ -25,7 +25,7 @@ closeProject(projectPath, save = NULL)
 
 resetProject(projectPath, save = NULL)
 
-saveProject(projectPath)
+saveProject(projectPath, type = c("RData", "XML", "JSON"))
 
 saveAsProject(projectPath, newProjectPath, ow = FALSE)
 

@@ -316,7 +316,7 @@ initiateRstoxFramework <- function(){
     # Define the process arguments, which define a process:
     processDefaultFull <- list(
         processName = NULL, 
-        functionName = NULL, 
+        functionName = "", 
         processParameters = processParameters,
         processData = list(), 
         functionParameters = list(), 
@@ -941,9 +941,9 @@ resetProject <- function(projectPath, save = NULL) {
 #' @export
 #' @rdname Projects
 #' 
-saveProject <- function(projectPath) {
+saveProject <- function(projectPath, type = c("RData", "XML", "JSON")) {
     # Get the current project description and save it to the project.RData file:
-    writeProjectDescription(projectPath)
+    writeProjectDescription(projectPath, type = type)
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     
@@ -1134,7 +1134,7 @@ writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON"
 }
 writeProjectDescriptionRData <- function(projectPath) {
     # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath)
+    projectDescription <- getProjectMemoryData(projectPath, named.list = FALSE)
     
     # Get the path to the project description file, and save the current project description:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
@@ -1142,7 +1142,7 @@ writeProjectDescriptionRData <- function(projectPath) {
 }
 writeProjectDescriptionXML <- function(projectPath) {
     # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath)
+    projectDescription <- getProjectMemoryData(projectPath, named.list = FALSE)
     
     # Get the path to the project description file, and save the current project description:
     projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
@@ -1150,7 +1150,7 @@ writeProjectDescriptionXML <- function(projectPath) {
 }
 writeProjectDescriptionJSON <- function(projectPath) {
     # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath)
+    projectDescription <- getProjectMemoryData(projectPath, named.list = FALSE)
     
     # Get the path to the project description file, and save the current project description:
     projectJSONFile <- getProjectPaths(projectPath, "projectJSONFile")

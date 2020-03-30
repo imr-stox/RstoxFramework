@@ -130,7 +130,7 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
 #' 
 #' @export
 #'
-getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE, argumentFilePaths = NULL) {
+getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE, argumentFilePaths = NULL, named.list = TRUE) {
     
     # Get the argument files:
     if(length(argumentFilePaths) > 0 && length(modelName) == 1 && length(processID) == 1 && length(argumentName) == 1 ) {
@@ -158,7 +158,18 @@ getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL
             output <- output[[argumentName]]
         }
     }
-
+    
+    if(!named.list) {
+        # Remove the processIDs:
+        for(modelName in names(output)) {
+            output[[modelName]] <- unname(output[[modelName]])
+        }
+        # Put the models in an anonymous list, and add the modelName
+        for(modelName in names(output)) {
+            output[[modelName]]$modelName <- modelName
+        }
+    }
+    
     return(output)
 }
 

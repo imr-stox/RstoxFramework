@@ -919,8 +919,9 @@ replaceEmpty <- function(x, vector = TRUE) {
 # Function to convert to JSON string, used to send only strings and arrays of strings to the GUI:
 toJSONString <- function(DT) {
     # Convert the possible values, which can have 0 or positive length:
-    #possibleValuesToJSONString(DT)
-    DT[, possibleValues := lapply(possibleValues, vectorToJSONStringOne, stringifyVector = FALSE)]
+    ####possibleValuesToJSONString(DT)
+    #DT[, possibleValues := lapply(possibleValues, vectorToJSONStringOne, stringifyVector = FALSE)]
+    DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne, nrow = nrow(DT))]
     
     # Convert vector value:
     atVector <- isVectorParameter(DT$format)
@@ -991,6 +992,30 @@ vectorToJSONStringOne <- function(x, stringifyVector = TRUE) {
     return(x)
 }
 
+
+# The parameter nrow is needed to ensure that data.table does not intruduce an extra list when there is more than one row and one of the cells has only one element:
+possibleValuesToJSONStringOne <- function(x, nrow) {
+    # Set empty possible values to numeric(), which ensures [] in OpenCPUs conversion to JSON (jsonlite::toJSON with auto_unbox = TRUE):
+    if(length(x) == 0) {
+        x <- numeric()
+    }
+    # Convert to JSON string for each element if not already character:
+    else {
+        if(!is.character(x)) {
+            x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
+        }
+        if(length(x) == 1) {
+            # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):
+            if(nrow == 1) {
+                x <- list(list(x))
+            }
+            else {
+                x <- list(x)
+            }
+        }
+    }
+    return(x)
+}
 
 
 

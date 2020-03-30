@@ -3323,24 +3323,6 @@ getNewDefaultProcessName <- function(projectPath, modelName) {
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processNames <- processIndexTable$processName
     
-    ## Identify all process names starting with the process_Prefix:
-    #process_Prefix <- getRstoxFrameworkDefinitions("process_Prefix")
-    #startsWithProcess_Prefix <- startsWith(processNames, process_Prefix)
-    #
-    ## Get the lowest index which is not occupied:
-    #if(any(startsWithProcess_Prefix)) {
-    #    # Extract the integers after the underscore:
-    #    process_Index <- as.numeric(substring(processNames[startsWithProcess_Prefix], nchar(process_Prefix) + 1))
-    #    process_Index <- min(seq_len(max(process_Index)))
-    #}
-    #else {
-    #    process_Index <- 1
-    #}
-    #
-    ## Create and return the name of the new project:
-    #processName <- paste0(process_Prefix, process_Index)
-    #processName
-    
     getNewDefaultName(processNames, getRstoxFrameworkDefinitions("process_Prefix"))
 }
 
@@ -3950,7 +3932,7 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     # If the folder does not exist, it is a sign that the process does not exist:
     if(length(folderPath) == 0 || !file.exists(folderPath)) {
         #processName <- getProcessName(projectPath, modelName, processID)
-        stop("The folder ", folderPath, " does not exist. This is likely due to non-existing process")
+        stop("Has the previous processes been run? The folder ", folderPath, " does not exist. This is likely due to non-existing process")
     }
     
     # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):

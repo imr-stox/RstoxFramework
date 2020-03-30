@@ -1114,7 +1114,7 @@ getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = N
         processID = processID
     )
     # Return empty string if the function name is missing:
-    if(length(packageName_functionName) == 0) {
+    if(length(packageName_functionName) == 0 || nchar(packageName_functionName) == 0) {
         return("")
     }
     

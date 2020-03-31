@@ -1135,7 +1135,7 @@ writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON"
 }
 writeProjectDescriptionRData <- function(projectPath) {
     # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath, named.list = FALSE)
+    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
     
     # Get the path to the project description file, and save the current project description:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
@@ -3503,7 +3503,7 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
     
     # values must be a list:
     if(length(values) && !is.list(values)) {
-        stop("values must be a list of specifics of the process.")
+        warning("Process not added. Values must be a list of specifics of the process.")
     }
     
     # Create an empty process:

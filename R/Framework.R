@@ -141,16 +141,17 @@ initiateRstoxFramework <- function(){
             "numeric"
         )
     )
-    # Define the process property formats (should this be used to check for valid format????????????):
+    # Define the process property formats:
     processPropertyFormats <- list(
         default = "none", 
         single = list(
             "filePath", 
             "directoryPath"
         ), 
-        multiple = list(
-            "filePaths", 
-            #"parameterTable", 
+        vector = list(
+            "filePaths"
+        ), 
+        table = list(
             "filterExpressionTable", 
             "speciesCategoryTable", 
             "acousticCategoryTable", 
@@ -316,7 +317,7 @@ initiateRstoxFramework <- function(){
     # Define the process arguments, which define a process:
     processDefaultFull <- list(
         processName = NULL, 
-        functionName = NULL, 
+        functionName = "", 
         processParameters = processParameters,
         processData = list(), 
         functionParameters = list(), 
@@ -941,9 +942,9 @@ resetProject <- function(projectPath, save = NULL) {
 #' @export
 #' @rdname Projects
 #' 
-saveProject <- function(projectPath) {
+saveProject <- function(projectPath, type = c("RData", "XML", "JSON")) {
     # Get the current project description and save it to the project.RData file:
-    writeProjectDescription(projectPath)
+    writeProjectDescription(projectPath, type = type)
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     
@@ -1134,7 +1135,7 @@ writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON"
 }
 writeProjectDescriptionRData <- function(projectPath) {
     # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath)
+    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
     
     # Get the path to the project description file, and save the current project description:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
@@ -1142,7 +1143,7 @@ writeProjectDescriptionRData <- function(projectPath) {
 }
 writeProjectDescriptionXML <- function(projectPath) {
     # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath)
+    projectDescription <- getProjectMemoryData(projectPath, named.list = FALSE)
     
     # Get the path to the project description file, and save the current project description:
     projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
@@ -1150,7 +1151,7 @@ writeProjectDescriptionXML <- function(projectPath) {
 }
 writeProjectDescriptionJSON <- function(projectPath) {
     # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath)
+    projectDescription <- getProjectMemoryData(projectPath, named.list = FALSE)
     
     # Get the path to the project description file, and save the current project description:
     projectJSONFile <- getProjectPaths(projectPath, "projectJSONFile")
@@ -3323,24 +3324,6 @@ getNewDefaultProcessName <- function(projectPath, modelName) {
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processNames <- processIndexTable$processName
     
-    ## Identify all process names starting with the process_Prefix:
-    #process_Prefix <- getRstoxFrameworkDefinitions("process_Prefix")
-    #startsWithProcess_Prefix <- startsWith(processNames, process_Prefix)
-    #
-    ## Get the lowest index which is not occupied:
-    #if(any(startsWithProcess_Prefix)) {
-    #    # Extract the integers after the underscore:
-    #    process_Index <- as.numeric(substring(processNames[startsWithProcess_Prefix], nchar(process_Prefix) + 1))
-    #    process_Index <- min(seq_len(max(process_Index)))
-    #}
-    #else {
-    #    process_Index <- 1
-    #}
-    #
-    ## Create and return the name of the new project:
-    #processName <- paste0(process_Prefix, process_Index)
-    #processName
-    
     getNewDefaultName(processNames, getRstoxFrameworkDefinitions("process_Prefix"))
 }
 
@@ -3520,7 +3503,7 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
     
     # values must be a list:
     if(length(values) && !is.list(values)) {
-        stop("values must be a list of specifics of the process.")
+        warning("Process not added. Values must be a list of specifics of the process.")
     }
     
     # Create an empty process:
@@ -3950,7 +3933,7 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     # If the folder does not exist, it is a sign that the process does not exist:
     if(length(folderPath) == 0 || !file.exists(folderPath)) {
         #processName <- getProcessName(projectPath, modelName, processID)
-        stop("The folder ", folderPath, " does not exist. This is likely due to non-existing process")
+        stop("Has the previous processes been run? The folder ", folderPath, " does not exist. This is likely due to non-existing process")
     }
     
     # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):

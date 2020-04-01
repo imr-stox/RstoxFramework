@@ -1,6 +1,6 @@
 Package: RstoxFramework
 Title: The engine of StoX
-Version: 1.1.0
+Version: 1.2.0
 Authors@R: c(
   person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
   person(given = "Ibrahim", family = "Umar", role = "aut"), 
@@ -23,11 +23,11 @@ Imports:
     geojsonio (>= 0.8.0),
     jsonlite (>= 1.6),
     sp (>= 1.3.2),
-    RstoxData (>= 0.7.0),
-    RstoxBase (>= 1.1.0)
+    RstoxData (>= 0.8.0),
+    RstoxBase (>= 1.2.0)
 Suggests: 
     testthat
 Remotes: 
-	StoXProject/RstoxData@RstoxData-v0.7.0, 
-	StoXProject/RstoxBase@RstoxBase-v1.1.0
+	StoXProject/RstoxData@RstoxData-v0.8.0, 
+	StoXProject/RstoxBase@RstoxBase-v1.2.0
 RoxygenNote: 7.0.2

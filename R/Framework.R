@@ -3036,17 +3036,15 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     
     # Add functionInputs and functionParameters:
     functionArguments <- c(
-        functionParameters, 
+        functionArguments, 
         functionInputs, 
         process$functionParameters
     )
     
-    # Replace any of the functionArguments by elements in the list replaceArgs:
-    replaceArgsInFunctionArguments <- instersect(names(replaceArgs), names(functionArguments))
-    if(length(replaceArgsInFunctionArguments)) {
-        for(this in replaceArgsInFunctionArguments) {
-            functionArguments[[this]] <- replaceArgs[[this]]
-        }
+    # Insert any arguments in replaceArgs:
+    replaceArgsToInsert <- intersect(names(replaceArgs), names(functionArguments))
+    if(length(replaceArgsToInsert)) {
+        functionArguments[replaceArgsToInsert] <- replaceArgs[replaceArgsToInsert]
     }
     
     # Get absolute paths:

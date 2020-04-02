@@ -1207,16 +1207,17 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     
     # Here we need to accept that the process has not been run, and return empty filter options!!!!!!!!!!!!
     
-    # Get the process output:
-    processOutput <- getProcessOutput(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        tableName = tableName, 
-        drop = TRUE
-    )
+    ### # Get the process output:
+    ### processOutput <- getProcessOutput(
+    ###     projectPath = projectPath, 
+    ###     modelName = modelName, 
+    ###     processID = processID, 
+    ###     tableName = tableName, 
+    ###     drop = TRUE
+    ### )
     
-    # Run the process without saving and without filter
+    # Run the process without saving and without filter:
+    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = ""))
     
     # Convert to a list of tables:
     #processOutput <- unlistToDataType(processOutput)

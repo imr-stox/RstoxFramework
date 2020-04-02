@@ -5,8 +5,6 @@
 \title{Get RstoxFramework definitions}
 \usage{
 getRstoxFrameworkDefinitions(name = NULL, ...)
-
-getRstoxFrameworkDefinitions(name = NULL, ...)
 }
 \arguments{
 \item{name}{An optional string vector denoting which definitions to extract.}
@@ -15,17 +13,11 @@ getRstoxFrameworkDefinitions(name = NULL, ...)
 }
 \value{
 A list of definitions.
-
-A list of definitions.
 }
 \description{
 This function gets vital definitions from the RstoxFramework environment.
-
-This function gets vital definitions from the RstoxFramework environment.
 }
 \examples{
-getRstoxFrameworkDefinitions()
-
 getRstoxFrameworkDefinitions()
 
 }

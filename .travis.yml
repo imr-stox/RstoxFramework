@@ -20,7 +20,6 @@ addons:
     packages:
     - pkg-config
     - gdal
-    update: true
 cran: https://cran.revolutionanalytics.com
 if: tag IS blank
 cache: packages

@@ -631,12 +631,20 @@ formatJSONString <- function(parameter) {
 }
 
 
-isMultipleParameter <- function(functionName, parameterName) {
-    multiple <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$multiple)
-    format <- unlist(getFunctionParameterPropertyFormats(functionName)[parameterName])
-    isMultiple <- format %in% multiple
-    return(isMultiple)
+#isMultipleParameter <- function(functionName, parameterName) {
+#    multiple <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$multiple)
+#    format <- unlist(getFunctionParameterPropertyFormats(functionName)[parameterName])
+#    isMultiple <- format %in% multiple
+#    return(isMultiple)
+#}
+isVectorParameter <- function(format) {
+    vector <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$vector)
+    isVector <- format %in% vector
+    return(isVector)
 }
+
+
+
 
 
 #' 
@@ -671,32 +679,6 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     # "speciesCategoryTable"
     # "acousticCategoryTable" 
     
-    
-    # Function that gets the process names of the processes returning the specified data type
-    getProcessNamesByDataType <- function(dataType, processTable) {
-        hasRequestedDataType <- processTable$dataType == dataType
-        if(any(hasRequestedDataType)) {
-            processTable$processName[hasRequestedDataType]
-        }
-        else {
-            NULL
-        }
-    }
-    
-    # Function to replace an empty object by double(0) or character(1), which results in [] in JSON (since OpenCPU uses auto-unbox = TRUE):
-    replaceEmpty <- function(x, vector = TRUE) {
-        areEmpty <- lengths(x) == 0
-        if(any(areEmpty)) {
-            if(vector) {
-                x[areEmpty] <- rep(list(double(0)), sum(areEmpty))
-            }
-            else {
-                x[areEmpty] <- rep(list(character(1)), sum(areEmpty))
-            }
-        }
-        x   
-    }
-    
     #######################
     ##### 1. Process: #####
     #######################
@@ -713,6 +695,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     processParametersDisplayNames <- getRstoxFrameworkDefinitions("processParametersDisplayNames")
     processParametersDescriptions <- getRstoxFrameworkDefinitions("processParametersDescriptions")
     processParameterNames <- names(processParameters)
+    
     
     ##### Define the process name, the function name and the process parameters as the process property "process": #####
     processArgumentsToReturn <- data.table::data.table(
@@ -788,7 +771,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         # Run only if there are function inputs:
         if(length(functionInputs)) {
             # Get the process table, which is needed to get the output data types from the prior processes for use in the function inputs:
-            processTable <- getProcessTable(projectPath = projectPath, modelName = modelName, processID = processID)
+            processTable <- getProcessTable(projectPath = projectPath, modelName = modelName, beforeProcessID = processID)
             #thisProcessIndex <- which(processTable$processID == processID)
             #processTable <- processTable[seq_len(thisProcessIndex), ]
             functionInputNames <- names(functionInputs)
@@ -808,6 +791,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 6. possibleValues:
                 #possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
+                #possibleValues = lapply(lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable), as.list),
                 possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # 7. value:
                 value = functionInputs
@@ -849,9 +833,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             
             # Convert to a JSON string if the parameter has a format:
             hasFormat <- functionParametersToReturn$format != "none"
-            if(any(hasFormat)) {
-                functionParametersToReturn$value[hasFormat] = lapply(functionParametersToReturn$value[hasFormat], formatJSONString)
-            }
+            #if(any(hasFormat)) {
+            #    functionParametersToReturn$value[hasFormat] = lapply(functionParametersToReturn$value[hasFormat], formatJSONString)
+            #}
             
             # Convert all possibleValues and value to character:
             toJSONString(functionParametersToReturn)
@@ -902,23 +886,61 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
 }
 
 
+# Function that gets the process names of the processes returning the specified data type
+getProcessNamesByDataType <- function(dataType, processTable) {
+    hasRequestedDataType <- processTable$functionOutputDataType == dataType
+    if(any(hasRequestedDataType)) {
+        output <- processTable$processName[hasRequestedDataType]
+    }
+    else {
+        output <- NULL
+    }
+    
+    ### This is a trick to keep arrays through jsonlite::toJSON, and must happen here (before the data.table is created):
+    #as.list(output)
+    return(output)
+}
+
+# Function to replace an empty object by double(0) or character(1), which results in [] in JSON (since OpenCPU uses auto-unbox = TRUE):
+replaceEmpty <- function(x, vector = TRUE) {
+    areEmpty <- lengths(x) == 0
+    if(any(areEmpty)) {
+        if(vector) {
+            x[areEmpty] <- rep(list(double(0)), sum(areEmpty))
+        }
+        else {
+            x[areEmpty] <- rep(list(character(1)), sum(areEmpty))
+        }
+    }
+    x   
+}
 
 
 # Function to convert to JSON string, used to send only strings and arrays of strings to the GUI:
 toJSONString <- function(DT) {
     # Convert the possible values, which can have 0 or positive length:
-    possibleValuesToJSONString(DT)
+    ####possibleValuesToJSONString(DT)
+    #DT[, possibleValues := lapply(possibleValues, vectorToJSONStringOne, stringifyVector = FALSE)]
+    DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne, nrow = nrow(DT))]
+    
+    # Convert vector value:
+    atVector <- isVectorParameter(DT$format)
+    if(any(atVector)) {
+        DT[atVector, value := lapply(value, vectorToJSONStringOne)]
+    }
+    
     # Convert all the other columns, which are required to have length 1:
     other <- setdiff(names(DT), "possibleValues")
-    valueToJSONString(DT, cols = other)
+    cellToJSONString(DT, cols = other)
+    DT[]
 }
 
 
 
-valueToJSONString <- function(DT, cols) {
-    DT[, (cols) := lapply(.SD, valueToJSONStringOneColumn), .SDcols = cols]
+cellToJSONString <- function(DT, cols) {
+    DT[, (cols) := lapply(.SD, cellToJSONStringOneColumn), .SDcols = cols]
 }
-valueToJSONStringOne <- function(x) {
+cellToJSONStringOne <- function(x) {
     if(length(x) == 0) {
         warning("Length 1 required for process properties except possibleValues.")
         x <- ""
@@ -928,19 +950,51 @@ valueToJSONStringOne <- function(x) {
     }
     return(x)
 }
-valueToJSONStringOneColumn <- function(x) {
-    lapply(x, valueToJSONStringOne)
+cellToJSONStringOneColumn <- function(x) {
+    lapply(x, cellToJSONStringOne)
 }
 
 
 
 
-possibleValuesToJSONString <- function(DT) {
-    DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne)]
+#vectorToJSONString <- function(DT) {
+#    output <- DT[, possibleValues := lapply(possibleValues, vectorToJSONStringOne, nrow = nrow(DT))]
+#    return(output)
+#}
+
+# The parameter nrow is needed to ensure that data.table does not intruduce an extra list when there is more than one row and one of the cells has only one element:
+vectorToJSONStringOne <- function(x, stringifyVector = TRUE) {
+    # Set empty possible values to numeric(), which ensures [] in OpenCPUs conversion to JSON (jsonlite::toJSON with auto_unbox = TRUE):
+    if(length(x) == 0) {
+        x <- numeric()
+        #as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+    }
+    
+    ## If data.table, simply convert to JSON string:
+    #else if(data.table::is.data.table(x)) {
+    #    as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+    #}
+    
+    # Convert to JSON string for each element if not already character:
+    else if(!data.table::is.data.table(x)) {
+        if(!is.character(x)) {
+            x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
+        }
+        if(length(x) == 1) {
+            # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):
+            x <- list(x)
+        }
+    }
+    
+    if(stringifyVector) {
+        x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+    }
+    return(x)
 }
 
 
-possibleValuesToJSONStringOne <- function(x) {
+# The parameter nrow is needed to ensure that data.table does not intruduce an extra list when there is more than one row and one of the cells has only one element:
+possibleValuesToJSONStringOne <- function(x, nrow) {
     # Set empty possible values to numeric(), which ensures [] in OpenCPUs conversion to JSON (jsonlite::toJSON with auto_unbox = TRUE):
     if(length(x) == 0) {
         x <- numeric()
@@ -950,14 +1004,18 @@ possibleValuesToJSONStringOne <- function(x) {
         if(!is.character(x)) {
             x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
         }
-        # Convert to a list to ensure that if of length 1, OpenCPU still returns an array:
         if(length(x) == 1) {
-            x <- list(x)
+            # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):
+            if(nrow == 1) {
+                x <- list(list(x))
+            }
+            else {
+                x <- list(x)
+            }
         }
     }
     return(x)
 }
-
 
 
 
@@ -1100,6 +1158,11 @@ getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = N
         modelName = modelName, 
         processID = processID
     )
+    # Return empty string if the function name is missing:
+    if(length(packageName_functionName) == 0 || nchar(packageName_functionName) == 0) {
+        return("")
+    }
+    
     # Get the package and function name:
     packageName <- getPackageNameFromPackageFunctionName(packageName_functionName)
     functionName <- getFunctionNameFromPackageFunctionName(packageName_functionName)

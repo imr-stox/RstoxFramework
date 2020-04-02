@@ -1216,6 +1216,8 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
         drop = TRUE
     )
     
+    # Run the process without saving and without filter
+    
     # Convert to a list of tables:
     #processOutput <- unlistToDataType(processOutput)
     

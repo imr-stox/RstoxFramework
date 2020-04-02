@@ -19,10 +19,35 @@ listArgumentFilesWithBasenamesAsNames <- function(path) {
     return(out)
 }
 
-listArgumentFiles <- function(dir, processID = NULL) {
+#listArgumentFiles <- function(dir, processID = NULL) {
+#    # Get processIDs:
+#    if(length(processID) == 0) {
+#        processID <- list.dirs(dir, recursive = FALSE, full.names = FALSE)
+#    }
+#    
+#    # Loop through the processIDs and list the argument files:
+#    sapply(
+#        processID, 
+#        function(x) listArgumentFilesWithBasenamesAsNames(file.path(dir, x)), 
+#        simplify = FALSE
+#    )
+#}
+
+
+listArgumentFiles <- function(projectPath, modelName, processID = NULL) {
+    
+    # Get the folder of files holding the memory file paths:
+    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    
+    # Get the path to the directory of the model:
+    dir <- file.path(currentMemoryFolder, modelName)
+    
     # Get processIDs:
     if(length(processID) == 0) {
-        processID <- list.dirs(dir, recursive = FALSE, full.names = FALSE)
+        # Get the processIndexTable, holding the order of the processes:
+        processIndexTable <- readProcessIndexTable(projectPath, modelName)
+        # Get all processIDs from the processIndexTable:
+        processID <- processIndexTable$processID
     }
     
     # Loop through the processIDs and list the argument files:
@@ -32,6 +57,8 @@ listArgumentFiles <- function(dir, processID = NULL) {
         simplify = FALSE
     )
 }
+
+
 
 verifyPaths <- function(x) {
     valid <- file.exists(x)
@@ -51,6 +78,7 @@ getArgumentFilesDir <- function(projectPath, modelName, processID) {
 
 
 getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
+    
     # Get the folder of files holding the memory file paths:
     currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
     
@@ -91,22 +119,39 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     }
     else if(length(modelName) == 1 && length(processID) >= 1 && length(argumentName) == 0) {
         # Create a list named by the modelName:
-        dir <- file.path(currentMemoryFolder, modelName)
+        #dir <- file.path(currentMemoryFolder, modelName)
+        #pointerFilePaths <- structure(
+        #    list(
+        #        # Loop through the processIDs and list the argument files:
+        #        listArgumentFiles(dir, processID = processID)
+        #    ), 
+        #    names = modelName
+        #)
+        #
+        
         pointerFilePaths <- structure(
             list(
-                # Loop through the processIDs and list the argument files:
-                listArgumentFiles(dir, processID = processID)
+                listArgumentFiles(projectPath = projectPath, modelName = modelName, processID = processID)
             ), 
             names = modelName
         )
     }
     else if(length(modelName) >= 1 && length(processID) == 0 && length(argumentName) == 0) {
         # Create a list named by the modelName:
-        dirs <- file.path(currentMemoryFolder, modelName)
+        #dirs <- file.path(currentMemoryFolder, modelName)
+        #pointerFilePaths <- structure(
+        #    lapply(
+        #        dirs, 
+        #        function(dir) listArgumentFiles(dir, processID = processID)
+        #    ), 
+        #    names = modelName
+        #)
+        
+        
         pointerFilePaths <- structure(
             lapply(
-                dirs, 
-                function(dir) listArgumentFiles(dir, processID = processID)
+                modelName,
+                function(thisModelName) listArgumentFiles(projectPath = projectPath, modelName = thisModelName)
             ), 
             names = modelName
         )

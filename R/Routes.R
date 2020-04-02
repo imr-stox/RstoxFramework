@@ -1217,7 +1217,9 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     ### )
     
     # Run the process without saving and without filter:
-    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = ""))
+    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
+    # Get the requested table:
+    processOutput <- processOutput[[tableName]]
     
     # Convert to a list of tables:
     #processOutput <- unlistToDataType(processOutput)

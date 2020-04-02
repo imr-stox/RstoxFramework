@@ -2983,7 +2983,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, replaceArgs = list()) {
     
     # Get the process:
     process <- getProcess(
@@ -3004,10 +3004,10 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     }
     
     # Build a list of the arguments to the function:
-    functionParameters <- list()
+    functionArguments <- list()
     # Add the processData if a processData function:
     if(isProcessDataFunction(process$functionName)) {
-        functionParameters$processData <- process$processData
+        functionArguments$processData <- process$processData
     }
     
     # Get the function input as output from the previously run processes:
@@ -3035,26 +3035,27 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     }
     
     # Add functionInputs and functionParameters:
-    functionParameters <- c(
+    functionArguments <- c(
         functionParameters, 
         functionInputs, 
         process$functionParameters
     )
     
+    # Replace any of the functionArguments by elements in the list replaceArgs:
+    replaceArgsInFunctionArguments <- instersect(names(replaceArgs), names(functionArguments))
+    if(length(replaceArgsInFunctionArguments)) {
+        for(this in replaceArgsInFunctionArguments) {
+            functionArguments[[this]] <- replaceArgs[[this]]
+        }
+    }
+    
     # Get absolute paths:
-    functionParameters <- getAbsolutePaths(
-        functionParameters = functionParameters, 
+    functionArguments <- getAbsolutePaths(
+        functionParameters = functionArguments, 
         projectPath = projectPath, 
         modelName = modelName,
         processID = processID
     )
-    
-    ### # Run the function:
-    ### processOutput <- do.call(
-    ###     getFunctionNameFromPackageFunctionName(process$functionName), 
-    ###     functionParameters, 
-    ###     envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))### 
-    ### )
     
     # Try running the function, and return FALSE if failing:
     failed <- FALSE
@@ -3071,7 +3072,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     processOutput <- tryCatch(
         do.call(
             getFunctionNameFromPackageFunctionName(process$functionName), 
-            functionParameters, 
+            functionArguments, 
             envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))
         ), 
         error = function(err) {

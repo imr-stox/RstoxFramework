@@ -1,10 +1,16 @@
 language: r
-jobs:
-  include:
-  - os: linux
-    r: 3.6
-  - os: osx
-    r: 3.6
+os:
+- linux
+- osx
+r:
+- release
+if: tag IS blank
+cache: packages
+warnings_are_errors: false
+notifications:
+  email:
+    on_success: change
+    on_failure: change
 addons:
   apt:
     packages:
@@ -20,17 +26,16 @@ addons:
     packages:
     - pkg-config
     - gdal
-cran: https://cran.revolutionanalytics.com
-if: tag IS blank
-cache: packages
-warnings_are_errors: false
-notifications:
-  email:
-    on_success: change
-    on_failure: change
+r_packages:
+  - drat
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then Rscript -e 'source("https://install-github.me/r-lib/remotes")'; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo 'options(repos = "https://cran.revolutionanalytics.com", install.packages.compile.from.source = "never")' > ~/.Rprofile.site && export R_PROFILE=~/.Rprofile.site; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then R -e 'source("https://install-github.me/r-lib/remotes")'; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo 'options(repos = "https://cloud.r-project.org/", install.packages.compile.from.source = "never")' > ~/.Rprofile.site && export R_PROFILE=~/.Rprofile.site; fi
+
+before_script:
+  - wget https://github.com/StoXProject/repo/raw/master/scripts/checktag.sh
+  - wget https://github.com/StoXProject/repo/raw/master/scripts/deploy.sh
+  - bash checktag.sh
 
 after_success:
   # Get Package name and version from DESCRIPTION
@@ -40,13 +45,21 @@ after_success:
   - "echo $SRC_PKG_FILE"
   # Build binary and remove the source archive
   - "R CMD INSTALL --build ${SRC_PKG_FILE}.tar.gz"
+  - "mkdir drat"
+  - "cp ${SRC_PKG_FILE}.tar.gz drat/"
   - "rm ${SRC_PKG_FILE}.tar.gz"
   # Look for binary bundle (*.tgz for OSX and *.tar.gz for Linux)
-  - "export BIN_PKG_FILE=$(ls $PKGNAME*gz)"
+  - "export BINSRC=$(ls $PKGNAME*gz)"
+  - "export BINDST=${BINSRC//.tar.gz/-R${TRAVIS_R_VERSION}.tar.gz}"
+  - "export BIN_PKG_FILE=${BINDST//.tgz/-R${TRAVIS_R_VERSION}.tgz}"
+  - "cp ${BINSRC} ${BIN_PKG_FILE}"
+  - "cp ${BINSRC} drat/"
   - "echo Resulting binary: $BIN_PKG_FILE"
-  # Generate documentation pages
-  - Rscript -e 'remotes::install_cran("pkgdown")'
-  - Rscript -e 'pkgdown::build_site()'
+  # If you are in linux with R release, instruct to deploy source in drat and also generate docs with pkdown
+  - test $TRAVIS_BRANCH == "master"  && test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_OS_NAME == "linux" && test $TRAVIS_R_VERSION_STRING == "release" && export DEPLOY_SRC="true" && Rscript -e 'remotes::install_cran("pkgdown")' && Rscript -e 'pkgdown::build_site()'
+  # Populate DRAT
+  - test $TRAVIS_BRANCH == "master"  && test $TRAVIS_PULL_REQUEST == "false" && export PKG_REPO=$PWD && bash deploy.sh
+
 before_deploy:
   # Set up git user name and tag this commit
   - git config --global user.email "builds@travis-ci.com"
@@ -65,7 +78,7 @@ deploy:
     skip_cleanup: true
     token: $API_KEY
     keep_history: true
-    local_dir: docs
+    local_dir: ${PKG_REPO}/docs
     on:
      branch: master
-     condition: $TRAVIS_OS_NAME = linux
+     condition: $TRAVIS_OS_NAME = linux && $TRAVIS_R_VERSION_STRING = release

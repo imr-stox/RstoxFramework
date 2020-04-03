@@ -151,8 +151,10 @@ initiateRstoxFramework <- function(){
         vector = list(
             "filePaths"
         ), 
+        list = list(
+            "filterExpressionList"
+        ), 
         table = list(
-            "filterExpressionTable", 
             "speciesCategoryTable", 
             "acousticCategoryTable", 
             "catchCompensationTable", 

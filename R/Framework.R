@@ -2243,7 +2243,10 @@ setListElements <- function(list, insertList, projectPath, modelName, processID)
     # Insert the list elements (one by one for safety):
     if(length(insertNames)) {
         for(ind in seq_along(insertList)) {
-            list[[names(insertList[ind])]] <- insertList[[ind]]
+            # Added this if statement on 2020-04-03, since it prevents parameters from being deleted:
+            if(!is.null(insertList[[ind]])) {
+                list[[names(insertList[ind])]] <- insertList[[ind]]
+            }
         }
     }
     

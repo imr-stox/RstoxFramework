@@ -1,4 +1,4 @@
-# RstoxFramework version: 1.2.3 (latest alpha, 2020-04-03)
+# RstoxFramework version: 1.2.4 (latest alpha, 2020-04-03)
 # R version: 3.6
 
 
@@ -6,10 +6,10 @@
 
 
 # Install the latest GitHub release
-devtools::install_github("https://github.com/StoXProject/RstoxFramework", ref = "RstoxFramework-v1.2.3")
+devtools::install_github("https://github.com/StoXProject/RstoxFramework", ref = "RstoxFramework-v1.2.4")
 
 
-# Release notes for RstoxFramework_1.2.3:
+# Release notes for RstoxFramework_1.2.4:
 # . 
 
 # For historical release notes see https://github.com/StoXProject/RstoxFramework/blob/master/NEWS

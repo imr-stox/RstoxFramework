@@ -27,7 +27,6 @@ Imports:
     RstoxBase (>= 1.2.2)
 Suggests: 
     testthat
-Remotes: 
-	StoXProject/RstoxData@RstoxData-v0.8.1, 
-	StoXProject/RstoxBase@RstoxBase-v1.2.2
+Additional_repositories:
+    https://stoxproject.github.io/repo
 RoxygenNote: 7.0.2

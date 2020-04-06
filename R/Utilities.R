@@ -216,7 +216,7 @@ list2expression <- function(l) {
         value <- l$value
         
         # If the value is a character, pad with quotation marks:
-        if(is.character(value)) {
+        if(length(value) && is.character(value[[1]])) {
             #value <- paste0('\'', value, '\'')
             value <- paste0("\"", value, "\"")
         }

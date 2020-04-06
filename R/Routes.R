@@ -650,15 +650,20 @@ isListParameter <- function(format) {
 
 
 parseParameterByFormat <- function(parameter, format) {
-    # If vector convert empty string to NULL
-    if(isVectorParameter(format)) {
-        return(NULL)
-    }
-    else if(isTableParameter(format)) {
-        return(data.table::data.table())
-    }
-    else if(isListParameter(format)) {
-        return(list())
+    # If vector convert empty string to character()
+    if(identical(parameter, "")) {
+        if(isVectorParameter(format)) {
+            return(character())
+        }
+        else if(isTableParameter(format)) {
+            return(data.table::data.table())
+        }
+        else if(isListParameter(format)) {
+            return(list())
+        }
+        else {
+            return(parameter)
+        }
     }
     else {
         return(parameter)

@@ -1290,15 +1290,15 @@ getFilterOptionsAll <- function(projectPath, modelName, processID) {
 getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     
     # Here we need to accept that the process has not been run, and return empty filter options!!!!!!!!!!!!
-    
     # Get the process output:
-    processOutput <- getProcessOutput(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        tableName = tableName, 
-        drop = TRUE
-    )
+    #processOutput <- getProcessOutput(
+    #    projectPath = projectPath, 
+    #    modelName = modelName, 
+    #    processID = processID, 
+    #    tableName = tableName, 
+    #    drop = TRUE
+    #)
+    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))[[tableName]]
     
     ## Run the process without saving and without filter:
     #processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
@@ -1364,7 +1364,8 @@ getOptionList <- function(option, digits = 6) {
 getPossibleValuesOneTable <- function(table) {
     # Unique and then sort each column:
     sortUnique <- function(y) {
-        sort(unique(y))
+        # 2020-04-06: Added na.last = TRUE to keep NAs in the filter options:
+        sort(unique(y), na.last = TRUE)
     }
     lapply(table, sortUnique)
 }

@@ -3101,8 +3101,9 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         }
         
         # Store the processData (this must be a named list of only one data table):
+        #if(isProcessDataFunction(process$functionName) && isTRUE(getUseProcessData(projectPath, modelName, processID))) {
         if(isProcessDataFunction(process$functionName)) {
-            modifyProcessData(projectPath, modelName, processID, processOutput)
+                modifyProcessData(projectPath, modelName, processID, processOutput)
             
             # Set the function parameters UseProcessData to TRUE:
             setUseProcessDataToTRUE(projectPath, modelName, processID)
@@ -3125,6 +3126,10 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
 
 setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
     modifyFunctionParameters(projectPath, modelName, processID, list(UseProcessData = TRUE))
+}
+
+getUseProcessData <- function(projectPath, modelName, processID) {
+    getFunctionParameters(projectPath = projectPath, modelName = modelName, processID = processID)$UseProcessData
 }
 
 

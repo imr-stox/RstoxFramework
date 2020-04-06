@@ -2986,7 +2986,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, replaceArgs = list()) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, flatten.output = TRUE, replaceArgs = list()) {
     
     # Get the process:
     process <- getProcess(
@@ -3084,6 +3084,26 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     
     # Return the process output if not to be saved:
     if(!save) {
+        if(data.table::is.data.table(utils::head(processOutput, 1))) {
+            nlevels <- 1
+        }
+        else if(is.list(utils::head(processOutput, 1))){
+            nlevels <- 2
+        }
+        else {
+            stop("Invalid processOutput")
+        }
+        
+        # Unlist and add names with slashes:
+        if(nlevels == 2 && flatten.output) {
+            processOutputNames <- paste(
+                rep(names(processOutput), lengths(processOutput)), 
+                unlist(lapply(processOutput, names)), 
+                sep = "/"
+            )
+            processOutput <- unlist(processOutput, recursive = FALSE)
+            names(processOutput) <- processOutputNames
+        }
         return(processOutput)
     }
     
@@ -3679,7 +3699,8 @@ getModelData <- function(projectPath, modelName, startProcess = 1, endProcess = 
         getProcessOutput, 
         projectPath = projectPath, 
         modelName = modelName, 
-        processTable$processID
+        processTable$processID, 
+        SIMPLIFY = FALSE
     )
     names(processOutput) <- processTable$processName
     

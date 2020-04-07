@@ -198,6 +198,7 @@ list2expression <- function(l) {
     # Declare the resulting expression
     result <- NULL
     # If the current rules or expression should be negated, we need to enclose the expression in paretheses:
+    #print(l)
     negate <- isTRUE(l$negate)
     needParentheses <- negate
     
@@ -216,12 +217,43 @@ list2expression <- function(l) {
         value <- l$value
         
         # If the value is a character, pad with quotation marks:
-        if(is.character(value)) {
-            #value <- paste0('\'', value, '\'')
-            value <- paste0("\"", value, "\"")
+        if(length(value) && is.character(value[[1]])) {
+            # Replace the string "NA" with NA:
+            areNAString <- sapply(value, "%in%", "NA")
+            if(any(areNAString)) {
+                value[areNAString] <- rep(list(NA), sum(areNAString))
+            }
+            
+            # Add quotes:
+            value[!areNAString] <- lapply(value[!areNAString], function(x) paste0("\"", x, "\""))
         }
+        
+        # If there is one single value, and this is NA, change operator to %in%, with a warning:
+        if(length(value) == 1 && is.na(value[[1]])) {
+            if(l$operator %in% "==") {
+                warning("Operator cannot be == when extracting NAs. Changed from == to %in% for ", l$field, l$operator, value)
+                l$operator <- "%in%"
+            }
+            else if(l$operator %in% "!=") {
+                warning("Operator cannot be != when excluding NAs. Changed from != to %notin% for ", l$field, l$operator, value)
+                l$operator <- "%notin%"
+            }
+        }
+        if(length(value) > 1 && l$operator %in% "==") {
+            warning("The operator == cannot be used with multiple reference values, and was replaced by %in%")
+            l$operator <- "%in%"
+        }
+        if(length(value) > 1 && l$operator %in% "!=") {
+            warning("The operator != cannot be used with multiple reference values, and was replaced by %notin%")
+            l$operator <- "%notin%"
+        }
+        
+        # Then collapse to a vector:
+        #value <- unlist(value)
+        
+        #value <- lapply(value, function(x) if (is.character(x)) if(x == "NA") NA else paste0("\"", x, "\"") else x)
         # If more than one value, obtain the c(...) notation: 
-        if(l$operator %in% c('%in%', '%notin%')) {
+        if(l$operator %in% c('%in%', '%notin%') && length(value) > 1) {
             value = paste0('c(', paste(value, collapse=', '), ')')
         }
         

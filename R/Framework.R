@@ -1786,7 +1786,7 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     afterProcessIndexInRest <- max(0, which(rest$modelName %in% modelName & rest$processID %in% afterProcessID))
     
     before <- rest[seq_len(afterProcessIndexInRest), ]
-    if(afterProcessIndexInRest < nrow(processIndexTable)) {
+    if(afterProcessIndexInRest < nrow(rest)) {
         after <- rest[seq(afterProcessIndexInRest + 1, nrow(rest)), ]
     }
     else {
@@ -2243,7 +2243,10 @@ setListElements <- function(list, insertList, projectPath, modelName, processID)
     # Insert the list elements (one by one for safety):
     if(length(insertNames)) {
         for(ind in seq_along(insertList)) {
-            list[[names(insertList[ind])]] <- insertList[[ind]]
+            # Added this if statement on 2020-04-03, since it prevents parameters from being deleted:
+            if(!is.null(insertList[[ind]])) {
+                list[[names(insertList[ind])]] <- insertList[[ind]]
+            }
         }
     }
     
@@ -2983,7 +2986,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, replaceArgs = list()) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, flatten.output = TRUE, replaceArgs = list()) {
     
     # Get the process:
     process <- getProcess(
@@ -3081,6 +3084,26 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     
     # Return the process output if not to be saved:
     if(!save) {
+        if(data.table::is.data.table(utils::head(processOutput, 1))) {
+            nlevels <- 1
+        }
+        else if(is.list(utils::head(processOutput, 1))){
+            nlevels <- 2
+        }
+        else {
+            stop("Invalid processOutput")
+        }
+        
+        # Unlist and add names with slashes:
+        if(nlevels == 2 && flatten.output) {
+            processOutputNames <- paste(
+                rep(names(processOutput), lengths(processOutput)), 
+                unlist(lapply(processOutput, names)), 
+                sep = "/"
+            )
+            processOutput <- unlist(processOutput, recursive = FALSE)
+            names(processOutput) <- processOutputNames
+        }
         return(processOutput)
     }
     
@@ -3098,8 +3121,9 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         }
         
         # Store the processData (this must be a named list of only one data table):
+        #if(isProcessDataFunction(process$functionName) && isTRUE(getUseProcessData(projectPath, modelName, processID))) {
         if(isProcessDataFunction(process$functionName)) {
-            modifyProcessData(projectPath, modelName, processID, processOutput)
+                modifyProcessData(projectPath, modelName, processID, processOutput)
             
             # Set the function parameters UseProcessData to TRUE:
             setUseProcessDataToTRUE(projectPath, modelName, processID)
@@ -3122,6 +3146,10 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
 
 setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
     modifyFunctionParameters(projectPath, modelName, processID, list(UseProcessData = TRUE))
+}
+
+getUseProcessData <- function(projectPath, modelName, processID) {
+    getFunctionParameters(projectPath = projectPath, modelName = modelName, processID = processID)$UseProcessData
 }
 
 
@@ -3671,7 +3699,8 @@ getModelData <- function(projectPath, modelName, startProcess = 1, endProcess = 
         getProcessOutput, 
         projectPath = projectPath, 
         modelName = modelName, 
-        processTable$processID
+        processTable$processID, 
+        SIMPLIFY = FALSE
     )
     names(processOutput) <- processTable$processName
     

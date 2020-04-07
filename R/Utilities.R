@@ -216,7 +216,7 @@ list2expression <- function(l) {
         value <- l$value
         
         # If the value is a character, pad with quotation marks:
-        lapply(value, function(x) if (is.character(x)) if(x == "NA") NA else paste0("\"", x, "\"") else x)
+        value <- lapply(value, function(x) if (is.character(x)) if(x == "NA") NA else paste0("\"", x, "\"") else x)
         # If more than one value, obtain the c(...) notation: 
         if(l$operator %in% c('%in%', '%notin%')) {
             value = paste0('c(', paste(value, collapse=', '), ')')

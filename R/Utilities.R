@@ -231,11 +231,11 @@ list2expression <- function(l) {
         # If there is one single value, and this is NA, change operator to %in%, with a warning:
         if(length(value) == 1 && is.na(value[[1]])) {
             if(l$operator %in% "==") {
-                warning("Operator changed from == to %in% for ", l$field, l$operator, value)
+                warning("Operator cannot be == when extracting NAs. Changed from == to %in% for ", l$field, l$operator, value)
                 l$operator <- "%in%"
             }
             else if(l$operator %in% "!=") {
-                warning("Operator changed from != to %notin% for ", l$field, l$operator, value)
+                warning("Operator cannot be != when excluding NAs. Changed from != to %notin% for ", l$field, l$operator, value)
                 l$operator <- "%notin%"
             }
         }

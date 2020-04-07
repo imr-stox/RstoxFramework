@@ -213,10 +213,10 @@ initiateRstoxFramework <- function(){
     filterOperators <- list(
         character = c("==", "!=", "%in%", "%notin%"), 
         logical   = c("==", "!="), # This may never be used
-        integer   = c("<", "<=", "==", "!=", ">=", ">", "%in%", "%notin%"),
-        double    = c("<", "<=", "==", "!=", ">=", ">", "%in%", "%notin%"),
-        numeric   = c("<", "<=", "==", "!=", ">=", ">", "%in%", "%notin%"),
-        POSIXct   = c("<", "<=", "==", "!=", ">=", ">", "%in%", "%notin%")
+        integer   = c("==", "!=", "<", "<=", ">=", ">", "%in%", "%notin%"),
+        double    = c("==", "!=", "<", "<=", ">=", ">", "%in%", "%notin%"),
+        numeric   = c("==", "!=", "<", "<=", ">=", ">", "%in%", "%notin%"),
+        POSIXct   = c("==", "!=", "<", "<=", ">=", ">", "%in%", "%notin%")
     )
     
     # Define the StoX folders, data sources, model names, model display names, model descriptions, and the latter three grouped as model info:

@@ -251,6 +251,7 @@ list2expression <- function(l) {
         # Then collapse to a vector:
         #value <- unlist(value)
         
+        #value <- lapply(value, function(x) if (is.character(x)) if(x == "NA") NA else paste0("\"", x, "\"") else x)
         # If more than one value, obtain the c(...) notation: 
         if(l$operator %in% c('%in%', '%notin%') && length(value) > 1) {
             value = paste0('c(', paste(value, collapse=', '), ')')

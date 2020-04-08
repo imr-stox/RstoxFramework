@@ -1,6 +1,6 @@
 Package: RstoxFramework
 Title: The engine of StoX
-Version: 1.2.4
+Version: 1.2.5
 Authors@R: c(
   person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
   person(given = "Ibrahim", family = "Umar", role = "aut"), 
@@ -30,4 +30,6 @@ Suggests:
 Remotes: 
 	StoXProject/RstoxData@RstoxData-v0.8.2, 
 	StoXProject/RstoxBase@RstoxBase-v1.2.3
+Additional_repositories: 
+	https://stoxproject.github.io/repo
 RoxygenNote: 7.0.2

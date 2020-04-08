@@ -20,11 +20,19 @@ addEDSU(PSU, EDSU, projectPath, modelName, processID)
 removeEDSU(EDSU, projectPath, modelName, processID)
 }
 \arguments{
+\item{Stratum}{The name of a stratum.}
+
+\item{PSU}{The name of a PSU.}
+
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
 \item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
 
 \item{processID}{The ID of the process.}
+
+\item{newPSUName}{The new name of a PSU.}
+
+\item{EDSU}{The name of an EDSU.}
 }
 \description{
 The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.

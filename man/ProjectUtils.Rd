@@ -33,7 +33,15 @@ setNotRunning(projectPath)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
+
+\item{type}{The type of file to read.}
 }
 \description{
 Utilities for projects.
+
+Write the project description.
+
+Initiate the actige processID.
+
+Check or set if a project is running or not.
 }

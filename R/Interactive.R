@@ -209,6 +209,11 @@ assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
 #' 
 #' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
 #' 
+#' @param Stratum The name of a stratum.
+#' @param PSU The name of a PSU.
+#' @param newPSUName The new name of a PSU.
+#' @param EDSU The name of an EDSU.
+#' 
 #' @details 
 #' The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
 #' 
@@ -443,6 +448,9 @@ removeEDSU <- function(EDSU, projectPath, modelName, processID) {
 #' The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
 #' 
 #' @inheritParams getProcessOutput
+#' @param stratum The SpatialPolygonsDataFrame object defining the stratum to add.
+#' @param stratumName The name of the stratum.
+#' 
 #' @name Stratum
 #' 
 NULL
@@ -622,7 +630,7 @@ copyPolygonNameToID <- function(stratum) {
     }
     
     # Update rownames of the data slot:
-    rownames(slot(stratum, "data")) <- polygonName
+    rownames(methods::slot(stratum, "data")) <- polygonName
     
     return(stratum)
 }

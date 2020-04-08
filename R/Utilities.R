@@ -84,7 +84,14 @@ flattenDataTable <- function(x, replace = NA) {
     x <- RstoxBase::expandDT(x)
 }
 
-# Function to convert data.table to fixed width:
+#' Function to convert data.table to fixed width:
+#' 
+#' @param x The table to modify.
+#' @param columnSeparator The string to separate columns by, defaulted to a single space. 
+#' @param lineSeparator The string to separate lines by, defaulted to a NULL, which keeps the output as a vector of strings.
+#' @param na The string to replace NAs by, defaulted to "-".
+#' @param list.pretty Logical: If TRUE wrap the output in a list in the case that \code{pretty} is TRUE.
+#' 
 fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
     # Return immediately if x has length 0:
     if(length(x) == 0) {

@@ -164,7 +164,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
         )
     }
     else if(interactiveMode == "assignment") {
-        getAssignmentPSUData(
+        getAssignmentData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -566,7 +566,7 @@ extrapolateLongitudeLatitude <- function(Log) {
             Log[onlyMiddle, c("middleLongitude", "middleLatitude")] + 
             Log[mapToRange(onlyMiddle + 1, numPositions), c("middleLongitude", "middleLatitude")]
         ) / 2
-        Log$interpolated[v] <- TRUE
+        Log$interpolated[onlyMiddle] <- TRUE
     }
     if(length(EndNotStart)) {
         Log[EndNotStart, c("startLongitude", "startLatitude")] <- Log[mapToRange(EndNotStart - 1, numPositions), c("endLongitude", "endLatitude")]
@@ -638,37 +638,11 @@ formatJSONString <- function(parameter) {
 #    return(isMultiple)
 #}
 isVectorParameter <- function(format) {
-    format %in% unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$vector)
-}
-isTableParameter <- function(format) {
-    format %in% unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$table)
-}
-isListParameter <- function(format) {
-    format %in% unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$list)
+    vector <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$vector)
+    isVector <- format %in% vector
+    return(isVector)
 }
 
-
-
-parseParameterByFormat <- function(parameter, format) {
-    # If vector convert empty string to character()
-    if(identical(parameter, "")) {
-        if(isVectorParameter(format)) {
-            return(character())
-        }
-        else if(isTableParameter(format)) {
-            return(data.table::data.table())
-        }
-        else if(isListParameter(format)) {
-            return(list())
-        }
-        else {
-            return(parameter)
-        }
-    }
-    else {
-        return(parameter)
-    }
-}
 
 
 
@@ -950,7 +924,7 @@ toJSONString <- function(DT) {
     DT[, possibleValues := lapply(possibleValues, possibleValuesToJSONStringOne, nrow = nrow(DT))]
     
     # Convert vector value:
-    atVector <- isVectorParameter(DT$format) || isListParameter(DT$format)
+    atVector <- isVectorParameter(DT$format)
     if(any(atVector)) {
         DT[atVector, value := lapply(value, vectorToJSONStringOne)]
     }
@@ -967,9 +941,7 @@ cellToJSONString <- function(DT, cols) {
     DT[, (cols) := lapply(.SD, cellToJSONStringOneColumn), .SDcols = cols]
 }
 cellToJSONStringOne <- function(x) {
-    #if(length(x) == 0) {
-    # Changed to only convert to "" for NULL:
-    if(is.null(x)) {
+    if(length(x) == 0) {
         warning("Length 1 required for process properties except possibleValues.")
         x <- ""
     }
@@ -992,15 +964,8 @@ cellToJSONStringOneColumn <- function(x) {
 
 # The parameter nrow is needed to ensure that data.table does not intruduce an extra list when there is more than one row and one of the cells has only one element:
 vectorToJSONStringOne <- function(x, stringifyVector = TRUE) {
-    
-    # For a list, make sure the jsonlite::toJSON returns {}:
-    if(is.list(x)) {
-        if(length(x) == 0) {
-            x <- list(name = NULL)[NULL]
-        }
-    }
     # Set empty possible values to numeric(), which ensures [] in OpenCPUs conversion to JSON (jsonlite::toJSON with auto_unbox = TRUE):
-    else if(length(x) == 0) {
+    if(length(x) == 0) {
         x <- numeric()
         #as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
     }
@@ -1098,7 +1063,7 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
                 projectPath = projectPath, 
                 modelName = modelName, 
                 processID = processID, 
-                newProcessParameters = setNames(list(value), name)
+                newProcessParameters = stats::setNames(list(value), name)
             )
         }
     }
@@ -1108,7 +1073,7 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newFunctionInputs = setNames(list(value), name)
+            newFunctionInputs = stats::setNames(list(value), name)
         )
     }
     # If the process property 'functionInputs' is given, modify the function parameters:
@@ -1119,18 +1084,12 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         #    functionParameterName = name, 
         #    functionParameterValue = value, 
         #    functionName = getFunctionName(projectPath, modelName, processID))
-        
-        # Convert given the format of the parameters:
-        functionName <- getFunctionName(projectPath, modelName, processID)
-        format <- getFunctionParameterPropertyFormats(functionName)[name]
-        value <- parseParameterByFormat(value, format)
-        
         # Modify the process parameter:
         modifyFunctionParameters(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newFunctionParameters = setNames(list(value), name)
+            newFunctionParameters = stats::setNames(list(value), name)
         )
     }
     
@@ -1244,71 +1203,23 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 #' 
 #' @export
 #' 
-getFilterOptionsAll <- function(projectPath, modelName, processID) {
-    
-    # Run the process without saving and without filter:
-    # Add a stop if the previvous process has not been run!!!!!!!!!!!!!
-    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
-    
-    # Get the column names:
-    name <- lapply(processOutput, names)
-    
-    # Get the data types:
-    type <- lapply(processOutput, function(x) sapply(x, firstClass))
-    
-    # Get the operators:
-    operators <- lapply(type, function(x) getRstoxFrameworkDefinitions("filterOperators")[x])
-    
-    # Get a list of unique values for each column of each table:
-    options <- lapply(processOutput, getPossibleValuesOneTable)
-    options <- lapply(options, function(x) getOptionList(x))
-    
-    # Return the 
-    output <- lapply(
-        seq_along(options), 
-        function(ind) 
-        mapply(
-            list, 
-            name = name[[ind]], 
-            type = type[[ind]], 
-            operators = operators[[ind]], 
-            options = options[[ind]], 
-            SIMPLIFY = FALSE
-        )
-    )
-    names(output) <- names(options)
-    
-    # Add the fields level:
-    output <- list(
-        tableNames = names(output), 
-        fields = output
-    )
-    
-    
-    # Return a list of the tableNames, columnNames and possibleValues:
-    return(output)
-}
-
-#' 
-#' @export
-#' 
 getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     
     # Here we need to accept that the process has not been run, and return empty filter options!!!!!!!!!!!!
-    # Get the process output:
-    #processOutput <- getProcessOutput(
-    #    projectPath = projectPath, 
-    #    modelName = modelName, 
-    #    processID = processID, 
-    #    tableName = tableName, 
-    #    drop = TRUE
-    #)
-    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))[[tableName]]
     
-    ## Run the process without saving and without filter:
-    #processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
-    ## Get the requested table:
-    #processOutput <- processOutput[[tableName]]
+    ### # Get the process output:
+    ### processOutput <- getProcessOutput(
+    ###     projectPath = projectPath, 
+    ###     modelName = modelName, 
+    ###     processID = processID, 
+    ###     tableName = tableName, 
+    ###     drop = TRUE
+    ### )
+    
+    # Run the process without saving and without filter:
+    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
+    # Get the requested table:
+    processOutput <- processOutput[[tableName]]
     
     # Convert to a list of tables:
     #processOutput <- unlistToDataType(processOutput)
@@ -1369,8 +1280,7 @@ getOptionList <- function(option, digits = 6) {
 getPossibleValuesOneTable <- function(table) {
     # Unique and then sort each column:
     sortUnique <- function(y) {
-        # 2020-04-06: Added na.last = TRUE to keep NAs in the filter options:
-        sort(unique(y), na.last = TRUE)
+        sort(unique(y))
     }
     lapply(table, sortUnique)
 }

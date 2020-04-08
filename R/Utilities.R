@@ -411,6 +411,9 @@ expression2list = function(expr, generateRuleset=TRUE) {
             expr
         )
         splittedCode <- strsplit(code, safeSeparator)[[1]]
+        if(length(splittedCode) != 3) {
+            stop(paste("Syntax error in expression: ", expr))
+        }
         s <- c(
             splittedCode[1], 
             splittedCode[2], 

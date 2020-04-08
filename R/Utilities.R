@@ -205,7 +205,7 @@ list2expression <- function(l) {
     # Identify rules by the condition:
     if(any(names(l) == "condition")) { 
         # Rules need parentheses, and the link is padded by spaces for readability:
-        needParentheses <- TRUE
+        needParentheses <- length(l$rules) > 1
         link <- paste('', l$condition, '')
         
         # Recurse into the children:

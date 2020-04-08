@@ -395,7 +395,7 @@ expression2list = function(expr, generateRuleset=TRUE) {
         
         # expression field op value
         allPossibleOperators <- unique(unlist(getRstoxFrameworkDefinitions("filterOperators")))
-        space <- "\\s+"
+        space <- "\\s*"
         regularExpression <- paste0(
             "([[:alnum:]^\\\\s]+)", 
             space, 

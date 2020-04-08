@@ -338,15 +338,25 @@ expression2list = function(expr, generateRuleset=TRUE) {
         for(grp in rulesList) {
           res$rules[[length(res$rules) + 1]] <- expression2list(grp, FALSE) 
         }
-    } else if(isTRUE(negate)) {
+    } else if(isTRUE(negate)) { 
         # Handle negate both outside and inside parenthesis by recursing
         res <- expression2list(substr(expr, 2, nchar(expr)), generateRuleset)
         if(!is.null(res)) {
-            if('negate' %in% names(res)) {
-                res$negate = !res$negate
+              if('rules' %in% names(res) && length(res$rules) == 1) {
+                if('negate' %in% res$rules[[1]]) {
+                    res$rules[[1]]$negate = !res$rules[[1]]$negate
+                } else {
+                  res$rules[[1]] <- c(list(negate = TRUE), res$rules[[1]])
+                }
             } else {
-              res <- c(list(negate = TRUE), res)
+                # keep the negate outside at the ruleset
+                if('negate' %in% names(res)) {
+                    res$negate = !res$negate
+                } else {
+                  res <- c(list(negate = TRUE), res)
+                }
             }
+
         }
     }
     else if(startsWith(expr, '(') & endsWith(expr, ')')) {

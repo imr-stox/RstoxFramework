@@ -194,7 +194,7 @@ json2expression <- function(json) {
 #' 
 #' @export
 #' 
-list2expression <- function(l) {
+list2expression <- function(l, parentHasSiblings=FALSE) {
     # Declare the resulting expression
     result <- NULL
     # If the current rules or expression should be negated, we need to enclose the expression in paretheses:
@@ -205,11 +205,11 @@ list2expression <- function(l) {
     # Identify rules by the condition:
     if(any(names(l) == "condition")) { 
         # Rules need parentheses, and the link is padded by spaces for readability:
-        needParentheses <- length(l$rules) > 1
+        needParentheses <- needParentheses || parentHasSiblings
         link <- paste('', l$condition, '')
         
         # Recurse into the children:
-        result <- paste(lapply(l$rules, list2expression), collapse = link)
+        result <- paste(lapply(l$rules, list2expression, parentHasSiblings=length(l$rules) > 1), collapse = link)
     } 
     # Otherwise build the expression:
     else {

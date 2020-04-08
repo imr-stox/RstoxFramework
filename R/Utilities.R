@@ -201,7 +201,7 @@ json2expression <- function(json) {
 #' 
 #' @export
 #' 
-list2expression <- function(l) {
+list2expression <- function(l, parentHasSiblings=FALSE) {
     # Declare the resulting expression
     result <- NULL
     # If the current rules or expression should be negated, we need to enclose the expression in paretheses:
@@ -212,11 +212,11 @@ list2expression <- function(l) {
     # Identify rules by the condition:
     if(any(names(l) == "condition")) { 
         # Rules need parentheses, and the link is padded by spaces for readability:
-        needParentheses <- TRUE
+        needParentheses <- needParentheses || parentHasSiblings
         link <- paste('', l$condition, '')
         
         # Recurse into the children:
-        result <- paste(lapply(l$rules, list2expression), collapse = link)
+        result <- paste(lapply(l$rules, list2expression, parentHasSiblings=length(l$rules) > 1), collapse = link)
     } 
     # Otherwise build the expression:
     else {
@@ -283,8 +283,34 @@ list2expression <- function(l) {
 
 
 
-
-
+splitStrByOpAtLevel0 = function(expr, splitOperator){
+    resArr <- list()
+    currentArr <- list()
+    res <- list()
+    exprArr <- unlist(strsplit(expr, ''))
+    exprSeq <- seq_along(exprArr)
+    
+    level <- 0
+    for(i in exprSeq) {
+        c <- exprArr[i]
+        if (c == '(') {
+            level <- level + 1
+        } else if (c == ')') {
+            level <- level - 1
+        } 
+        if(c != splitOperator || level > 0) {
+            currentArr[[length(currentArr) + 1]] <- c
+        }
+        if (level == 0) {
+            if(length(currentArr) > 0 && (c == splitOperator || i == nchar(expr))) {
+                # flush the currentArr to a string result vector
+                res[[length(res) + 1]] <- paste(currentArr, collapse='')
+                currentArr <- list()
+            }
+        }
+    }
+    unlist(res)
+}
 
 
 #j2expr = function(json_str) {
@@ -339,21 +365,32 @@ expression2list = function(expr, generateRuleset=TRUE) {
     if(!is.null(splitOperator)) {
         res = list()
         res$condition = splitOperator
-        rulesList <- unlist(strsplit(expr, splitOperator, fixed = TRUE))
+        rulesList <- splitStrByOpAtLevel0(expr, splitOperator)
+        #unlist(strsplit(expr, splitOperator, fixed = TRUE))
         
         res$rules <- list()
         for(grp in rulesList) {
           res$rules[[length(res$rules) + 1]] <- expression2list(grp, FALSE) 
         }
-    } else if(isTRUE(negate)) {
+    } else if(isTRUE(negate)) { 
         # Handle negate both outside and inside parenthesis by recursing
         res <- expression2list(substr(expr, 2, nchar(expr)), generateRuleset)
         if(!is.null(res)) {
-            if('negate' %in% names(res)) {
-                res$negate = !res$negate
+              if('rules' %in% names(res) && length(res$rules) == 1) {
+                if('negate' %in% res$rules[[1]]) {
+                    res$rules[[1]]$negate = !res$rules[[1]]$negate
+                } else {
+                  res$rules[[1]] <- c(list(negate = TRUE), res$rules[[1]])
+                }
             } else {
-              res <- c(list(negate = TRUE), res)
+                # keep the negate outside at the ruleset
+                if('negate' %in% names(res)) {
+                    res$negate = !res$negate
+                } else {
+                  res <- c(list(negate = TRUE), res)
+                }
             }
+
         }
     }
     else if(startsWith(expr, '(') & endsWith(expr, ')')) {
@@ -365,7 +402,7 @@ expression2list = function(expr, generateRuleset=TRUE) {
         
         # expression field op value
         allPossibleOperators <- unique(unlist(getRstoxFrameworkDefinitions("filterOperators")))
-        space <- "\\s+"
+        space <- "\\s*"
         regularExpression <- paste0(
             "([[:alnum:]^\\\\s]+)", 
             space, 
@@ -381,6 +418,9 @@ expression2list = function(expr, generateRuleset=TRUE) {
             expr
         )
         splittedCode <- strsplit(code, safeSeparator)[[1]]
+        if(length(splittedCode) != 3) {
+            stop(paste("Syntax error in expression: ", expr))
+        }
         s <- c(
             splittedCode[1], 
             splittedCode[2], 

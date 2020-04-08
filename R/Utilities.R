@@ -276,8 +276,34 @@ list2expression <- function(l) {
 
 
 
-
-
+splitStrByOpAtLevel0 = function(expr, splitOperator){
+    resArr <- list()
+    currentArr <- list()
+    res <- list()
+    exprArr <- unlist(strsplit(expr, ''))
+    exprSeq <- seq_along(exprArr)
+    
+    level <- 0
+    for(i in exprSeq) {
+        c <- exprArr[i]
+        if (c == '(') {
+            level <- level + 1
+        } else if (c == ')') {
+            level <- level - 1
+        } 
+        if(c != splitOperator || level > 0) {
+            currentArr[[length(currentArr) + 1]] <- c
+        }
+        if (level == 0) {
+            if(length(currentArr) > 0 && (c == splitOperator || i == nchar(expr))) {
+                # flush the currentArr to a string result vector
+                res[[length(res) + 1]] <- paste(currentArr, collapse='')
+                currentArr <- list()
+            }
+        }
+    }
+    unlist(res)
+}
 
 
 #j2expr = function(json_str) {
@@ -332,7 +358,8 @@ expression2list = function(expr, generateRuleset=TRUE) {
     if(!is.null(splitOperator)) {
         res = list()
         res$condition = splitOperator
-        rulesList <- unlist(strsplit(expr, splitOperator, fixed = TRUE))
+        rulesList <- splitStrByOpAtLevel0(expr, splitOperator)
+        #unlist(strsplit(expr, splitOperator, fixed = TRUE))
         
         res$rules <- list()
         for(grp in rulesList) {

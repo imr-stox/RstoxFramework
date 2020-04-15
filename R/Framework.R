@@ -412,7 +412,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' 
 openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE) {
     if(!force && isOpenProject(projectPath)) {
-        warning("Project ", projectPath, "is already open.")
+        warning("StoX: Project ", projectPath, "is already open.")
         
         # Reset the active process if requested:
         if(reset) {
@@ -628,6 +628,11 @@ readProjectDescriptionRData <- function(projectPath) {
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
     projectDescription <- NULL
     load(projectRDataFile) # Creates/replaces the object 'projectDescription'
+    
+    if(length(projectDescription) == 0) {
+        stop("The project description ", projectRDataFile, " is empty.")
+    }
+    
     # Define the process IDs and return the project description:
     defineProcessIDs(projectDescription)
 }
@@ -690,8 +695,16 @@ writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON"
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     
+    # Get the current project description:
+    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
+    
+    # Stop if the projectDescription is empty:
+    if(length(projectDescription) == 0) {
+        stop("You cannot save an empty project.")
+    }
+    
     functionName <- paste0("writeProjectDescription", type)
-    do.call(functionName, list(projectPath = projectPath))
+    do.call(functionName, list(projectDescription = projectDescription))
     
     #switch(
     #    type,
@@ -700,26 +713,17 @@ writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON"
     #    JSON = writeProjectDescriptionJSON(projectPath)
     #)
 }
-writeProjectDescriptionRData <- function(projectPath) {
-    # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
-    
+writeProjectDescriptionRData <- function(projectDescription) {
     # Get the path to the project description file, and save the current project description:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
     save(projectDescription, file = projectRDataFile)
 }
-writeProjectDescriptionXML <- function(projectPath) {
-    # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath, named.list = FALSE)
-    
+writeProjectDescriptionXML <- function(projectDescription) {
     # Get the path to the project description file, and save the current project description:
     projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
     writeProjectXML(projectDescription, projectXMLFile)
 }
-writeProjectDescriptionJSON <- function(projectPath) {
-    # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath, named.list = FALSE)
-    
+writeProjectDescriptionJSON <- function(projectDescription) {
     # Get the path to the project description file, and save the current project description:
     projectJSONFile <- getProjectPaths(projectPath, "projectJSONFile")
     writeProjectJSON(projectDescription, projectJSONFile)

@@ -695,16 +695,8 @@ writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON"
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     
-    # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
-    
-    # Stop if the projectDescription is empty:
-    if(length(projectDescription) == 0) {
-        stop("You cannot save an empty project.")
-    }
-    
     functionName <- paste0("writeProjectDescription", type)
-    do.call(functionName, list(projectDescription = projectDescription))
+    do.call(functionName, list(projectPath = projectPath))
     
     #switch(
     #    type,
@@ -713,17 +705,41 @@ writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON"
     #    JSON = writeProjectDescriptionJSON(projectPath)
     #)
 }
-writeProjectDescriptionRData <- function(projectDescription) {
+writeProjectDescriptionRData <- function(projectPath) {
+    # Get the current project description:
+    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
+    
+    # Stop if the projectDescription is empty:
+    if(length(projectDescription) == 0) {
+        stop("You cannot save an empty project.")
+    }
+    
     # Get the path to the project description file, and save the current project description:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
     save(projectDescription, file = projectRDataFile)
 }
-writeProjectDescriptionXML <- function(projectDescription) {
+writeProjectDescriptionXML <- function(projectPath) {
+    # Get the current project description:
+    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
+    
+    # Stop if the projectDescription is empty:
+    if(length(projectDescription) == 0) {
+        stop("You cannot save an empty project.")
+    }
+    
     # Get the path to the project description file, and save the current project description:
     projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
     writeProjectXML(projectDescription, projectXMLFile)
 }
-writeProjectDescriptionJSON <- function(projectDescription) {
+writeProjectDescriptionJSON <- function(projectPath) {
+    # Get the current project description:
+    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
+    
+    # Stop if the projectDescription is empty:
+    if(length(projectDescription) == 0) {
+        stop("You cannot save an empty project.")
+    }
+    
     # Get the path to the project description file, and save the current project description:
     projectJSONFile <- getProjectPaths(projectPath, "projectJSONFile")
     writeProjectJSON(projectDescription, projectJSONFile)

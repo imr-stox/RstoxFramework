@@ -1200,6 +1200,10 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 }
 
 
+#' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
+#' 
+#' @inheritParams Projects
+#' @inheritParams getProcessOutput__________ Add a doc for projectPath, modelName, processID, tableName!!!!!!!
 #' 
 #' @export
 #' 
@@ -1308,6 +1312,7 @@ getParameterTablePossibleValues <- function(projectPath, modelName, processID, f
     rep(list(list()), length(columnNames))
 }
 
+#' GUI function: Function to get the info required for populating a parameter table builder in the GUI
 #' 
 #' @export
 #' 

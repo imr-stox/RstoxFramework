@@ -1,6 +1,26 @@
+##################################################
+##################################################
+#' General parameters of RstoxFramework.
+#' 
+#' All functions referring to a project, a model, a process or an output table use the same parameters, listed here.
+#' 
+#' @param projectPath The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.
+#' @param modelName The name of the model (one of "baseline", "analysis" and "report").
+#' @param processID The ID of the process.
+#' @param processName The name of the process.
+#' @param tableName The name of the output table to get from the process.
+#' @param template A string naming the template to use when generating the project. See \code{getAvaiableTemplates} for a list of available templates.
+#' @param ow Logical: If TRUE overwrite the project.
+#' @param showWarnings      Logical: If TRUE display warninigs when creting the project folders.
+#' 
+#' @name general_arguments
+#' 
+NULL
+
+
 #' This function gets the paths defined by \code{\link{initiateRstoxFramework}}.
 #' 
-#' @inheritParams Projects
+#' @inheritParams general_arguments
 #' @param name A string naming the path element to get. Set this to NULL to get all paths.
 #' 
 #' @export
@@ -287,6 +307,8 @@ defineProcessIDs <- function(projectMemory) {
 #' 
 #' This function creates the "stox" folder and the "project" and "reference" sub folders.
 #' 
+#' @inheritParams general_arguments
+#' 
 #' @return
 #' A list of paths to the "stox" folder and sub folders.
 #' 
@@ -329,10 +351,7 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' 
 #' Create a StoX project using \code{createProject}, possibly specifying a template; open an existing (un-opened) project using \code{openProject}, which involves creating files holding the memory of the project; close a project using  \code{closeProject}, which removes the memory files; save the project using \code{saveProject}, which saves the memory file to the project description file or make a copy using \code{saveProject} or \code{saveProject}, where the former closes the given project unsaved and opens the copy.
 #' 
-#' @param projectPath       The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.
-#' @param template          A string naming the template to use when generating the project. See \code{getAvaiableTemplates} for a list of available templates.
-#' @param ow                Logical: If TRUE overwrite the project.
-#' @param showWarnings      Logical: If TRUE display warninigs when creting the project folders.
+#' @inheritParams general_arguments
 #' @param open              Logical: If TRUE open the project after creating it.
 #' @param force             Logical: If TRUE reopen (close and then open) the project if already open.
 #' @param reset             Logical: If TRUE reset each model to the start of the model.
@@ -545,7 +564,7 @@ copyProject <- function(projectPath, newProjectPath, ow = FALSE) {
 ##################################################
 #' Utilities for projects.
 #' 
-#' @inheritParams Projects
+#' @inheritParams general_arguments
 #' @param type The type of file to read.
 #' 
 #' @name ProjectUtils
@@ -801,8 +820,7 @@ resolveProjectPath <- function(filePath) {
 
 #' Get the active process.
 #' 
-#' @inheritParams Projects
-#' @inheritParams getProcessOutput
+#' @inheritParams general_arguments
 #'
 #' @export
 #'
@@ -857,10 +875,9 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
 
 #' Reset a StoX model.
 #' 
-#' @inheritParams Projects
-#' @inheritParams getProcessOutput
-#' @inheritParams unReDoProject
+#' @inheritParams general_arguments
 #' @param modified Logical: Indicates whether the model has been modified when reseting.
+#' @inheritParams unReDoProject
 #' 
 #' @export
 #'
@@ -1288,7 +1305,7 @@ writeProjectMemoryIndex <- function(projectPath, projectMemoryIndex) {
 
 #' Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:
 #' 
-#' @inheritParams Projects
+#' @inheritParams general_arguments
 #' @param shift The position relative to the current memory status to un/redo to.
 #' 
 #' @export
@@ -1344,7 +1361,7 @@ unwrapProjectMemoryFile <- function(projectMemoryFile) {
 
 #' Function returning the names of the StoX functions available for a model:
 #' 
-#' @inheritParams getProcessOutput
+#' @inheritParams general_arguments
 #' 
 #' @export
 #' 
@@ -1888,63 +1905,100 @@ getProcessIDFromProcessName <- function(projectPath, modelName, processName) {
 
 
 ##### Process table: #####
-
-checkFunctionInput <- function(functionInput, functionInputDataType, processIndexTable) {
+#' Functions to get the process table of a model.
+#'
+#' @inheritParams general_arguments
+#' 
+#' @export
+#' 
+getProcessTable <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
-    # Expect an error, and return FALSE if all checks passes:
-    functionInputError <- TRUE
-    # (0) Chech that the function input is a string with positive number of characters:
-    if(!is.character(functionInput)) {
-        warning("Function input must be a character string (", functionInputDataType, ").")
+    # Read the memory file paths once, and insert to the get* functions below to speed things up:
+    if(length(argumentFilePaths) == 0) {
+        argumentFilePaths <- getArgumentFilePaths(projectPath)
     }
-    # (1) Error if empty string:
-    else if(nchar(functionInput) == 0) {
-        warning("Function input must be a non-empty character string (", functionInputDataType, ").")
+    
+    # Get a table of all the processes including function inputs, parameters and input errors:
+    processTable <- scanForModelError(projectPath, modelName, beforeProcessID = beforeProcessID, argumentFilePaths = argumentFilePaths)
+    # Return an empty data.table if the processTable is empty:
+    if(nrow(processTable) == 0) {
+        return(data.table::data.table())
     }
-    # (2) Error if not the name of a previous process:
-    else if(! functionInput %in% processIndexTable$processName) {
-        warning("Function input ", functionInput, " is not the name of a previous process (", functionInputDataType, ").")
-    }
-    else {
-        atRequestedPriorProcess <- which(functionInput == processIndexTable$processName)
-        outputDataTypeOfRequestedPriorProcess <- getStoxFunctionMetaData(processIndexTable$functionName[atRequestedPriorProcess], "functionOutputDataType")
-        
-        # (3) Error if the previous process returns the wrong data type:
-        if(! functionInputDataType %in% outputDataTypeOfRequestedPriorProcess) {
-            warning("Function input of process ", processIndexTable$processName[atRequestedPriorProcess], " does not return the correct data type (", functionInputDataType, ").")
+    
+    # Check whether the data type can be shown in the map:
+    processTable[, canShowInMap := getCanShowInMap(dataType = functionOutputDataType)]
+    
+    # Check whether the process returns process data:
+    processTable[, hasProcessData := lapply(functionName, isProcessDataFunction)]
+    
+    # Add hasBeenRun and modified:
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    
+    processTable[, hasBeenRun := FALSE]
+    processTable[, modified := FALSE]
+    
+    if(!is.na(activeProcess$processID)) {
+        activeProcessIndex <- getProcessIndexFromProcessID(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = activeProcess$processID
+        )
+        processTable[seq_len(min(activeProcessIndex, nrow(processTable))), hasBeenRun := TRUE]
+        if(activeProcessIndex <= nrow(processTable)) {
+            processTable[activeProcessIndex, modified := activeProcess$modified]
         }
-        # (4) Error if the previous process is not enabled:
-        else if(!processIndexTable$enabled[atRequestedPriorProcess]) {
-            warning("The process ", processIndexTable$processName[atRequestedPriorProcess], " is not enabled.")
-        }
-        # (5) Error if the previous process has input error:
-        else if(processIndexTable$functionInputError[atRequestedPriorProcess]) {
-            warning("The process ", processIndexTable$processName[atRequestedPriorProcess], " has input error.")
+    }
+    
+    return(processTable[])
+}
+#' 
+#' @export
+#' @rdname getProcessTable
+#' 
+scanForModelError <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
+    
+    # Get the processes:
+    processTable <- getProcessesSansProcessData(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        beforeProcessID = beforeProcessID, 
+        argumentFilePaths = argumentFilePaths
+    )
+    # Return an empty data.table if the processTable is empty:
+    if(nrow(processTable) == 0) {
+        return(data.table::data.table())
+    }
+    
+    # Add output data type:
+    processTable$functionOutputDataType <- mapply(
+        getDataType, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processTable$processID, 
+        MoreArgs = list(argumentFilePaths = argumentFilePaths), 
+        SIMPLIFY = TRUE
+    )
+    
+    # Add a column logging function input errors:
+    processTable[, functionInputError := FALSE]
+    # Run through the processes and detect model errors:
+    for(processIndex in seq_len(nrow(processTable))) {
+        if(length(processTable$functionInputs[[processIndex]])) {
+            functionInputError <- checkFunctionInputs(processTable[seq_len(processIndex), ])
         }
         else {
             functionInputError <- FALSE
         }
+        # Do any of the funciton inputs have error?
+        processTable$functionInputError[processIndex] <- any(functionInputError)
     }
-    return(functionInputError)
-}
-
-checkFunctionInputs <- function(processIndexTable) {
-    # Get the function input name and value paris:
-    functionInput <- processIndexTable$functionInputs[[nrow(processIndexTable)]]
-    functionInputDataType <- names(processIndexTable$functionInputs[[nrow(processIndexTable)]])
-    functionInputError <- mapply(
-        checkFunctionInput, 
-        functionInput = functionInput, 
-        functionInputDataType = functionInputDataType, 
-        MoreArgs = list(processIndexTable = processIndexTable)
-    )
     
-    # Error also if 
-    
-    return(functionInputError)
+    return(processTable)
 }
-
-
+#' 
+#' @export
+#' @rdname getProcessTable
+#' 
 getProcessesSansProcessData <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
     ##### (1) Get the table of process name and ID: #####
@@ -2002,97 +2056,61 @@ getProcessesSansProcessData <- function(projectPath, modelName, beforeProcessID 
     return(processIndexTable)
 }
 
-#' 
-#' @export
-#' 
-scanForModelError <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
+
+checkFunctionInput <- function(functionInput, functionInputDataType, processIndexTable) {
     
-    # Get the processes:
-    processTable <- getProcessesSansProcessData(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        beforeProcessID = beforeProcessID, 
-        argumentFilePaths = argumentFilePaths
-    )
-    # Return an empty data.table if the processTable is empty:
-    if(nrow(processTable) == 0) {
-        return(data.table::data.table())
+    # Expect an error, and return FALSE if all checks passes:
+    functionInputError <- TRUE
+    # (0) Chech that the function input is a string with positive number of characters:
+    if(!is.character(functionInput)) {
+        warning("Function input must be a character string (", functionInputDataType, ").")
     }
-    
-    # Add output data type:
-    processTable$functionOutputDataType <- mapply(
-        getDataType, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processTable$processID, 
-        MoreArgs = list(argumentFilePaths = argumentFilePaths), 
-        SIMPLIFY = TRUE
-    )
-    
-    # Add a column logging function input errors:
-    processTable[, functionInputError := FALSE]
-    # Run through the processes and detect model errors:
-    for(processIndex in seq_len(nrow(processTable))) {
-        if(length(processTable$functionInputs[[processIndex]])) {
-            functionInputError <- checkFunctionInputs(processTable[seq_len(processIndex), ])
+    # (1) Error if empty string:
+    else if(nchar(functionInput) == 0) {
+        warning("Function input must be a non-empty character string (", functionInputDataType, ").")
+    }
+    # (2) Error if not the name of a previous process:
+    else if(! functionInput %in% processIndexTable$processName) {
+        warning("Function input ", functionInput, " is not the name of a previous process (", functionInputDataType, ").")
+    }
+    else {
+        atRequestedPriorProcess <- which(functionInput == processIndexTable$processName)
+        outputDataTypeOfRequestedPriorProcess <- getStoxFunctionMetaData(processIndexTable$functionName[atRequestedPriorProcess], "functionOutputDataType")
+        
+        # (3) Error if the previous process returns the wrong data type:
+        if(! functionInputDataType %in% outputDataTypeOfRequestedPriorProcess) {
+            warning("Function input of process ", processIndexTable$processName[atRequestedPriorProcess], " does not return the correct data type (", functionInputDataType, ").")
+        }
+        # (4) Error if the previous process is not enabled:
+        else if(!processIndexTable$enabled[atRequestedPriorProcess]) {
+            warning("The process ", processIndexTable$processName[atRequestedPriorProcess], " is not enabled.")
+        }
+        # (5) Error if the previous process has input error:
+        else if(processIndexTable$functionInputError[atRequestedPriorProcess]) {
+            warning("The process ", processIndexTable$processName[atRequestedPriorProcess], " has input error.")
         }
         else {
             functionInputError <- FALSE
         }
-        # Do any of the funciton inputs have error?
-        processTable$functionInputError[processIndex] <- any(functionInputError)
     }
-    
-    return(processTable)
+    return(functionInputError)
 }
 
-
-#' 
-#' @export
-#' 
-getProcessTable <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
+checkFunctionInputs <- function(processIndexTable) {
+    # Get the function input name and value paris:
+    functionInput <- processIndexTable$functionInputs[[nrow(processIndexTable)]]
+    functionInputDataType <- names(processIndexTable$functionInputs[[nrow(processIndexTable)]])
+    functionInputError <- mapply(
+        checkFunctionInput, 
+        functionInput = functionInput, 
+        functionInputDataType = functionInputDataType, 
+        MoreArgs = list(processIndexTable = processIndexTable)
+    )
     
-    # Read the memory file paths once, and insert to the get* functions below to speed things up:
-    if(length(argumentFilePaths) == 0) {
-        argumentFilePaths <- getArgumentFilePaths(projectPath)
-    }
+    # Error also if 
     
-    # Get a table of all the processes including function inputs, parameters and input errors:
-    processTable <- scanForModelError(projectPath, modelName, beforeProcessID = beforeProcessID, argumentFilePaths = argumentFilePaths)
-    # Return an empty data.table if the processTable is empty:
-    if(nrow(processTable) == 0) {
-        return(data.table::data.table())
-    }
-    
-    # Check whether the data type can be shown in the map:
-    processTable[, canShowInMap := getCanShowInMap(dataType = functionOutputDataType)]
-    
-    # Check whether the process returns process data:
-    processTable[, hasProcessData := lapply(functionName, isProcessDataFunction)]
-    
-    # Add hasBeenRun and modified:
-    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    
-    processTable[, hasBeenRun := FALSE]
-    processTable[, modified := FALSE]
-
-    if(!is.na(activeProcess$processID)) {
-        activeProcessIndex <- getProcessIndexFromProcessID(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = activeProcess$processID
-        )
-        processTable[seq_len(min(activeProcessIndex, nrow(processTable))), hasBeenRun := TRUE]
-        if(activeProcessIndex <= nrow(processTable)) {
-            processTable[activeProcessIndex, modified := activeProcess$modified]
-        }
-    }
-    
-    return(processTable[])
+    return(functionInputError)
 }
-
-
-
 
 
 isFunctionInput <- function(parameter) {
@@ -2579,6 +2597,9 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
 
 
 
+#' Modify a process
+#' 
+#' @inheritParams general_arguments
 #' 
 #' @export
 #' 
@@ -2668,6 +2689,11 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     
     return(modified)
 }
+
+#' 
+#' 
+#' @param parameter 
+#' @param simplifyVector 
 #' 
 #' @export
 #' 

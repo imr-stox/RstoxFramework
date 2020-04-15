@@ -331,11 +331,14 @@ splitStrByOpAtLevel0 = function(expr, splitOperator){
 
 # Here, a function expression2json is not neede, since openCPU converts to JSON:
 
-# Parse an R expression to a nested list:
+#' Parse an R expression to a nested list:
+#' 
+#' @param expr An R expression string such as "a == 3 && !(b > 0)".
+#' @param generateRuleset Logical: If TRUE output the expressions as rules, which are lists of condition and rules.
 #' 
 #' @export
 #' 
-expression2list = function(expr, generateRuleset=TRUE) {
+expression2list <- function(expr, generateRuleset = TRUE) {
     res <- NULL
     expr <- trimws(expr)
     negate <- startsWith(expr, '!') 

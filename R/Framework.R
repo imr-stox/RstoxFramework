@@ -454,7 +454,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     # Set the project memory:
     temp <- addProcesses(
         projectPath = projectPath, 
-        modelName = names(projectMemory), 
+        #modelName = names(projectMemory), 
         projectMemory = projectMemory, 
         returnProcessTable = FALSE
     )

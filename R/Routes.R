@@ -1202,8 +1202,7 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 
 #' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
 #' 
-#' @inheritParams Projects
-#' @inheritParams getProcessOutput__________ Add a doc for projectPath, modelName, processID, tableName!!!!!!!
+#' @inheritParams general_arguments Add a doc for projectPath, modelName, processID, tableName!!!!!!!
 #' 
 #' @export
 #' 
@@ -1222,7 +1221,16 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     
     # Run the process without saving and without filter:
     processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
+    # If the process output is a list of lists, unlist the top level and add names separated by slash:
+    processOutput <- unlistProcessOutput(processOutput)
+    
     # Get the requested table:
+    if(tableName %in% names(processOutput)) {
+        
+    }
+    else {
+        stop("Table name should be one of the following:\n\t", paste(names(processOutput), collapse = "\n\t"))
+    }
     processOutput <- processOutput[[tableName]]
     
     # Convert to a list of tables:

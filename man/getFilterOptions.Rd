@@ -6,9 +6,6 @@
 \usage{
 getFilterOptions(projectPath, modelName, processID, tableName)
 }
-\arguments{
-\item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
-}
 \description{
 GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
 }

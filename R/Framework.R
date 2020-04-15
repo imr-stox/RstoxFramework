@@ -3273,6 +3273,16 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
 }
 
 
+unlistProcessOutput <- function(processOutput) {
+    if(is.list(processOutput[[1]]) && !data.table::is.data.table(processOutput[[1]])) {
+        names1 <- names(processOutput)
+        names2 <- lapply(processOutput, names)
+        processOutput <- unlist(processOutput, recursive = FALSE)
+        names(processOutput) <- paste(rep(names1, lengths(names2)), unlist(names2), sep = "/")
+    }
+    return(processOutput)
+}
+
 #' Function to read a single process output file, possibly by pages and in flattened and pretty view:
 #' 
 #' @inheritParams fixedWidthDataTable

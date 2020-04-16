@@ -1305,7 +1305,7 @@ getFilterOptionsAll <- function(projectPath, modelName, processID) {
     type <- lapply(processOutput, function(x) sapply(x, firstClass))
     
     # Get the operators:
-    operators <- lapply(type, function(x) getRstoxFrameworkDefinitions("filterOperators")[x])
+    operators <- lapply(type, function(x) if(length(x)) getRstoxFrameworkDefinitions("filterOperators")[x] else NULL)
     
     # Get a list of unique values for each column of each table:
     options <- lapply(processOutput, getPossibleValuesOneTable)

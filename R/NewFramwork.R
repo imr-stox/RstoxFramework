@@ -370,7 +370,7 @@ savePointerFilesTableAsPointerFiles <- function(projectPath, pointerFilesTable) 
         currentMemoryFolder, 
         pointerFilesTable$modelname, 
         pointerFilesTable$processID, 
-        paste0(projectMemoryTable$argumentName, ".rds"), 
+        paste0(pointerFilesTable$argumentName, ".rds"), 
     )
     
     # Write the files with memory file paths:

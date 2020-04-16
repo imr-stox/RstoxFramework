@@ -420,7 +420,43 @@ initiateRstoxFramework <- function(){
     
     #### Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv: ####
     #utils::globalVariables("RstoxFrameworkEnv")
-    utils::globalVariables(c("RstoxFrameworkEnv", ":=") )
+    utils::globalVariables(c(
+        "RstoxFrameworkEnv", 
+        ":=", ".", 
+        "..PSU", 
+        "..activeProcessID", 
+        "..clickPointNames", 
+        "..coordinateNames", 
+        "..functionInputs", 
+        "..functionName", 
+        "..functionParameters", 
+        "..infoToKeep", 
+        "..modified", 
+        "..newProcessName", 
+        "CruiseKey", 
+        "Latitude", 
+        "Latitude2", 
+        "LogOrigin", 
+        "LogOrigin2", 
+        "Longitude", 
+        "Longitude2", 
+        "PSU", 
+        "atRemove", 
+        "canShowInMap", 
+        "filePahts", 
+        "functionName", 
+        "functionOutputDataType", 
+        "hasBeenRun", 
+        "hasProcessData", 
+        "modelName", 
+        "modified", 
+        "name", 
+        "possibleValues", 
+        "processID", 
+        "projectPath", 
+        "value"
+    ))
+        
     assign("RstoxFrameworkEnv", new.env(), parent.env(environment()))
     
     assign("definitions", definitions, envir=get("RstoxFrameworkEnv"))

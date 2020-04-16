@@ -3454,9 +3454,7 @@ getProcessIndexFromProcessID <- function(projectPath, modelName, processID) {
 }
 
 
-#' 
-#' @export
-#' 
+# Function to write process output to a text file in the output folder:
 writeProcessOutputTextFile <- function(processOutput, process, projectPath, modelName) {
     # Return NULL for empty process output:
     if(length(processOutput)) {
@@ -3551,9 +3549,7 @@ unlistToDataType <- function(processOutput) {
 }
 
 
-#' 
-#' @export
-#' 
+# Function to write process output to a memory file:
 writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, modelName) {
     
     if(length(processOutput)) {

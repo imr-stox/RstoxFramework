@@ -1021,6 +1021,12 @@ possibleValuesToJSONStringOne <- function(x, nrow) {
 
 
 
+#' GUI function: Set procecss properties.
+#' 
+#' @param groupName The name of the property group, one of "processArguments", "functionInputs" and "functionParameters".
+#' @param name The name of the property, such as "processName", "functionName", one of the process parameters ("enabled", "showInMap" and "fileOutput"), the name of a funciton input, or the name of a function parameter. 
+#' @param value The value to set to the property (string).
+#' @inheritParams general_arguments
 #' 
 #' @export
 #' 

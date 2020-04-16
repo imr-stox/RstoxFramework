@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.5</span>
       </span>
     </div>
 
@@ -156,7 +156,7 @@
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>## # Create artificial assignment data:
-## Assignment <- data.table::data.table(
+## Assignment &lt;- data.table::data.table(
 ##     PSU = paste0("T", c(1,1, 2, 3,3)), 
 ##     Layer = "L1", 
 ##     Haul = c(1,2, 2, 1,2), 
@@ -164,11 +164,11 @@
 ## )
 ## 
 ## # Add a haul:
-## Assignment1 <- assignment_addHauls("T3", "L1", 4, Assignment)
+## Assignment1 &lt;- assignment_addHauls("T3", "L1", 4, Assignment)
 ## all.equal(Assignment, Assignment2)
 ## 
 ## # Remove the same haul:
-## Assignment2 <- assignment_removeHauls("T3", "L1", 4, Assignment1)
+## Assignment2 &lt;- assignment_removeHauls("T3", "L1", 4, Assignment1)
 ## all.equal(Assignment, Assignment2)
 
 </div></pre>
@@ -187,7 +187,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

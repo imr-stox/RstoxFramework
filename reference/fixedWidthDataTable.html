@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Utilities for projects. — ProjectUtils • RstoxFramework</title>
+<title>Function to convert data.table to fixed width: — fixedWidthDataTable • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,11 +39,8 @@
 
 
 
-<meta property="og:title" content="Utilities for projects. — ProjectUtils" />
-<meta property="og:description" content="Utilities for projects.
-Write the project description.
-Initiate the actige processID.
-Check or set if a project is running or not." />
+<meta property="og:title" content="Function to convert data.table to fixed width: — fixedWidthDataTable" />
+<meta property="og:description" content="Function to convert data.table to fixed width:" />
 
 
 
@@ -111,46 +108,45 @@ Check or set if a project is running or not." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Utilities for projects.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
-    <div class="hidden name"><code>ProjectUtils.Rd</code></div>
+    <h1>Function to convert data.table to fixed width:</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Utilities.R'><code>R/Utilities.R</code></a></small>
+    <div class="hidden name"><code>fixedWidthDataTable.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Utilities for projects.</p>
-<p>Write the project description.</p>
-<p>Initiate the actige processID.</p>
-<p>Check or set if a project is running or not.</p>
+    <p>Function to convert data.table to fixed width:</p>
     </div>
 
-    <pre class="usage"><span class='fu'>isProject</span>(<span class='no'>projectPath</span>)
-
-<span class='fu'>isSaved</span>(<span class='no'>projectPath</span>)
-
-<span class='fu'>isOpenProject</span>(<span class='no'>projectPath</span>)
-
-<span class='fu'>readProjectDescription</span>(<span class='no'>projectPath</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"XML"</span>))
-
-<span class='fu'>writeProjectDescription</span>(<span class='no'>projectPath</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"XML"</span>, <span class='st'>"JSON"</span>))
-
-<span class='fu'>initiateActiveProcessID</span>(<span class='no'>projectPath</span>)
-
-<span class='fu'>isRunning</span>(<span class='no'>projectPath</span>)
-
-<span class='fu'>setRunning</span>(<span class='no'>projectPath</span>)
-
-<span class='fu'>setNotRunning</span>(<span class='no'>projectPath</span>)</pre>
+    <pre class="usage"><span class='fu'>fixedWidthDataTable</span>(
+  <span class='no'>x</span>,
+  <span class='kw'>columnSeparator</span> <span class='kw'>=</span> <span class='st'>" "</span>,
+  <span class='kw'>lineSeparator</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>na</span> <span class='kw'>=</span> <span class='st'>"-"</span>,
+  <span class='kw'>list.pretty</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>projectPath</th>
-      <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
+      <th>x</th>
+      <td><p>The table to modify.</p></td>
     </tr>
     <tr>
-      <th>type</th>
-      <td><p>The type of file to read.</p></td>
+      <th>columnSeparator</th>
+      <td><p>The string to separate columns by, defaulted to a single space.</p></td>
+    </tr>
+    <tr>
+      <th>lineSeparator</th>
+      <td><p>The string to separate lines by, defaulted to a NULL, which keeps the output as a vector of strings.</p></td>
+    </tr>
+    <tr>
+      <th>na</th>
+      <td><p>The string to replace NAs by, defaulted to "-".</p></td>
+    </tr>
+    <tr>
+      <th>list.pretty</th>
+      <td><p>Logical: If TRUE wrap the output in a list in the case that <code>pretty</code> is TRUE.</p></td>
     </tr>
     </table>
 

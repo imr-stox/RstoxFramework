@@ -259,6 +259,7 @@ getStratumData <- function(projectPath, modelName, processID) {
 getAcousticPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
+    browser()
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of AcousticPSU type:
     #if(!all(names(processData) %in% c("Stratum_PSU", "EDSU_PSU"))){

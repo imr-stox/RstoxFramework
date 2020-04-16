@@ -412,7 +412,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' 
 openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE) {
     if(!force && isOpenProject(projectPath)) {
-        warning("StoX: Project ", projectPath, "is already open.")
+        warning("StoX: Project ", projectPath, " is already open.")
         
         # Reset the active process if requested:
         if(reset) {
@@ -497,8 +497,8 @@ closeProject <- function(projectPath, save = NULL) {
 #' @rdname Projects
 #' 
 resetProject <- function(projectPath, save = NULL) {
-    #closeProject(projectPath, save = save)
-    openProject(projectPath, showWarnings = FALSE, force = TRUE)
+    closeProject(projectPath, save = save)
+    openProject(projectPath, showWarnings = FALSE, force = FALSE)
 }
 #' 
 #' @export
@@ -2276,7 +2276,10 @@ setListElements <- function(list, insertList, projectPath, modelName, processID)
     # Insert the list elements (one by one for safety):
     if(length(insertNames)) {
         for(ind in seq_along(insertList)) {
-            list[[names(insertList[ind])]] <- insertList[[ind]]
+            # Added this if statement on 2020-04-03, since it prevents parameters from being deleted:
+            if(!is.null(insertList[[ind]])) {
+                list[[names(insertList[ind])]] <- insertList[[ind]]
+            }
         }
     }
     
@@ -2364,7 +2367,9 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         modelName = modelName, 
         processID = processID
     )
-
+    print("---------functionParameters---------")
+    print(functionParameters)
+    
     # Modify any file or directory paths to relative paths if possible, and issue a warning if the projectPath is not in the path:
     newFunctionParameters <- getRelativePaths(
         functionParameters = newFunctionParameters, 
@@ -2372,6 +2377,8 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         modelName = modelName, 
         processID = processID
     )
+    print("---------newFunctionParameters---------")
+    print(newFunctionParameters)
     
     # Modify the funciton parameters:
     modifiedFunctionParameters <- setListElements(
@@ -2381,6 +2388,8 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         modelName = modelName, 
         processID = processID
     )
+    print("---------modifiedFunctionParameters---------")
+    print(modifiedFunctionParameters)
     
     # Store the changes:
     if(!identical(functionParameters, modifiedFunctionParameters)) {

@@ -1208,7 +1208,7 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 
 #' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
 #' 
-#' @inheritParams general_arguments Add a doc for projectPath, modelName, processID, tableName!!!!!!!
+#' @inheritParams general_arguments
 #' 
 #' @export
 #' 
@@ -1232,12 +1232,11 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     
     # Get the requested table:
     if(tableName %in% names(processOutput)) {
-        
+        processOutput <- processOutput[[tableName]]
     }
     else {
         stop("Table name should be one of the following:\n\t", paste(names(processOutput), collapse = "\n\t"))
     }
-    processOutput <- processOutput[[tableName]]
     
     # Convert to a list of tables:
     #processOutput <- unlistToDataType(processOutput)
@@ -1283,6 +1282,62 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     # Return a list of the tableNames, columnNames and possibleValues:
     return(output)
 }
+
+
+#' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
+#' 
+#' @inheritParams general_arguments
+#' 
+#' @export
+#' 
+getFilterOptionsAll <- function(projectPath, modelName, processID) {
+
+    # Run the process without saving and without filter:
+    # Add a stop if the previvous process has not been run!!!!!!!!!!!!!
+    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
+    # If the process output is a list of lists, unlist the top level and add names separated by slash:
+    processOutput <- unlistProcessOutput(processOutput)
+    
+    # Get the column names:
+    name <- lapply(processOutput, names)
+    
+    # Get the data types:
+    type <- lapply(processOutput, function(x) sapply(x, firstClass))
+    
+    # Get the operators:
+    operators <- lapply(type, function(x) getRstoxFrameworkDefinitions("filterOperators")[x])
+    
+    # Get a list of unique values for each column of each table:
+    options <- lapply(processOutput, getPossibleValuesOneTable)
+    options <- lapply(options, function(x) getOptionList(x))
+    
+    # Return the
+    output <- lapply(
+        seq_along(options),
+        function(ind)
+            mapply(
+                list,
+                    name = name[[ind]],
+                    type = type[[ind]],
+                    operators = operators[[ind]],
+                    options = options[[ind]],
+                    SIMPLIFY = FALSE
+                )
+            )
+    
+    names(output) <- names(options)
+    
+    # Add the fields level:
+    output <- list(
+        tableNames = names(output),
+        fields = output
+    )
+                            
+    # Return a list of the tableNames, columnNames and possibleValues:
+    return(output)
+}
+
+    
 
 getOptionList <- function(option, digits = 6) {
     option <- data.table::data.table(

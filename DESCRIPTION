@@ -1,6 +1,6 @@
 Package: RstoxFramework
 Title: The engine of StoX
-Version: 1.2.5
+Version: 1.2.6
 Authors@R: c(
   person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
   person(given = "Ibrahim", family = "Umar", role = "aut"), 

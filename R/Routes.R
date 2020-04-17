@@ -1311,19 +1311,24 @@ getFilterOptionsAll <- function(projectPath, modelName, processID) {
     
     # Get a list of unique values for each column of each table:
     options <- lapply(processOutput, getPossibleValuesOneTable)
-    options <- lapply(options, function(x) getOptionList(x))
+    options <- lapply(options, function(x) lapply(x, getOptionList))
     
     # Return the
     output <- lapply(
         seq_along(options),
         function(ind)
-            mapply(
-                list,
-                    name = name[[ind]],
-                    type = type[[ind]],
-                    operators = operators[[ind]],
-                    options = options[[ind]],
-                    SIMPLIFY = FALSE
+            structure(
+                list(
+                    mapply(
+                        list,
+                            name = name[[ind]],
+                            type = type[[ind]],
+                            operators = operators[[ind]],
+                            options = options[[ind]],
+                            SIMPLIFY = FALSE
+                        )
+                    ), 
+                names = "fields"
                 )
             )
     
@@ -1332,7 +1337,7 @@ getFilterOptionsAll <- function(projectPath, modelName, processID) {
     # Add the fields level:
     output <- list(
         tableNames = names(output),
-        fields = output
+        allFields = output
     )
                             
     # Return a list of the tableNames, columnNames and possibleValues:

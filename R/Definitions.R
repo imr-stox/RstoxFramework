@@ -196,6 +196,12 @@ initiateRstoxFramework <- function(){
             "m", 
             "a", 
             "d"
+        ),
+        variableConversionTable = c(
+            "TableName", 
+            "VariableName", 
+            "Value", 
+            "NewValue"
         )
     )
     

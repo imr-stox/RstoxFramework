@@ -153,6 +153,7 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
 getInteractiveData  <- function(projectPath, modelName, processID) {
     
     # Get the interactive mode:
+    browser()
     interactiveMode <- getInteractiveMode(projectPath, modelName, processID)
     
     # Call the appropriate function depending on the interactive mode:

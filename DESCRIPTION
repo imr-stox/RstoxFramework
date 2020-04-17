@@ -23,13 +23,13 @@ Imports:
     geojsonio (>= 0.8.0),
     jsonlite (>= 1.6),
     sp (>= 1.3.2),
-    RstoxData (>= 0.8.2),
-    RstoxBase (>= 1.2.3)
+    RstoxData (>= 0.8.3),
+    RstoxBase (>= 1.2.4)
 Suggests: 
     testthat
 Remotes: 
-	StoXProject/RstoxData@RstoxData-v0.8.2, 
-	StoXProject/RstoxBase@RstoxBase-v1.2.3
+	StoXProject/RstoxData@RstoxData-v0.8.3, 
+	StoXProject/RstoxBase@RstoxBase-v1.2.4
 Additional_repositories: 
 	https://stoxproject.github.io/repo
 RoxygenNote: 7.0.2

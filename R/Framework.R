@@ -442,11 +442,11 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
         return(NULL)
     }
     
-    # Create the project session folder structure:
-    createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
-    
     # Read the project description file:
     projectMemory <- readProjectDescription(projectPath)
+    
+    # Create the project session folder structure:
+    createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
     # Set the active process ID to 0 for all models:
     initiateActiveProcessID(projectPath)
@@ -710,7 +710,7 @@ writeProjectDescriptionRData <- function(projectPath) {
     projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
     
     # Stop if the projectDescription is empty:
-    if(length(projectDescription) == 0) {
+    if(length(projectDescription) == 0 || (is.list(projectDescription) && all(lengths(projectDescription) == 0))) {
         stop("You cannot save an empty project.")
     }
     
@@ -973,7 +973,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
             
             # Identify the output file with prefix later than the index of the process to reset to:
             prefix <- as.numeric(sub("\\_.*", "", basename(outputTextFiles)))
-            filesToDelete <- outputTextFiles[prefix > processIndex]
+            filesToDelete <- outputTextFiles[prefix >= processIndex]
             
             # Delete the files:
             unlink(filesToDelete, recursive = TRUE, force = TRUE)
@@ -1818,7 +1818,7 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     afterProcessIndexInRest <- max(0, which(rest$modelName %in% modelName & rest$processID %in% afterProcessID))
     
     before <- rest[seq_len(afterProcessIndexInRest), ]
-    if(afterProcessIndexInRest < nrow(processIndexTable)) {
+    if(afterProcessIndexInRest < nrow(rest)) {
         after <- rest[seq(afterProcessIndexInRest + 1, nrow(rest)), ]
     }
     else {
@@ -2367,8 +2367,6 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         modelName = modelName, 
         processID = processID
     )
-    print("---------functionParameters---------")
-    print(functionParameters)
     
     # Modify any file or directory paths to relative paths if possible, and issue a warning if the projectPath is not in the path:
     newFunctionParameters <- getRelativePaths(
@@ -2377,8 +2375,6 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         modelName = modelName, 
         processID = processID
     )
-    print("---------newFunctionParameters---------")
-    print(newFunctionParameters)
     
     # Modify the funciton parameters:
     modifiedFunctionParameters <- setListElements(
@@ -2388,8 +2384,6 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         modelName = modelName, 
         processID = processID
     )
-    print("---------modifiedFunctionParameters---------")
-    print(modifiedFunctionParameters)
     
     # Store the changes:
     if(!identical(functionParameters, modifiedFunctionParameters)) {
@@ -3426,7 +3420,7 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
 getProcessOutputTableNames <- function(projectPath, modelName, processID) {
     # Get the output file names, and add the process name:
     tableNames <- getProcessOutputFiles(projectPath, modelName, processID, onlyTableNames = TRUE)
-    processName <- getProcessName(projectPath, modelName, processID)
+    #processName <- getProcessName(projectPath, modelName, processID)
     #tableNames <- paste(processName, tableNames, sep ="_")
     
     # Ensure that this is a vector in JSON after auto_unbox = TRUE, by using as.list():

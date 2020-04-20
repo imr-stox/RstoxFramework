@@ -933,7 +933,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
             newActiveProcessID <- NA
         }
         else {
-            # Reset only if the input process ID is before that the active:
+            # Reset the active process ID only if the input process ID is before that of the active:
             if(processIndex < currentActiveProcessIndex) {
                     newActiveProcessID <- processIndexTable$processID[processIndex]
                 }
@@ -973,7 +973,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
             
             # Identify the output file with prefix later than the index of the process to reset to:
             prefix <- as.numeric(sub("\\_.*", "", basename(outputTextFiles)))
-            filesToDelete <- outputTextFiles[prefix >= processIndex]
+            filesToDelete <- outputTextFiles[prefix > processIndex]
             
             # Delete the files:
             unlink(filesToDelete, recursive = TRUE, force = TRUE)
@@ -1709,7 +1709,7 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     if(any(changed)) {
         writeProcessIndexTable(projectPath = projectPath, processIndexTable = newProcessIndexTable)
         
-        # Set the activev process index as the first changed process minus 1:
+        # Set the active process index as the first changed process minus 1 (the process before the first changed process):
         activeProcessIndex <- min(changed) - 1
         activeProcessID <- processIndexTable$processID[activeProcessIndex]
         return(activeProcessID)
@@ -2891,7 +2891,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
     
     # Reset the model to the first of afterProcessID and the processes to be rearranged, but only if there was any change:
     if(length(activeProcessID)) {
-        resetModel(projectPath, modelName, processID = activeProcessID)
+        resetModel(projectPath, modelName, processID = activeProcessID, shift = 0)
         # Set the status as not saved (saving is done when running a process):
         setSavedStatus(projectPath, status = FALSE)
     }

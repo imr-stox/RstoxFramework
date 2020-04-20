@@ -51,6 +51,10 @@ copyProject(projectPath, newProjectPath, ow = FALSE)
 \item{type}{The type of file to save the project to.}
 
 \item{newProjectPath}{The path to the copied StoX project.}
+
+\item{values}{A list of values to assign to the process, such as list(processName = "ReadBiotic", functionName = "RstoxBase::ReadBiotic").}
+
+\item{returnProcessTable}{Logical: If TRUE return the process table.}
 }
 \description{
 Create a StoX project using \code{createProject}, possibly specifying a template; open an existing (un-opened) project using \code{openProject}, which involves creating files holding the memory of the project; close a project using  \code{closeProject}, which removes the memory files; save the project using \code{saveProject}, which saves the memory file to the project description file or make a copy using \code{saveProject} or \code{saveProject}, where the former closes the given project unsaved and opens the copy.

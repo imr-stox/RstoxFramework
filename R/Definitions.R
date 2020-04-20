@@ -155,12 +155,14 @@ initiateRstoxFramework <- function(){
             "filterExpressionList"
         ), 
         table = list(
-            "speciesCategoryTable", 
-            "acousticCategoryTable", 
+            #"speciesCategoryTable", 
+            #"acousticCategoryTable", 
             "catchCompensationTable", 
+            "ellipsoidalDistanceTable", 
             "selectivityTable", 
             "speciesLinktable", 
-            "acousticTargetStrengthTable"
+            "acousticTargetStrengthTable", 
+            "variableConversionTable"
         )
     )
     

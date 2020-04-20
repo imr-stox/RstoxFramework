@@ -1021,64 +1021,6 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
 
 # 5. Function to read the current project memory, or parts of it (e.g., argumentName = NULL indicate all arguments of the specified process(es)):
 
-
-# Unused.
-appendProjectDescription <- function(projectDescription, modelName, processID, argumentName, argumentValue) {
-    # Append the missing list elements down to the argument:
-    if(!modelName %in% names(projectDescription)) {
-        projectDescription <- append(
-            projectDescription, 
-            structure(list(NULL), names = modelName)
-        )
-    }
-    if(!processID %in% names(projectDescription [[modelName]])) {
-        projectDescription [[modelName]] <- append(
-            projectDescription[[modelName]], 
-            structure(list(NULL), names = processID)
-        )
-    }
-    # If missing, append the argument, and if not replace it:
-    if(!argumentName %in% names(projectDescription [[modelName]] [[processID]])) {
-        projectDescription [[modelName]] [[processID]] <- append(
-            projectDescription [[modelName]] [[processID]], 
-            structure(list(argumentValue), names = argumentName)
-        )
-    }
-    else {
-        projectDescription [[modelName]] [[processID]] [[argumentName]] <- argumentValue
-    }
-    
-    return(projectDescription)
-}
-
-
-# Unused: Read the process argument files to a list of the elements modelName, processID, argumentName, argumentValue:
-getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL) {
-    
-    # Read the current project memory file, which contains the list of files holding the current process arguments:
-    projectMemoryFile <- getProjectPaths(projectPath, "currentProjectMemoryFile")
-    
-    # If the projectMemoryFile does not exist, return an empty data.table:
-    if(file.exists(projectMemoryFile)) {
-        # Read the projectMemoryFile:
-        argumentFileTable <- readRDS(projectMemoryFile)$argumentFileTable
-        # Subset out the model if requested:
-        if(length(modelName)) {
-            argumentFileTable <- subset(argumentFileTable, modelName == modelName)
-        }
-        if(length(processID)) {
-            argumentFileTable <- subset(argumentFileTable, processID == processID)
-        }
-    }
-    else {
-        argumentFileTable <- data.table::data.table()
-    }
-    
-    argumentFileTable
-}
-
-
-
 # Function for getting the file path of one specific process argument rds file.
 getNewArgumentFile <- function(projectPath, modelName, processID, argumentName) {
     
@@ -1121,9 +1063,7 @@ getCurrentProjectMemoryFile <- function(projectPath) {
 #}
 
 
-
-
-# Unused: Function for saving an argument value to one process argument rds file:
+# Function for saving an argument value to one process argument rds file:
 saveArgumentFile <- function(projectPath, modelName, processID, argumentName, argumentValue) {
     
     # Get the path to the new argument file:
@@ -1149,76 +1089,6 @@ saveArgumentFile <- function(projectPath, modelName, processID, argumentName, ar
 }
 
 
-
-
-
-# Unused.
-insertToArgumentFileTable <- function(argumentFileTable, modelName, processID, argumentName, argumentFile) {
-    
-    # Function to get the row index of a combination of values of the columns of argumentFileTable:
-    getRowIndex <- function(ind, argumentFilesToInsert, argumentFileTable) {
-        # Get the indices at which to insert the row of argumentFilesToInsert:
-        atModelName    <- argumentFilesToInsert$modelName[ind]    == argumentFileTable$modelName
-        atProcessID    <- argumentFilesToInsert$processID[ind]    == argumentFileTable$processID
-        atArgumentName <- argumentFilesToInsert$argumentName[ind] == argumentFileTable$argumentName
-        index <- which(atModelName & atProcessID & atArgumentName)
-        # Return NA for missing indices:
-        if(length(index) == 0) {
-            index <- NA
-        }
-        index
-    }
-    
-    # Define a data.table of the same form as the argumentFileTable, with the data to insert:
-    argumentFilesToInsert <- data.table::data.table(
-        modelName = modelName, 
-        processID = processID, 
-        argumentName = argumentName, 
-        argumentFile = argumentFile
-    )
-    
-    # Identify the row which are not present in the current argumentFileTable:
-    index <- sapply(
-        seq_len(nrow(argumentFilesToInsert)), 
-        getRowIndex, 
-        argumentFilesToInsert = argumentFilesToInsert, 
-        argumentFileTable = argumentFileTable
-    )
-    
-    # Detect the new files:
-    additions <- is.na(index)
-    
-    # Replace the argument files:
-    argumentFileTable[index[!additions], "argumentFile"] <- argumentFilesToInsert[!additions, "argumentFile"]
-    
-    # Append the new argument files:
-    argumentFileTable <- rbind(
-        argumentFileTable, 
-        argumentFilesToInsert[additions, ], 
-        fill = TRUE
-    )
-    
-    # Return the modified table:
-    argumentFileTable
-}
-
-# Unused.
-removeFromArgumentFileTable <- function(argumentFileTable, modelName, processID) {
-    
-    # Get the rows in the argument file table to remove, which are those with processID as that specified by the user to remove:
-    toRemove <- argumentFileTable$processID == processID & argumentFileTable$modelName == modelName
-    
-    # Remove the argument files of the process:
-    if(any(toRemove)) {
-        argumentFileTable <- argumentFileTable[!toRemove, ]
-    }
-    else {
-        warning("The process with processID ", processID, " was not found in the current state of the model")
-    }
-    
-    # Return the argument file table:
-    argumentFileTable
-}
 
 # Function for saving an argument file table (defining the process memory files comprising the process memory).
 saveProjectMemory <- function(projectPath, argumentFileTable) {
@@ -2713,7 +2583,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
     return(modified)
 }
 
-#' 
+#' Parse a parameter received from the GUI, usually saved as JSON.
 #' 
 #' @param parameter 
 #' @param simplifyVector 
@@ -2817,9 +2687,7 @@ createProcessIDString <- function(integerID) {
 
 
 
-#' 
-#' @export
-#' 
+# Add an empry process at the end of a model:
 addEmptyProcess <- function(projectPath, modelName, processName = NULL) {
     
     # Get a default new process name, or check the validity of the given process name:
@@ -2913,13 +2781,19 @@ addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE) 
 }
 
 
-#' Add a StoX process to a model.
+##################################################
+##################################################
+#' Add or remove a StoX process.
 #' 
-#' @inheritParams Projects
-#' @inheritParams getProcessOutput
+#' @inheritParams general_arguments
 #' @param values A list of values to assign to the process, such as list(processName = "ReadBiotic", functionName = "RstoxBase::ReadBiotic").
 #' @param returnProcessTable Logical: If TRUE return the process table.
 #' 
+#' @name Projects
+#' 
+NULL
+#' 
+#' @rdname ProjectUtils
 #' @export
 #' 
 addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable = TRUE) {
@@ -2970,6 +2844,7 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
     }
 }
 #' 
+#' @rdname ProjectUtils
 #' @export
 #' 
 removeProcess <- function(projectPath, modelName, processID) {
@@ -3001,6 +2876,10 @@ removeProcess <- function(projectPath, modelName, processID) {
 }
 
 
+#' Select a number of processes and move these to a different location in a model.
+#' 
+#' @inheritParams general_arguments
+#' @param afterProcessID The process ID after which to more the specified processes to.
 #' 
 #' @export
 #' 
@@ -3030,9 +2909,12 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 
 
 
-#### Functions to run models: ####
+#' Run a single process:
 #' 
-#' @export
+#' @inheritParams general_arguments
+#' @param msg Logical: If TRUE print a message that tells that the process is being run.
+#' @param save Logical: If TRUE save the project after the process has been run.
+#' @param replaceArgs A list of arguments to override the arguments of the process by.
 #' 
 runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, replaceArgs = list()) {
     
@@ -3170,6 +3052,17 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     }
 }
 
+#' Convenience function to set UseProcessData to FALSE for a process.
+#' 
+#' This function cna be used if one wishes to run a process with UseProcessData turned off, thus overriding the process data. UseProcessData is set to TRUE automatically when a process is run, so \code{setUseProcessDataToFALSE} corresponds to unchecking that parameter in the GUI. 
+#' 
+#' @inheritParams general_arguments
+#' 
+#' @export
+#' 
+setUseProcessDataToFALSE <- function(projectPath, modelName, processID) {
+    modifyFunctionParameters(projectPath, modelName, processID, list(UseProcessData = FALSE))
+}
 
 setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
     modifyFunctionParameters(projectPath, modelName, processID, list(UseProcessData = TRUE))
@@ -3182,11 +3075,9 @@ setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
 #' 
 #' Gets the output of a process that has been run.
 #' 
-#' @inheritParams fixedWidthDataTable
+#' @inheritParams general_arguments
 #' @inheritParams readProcessOutputFile
-#' @param modelName The name of the model (one of "baseline", "analysis" and "report").
-#' @param processID The ID of the process.
-#' @param tableName The name of the table to extract from the process.
+#' @inheritParams fixedWidthDataTable
 #' @param subFolder If the process returns subfolders (ReadBiotic and ReadAcoustic, where the subfolders represent files), specify the name of the folder with this parameter.
 #' @param drop Logical: If TRUE drop the list if only one element.
 #' @param drop.datatype Logical: If TRUE drop the top level of the output if in a list, which is the level named by the data type.
@@ -3276,6 +3167,8 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
 }
 
 
+
+
 unlistProcessOutput <- function(processOutput) {
     if(is.list(processOutput[[1]]) && !data.table::is.data.table(processOutput[[1]])) {
         names1 <- names(processOutput)
@@ -3351,8 +3244,7 @@ flattenProcessOutput <- function(processOutput) {
 
 # Function to get all process output memory files of a process:
 #' 
-#' @inheritParams Projects
-#' @inheritParams getProcessOutput
+#' @inheritParams general_arguments
 #' @param onlyTableNames Logical: If TRUE return only table names.
 #' @export
 #' 
@@ -3413,8 +3305,9 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     processOutputFiles
 }
 
+#' Get the table names of the output of a process.
 #' 
-#' @inheritParams Projects
+#' @inheritParams general_arguments
 #' @export
 #' 
 getProcessOutputTableNames <- function(projectPath, modelName, processID) {
@@ -3637,10 +3530,18 @@ getProcessOutputMemoryFileNames <- function(processOutput) {
 }
 
 
+#' Run processes of a StoX model.
+#' 
+#' This function runs the processes with process index form startProcess to endProcess.
+#' 
+#' @inheritParams general_arguments
+#' @inheritParams runProcess
+#' @param startProcess The process index of the first process to run.
+#' @param endProcess The process index of the last process to run.
+#' @param force.restart Logical: If TRUE restart the model even if it is running (e.g. if the model crashed before completing).
 #' 
 #' @export
 #' 
-#runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
 runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force.restart = FALSE) {
         
     ## Get the processIDs:
@@ -3732,6 +3633,12 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
 
 
 
+
+#' Get the data output data of a model.
+#' 
+#' This function is used by RstoxAPI::runModel().
+#' 
+#' @inheritParams runProcesses
 #' 
 #' @export
 #' 

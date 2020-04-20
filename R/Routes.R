@@ -69,18 +69,6 @@ getCanShowInMap <- function(functionName, dataType = NULL) {
 
 ##### Interactive: #####
 
-# RunProcess In the GUI
-
-# In a for loop:
-# 1. runProcess()
-# If success:
-#   1.2. getMapMode()
-#   1.3. getMapData()
-#   1.4. getInteractiveMode()
-#   1.5. getInteractiveData()
-#   1.6. getLog
-# 
-
 # Function for getting the interactive mode of the process:
 #' 
 #' @export
@@ -153,7 +141,6 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
 getInteractiveData  <- function(projectPath, modelName, processID) {
     
     # Get the interactive mode:
-    browser()
     interactiveMode <- getInteractiveMode(projectPath, modelName, processID)
     
     # Call the appropriate function depending on the interactive mode:
@@ -235,6 +222,7 @@ getStratumData <- function(projectPath, modelName, processID) {
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Return an empty StratumPolygon if processData is empty:
+    # Change this to an error?????????????????
     if(length(processData) == 0) {
         return(getRstoxFrameworkDefinitions("emptyStratumPolygon"))
     }
@@ -260,7 +248,6 @@ getStratumData <- function(projectPath, modelName, processID) {
 getAcousticPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
-    browser()
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of AcousticPSU type:
     #if(!all(names(processData) %in% c("Stratum_PSU", "EDSU_PSU"))){
@@ -321,9 +308,9 @@ getAssignmentData <- function(projectPath, modelName, processID) {
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of Assignment type:
-    if(names(processData) != "Assignment"){
+    if(names(processData) != "BioticAssignment"){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type Assignment")
+        warning("The process ", processName, " does not return process data of type BioticAssignment")
         return(NULL)
     }
     
@@ -336,7 +323,7 @@ getAssignmentData <- function(projectPath, modelName, processID) {
     ###     PSU_Layer_AssignmentID = PSU_Layer_AssignmentID, 
     ###     AssignmentID_Station_StationWeight = AssignmentID_Station_StationWeight
     ### )
-    processData$Assignment
+    processData$BioticAssignment
 }
 
 

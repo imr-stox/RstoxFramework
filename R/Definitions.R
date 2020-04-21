@@ -1,17 +1,3 @@
-# TODO:
-# getModelNameFromProcessID
-
-# RstoxFramework functions run by Modify-processes in the GUI will return update flags
-# 
-# updateProcessTable
-# updateProcessProperties
-# updateMapData: showInMap & canShowInMap
-# updateLog
-
-
-
-# 
-# 
 # 
 # In DefineAcousticPSU and other functions requiring specific inputs we were for a while # thinking that these inputs should define which layers to plot in the map. We divert from # this and reserve the resposibility of plotting the appropriate layers to the user!
 
@@ -345,7 +331,6 @@ initiateRstoxFramework <- function(){
     projectSessionFolder <- file.path(stoxFolders["Process"], "projectSession")
     # Sub folders:
     dataFolder <- file.path(projectSessionFolder, "data")
-    GUIFolder <- file.path(projectSessionFolder, "GUI")
     projectMemoryFolder <- file.path(projectSessionFolder, "projectMemory")
     
     currentMemoryFolder <- file.path(projectMemoryFolder, "current")
@@ -355,7 +340,6 @@ initiateRstoxFramework <- function(){
     # Return also a vector of all session folders, to generate the folder structure recursively:
     projectSessionFolderStructure <- c(
         dataFolder, 
-        GUIFolder, 
         projectMemoryFolder, 
         statusFolder, 
         currentMemoryFolder, 
@@ -394,7 +378,6 @@ initiateRstoxFramework <- function(){
             # Project session:
             projectSessionFolder = projectSessionFolder, 
             dataFolder = dataFolder, 
-            GUIFolder = GUIFolder, 
             projectMemoryFolder = projectMemoryFolder, 
             currentMemoryFolder = currentMemoryFolder, 
             historyMemoryFolder = historyMemoryFolder, 

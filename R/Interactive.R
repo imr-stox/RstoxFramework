@@ -90,7 +90,7 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
     
     # Check for existing PSU:
     if(!PSU %in% Assignment$PSU) {
-        warning("The acoustic PSU with name ", PSU, " does not exist. Please choose a different PSU name or add the PSU using DefineAcousticPSU.")
+        warning("StoX: The acoustic PSU with name ", PSU, " does not exist. Please choose a different PSU name or add the PSU using DefineAcousticPSU.")
     }
     
     # Add the hauls:
@@ -284,11 +284,12 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     AcousticPSU <- getProcessData(projectPath, modelName, processID)
     
     # Add the acsoutic PSU:
-    PSUsToKeep <- !AcousticPSU$Stratum_PSU$PSU %in% PSU
-    EDSUsToKeep <- !AcousticPSU$EDSU_PSU$PSU %in% PSU
+    PSUsToKeepInStratum_PSU <- !AcousticPSU$Stratum_PSU$PSU %in% PSU
+    PSUsToSetToNAInEDSU_PSU <- AcousticPSU$EDSU_PSU$PSU %in% PSU
     
     AcousticPSU$Stratum_PSU <- AcousticPSU$Stratum_PSU[PSUsToKeep, ]
-    AcousticPSU$EDSU_PSU <- AcousticPSU$EDSU_PSU[EDSUsToKeep, ]
+    #AcousticPSU$EDSU_PSU <- AcousticPSU$EDSU_PSU[EDSUsToKeep, ]
+    AcousticPSU$EDSU_PSU[PSUsToSetToNAInEDSU_PSU, PSU := NA]
     
     # Set the Assignment back to the process data of the process:
     setProcessMemory(

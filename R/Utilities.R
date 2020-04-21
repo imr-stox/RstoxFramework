@@ -238,20 +238,20 @@ list2expression <- function(l, parentHasSiblings=FALSE) {
         # If there is one single value, and this is NA, change operator to %in%, with a warning:
         if(length(value) == 1 && is.na(value[[1]])) {
             if(l$operator %in% "==") {
-                warning("Operator cannot be == when extracting NAs. Changed from == to %in% for ", l$field, l$operator, value)
+                warning("StoX: Operator cannot be == when extracting NAs. Changed from == to %in% for ", l$field, l$operator, value)
                 l$operator <- "%in%"
             }
             else if(l$operator %in% "!=") {
-                warning("Operator cannot be != when excluding NAs. Changed from != to %notin% for ", l$field, l$operator, value)
+                warning("StoX: Operator cannot be != when excluding NAs. Changed from != to %notin% for ", l$field, l$operator, value)
                 l$operator <- "%notin%"
             }
         }
         if(length(value) > 1 && l$operator %in% "==") {
-            warning("The operator == cannot be used with multiple reference values, and was replaced by %in%")
+            warning("StoX: The operator == cannot be used with multiple reference values, and was replaced by %in%")
             l$operator <- "%in%"
         }
         if(length(value) > 1 && l$operator %in% "!=") {
-            warning("The operator != cannot be used with multiple reference values, and was replaced by %notin%")
+            warning("StoX: The operator != cannot be used with multiple reference values, and was replaced by %notin%")
             l$operator <- "%notin%"
         }
         
@@ -470,7 +470,7 @@ expression2list <- function(expr, generateRuleset = TRUE) {
 verifyPaths <- function(x) {
     valid <- file.exists(x)
     if(any(!valid)) {
-        warning("The following files do not exist: ", paste(x[!valid], collapse = ", "), ".")
+        warning("StoX: The following files do not exist: ", paste(x[!valid], collapse = ", "), ".")
     }
     return(x[valid])
 }

@@ -63,7 +63,7 @@ listArgumentFiles <- function(projectPath, modelName, processID = NULL) {
 verifyPaths <- function(x) {
     valid <- file.exists(x)
     if(any(!valid)) {
-        warning("The following files do not exist: ", paste(x[!valid], collapse = ", "), ".")
+        warning("StoX: The following files do not exist: ", paste(x[!valid], collapse = ", "), ".")
     }
     return(x[valid])
 }

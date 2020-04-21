@@ -209,7 +209,7 @@ getMapData  <- function(projectPath, modelName, processID) {
         )
     }
     else {
-        warning("No map data available from the process ", processID, " of model ", modelName, " of project ", projectPath)
+        warning("StoX: No map data available from the process ", processID, " of model ", modelName, " of project ", projectPath)
         geojsonio::geojson_json(getRstoxFrameworkDefinitions("emptyStratumPolygon"))
     }
 }
@@ -230,7 +230,7 @@ getStratumData <- function(projectPath, modelName, processID) {
     # Issue an error of the process data are not of StratumPolygon type:
     if(names(processData) != "StratumPolygon"){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type StratumPolygon")
+        warning("StoX: The process ", processName, " does not return process data of type StratumPolygon")
         return(NULL)
     }
     
@@ -253,7 +253,7 @@ getAcousticPSUData <- function(projectPath, modelName, processID) {
     #if(!all(names(processData) %in% c("Stratum_PSU", "EDSU_PSU"))){
     if(! "EDSU_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type AcousticPSU")
+        warning("StoX: The process ", processName, " does not return process data of type AcousticPSU")
         return(NULL)
     }
     
@@ -284,7 +284,7 @@ getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     # Issue an error of the process data are not of SweptAreaPSU type:
     if(! "Station_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type SweptAreaPSU")
+        warning("StoX: The process ", processName, " does not return process data of type SweptAreaPSU")
         return(NULL)
     }
     
@@ -310,7 +310,7 @@ getAssignmentData <- function(projectPath, modelName, processID) {
     # Issue an error of the process data are not of Assignment type:
     if(names(processData) != "BioticAssignment"){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type BioticAssignment")
+        warning("StoX: The process ", processName, " does not return process data of type BioticAssignment")
         return(NULL)
     }
     
@@ -340,7 +340,7 @@ getStratumList <- function(projectPath, modelName, processID) {
     # Issue an error of the process data are not of StratumPolygon type:
     if(names(processData) != "StratumPolygon"){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type StratumPolygon")
+        warning("StoX: The process ", processName, " does not return process data of type StratumPolygon")
         return(list())
     }
     
@@ -931,7 +931,7 @@ cellToJSONString <- function(DT, cols) {
 }
 cellToJSONStringOne <- function(x) {
     if(length(x) == 0) {
-        warning("Length 1 required for process properties except possibleValues.")
+        warning("StoX: Length 1 required for process properties except possibleValues.")
         x <- ""
     }
     if(!is.character(x)) {

@@ -1281,24 +1281,32 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
 #' 
 getFilterOptionsAll <- function(projectPath, modelName, processID) {
 
+    ppp <- proc.time()[3]
     # Run the process without saving and without filter:
     # Add a stop if the previvous process has not been run!!!!!!!!!!!!!
     processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
+    cat("1: ", proc.time()[3] - ppp, "\n")
     # If the process output is a list of lists, unlist the top level and add names separated by slash:
     processOutput <- unlistProcessOutput(processOutput)
+    cat("2: ", proc.time()[3] - ppp, "\n")
     
     # Get the column names:
     name <- lapply(processOutput, names)
+    cat("3: ", proc.time()[3] - ppp, "\n")
     
     # Get the data types:
     type <- lapply(processOutput, function(x) sapply(x, firstClass))
+    cat("4: ", proc.time()[3] - ppp, "\n")
     
     # Get the operators:
     operators <- lapply(type, function(x) if(length(x)) getRstoxFrameworkDefinitions("filterOperators")[x] else NULL)
+    cat("5: ", proc.time()[3] - ppp, "\n")
     
     # Get a list of unique values for each column of each table:
     options <- lapply(processOutput, getPossibleValuesOneTable)
+    cat("6a: ", proc.time()[3] - ppp, "\n")
     options <- lapply(options, function(x) lapply(x, getOptionList))
+    cat("6b: ", proc.time()[3] - ppp, "\n")
     
     # Return the
     output <- lapply(
@@ -1318,6 +1326,7 @@ getFilterOptionsAll <- function(projectPath, modelName, processID) {
                 names = "fields"
                 )
             )
+    cat("7: ", proc.time()[3] - ppp, "\n")
     
     names(output) <- names(options)
     
@@ -1326,7 +1335,8 @@ getFilterOptionsAll <- function(projectPath, modelName, processID) {
         tableNames = names(output),
         allFields = output
     )
-                            
+    cat("8: ", proc.time()[3] - ppp, "\n")
+    
     # Return a list of the tableNames, columnNames and possibleValues:
     return(output)
 }

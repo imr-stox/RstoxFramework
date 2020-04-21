@@ -1281,6 +1281,7 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
 #' 
 getFilterOptionsAll <- function(projectPath, modelName, processID) {
 
+    
     ppp <- proc.time()[3]
     # Run the process without saving and without filter:
     # Add a stop if the previvous process has not been run!!!!!!!!!!!!!
@@ -1344,13 +1345,20 @@ getFilterOptionsAll <- function(projectPath, modelName, processID) {
     
 
 getOptionList <- function(option, digits = 6) {
-    option <- data.table::data.table(
-        name = format(option, digits = digits), 
-        value = option
-    )
-    output <- unname(split(option, seq_len(nrow(option))))
-    output <- lapply(output, as.list)
-    return(output)
+    ##pp <- proc.time()[3]
+    #browser()
+    #option <- data.table::data.table(
+    #    name = format(option, digits = digits), 
+    #    value = option
+    #)
+    ##cat("-1", proc.time()[3] - pp, "\n")
+    #output <- unname(split(option, seq_len(nrow(option))))
+    ##cat("-2", proc.time()[3] - pp, "\n")
+    #output <- lapply(output, as.list)
+    ##cat("-3", proc.time()[3] - pp, "\n")
+    #return(output)
+    
+    lapply(option, function(x) list(name = format(x, digits = digits), value = x))
 }
 
 

@@ -3089,6 +3089,11 @@ setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
 #' 
 getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, pageindex = integer(0), linesPerPage = 1000L, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE, drop = FALSE, drop.datatype = TRUE) {
     
+    # Return NULL if no files are found:
+    if(length(processID) == 0) {
+        return(NULL)
+    }
+    
     # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
     if(any(grepl("/", tableName))) {
         subFolder_tableName <- strsplit(tableName, "/")
@@ -3109,6 +3114,11 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
         modelName = modelName, 
         processID = processID
     )
+    # Return NULL if no files are found:
+    if(length(processOutputFiles) == 0) {
+        warning("Has the previous processes been run? The folder ", folderPath, " does not exist. This is likely due to non-existing process")
+        return(NULL)
+    }
     
     # Get the file paths of the requested memory files:
     if(folderDepth == 1) {
@@ -3277,7 +3287,8 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     # If the folder does not exist, it is a sign that the process does not exist:
     if(length(folderPath) == 0 || !file.exists(folderPath)) {
         #processName <- getProcessName(projectPath, modelName, processID)
-        stop("Has the previous processes been run? The folder ", folderPath, " does not exist. This is likely due to non-existing process")
+        #warning("Has the previous processes been run? The folder ", folderPath, " does not exist. This is likely due to non-existing process")
+        return(NULL)
     }
     
     # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):

@@ -35,7 +35,7 @@ removeEDSU(EDSU, projectPath, modelName, processID)
 \item{EDSU}{The name of an EDSU.}
 }
 \description{
-The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
+The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the BioticAssignment process data of the specified process.
 }
 \details{
 The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.

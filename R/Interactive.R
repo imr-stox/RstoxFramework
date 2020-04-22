@@ -18,7 +18,7 @@
 ############################################################
 #' Add or remove biotic hauls from assignments
 #' 
-#' The functions \code{addHaulsToAssignment} and \code{removeHaulsFromAssignment} adds or removes biotic hauls from the Assignment process data of the specified process.
+#' The functions \code{addHaulsToAssignment} and \code{removeHaulsFromAssignment} adds or removes biotic hauls from the BioticAssignment process data of the specified process.
 #' 
 #' @param PSU   The acoustic primary sampling unit (PSU) for which to remove the haul
 #' @param Layer The acoustic Layer for which to remove the haul
@@ -27,30 +27,13 @@
 #' @details 
 #' The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
 #' 
-#' @examples
-#' ## # Create artificial assignment data:
-#' ## Assignment <- data.table::data.table(
-#' ##     PSU = paste0("T", c(1,1, 2, 3,3)), 
-#' ##     Layer = "L1", 
-#' ##     Haul = c(1,2, 2, 1,2), 
-#' ##     AssignmentID = c(1,1, 2, 1,1)
-#' ## )
-#' ## 
-#' ## # Add a haul:
-#' ## Assignment1 <- assignment_addHauls("T3", "L1", 4, Assignment)
-#' ## all.equal(Assignment, Assignment2)
-#' ## 
-#' ## # Remove the same haul:
-#' ## Assignment2 <- assignment_removeHauls("T3", "L1", 4, Assignment1)
-#' ## all.equal(Assignment, Assignment2)
-#' 
 #' @inheritParams getProcessOutput
-#' @name Assignment
+#' @name BioticAssignment
 #' 
 NULL
 #' 
 #' @export
-#' @rdname Assignment
+#' @rdname BioticAssignment
 #' 
 addHaulToAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID) {
     modifyAssignment(
@@ -65,7 +48,7 @@ addHaulToAssignment <- function(PSU, Layer, Haul, projectPath, modelName, proces
 }
 #' 
 #' @export
-#' @rdname Assignment
+#' @rdname BioticAssignment
 #' 
 removeHaulFromAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID) {
     modifyAssignment(
@@ -83,35 +66,35 @@ removeHaulFromAssignment <- function(PSU, Layer, Haul, projectPath, modelName, p
 modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
     
     # Check that the process returns Assigment process data:
-    checkDataType("Assignment", projectPath, modelName, processID)
+    checkDataType("BioticAssignment", projectPath, modelName, processID)
     
     # Get the process data of the process, a table of PSU, Layer, Haul and HaulWeight:
-    Assignment <- getProcessData(projectPath, modelName, processID)$Assignment
+    BioticAssignment <- getProcessData(projectPath, modelName, processID)$BioticAssignment
     
     # Check for existing PSU:
-    if(!PSU %in% Assignment$PSU) {
+    if(!PSU %in% BioticAssignment$PSU) {
         warning("StoX: The acoustic PSU with name ", PSU, " does not exist. Please choose a different PSU name or add the PSU using DefineAcousticPSU.")
     }
     
     # Add the hauls:
     utilityFunctionName <- paste0("assignment_", action[1], "Haul")
-    Assignment <- do.call(
+    BioticAssignment <- do.call(
         utilityFunctionName, 
         list(
             PSU = PSU, 
             Layer = Layer, 
             Haul = Haul, 
-            Assignment = Assignment
+            BioticAssignment = BioticAssignment
         )
     )
     
-    # Set the Assignment back to the process data of the process:
+    # Set the BioticAssignment back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(list(Assignment = Assignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(list(BioticAssignment = BioticAssignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     # Revert the active process ID to the previous process:
@@ -128,8 +111,9 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
 }
 
 # Function that adds a haul to the assignment data:
-assignment_addHaul <- function(PSU, Layer, Haul, Assignment) {
+assignment_addHaul <- function(PSU, Layer, Haul, BioticAssignment) {
     
+    browser()
     # Add the hauls:
     toAdd <- data.table::data.table(
         PSU = PSU, 
@@ -137,18 +121,18 @@ assignment_addHaul <- function(PSU, Layer, Haul, Assignment) {
         Haul = Haul, 
         WeightingFactor = 1
     )
-    Assignment <- rbind(
-        Assignment, 
+    BioticAssignment <- rbind(
+        BioticAssignment, 
         toAdd
     )
     
-    # Set the Assignment back to the process data of the process:
+    # Set the BioticAssignment back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(list(Assignment = Assignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(list(BioticAssignment = BioticAssignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     # Revert the active process ID to the previous process:
@@ -165,26 +149,26 @@ assignment_addHaul <- function(PSU, Layer, Haul, Assignment) {
 }
 
 # Function that removes a haul from the assignment data:
-assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
+assignment_removeHaul <- function(PSU, Layer, Haul, BioticAssignment) {
     
     # Get the row indixces of the PSU and Layer:
-    atPSU <- Assignment$PSU %in% PSU
-    atLayer <- Assignment$Layer  %in% Layer
+    atPSU <- BioticAssignment$PSU %in% PSU
+    atLayer <- BioticAssignment$Layer  %in% Layer
     at <- which(atPSU & atLayer)
     
     # Get the indices in 'at' to remove:
-    atHauls <- Assignment[at, ]$Haul %in% Haul
+    atHauls <- BioticAssignment[at, ]$Haul %in% Haul
     
     # Remove the hauls:
-    Assignment <- Assignment[-at[atHauls], ]
+    BioticAssignment <- BioticAssignment[-at[atHauls], ]
     
-    # Set the Assignment back to the process data of the process:
+    # Set the BioticAssignment back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
         argumentName = "processData", 
-        argumentValue = list(list(Assignment = Assignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
+        argumentValue = list(list(BioticAssignment = BioticAssignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
     )
     
     # Revert the active process ID to the previous process:
@@ -207,7 +191,7 @@ assignment_removeHaul <- function(PSU, Layer, Haul, Assignment) {
 ############################################################
 #' Add or remove acoustic PSUs and EDSUs
 #' 
-#' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
+#' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the BioticAssignment process data of the specified process.
 #' 
 #' @param Stratum The name of a stratum.
 #' @param PSU The name of a PSU.
@@ -252,7 +236,7 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         toAdd
     )
     
-    # Set the Assignment back to the process data of the process:
+    # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -291,7 +275,7 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     #AcousticPSU$EDSU_PSU <- AcousticPSU$EDSU_PSU[EDSUsToKeep, ]
     AcousticPSU$EDSU_PSU[PSUsToSetToNAInEDSU_PSU, PSU := NA]
     
-    # Set the Assignment back to the process data of the process:
+    # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -328,7 +312,7 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
     AcousticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
     AcousticPSU$EDSU_PSU$PSU[EDSUsToRename] <- newPSUName
     
-    # Set the Assignment back to the process data of the process:
+    # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -373,7 +357,7 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     #    toAdd
     #)
     
-    # Set the Assignment back to the process data of the process:
+    # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -412,7 +396,7 @@ removeEDSU <- function(EDSU, projectPath, modelName, processID) {
     #
     #AcousticPSU$PSU_EDSU <- AcousticPSU$PSU_EDSU[EDSUsToKeep, ]
     
-    # Set the Assignment back to the process data of the process:
+    # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -443,7 +427,7 @@ removeEDSU <- function(EDSU, projectPath, modelName, processID) {
 ############################################################
 #' Stratum manipulation
 #' 
-#' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the Assignment process data of the specified process.
+#' The functions \code{addStations} and \code{removeStations} adds or removes biotic stations from the BioticAssignment process data of the specified process.
 #' 
 #' @details 
 #' The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
@@ -497,7 +481,7 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
         stratum
     )
     
-    # Set the Assignment back to the process data of the process:
+    # Set the StratumPolygon back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -537,7 +521,7 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
         StratumPolygon$StratumPolygon@polygons <- StratumPolygon$StratumPolygon@polygons[-atRemove]
     }
     
-    # Set the Assignment back to the process data of the process:
+    # Set the StratumPolygon back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -585,7 +569,7 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
             StratumPolygon$StratumPolygon@polygons[atModify] <- stratum@polygons
     }
     
-    # Set the Assignment back to the process data of the process:
+    # Set the StratumPolygon back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
         modelName = modelName, 

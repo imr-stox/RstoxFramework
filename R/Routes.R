@@ -307,7 +307,7 @@ getAssignmentData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
-    # Issue an error of the process data are not of Assignment type:
+    # Issue an error of the process data are not of BioticAssignment type:
     if(names(processData) != "BioticAssignment"){
         processName <- getProcessName(projectPath, modelName, processID)
         warning("StoX: The process ", processName, " does not return process data of type BioticAssignment")

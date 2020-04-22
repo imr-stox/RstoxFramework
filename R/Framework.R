@@ -492,15 +492,15 @@ closeProject <- function(projectPath, save = NULL) {
     projectSessionFolderStructure <- getProjectPaths(projectPath, "projectSessionFolder")
     unlink(projectSessionFolderStructure, recursive = TRUE, force = TRUE)
 }
-#' 
-#' @export
-#' @rdname Projects
-#' 
-resetProject <- function(projectPath, save = NULL) {
-    closeProject(projectPath, save = save)
-    openProject(projectPath, showWarnings = FALSE, force = FALSE)
-}
-#' 
+### #' 
+### #' @export
+### #' @rdname Projects
+### #' 
+### resetProject <- function(projectPath, save = NULL) {
+###     closeProject(projectPath, save = save)
+###     openProject(projectPath, showWarnings = FALSE, force = FALSE)
+### }
+### #' 
 #' @export
 #' @rdname Projects
 #' 

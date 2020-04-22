@@ -5,7 +5,6 @@
 \alias{createProject}
 \alias{openProject}
 \alias{closeProject}
-\alias{resetProject}
 \alias{saveProject}
 \alias{saveAsProject}
 \alias{copyProject}
@@ -22,8 +21,6 @@ createProject(
 openProject(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE)
 
 closeProject(projectPath, save = NULL)
-
-resetProject(projectPath, save = NULL)
 
 saveProject(projectPath, type = c("RData", "XML", "JSON"))
 

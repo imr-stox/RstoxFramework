@@ -1362,7 +1362,7 @@ getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE) {
         validInd <- seq_len(ncol(table))
     }
     else {
-        validInd <- which(!is.numeric(type))
+        validInd <- which(! type %in% c("numeric", "integer", "double"))
     }
     
     # Declare a list for the output, with empty on numeric type if include.numeric = FALSE

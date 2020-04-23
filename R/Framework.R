@@ -709,10 +709,10 @@ writeProjectDescriptionRData <- function(projectPath) {
     # Get the current project description:
     projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
     
-    # Stop if the projectDescription is empty:
-    if(length(projectDescription) == 0 || (is.list(projectDescription) && all(lengths(projectDescription) == 0))) {
-        stop("You cannot save an empty project.")
-    }
+    ### # Stop if the projectDescription is empty:
+    ### if(length(projectDescription) == 0 || (is.list(projectDescription) && all(lengths(projectDescription) == 0))) {
+    ###     stop("You cannot save an empty project.")
+    ### }
     
     # Get the path to the project description file, and save the current project description:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
@@ -722,10 +722,10 @@ writeProjectDescriptionXML <- function(projectPath) {
     # Get the current project description:
     projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
     
-    # Stop if the projectDescription is empty:
-    if(length(projectDescription) == 0) {
-        stop("You cannot save an empty project.")
-    }
+    ### # Stop if the projectDescription is empty:
+    ### if(length(projectDescription) == 0) {
+    ###     stop("You cannot save an empty project.")
+    ### }
     
     # Get the path to the project description file, and save the current project description:
     projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
@@ -735,10 +735,10 @@ writeProjectDescriptionJSON <- function(projectPath) {
     # Get the current project description:
     projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
     
-    # Stop if the projectDescription is empty:
-    if(length(projectDescription) == 0) {
-        stop("You cannot save an empty project.")
-    }
+    ### # Stop if the projectDescription is empty:
+    ### if(length(projectDescription) == 0) {
+    ###     stop("You cannot save an empty project.")
+    ### }
     
     # Get the path to the project description file, and save the current project description:
     projectJSONFile <- getProjectPaths(projectPath, "projectJSONFile")

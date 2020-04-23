@@ -276,6 +276,8 @@ initiateRstoxFramework <- function(){
     stratumDataType <- "StratumPolygon"
     acousticPSUDataType <- "AcousticPSU"
     sweptAreaPSUDataType <- "SweptAreaPSU"
+    acousticLayerDataType <- "AcousticLayer"
+    sweptAreaLayerDataType <- "SweptAreaLayer"
     assignmentDataType <- "BioticAssignment"
     stationDataType <- "StoxBioticData"
     EDSUDataType <- "StoxAcousticData"

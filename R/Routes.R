@@ -95,6 +95,12 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaPSUDataType")) {
         "sweptAreaPSU"
     }
+    else if(dataType %in% getRstoxFrameworkDefinitions("acousticLayerDataType")) {
+        "acousticLayer"
+    }
+    else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaLayerDataType")) {
+        "sweptAreaLayer"
+    }
     else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataType")) {
         "assignment"
     }
@@ -108,30 +114,6 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
         "none"
     }
 }
-
-### # Function for getting the map mode of the process:
-### getMapMode <- function(projectPath, modelName, processID) {
-###     # Get the data type of the process:
-###     dataType <- getDataType(
-###         projectPath = projectPath, 
-###         modelName = modelName, 
-###         processID = processID
-###     )
-###     
-###     # Select the type of interactive mode depending on the output data type from the process:
-###     if(dataType %in% getRstoxFrameworkDefinitions("strataDataTypes")) {
-###         "stratum"
-###     }
-###     else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataTypes")) {
-###         "station"
-###     }
-###     else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType")) {
-###         "EDSU"
-###     }
-###     else {
-###         stop("Invalid dataType")
-###     }
-### }
 
 
 # Functions for getting the appropriate process data from the process, called depending on the interactive mode:
@@ -152,7 +134,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
         )
     }
     else if(interactiveMode == "assignment") {
-        getAssignmentData(
+        getBioticAssignmentData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -167,6 +149,20 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
     }
     else if(interactiveMode == "sweptAreaPSU") {
         getSweptAreaPSUData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else if(interactiveMode == "acousticLayer") {
+        getAcousticLayerData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else if(interactiveMode == "sweptAreaLayer") {
+        getSweptAreaLayerData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -216,7 +212,6 @@ getMapData  <- function(projectPath, modelName, processID) {
 
 
 # Individual get data functions:
-#' 
 getStratumData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -244,39 +239,22 @@ getStratumData <- function(projectPath, modelName, processID) {
     stratumPolygon
 }
 
-#' 
+# Function to get acousic PSU data:
 getAcousticPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of AcousticPSU type:
-    #if(!all(names(processData) %in% c("Stratum_PSU", "EDSU_PSU"))){
     if(! "EDSU_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
         warning("StoX: The process ", processName, " does not return process data of type AcousticPSU")
         return(NULL)
     }
     
-    ## Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    #EDSU_PSU <- processData$AcousticPSU[, c("EDSU", "PSU")]
-    #PSU_Stratum <- unique(processData$AcousticPSU[, c("PSU", "Stratum")])
-    #Stratum = unique(processData$AcousticPSU$Stratum)
-    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    #Stratum = data.table::data.table(
-    #    Stratum = unique(processData$Stratum_PSU$Stratum)
-    #)
-    
-    # Return the list of data.tables:
-    #output <- c(
-    #    processData, 
-    #    list(Stratum = Stratum)
-    #)
-    #
-    #return(output)
     return(processData)
 }
 
-#' 
+# Function to get swept-area PSU data:
 getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -288,22 +266,41 @@ getSweptAreaPSUData <- function(projectPath, modelName, processID) {
         return(NULL)
     }
     
-    ### # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    ### Station_PSU <- processData$SweptAreaPSU[, c("Station", "PSU")]
-    ### PSU_Stratum <- unique(processData$c[, c("PSU", "Stratum")])
-    ### Stratum = unique(processData$SweptAreaPSU$Stratum)
-    ### 
-    ### # Return the list of data.tables:
-    ### list(
-    ###     Station_PSU = Station_PSU, 
-    ###     PSU_Stratum = PSU_Stratum, 
-    ###     Stratum = Stratum
-    ### )
     return(processData)
 }
 
-#' 
-getAssignmentData <- function(projectPath, modelName, processID) {
+# Function to get acousic PSU data:
+getAcousticLayerData <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Issue an error of the process data are not of AcousticPSU type:
+    if(! "AcousticLayer" %in% names(processData)){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("StoX: The process ", processName, " does not return process data of type AcousticLayer")
+        return(NULL)
+    }
+    
+    return(processData)
+}
+
+# Function to get swept-area PSU data:
+getSweptAreaLayerData <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Issue an error of the process data are not of SweptAreaPSU type:
+    if(! "SweptAreaLayer" %in% names(processData)){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("StoX: The process ", processName, " does not return process data of type SweptAreaLayer")
+        return(NULL)
+    }
+    
+    return(processData)
+}
+
+# Function to get biotic assignment data:
+getBioticAssignmentData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
@@ -327,7 +324,7 @@ getAssignmentData <- function(projectPath, modelName, processID) {
 }
 
 
-#' 
+# Function to get a list of strata names:
 getStratumList <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -354,7 +351,7 @@ getStratumList <- function(projectPath, modelName, processID) {
     list(stratumList)
 }
 
-#' 
+# Function to get a list of station data:
 getStationData <- function(projectPath, modelName, processID) {
     # Get the station data:
     Cruise <- getProcessOutput(projectPath, modelName, processID, tableName = "Cruise")$Cruise
@@ -384,7 +381,7 @@ getStationData <- function(projectPath, modelName, processID) {
     StationData
 }
 
-#' 
+# Function to get EDSU data:
 getEDSUData <- function(projectPath, modelName, processID) {
     
     # Get the Log data:

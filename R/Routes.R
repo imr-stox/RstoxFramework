@@ -101,8 +101,8 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaLayerDataType")) {
         "sweptAreaLayer"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataType")) {
-        "assignment"
+    else if(dataType %in% getRstoxFrameworkDefinitions("bioticAssignmentDataType")) {
+        "bioticAssignment"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("stationDataType") && showInMap) {
         "station"
@@ -133,7 +133,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
             processID = processID
         )
     }
-    else if(interactiveMode == "assignment") {
+    else if(interactiveMode == "bioticAssignment") {
         getBioticAssignmentData(
             projectPath = projectPath, 
             modelName = modelName, 

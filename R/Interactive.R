@@ -65,7 +65,7 @@ removeHaulFromAssignment <- function(PSU, Layer, Haul, projectPath, modelName, p
 # Generic function to add or remove a haul:
 modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
     
-    # Check that the process returns Assigment process data:
+    # Check that the process returns BioticAssigment process data:
     checkDataType("BioticAssignment", projectPath, modelName, processID)
     
     # Get the process data of the process, a table of PSU, Layer, Haul and HaulWeight:
@@ -102,6 +102,7 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
     
     # Return the active process:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
+    
     return(
         list(
             activeProcess = activeProcess, 
@@ -113,7 +114,6 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
 # Function that adds a haul to the assignment data:
 assignment_addHaul <- function(PSU, Layer, Haul, BioticAssignment) {
     
-    browser()
     # Add the hauls:
     toAdd <- data.table::data.table(
         PSU = PSU, 
@@ -126,26 +126,10 @@ assignment_addHaul <- function(PSU, Layer, Haul, BioticAssignment) {
         toAdd
     )
     
-    # Set the BioticAssignment back to the process data of the process:
-    setProcessMemory(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        argumentName = "processData", 
-        argumentValue = list(list(BioticAssignment = BioticAssignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
-    )
+    # Order the BioticAssignment:
+    setorderv(BioticAssignment, cols = c("PSU", "Layer", "Haul"), na.last = TRUE)
     
-    # Revert the active process ID to the previous process:
-    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
-    
-    # Return the active process:
-    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(
-        list(
-            activeProcess = activeProcess, 
-            saved = isSaved(projectPath)
-        )
-    )
+    return(BioticAssignment)
 }
 
 # Function that removes a haul from the assignment data:
@@ -162,26 +146,7 @@ assignment_removeHaul <- function(PSU, Layer, Haul, BioticAssignment) {
     # Remove the hauls:
     BioticAssignment <- BioticAssignment[-at[atHauls], ]
     
-    # Set the BioticAssignment back to the process data of the process:
-    setProcessMemory(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        argumentName = "processData", 
-        argumentValue = list(list(BioticAssignment = BioticAssignment)) # We need to list this to make it correspond to the single value of the argumentName parameter.
-    )
-    
-    # Revert the active process ID to the previous process:
-    resetModel(projectPath, modelName, processID = processID, modified = TRUE)
-    
-    # Return the active process:
-    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    return(
-        list(
-            activeProcess = activeProcess, 
-            saved = isSaved(projectPath)
-        )
-    )
+    return(BioticAssignment)
 }
 
 

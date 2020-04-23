@@ -320,7 +320,7 @@ getBioticAssignmentData <- function(projectPath, modelName, processID) {
     ###     PSU_Layer_AssignmentID = PSU_Layer_AssignmentID, 
     ###     AssignmentID_Station_StationWeight = AssignmentID_Station_StationWeight
     ### )
-    processData$BioticAssignment
+    return(processData)
 }
 
 

@@ -46,6 +46,7 @@ initiateRstoxFramework <- function(){
     
     # Get the stoxLibrary as the list of function attributes from all official packages:
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
+    stoxLibraryPackageFunctionNames <- unname(sapply(stoxLibrary, "[[", "functionName"))
     
     #### Data types: ####
     oldStoxModelDataTypes <- c(
@@ -460,6 +461,50 @@ initiateRstoxFramework <- function(){
     
     #### Return the definitions: ####
     definitions
+}
+
+# This function gets the stoxFunctionAttributes of the specified packages.
+getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
+    
+    # Validate the pakcages:
+    packageNames <- packageNames[sapply(packageNames, validateStoxLibraryPackage)]
+    # Get a list of the 'stoxFunctionAttributes' from each package:
+    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
+    
+    # Collapse to one list:
+    stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
+    
+    # Check for duplicaetd function names:
+    functionNames <- names(stoxFunctionAttributes)
+    packageNames <- sapply(stoxFunctionAttributes, "[[", "packageName")
+    areDuplicatedFunctionNames <- duplicated(functionNames)
+    
+    # If there are any duplicated function names, report a warning stating which function names and from which packages:
+    if(any(areDuplicatedFunctionNames)) {
+        # Get the package strings as concatenations of the packages with common function names:
+        packageNamesString <- as.character(
+            by(
+                functionNames[areDuplicatedFunctionNames], 
+                packageNames[areDuplicatedFunctionNames], 
+                paste, 
+                collapse = ", "
+            )
+        )
+        # Get the unique duplicated function names, and paste the packageNamesString to these:
+        uniqueDuplicatedFunctionNames <- unique(functionNames[areDuplicatedFunctionNames])
+        functionNamePackageNamesString <- paste0(
+            uniqueDuplicatedFunctionNames, 
+            "(", 
+            packageNamesString, 
+            ")"
+        )
+        
+        warning("StoX: The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
+    }
+    
+    # Keep only the non-duplicated functions: 
+    stoxFunctionAttributes <- stoxFunctionAttributes[!areDuplicatedFunctionNames]
+    return(stoxFunctionAttributes)
 }
 
 

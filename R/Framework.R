@@ -36,49 +36,6 @@ getProjectPaths <- function(projectPath, name = NULL) {
     paths
 }
 
-# This function gets the stoxFunctionAttributes of the specified packages.
-getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
-    
-    # Validate the pakcages:
-    packageNames <- packageNames[sapply(packageNames, validateStoxLibraryPackage)]
-    # Get a list of the 'stoxFunctionAttributes' from each package:
-    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
-    
-    # Collapse to one list:
-    stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
-    
-    # Check for duplicaetd function names:
-    functionNames <- names(stoxFunctionAttributes)
-    packageNames <- sapply(stoxFunctionAttributes, "[[", "packageName")
-    areDuplicatedFunctionNames <- duplicated(functionNames)
-    
-    # If there are any duplicated function names, report a warning stating which function names and from which packages:
-    if(any(areDuplicatedFunctionNames)) {
-        # Get the package strings as concatenations of the packages with common function names:
-        packageNamesString <- as.character(
-            by(
-                functionNames[areDuplicatedFunctionNames], 
-                packageNames[areDuplicatedFunctionNames], 
-                paste, 
-                collapse = ", "
-            )
-        )
-        # Get the unique duplicated function names, and paste the packageNamesString to these:
-        uniqueDuplicatedFunctionNames <- unique(functionNames[areDuplicatedFunctionNames])
-        functionNamePackageNamesString <- paste0(
-            uniqueDuplicatedFunctionNames, 
-            "(", 
-            packageNamesString, 
-            ")"
-        )
-        
-        warning("StoX: The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
-    }
-    
-    # Keep only the non-duplicated functions: 
-    stoxFunctionAttributes <- stoxFunctionAttributes[!areDuplicatedFunctionNames]
-    return(stoxFunctionAttributes)
-}
 
 # Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each element (function) of the list.
 getStoxFunctionAttributes <- function(packageName, requestedFunctionAttributeNames = NULL) {
@@ -221,20 +178,32 @@ validateFunction <- function(functionName) {
     #if(!grepl("::", functionName, fixed = TRUE)) {
     #    stop("The function \"", functionName, "\" does not appear to be a string of the form PACKAGENAME::FUNCTIONNAME, where PACK#AGENAME is the package exporting the function with name FUNCTIONNAME.")
     #}
-    if(length(functionName) == 0) {
+    if(length(functionName) == 0 || nchar(functionName) == 0) {
         stop("The function \"", functionName, "\" does not appear to be a string of the form PACKAGENAME::FUNCTIONNAME, where PACKAGENAME is the package exporting the function with name FUNCTIONNAME.")
     }
     
-    # Extract the packageName:
-    packageName <- getPackageNameFromPackageFunctionName(functionName)
-    
-    # 2. Validate the package for use in the process:
-    if(validateStoxLibraryPackage(packageName)) {
-        functionName
+    # If the function is included in the StoxLibrary, return the packageName::functionName:
+    stoxLibraryPackageFunctionNames <- getRstoxFrameworkDefinitions("stoxLibraryPackageFunctionNames")
+    if(functionName %in% stoxLibraryPackageFunctionNames) {
+        return(functionName)
     }
     else {
-        stop("Invalid function ", functionName)
+        # Extract the packageName:
+        cat(".")
+        packageName <- getPackageNameFromPackageFunctionName(functionName)
+        if(length(functionName) == 0) {
+            stop("The function \"", functionName, "\" does not appear to be a string of the form PACKAGENAME::FUNCTIONNAME, where PACKAGENAME is the package exporting the function with name FUNCTIONNAME.")
+        }
+        
+        # 2. Validate the package for use in the process:
+        if(validateStoxLibraryPackage(packageName)) {
+            return(functionName)
+        }
+        else {
+            stop("Invalid function ", functionName)
+        }
     }
+    
 }
 
 
@@ -2071,7 +2040,6 @@ setFunctionName <- function(process, newFunctionName) {
         # Split the defaults into function parameters and function inputs:
         process$functionParameters <- defaults[!areInputs]
         process$functionInputs <- defaults[areInputs]
-        
     }
     
     # Delete the processData, since these are no longer valid for the new function:
@@ -2819,12 +2787,12 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
         newValues = valuesSansProcessName
     )
     
-    # Return the process:
-    process <- getProcess(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = process$processID
-    )
+    ## Return the process:
+    #process <- getProcess(
+    #    projectPath = projectPath, 
+    #    modelName = modelName, 
+    #    processID = process$processID
+    #)
     
     # Set the status as not saved (saving is done when running a process):
     setSavedStatus(projectPath, status = FALSE)

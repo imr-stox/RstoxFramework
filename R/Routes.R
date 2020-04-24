@@ -236,7 +236,12 @@ getStratumData <- function(projectPath, modelName, processID) {
     #    includeInTotal = 
     #)
     
-    stratumPolygon
+    return(
+        list(
+            stratumPolygon = stratumPolygon
+        )
+    )
+    #stratumPolygon
 }
 
 # Function to get acousic PSU data:
@@ -357,16 +362,24 @@ getStationData <- function(projectPath, modelName, processID) {
     Cruise <- getProcessOutput(projectPath, modelName, processID, tableName = "Cruise")$Cruise
     Station <- getProcessOutput(projectPath, modelName, processID, tableName = "Station")$Station
     CruiseStation <- merge(Cruise, Station, by = intersect(names(Cruise), names(Station)))
-    #Haul <- getProcessOutput(projectPath, modelName, processID, tableName = "Haul")$Haul
-    #Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
+    
+    Haul <- getProcessOutput(projectPath, modelName, processID, tableName = "Haul")$Haul
+    Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
     
     # Split the Station table into the coordinates and the properties:
     coordinateNames <- c("Longitude", "Latitude")
     coordinates <- CruiseStation[, ..coordinateNames]
+    
     #rownames(coordinates) <- Station$Station
     #infoToKeep <- c("CruiseKey", "Platform", "StationKey", "Station", "CatchPlatform", "DateTime", "Longitude", "Latitude", "BottomDepth")
-    infoToKeep <- c("Station", "Platform", "DateTime", "Longitude", "Latitude", "BottomDepth")
-    properties <- CruiseStation[, ..infoToKeep]
+    stationInfoToKeep <- c("Station", "Platform", "DateTime", "Longitude", "Latitude", "BottomDepth")
+    stationInfo <- CruiseStation[, ..stationInfoToKeep]
+    properties <- stationInfo[, "Station"]
+    
+    haulInfoToKeep <- c("Station", "Haul", "Gear", "EffectiveTowedDistance", "MinHaulDepth", "MaxHaulDepth")
+    haulInfo <- Station_Haul[, ..haulInfoToKeep]
+    
+    
     #properties <- Station[, !(colnames(Station) %in% c("Longitude", "Latitude")), with = FALSE]
     #rownames(properties) <- Station$Station
     
@@ -375,10 +388,16 @@ getStationData <- function(projectPath, modelName, processID) {
     #properties$HaulInfo <- HaulInfo$HaulInfo
     
     # Create a spatial points data frame and convert to geojson:
-    StationData <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)
-    StationData <- geojsonio::geojson_json(StationData)
+    stationPoints <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)
+    stationPoints <- geojsonio::geojson_json(stationPoints)
     
-    StationData
+    return(
+        list(
+            stationPoints = stationPoints, 
+            stationInfo = stationInfo, 
+            haulInfo = haulInfo
+        )
+    )
 }
 
 # Function to get EDSU data:
@@ -403,8 +422,9 @@ getEDSUData <- function(projectPath, modelName, processID) {
     
     # ...and define the properties:
     #infoToKeep <- c("CruiseKey", "Platform", "LogKey", "Log", "EDSU", "DateTime", "Longitude", "Latitude", "LogOrigin", "Longitude2", "Latitude2", "LogOrigin2", "LogDuration", "LogDistance", "EffectiveLogDistance", "BottomDepth")
-    infoToKeep <- c("Platform", "EDSU", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
-    properties <- CruiseLog[, ..infoToKeep]
+    EDSUInfoToKeep <- c("EDSU", "Platform", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
+    EDSUInfo <- CruiseLog[, ..EDSUInfoToKeep]
+    properties <- EDSUInfo[, "EDSU"]
     
     # Create a spatial points data frame and convert to geojson:
     EDSUPoints <- sp::SpatialPointsDataFrame(clickPoints, properties, match.ID = FALSE)
@@ -422,13 +442,20 @@ getEDSUData <- function(projectPath, modelName, processID) {
     EDSULines <- sp::SpatialLinesDataFrame(EDSULines, data = CruiseLog[, "interpolated"], match.ID = FALSE)
     EDSULines <- geojsonio::geojson_json(EDSULines)
     
-    # List the points and lines and return:
-    EDSUData <- list(
-        EDSUPoints = EDSUPoints, 
-        EDSULines = EDSULines
-    )
+    ## List the points and lines and return:
+    #EDSUData <- list(
+    #    EDSUPoints = EDSUPoints, 
+    #    EDSULines = EDSULines
+    #)
     
-    return(EDSUData)
+    return(
+        list(
+            EDSUPoints = EDSUPoints, 
+            EDSULines = EDSULines, 
+            EDSUInfo = EDSUInfo
+        )
+    )
+    #return(EDSUData)
 }
 
 

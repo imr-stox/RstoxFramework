@@ -6,9 +6,25 @@
 \alias{removeHaulFromAssignment}
 \title{Add or remove biotic hauls from assignments}
 \usage{
-addHaulToAssignment(PSU, Layer, Haul, projectPath, modelName, processID)
+addHaulToAssignment(
+  Stratum,
+  PSU,
+  Layer,
+  Haul,
+  projectPath,
+  modelName,
+  processID
+)
 
-removeHaulFromAssignment(PSU, Layer, Haul, projectPath, modelName, processID)
+removeHaulFromAssignment(
+  Stratum,
+  PSU,
+  Layer,
+  Haul,
+  projectPath,
+  modelName,
+  processID
+)
 }
 \arguments{
 \item{PSU}{The acoustic primary sampling unit (PSU) for which to remove the haul}

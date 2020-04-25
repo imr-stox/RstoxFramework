@@ -35,7 +35,7 @@ NULL
 #' @export
 #' @rdname BioticAssignment
 #' 
-addHaulToAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID) {
+addHaulToAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID) {
     modifyAssignment(
         PSU, 
         Layer, 
@@ -50,7 +50,7 @@ addHaulToAssignment <- function(PSU, Layer, Haul, projectPath, modelName, proces
 #' @export
 #' @rdname BioticAssignment
 #' 
-removeHaulFromAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID) {
+removeHaulFromAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID) {
     modifyAssignment(
         PSU, 
         Layer, 
@@ -63,7 +63,7 @@ removeHaulFromAssignment <- function(PSU, Layer, Haul, projectPath, modelName, p
 }
 
 # Generic function to add or remove a haul:
-modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
+modifyAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
     
     # Check that the process returns BioticAssigment process data:
     checkDataType("BioticAssignment", projectPath, modelName, processID)
@@ -81,6 +81,7 @@ modifyAssignment <- function(PSU, Layer, Haul, projectPath, modelName, processID
     BioticAssignment <- do.call(
         utilityFunctionName, 
         list(
+            Stratum = Stratum, 
             PSU = PSU, 
             Layer = Layer, 
             Haul = Haul, 
@@ -116,6 +117,7 @@ assignment_addHaul <- function(PSU, Layer, Haul, BioticAssignment) {
     
     # Add the hauls:
     toAdd <- data.table::data.table(
+        Stratum = Stratum, 
         PSU = PSU, 
         Layer = Layer, 
         Haul = Haul, 

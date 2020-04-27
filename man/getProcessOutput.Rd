@@ -29,7 +29,7 @@ getProcessOutput(
 
 \item{processID}{The ID of the process.}
 
-\item{tableName}{The name of the output table to get from the process.}
+\item{tableName}{The name of the table to extract from the process.}
 
 \item{subFolder}{If the process returns subfolders (ReadBiotic and ReadAcoustic, where the subfolders represent files), specify the name of the folder with this parameter.}
 

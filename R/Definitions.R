@@ -128,136 +128,41 @@ initiateRstoxFramework <- function(){
             "numeric"
         )
     )
-    # Define the process property formats:
-    processPropertyFormats <- list(
-        default = "none", 
-        single = list(
-            "filePath", 
-            "directoryPath"
-        ), 
-        vector = list(
-            "filePaths"
-        ), 
-        list = list(
-            "filterExpressionList"
-        ), 
-        table = list(
-            "catchCompensationTable", 
-            "selectivityTable", 
-            "ellipsoidalDistanceTable", 
-            "speciesLinkTable", 
-            "acousticTargetStrengthTable", 
-            "variableConversionTable"
-        )
-    )
     
-    # Define the column names of the different parameter tables:
-    parameterTableInfo <- list(
-        catchCompensationTable = list(
-            title = "Define parameters for length dependent catch compensation", 
-            info = data.table::data.table(
-                name = c(
-                    "SpeciesCategory", 
-                    "Alpha", 
-                    "Beta", 
-                    "LMin", 
-                    "LMax"
-                ), 
-                type = c(
-                    "character", 
-                    "double", 
-                    "double", 
-                    "double", 
-                    "double"
-                )
-            )
-        ),
-        selectivityTable = list(
-            title = "Define parameters for length dependent selectivity", 
-            info = data.table::data.table(
-                name = c(
-                    "SpeciesCategory", 
-                    "Alpha", 
-                    "Beta", 
-                    "LMax"
-                ), 
-                type = c(
-                    "character", 
-                    "double", 
-                    "double", 
-                    "double"
-                )
-            )
-        ),
-        ellipsoidalDistanceTable = list(
-            title = "Define semi asix lengths for an ellipsoid inside which biotic stations are assigned to acoustic PSUs", 
-            info = data.table::data.table(
-                name = c(
-                    "MinimumNumberOfStations",
-                    "DistanceNauticalMiles", 
-                    "TimeHours", 
-                    "BottomDepthMeters", 
-                    "LatitudeDecimalDegrees", 
-                    "LongitudeDecimalDegrees"
-                ), 
-                type = c(
-                    "integer", 
-                    "double", 
-                    "double", 
-                    "double", 
-                    "double", 
-                    "double"
-                )
-            )
-        ),
-        speciesLinkTable = list(
-            title = "Link acoustic categories and species categories", 
-            info = data.table::data.table(
-                name = c(
-                    "AcousticCategory",
-                    "SpeciesCategory"
-                ), 
-                type = c(
-                    "character",
-                    "character"
-                )
-            )
-        ),
-        acousticTargetStrengthTable = list(
-            title = "Define parameters of acoustic target strength by length", 
-            info = data.table::data.table(
-                name = c(
-                    "AcousticCategory", 
-                    "m", 
-                    "a", 
-                    "d"
-                ), 
-                type = c(
-                    "character",
-                    "double",
-                    "double",
-                    "double"
-                )
-            )
-        ),
-        variableConversionTable = list(
-            title = "Define new values for spcific variables", 
-            info = data.table::data.table(
-                name = c(
-                    "TableName", 
-                    "VariableName", 
-                    "Value", 
-                    "NewValue"
-                ), 
-                type = c(
-                    "character",
-                    "character",
-                    "character",
-                    "character"
-                )
-            )
+    # Get the function returning the definitions of a package:
+    getDefinitionsFunctionFromPackage <- function(packageName) {
+        # Get the function returning the definitions:
+        definitionsFunctionName <- paste0("get", packageName, "Definitions")
+        definitionsFunction <- tryCatch(
+            getExportedValue(packageName, definitionsFunctionName), 
+            error = function(err) NULL
         )
-    )
+        return(definitionsFunction)
+    }
+    # Get the parameterTableInfo defined by a package:
+    getParameterTableInfoFromPackage <- function(packageName) {
+        # Get the function returning the definitions:
+        definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
+        # Run the function:
+        do.call(definitionsFunctionName, list("parameterTableInfo"))
+    }
+    # Get the processPropertyFormats defined by a package:
+    getProcessPropertyFormats <- function(packageName) {
+        # Get the function returning the definitions:
+        definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
+        # Run the function:
+        do.call(definitionsFunctionName, list("processPropertyFormats"))
+    }
+    
+    # Get the parameterTableInfo from all packages, and combine into a list:
+    parameterTableInfo <- lapply(officialStoxLibraryPackages, getParameterTableInfoFromPackage)
+    parameterTableInfo <- unlist(parameterTableInfo, recursive = FALSE)
+
+    # Get the processPropertyFormats of all packages, and merge the lists and add the default ("none"):
+    processPropertyFormats <- lapply(officialStoxLibraryPackages, getProcessPropertyFormats)
+    allFormatClasses <- unique(unlist(lapply(processPropertyFormats, names)))
+    processPropertyFormats <- lapply(allFormatClasses, function(x) unlist(lapply(processPropertyFormats, "[[", x)))
+    names(processPropertyFormats) <- allFormatClasses
     
     # Define filter operators for the different data types:
     filterOperators <- list(

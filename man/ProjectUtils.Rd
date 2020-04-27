@@ -11,8 +11,6 @@
 \alias{isRunning}
 \alias{setRunning}
 \alias{setNotRunning}
-\alias{addProcess}
-\alias{removeProcess}
 \title{Utilities for projects.}
 \usage{
 isProject(projectPath)
@@ -32,19 +30,11 @@ isRunning(projectPath)
 setRunning(projectPath)
 
 setNotRunning(projectPath)
-
-addProcess(projectPath, modelName, values = NULL, returnProcessTable = TRUE)
-
-removeProcess(projectPath, modelName, processID)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
 \item{type}{The type of file to read.}
-
-\item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
-
-\item{processID}{The ID of the process.}
 }
 \description{
 Utilities for projects.

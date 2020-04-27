@@ -1406,6 +1406,9 @@ sortUnique <- function(y) {
 
 
 
+
+
+##### Handle parameter tables: #####
 # Get the title of a parameter table:
 getParameterTableTitle <- function(format) {
     parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
@@ -1428,6 +1431,7 @@ getParameterTableVariableTypes <- function(format) {
 }
     
 # Get the possible values of a parameter table:
+# Unfinished!!!!!!!!!!!!!!!
 getParameterTablePossibleValues <- function(projectPath, modelName, processID, format) {
     columnNames <- getParameterTableColumnNames(format)
     rep(list(list()), length(columnNames))
@@ -1453,6 +1457,6 @@ getParameterTableInfo <- function(projectPath, modelName, processID, format) {
         )
     )
 }
-
+#####
 
 

@@ -142,11 +142,9 @@ initiateRstoxFramework <- function(){
             "filterExpressionList"
         ), 
         table = list(
-            #"speciesCategoryTable", 
-            #"acousticCategoryTable", 
             "catchCompensationTable", 
-            "ellipsoidalDistanceTable", 
             "selectivityTable", 
+            "ellipsoidalDistanceTable", 
             "speciesLinkTable", 
             "acousticTargetStrengthTable", 
             "variableConversionTable"
@@ -154,54 +152,111 @@ initiateRstoxFramework <- function(){
     )
     
     # Define the column names of the different parameter tables:
-    parameterTableColumnNames <- list(
-        speciesCategoryTable = c(
-            "SpeciesCategory", 
-            "NewSpeciesCategory"
+    parameterTableInfo <- list(
+        catchCompensationTable = list(
+            title = "Define parameters for length dependent catch compensation", 
+            info = data.table::data.table(
+                name = c(
+                    "SpeciesCategory", 
+                    "Alpha", 
+                    "Beta", 
+                    "LMin", 
+                    "LMax"
+                ), 
+                type = c(
+                    "character", 
+                    "double", 
+                    "double", 
+                    "double", 
+                    "double"
+                )
+            )
         ),
-        acousticCategoryTable = c(
-            "AcousticCategory", 
-            "NewAcousticCategory"
+        selectivityTable = list(
+            title = "Define parameters for length dependent selectivity", 
+            info = data.table::data.table(
+                name = c(
+                    "SpeciesCategory", 
+                    "Alpha", 
+                    "Beta", 
+                    "LMax"
+                ), 
+                type = c(
+                    "character", 
+                    "double", 
+                    "double", 
+                    "double"
+                )
+            )
         ),
-        catchCompensationTable = c(
-            "SpeciesCategory", 
-            "Alpha", 
-            "Beta", 
-            "LMin", 
-            "LMax"
+        ellipsoidalDistanceTable = list(
+            title = "Define semi asix lengths for an ellipsoid inside which biotic stations are assigned to acoustic PSUs", 
+            info = data.table::data.table(
+                name = c(
+                    "MinimumNumberOfStations",
+                    "DistanceNauticalMiles", 
+                    "TimeHours", 
+                    "BottomDepthMeters", 
+                    "LatitudeDecimalDegrees", 
+                    "LongitudeDecimalDegrees"
+                ), 
+                type = c(
+                    "integer", 
+                    "double", 
+                    "double", 
+                    "double", 
+                    "double", 
+                    "double"
+                )
+            )
         ),
-        selectivityTable = c(
-            "SpeciesCategory", 
-            "Alpha", 
-            "Beta", 
-            "LMax"
+        speciesLinkTable = list(
+            title = "Link acoustic categories and species categories", 
+            info = data.table::data.table(
+                name = c(
+                    "AcousticCategory",
+                    "SpeciesCategory"
+                ), 
+                type = c(
+                    "character",
+                    "character"
+                )
+            )
         ),
-        speciesLinkTable = c(
-            "AcousticCategory",
-            "SpeciesCategory"
+        acousticTargetStrengthTable = list(
+            title = "Define parameters of acoustic target strength by length", 
+            info = data.table::data.table(
+                name = c(
+                    "AcousticCategory", 
+                    "m", 
+                    "a", 
+                    "d"
+                ), 
+                type = c(
+                    "character",
+                    "double",
+                    "double",
+                    "double"
+                )
+            )
         ),
-        acousticTargetStrengthTable = c(
-            "AcousticCategory", 
-            "m", 
-            "a", 
-            "d"
-        ),
-        variableConversionTable = c(
-            "TableName", 
-            "VariableName", 
-            "Value", 
-            "NewValue"
+        variableConversionTable = list(
+            title = "Define new values for spcific variables", 
+            info = data.table::data.table(
+                name = c(
+                    "TableName", 
+                    "VariableName", 
+                    "Value", 
+                    "NewValue"
+                ), 
+                type = c(
+                    "character",
+                    "character",
+                    "character",
+                    "character"
+                )
+            )
         )
-    )
-    
-    # Define the titles of the different parameter tables:
-    parameterTableTitle <- list(
-        speciesCategoryTable = "Define new species categories",
-        acousticCategoryTable = "Define new acoustic categories",
-        catchCompensationTable = "Define parameters for length dependent catch compensation",
-        selectivityTable = "Define parameters for length dependent selectivity",
-        speciesLinktable = "Link acoustic categories and species categories",
-        acousticTargetStrengthTable = "Define parameters of acoustic target strength by length"
     )
     
     # Define filter operators for the different data types:

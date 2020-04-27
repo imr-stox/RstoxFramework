@@ -1403,23 +1403,31 @@ sortUnique <- function(y) {
     sort(unique(y))
 }
 
-#' 
-#' @export
-#' 
+
+
+
+# Get the title of a parameter table:
 getParameterTableTitle <- function(format) {
-    getRstoxFrameworkDefinitions("parameterTableTitle")[[format]]
+    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+    parameterTableTitle <- parameterTableInfo[[format]]$title
+    return(parameterTableTitle)
 }
 
-#' 
-#' @export
-#' 
+# Get the column names of a parameter table:
 getParameterTableColumnNames <- function(format) {
-    getRstoxFrameworkDefinitions("parameterTableColumnNames")[[format]]
+    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+    parameterTableColumnNames <- parameterTableInfo[[format]]$info$name
+    return(parameterTableColumnNames)
+}
+
+# Get the variable types of a parameter table:
+getParameterTableVariableTypes <- function(format) {
+    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+    parameterTableVariableTypes <- parameterTableInfo[[format]]$info$type
+    return(parameterTableVariableTypes)
 }
     
-#' 
-#' @export
-#' 
+# Get the possible values of a parameter table:
 getParameterTablePossibleValues <- function(projectPath, modelName, processID, format) {
     columnNames <- getParameterTableColumnNames(format)
     rep(list(list()), length(columnNames))
@@ -1427,12 +1435,16 @@ getParameterTablePossibleValues <- function(projectPath, modelName, processID, f
 
 #' GUI function: Function to get the info required for populating a parameter table builder in the GUI
 #' 
+#' @inheritParams general_arguments
+#' @param format A character string naming the format to get info for.
+#' 
 #' @export
 #' 
 getParameterTableInfo <- function(projectPath, modelName, processID, format) {
     list(
         parameterTableTitle = getParameterTableTitle(format), 
         parameterTableColumnNames = getParameterTableColumnNames(format), 
+        parameterTableVariableTypes = getParameterTableVariableTypes(format), 
         parameterTablePossibleValues = getParameterTablePossibleValues(
             projectPath = projectPath, 
             modelName = modelName, 

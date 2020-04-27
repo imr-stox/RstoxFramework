@@ -113,7 +113,7 @@ modifyAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, 
 }
 
 # Function that adds a haul to the assignment data:
-assignment_addHaul <- function(PSU, Layer, Haul, BioticAssignment) {
+assignment_addHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     
     # Add the hauls:
     toAdd <- data.table::data.table(
@@ -135,7 +135,7 @@ assignment_addHaul <- function(PSU, Layer, Haul, BioticAssignment) {
 }
 
 # Function that removes a haul from the assignment data:
-assignment_removeHaul <- function(PSU, Layer, Haul, BioticAssignment) {
+assignment_removeHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     
     # Get the row indixces of the PSU and Layer:
     atPSU <- BioticAssignment$PSU %in% PSU

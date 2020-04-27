@@ -147,7 +147,7 @@ initiateRstoxFramework <- function(){
             "catchCompensationTable", 
             "ellipsoidalDistanceTable", 
             "selectivityTable", 
-            "speciesLinktable", 
+            "speciesLinkTable", 
             "acousticTargetStrengthTable", 
             "variableConversionTable"
         )
@@ -176,7 +176,7 @@ initiateRstoxFramework <- function(){
             "Beta", 
             "LMax"
         ),
-        speciesLinktable = c(
+        speciesLinkTable = c(
             "AcousticCategory",
             "SpeciesCategory"
         ),

@@ -1457,6 +1457,17 @@ getParameterTableInfo <- function(projectPath, modelName, processID, format) {
         )
     )
 }
+
+#' GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all Rstox packages
+#' 
+#' @export
+#' 
+getAllParameterTableInfo <- function() {
+    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+    info <- lapply(parameterTableInfo, function(x) x$info)
+    info <- unique(data.table::rbindlist(info))
+    return(info)
+}
 #####
 
 

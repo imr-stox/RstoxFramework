@@ -390,8 +390,12 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     temp <- addProcesses(
         projectPath = projectPath, 
         projectMemory = thisTemplate, 
-        returnProcessTable = FALSE
+        returnProcessTable = FALSE, 
+        archive = FALSE, 
+        add.defaults = FALSE
     )
+    # Store the changes:
+    archiveProject(projectPath)
     
     # Save the project, close it, and open:
     saveProject(projectPath)
@@ -456,8 +460,13 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
         projectPath = projectPath, 
         #modelName = names(projectMemory), 
         projectMemory = projectMemory, 
-        returnProcessTable = FALSE
+        returnProcessTable = FALSE, 
+        archive = FALSE, 
+        add.defaults = FALSE
     )
+    # Store the changes:
+    archiveProject(projectPath)
+    
     
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
@@ -709,10 +718,10 @@ writeProjectDescriptionRData <- function(projectPath) {
     # Get the current project description:
     projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
     
-    # Stop if the projectDescription is empty:
-    if(length(projectDescription) == 0) {
-        stop("You cannot save an empty project.")
-    }
+    ## Stop if the projectDescription is empty:
+    #if(length(projectDescription) == 0) {
+    #    stop("You cannot save an empty project.")
+    #}
     
     # Get the path to the project description file, and save the current project description:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
@@ -722,10 +731,10 @@ writeProjectDescriptionXML <- function(projectPath) {
     # Get the current project description:
     projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
     
-    # Stop if the projectDescription is empty:
-    if(length(projectDescription) == 0) {
-        stop("You cannot save an empty project.")
-    }
+    ## Stop if the projectDescription is empty:
+    #if(length(projectDescription) == 0) {
+    #    stop("You cannot save an empty project.")
+    #}
     
     # Get the path to the project description file, and save the current project description:
     projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
@@ -735,10 +744,10 @@ writeProjectDescriptionJSON <- function(projectPath) {
     # Get the current project description:
     projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
     
-    # Stop if the projectDescription is empty:
-    if(length(projectDescription) == 0) {
-        stop("You cannot save an empty project.")
-    }
+    ## Stop if the projectDescription is empty:
+    #if(length(projectDescription) == 0) {
+    #    stop("You cannot save an empty project.")
+    #}
     
     # Get the path to the project description file, and save the current project description:
     projectJSONFile <- getProjectPaths(projectPath, "projectJSONFile")
@@ -1453,7 +1462,8 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
         if(argumentName %in% names(functionArgumentHierarchy)) {
             # Loop through the functionArgumentHierarchy of the current argumentName and set to show if at least one condition is fullfilled:
             for(conditionArgument in names(functionArgumentHierarchy[[argumentName]])) {
-                if(functionArguments[[conditionArgument]] == functionArgumentHierarchy[[argumentName]][[conditionArgument]]) {
+                #if(functionArguments[[conditionArgument]] == functionArgumentHierarchy[[argumentName]][[conditionArgument]]) {
+                if(identical(functionArguments[[conditionArgument]], functionArgumentHierarchy[[argumentName]][[conditionArgument]])) {
                     toShow[[argumentName]] <- TRUE
                 }
             }
@@ -1505,18 +1515,22 @@ getStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData
     }
     
     # Evaluate and return:
-    f <- lapply(f, eval)    
+    output <- f
+    for(i in seq_along(f)) {
+        assign(names(f[i]), if(!is.null(f[[i]])) output[[i]] <- eval(f[[i]]) else eval(f[[i]]))
+    }
+    #f <- lapply(f, eval)    
     
     # Insert c(FALSE, TRUE) for logicals:
     if(fill.logical) {
-        areLogicals <- sapply(f, is.logical)
+        areLogicals <- sapply(output, is.logical)
         if(sum(areLogicals)) {
-            f[areLogicals] <- lapply(f[areLogicals], expandLogical)
+            output[areLogicals] <- lapply(output[areLogicals], expandLogical)
             # f[areLogicals] <- rep(list(c(FALSE, TRUE)), sum(areLogicals))
         }
     }
     
-    f
+    return(output)
 }
 
 # Function which gets the default values of a function:
@@ -2179,7 +2193,7 @@ applyEmptyFunction <- function(process) {
 
 
 # This funciton is quite central, as it is resposible of setting the default values of funcitons. Only the function inputs and parameters introduced to a process using setFunctionName() can be modified:
-setFunctionName <- function(process, newFunctionName) {
+setFunctionName <- function(process, newFunctionName, add.defaults = FALSE) {
     
     # If empty function name, return empty list:
     if(length(newFunctionName) == 0 || nchar(newFunctionName) == 0) {
@@ -2191,17 +2205,21 @@ setFunctionName <- function(process, newFunctionName) {
         
         # Insert the function name:
         process$functionName <- newFunctionName
-        
         # Get the parameters to display, and their defaults:
         defaults <- getStoxFunctionParameterDefaults(process$functionName)
         
         # Detect which parameters are data types, which identifies them as function inputs (outputs from other processes):
         areInputs <- isFunctionInput(names(defaults))
         
+        if(!add.defaults) {
+            areNonEmpryString <- sapply(defaults, function(x) length(x) && is.character(x))
+            if(any(areNonEmpryString)) {
+                defaults[areNonEmpryString] <- lapply(defaults[areNonEmpryString], function(x) character(0))
+            }
+        }
         # Split the defaults into function parameters and function inputs:
         process$functionParameters <- defaults[!areInputs]
         process$functionInputs <- defaults[areInputs]
-        
     }
     
     # Delete the processData, since these are no longer valid for the new function:
@@ -2285,7 +2303,7 @@ setListElements <- function(list, insertList, projectPath, modelName, processID)
 
 
 ##### Functions for modifying individual process arguments. These are called in the exported function modifyProcess(): #####
-modifyFunctionName <- function(projectPath, modelName, processID, newFunctionName) {
+modifyFunctionName <- function(projectPath, modelName, processID, newFunctionName, archive = TRUE, add.defaults = FALSE) {
     
     # Get the project description:
     process <- getProcess(
@@ -2301,14 +2319,15 @@ modifyFunctionName <- function(projectPath, modelName, processID, newFunctionNam
             stop("The function name must be a character string of the type packageName::functionName")
         }
         # Set the function name, and the corresponding default function inputs and parameters, as well as removing any process parameters that should not be included (showImMap):
-        process <- setFunctionName(process, newFunctionName)
+        process <- setFunctionName(process, newFunctionName, add.defaults = add.defaults)
         
         # Store the changes:
         setProcessMemory(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            process = process
+            process = process, 
+            archive = archive
         )
         
         # Return a flag TRUE if the function name was changed: 
@@ -2319,7 +2338,7 @@ modifyFunctionName <- function(projectPath, modelName, processID, newFunctionNam
     }
     #process
 }
-modifyProcessName <- function(projectPath, modelName, processID, newProcessName) {
+modifyProcessName <- function(projectPath, modelName, processID, newProcessName, archive = TRUE) {
     
     # Get the current process name:
     processName <- getProcessName(
@@ -2337,7 +2356,8 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName)
                 modelName = modelName, 
                 processID = processID, 
                 argumentName = "processName", 
-                argumentValue = newProcessName
+                argumentValue = newProcessName, 
+                archive = archive
             )
         }
         
@@ -2356,7 +2376,7 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName)
     
     #processName
 }
-modifyFunctionParameters <- function(projectPath, modelName, processID, newFunctionParameters) {
+modifyFunctionParameters <- function(projectPath, modelName, processID, newFunctionParameters, archive = TRUE) {
     
     # Get the function parameters:
     functionParameters <- getFunctionParameters(
@@ -2389,7 +2409,8 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
             modelName = modelName, 
             processID = processID, 
             argumentName = "functionParameters", 
-            argumentValue = list(modifiedFunctionParameters) # We need to list this to make it correspond to the single value of the argumentName parameter.
+            argumentValue = list(modifiedFunctionParameters),  # We need to list this to make it correspond to the single value of the argumentName parameter.
+            archive = archive
         )
         
         # Return a flag TRUE if the function parameters were changed: 
@@ -2401,7 +2422,7 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
     
     #modifiedFunctionParameters
 }
-modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionInputs) {
+modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionInputs, archive = TRUE) {
     
     # Get the function inputs:
     functionInputs <- getFunctionInputs(
@@ -2426,7 +2447,8 @@ modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionI
             modelName = modelName, 
             processID = processID, 
             argumentName = "functionInputs", 
-            argumentValue = list(modifiedFunctionInputs) # We need to list this to make it correspond to the single value of the argumentName parameter.
+            argumentValue = list(modifiedFunctionInputs),  # We need to list this to make it correspond to the single value of the argumentName parameter.
+            archive = archive
         )
     
         # Return a flag TRUE if the function inputs were changed: 
@@ -2438,7 +2460,7 @@ modifyFunctionInputs <- function(projectPath, modelName, processID, newFunctionI
     
     #modifiedFunctionInputs
 }
-modifyProcessParameters <- function(projectPath, modelName, processID, newProcessParameters) {
+modifyProcessParameters <- function(projectPath, modelName, processID, newProcessParameters, archive = TRUE) {
     
     # Get the function inputs:
     processParameters <- getProcessParameters(
@@ -2463,7 +2485,8 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
             modelName = modelName, 
             processID = processID, 
             argumentName = "processParameters", 
-            argumentValue = list(modifiedProcessParameters) # We need to list this to make it correspond to the single value of the argumentName parameter.
+            argumentValue = list(modifiedProcessParameters),  # We need to list this to make it correspond to the single value of the argumentName parameter.
+            archive = archive
         )
     
         # Return a flag TRUE if the process parameters were changed: 
@@ -2475,7 +2498,7 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
     
     #modifiedProcessParameters
 }
-modifyProcessData <- function(projectPath, modelName, processID, newProcessData) {
+modifyProcessData <- function(projectPath, modelName, processID, newProcessData, archive = TRUE) {
     
     # Get the process data:
     processData<- getProcessData(
@@ -2500,7 +2523,8 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData)
             modelName = modelName, 
             processID = processID, 
             argumentName = "processData", 
-            argumentValue = list(modifiedProcessData) # We need to list this to make it correspond to the single value of the argumentName parameter.
+            argumentValue = list(modifiedProcessData),  # We need to list this to make it correspond to the single value of the argumentName parameter.
+            archive = archive
         )
     
         # Return a flag TRUE if the process data were changed: 
@@ -2623,7 +2647,7 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
 #' 
 #' @export
 #' 
-modifyProcess <- function(projectPath, modelName, processName, newValues) {
+modifyProcess <- function(projectPath, modelName, processName, newValues, archive = TRUE, add.defaults = FALSE) {
     
     # The values of the process must be changed in the following order:
     # 1. Function name
@@ -2653,7 +2677,9 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newFunctionName = newValues$functionName
+            newFunctionName = newValues$functionName, 
+            archive = archive, 
+            add.defaults = add.defaults
         )
     }
     
@@ -2663,7 +2689,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newFunctionParameters = newValues$functionParameters
+            newFunctionParameters = newValues$functionParameters, 
+            archive = archive
         )
     }
     
@@ -2673,7 +2700,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newFunctionInputs = newValues$functionInputs
+            newFunctionInputs = newValues$functionInputs, 
+            archive = archive
         )
     }
     
@@ -2683,7 +2711,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newProcessName = newValues$processName
+            newProcessName = newValues$processName, 
+            archive = archive
         )
     }
     
@@ -2693,7 +2722,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newProcessParameters = newValues$processParameters
+            newProcessParameters = newValues$processParameters, 
+            archive = archive
         )
     }
     
@@ -2703,7 +2733,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues) {
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            newProcessData = newValues$processData
+            newProcessData = newValues$processData, 
+            archive = archive
         )
     }
     
@@ -2817,7 +2848,7 @@ createProcessIDString <- function(integerID) {
 #' 
 #' @export
 #' 
-addEmptyProcess <- function(projectPath, modelName, processName = NULL) {
+addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive = TRUE) {
     
     # Get a default new process name, or check the validity of the given process name:
     if(length(processName)) {
@@ -2854,7 +2885,8 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL) {
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
-        process = process
+        process = process, 
+        archive = archive
     )
     
     # Update the process index table:
@@ -2873,7 +2905,7 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL) {
 }
 
 # Function to add all processes of template or project description:
-addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE) {
+addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE, archive = TRUE, add.defaults = FALSE) {
     # Get the possible models:
     stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
     
@@ -2888,7 +2920,9 @@ addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE) 
                 projectPath = projectPath, 
                 modelName = modelName, 
                 values = projectMemory[[modelName]][[ind]], 
-                returnProcessTable = returnProcessTable
+                returnProcessTable = returnProcessTable, 
+                archive = archive, 
+                add.defaults = add.defaults
             )
         }
     }
@@ -2919,7 +2953,7 @@ addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE) 
 #' 
 #' @export
 #' 
-addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable = TRUE) {
+addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable = TRUE, archive = TRUE, add.defaults = FALSE) {
     
     # values must be a list:
     if(length(values) && !is.list(values)) {
@@ -2930,7 +2964,8 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
     process <- addEmptyProcess(
         projectPath = projectPath, 
         modelName = modelName, 
-        processName = values$processName
+        processName = values$processName, 
+        archive = FALSE
     )
     
     # Apply the arguments:
@@ -2939,15 +2974,17 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
         projectPath = projectPath, 
         modelName = modelName, 
         processName = process$processName, 
-        newValues = valuesSansProcessName
+        newValues = valuesSansProcessName, 
+        archive = archive, 
+        add.defaults = add.defaults
     )
     
     # Return the process:
-    process <- getProcess(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = process$processID
-    )
+    #process <- getProcess(
+    #    projectPath = projectPath, 
+    #    modelName = modelName, 
+    #    processID = process$processID
+    #)
     
     # Set the status as not saved (saving is done when running a process):
     setSavedStatus(projectPath, status = FALSE)

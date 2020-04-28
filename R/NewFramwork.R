@@ -231,7 +231,7 @@ readPointerFile <- function(pointerFile, projectPath) {
 #' 
 #' @export
 #' 
-setProcessMemory <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL) {
+setProcessMemory <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL, archive = TRUE) {
     
     # Get the arguments and argument names from the process:
     if(length(process)) {
@@ -263,7 +263,9 @@ setProcessMemory <- function(projectPath, modelName, processID, argumentName, ar
     setSavedStatus(projectPath, status = FALSE)
     
     # Save the project memory:
-    archiveProject(projectPath)
+    if(archive) {
+        archiveProject(projectPath)
+    }
 }
 
 

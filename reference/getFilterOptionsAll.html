@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Add or remove biotic hauls from assignments — Assignment • RstoxFramework</title>
+<title>GUI function: Get possible tables, operators and unique values for use in the filter expression builder. — getFilterOptionsAll • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Add or remove biotic hauls from assignments — Assignment" />
-<meta property="og:description" content="The functions addHaulsToAssignment and removeHaulsFromAssignment adds or removes biotic hauls from the Assignment process data of the specified process." />
+<meta property="og:title" content="GUI function: Get possible tables, operators and unique values for use in the filter expression builder. — getFilterOptionsAll" />
+<meta property="og:description" content="GUI function: Get possible tables, operators and unique values for use in the filter expression builder." />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.6</span>
       </span>
     </div>
 
@@ -108,34 +108,20 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Add or remove biotic hauls from assignments</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Interactive.R'><code>R/Interactive.R</code></a></small>
-    <div class="hidden name"><code>Assignment.Rd</code></div>
+    <h1>GUI function: Get possible tables, operators and unique values for use in the filter expression builder.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Routes.R'><code>R/Routes.R</code></a></small>
+    <div class="hidden name"><code>getFilterOptionsAll.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>The functions <code>addHaulsToAssignment</code> and <code>removeHaulsFromAssignment</code> adds or removes biotic hauls from the Assignment process data of the specified process.</p>
+    <p>GUI function: Get possible tables, operators and unique values for use in the filter expression builder.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>addHaulToAssignment</span>(<span class='no'>PSU</span>, <span class='no'>Layer</span>, <span class='no'>Haul</span>, <span class='no'>projectPath</span>, <span class='no'>modelName</span>, <span class='no'>processID</span>)
-
-<span class='fu'>removeHaulFromAssignment</span>(<span class='no'>PSU</span>, <span class='no'>Layer</span>, <span class='no'>Haul</span>, <span class='no'>projectPath</span>, <span class='no'>modelName</span>, <span class='no'>processID</span>)</pre>
+    <pre class="usage"><span class='fu'>getFilterOptionsAll</span>(<span class='no'>projectPath</span>, <span class='no'>modelName</span>, <span class='no'>processID</span>, <span class='kw'>include.numeric</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>PSU</th>
-      <td><p>The acoustic primary sampling unit (PSU) for which to remove the haul</p></td>
-    </tr>
-    <tr>
-      <th>Layer</th>
-      <td><p>The acoustic Layer for which to remove the haul</p></td>
-    </tr>
-    <tr>
-      <th>Haul</th>
-      <td><p>The biotic haul to remove (can be a vector of hauls).</p></td>
-    </tr>
     <tr>
       <th>projectPath</th>
       <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
@@ -150,28 +136,7 @@
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.</p>
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'>## # Create artificial assignment data:
-## Assignment &lt;- data.table::data.table(
-##     PSU = paste0("T", c(1,1, 2, 3,3)), 
-##     Layer = "L1", 
-##     Haul = c(1,2, 2, 1,2), 
-##     AssignmentID = c(1,1, 2, 1,1)
-## )
-## 
-## # Add a haul:
-## Assignment1 &lt;- assignment_addHauls("T3", "L1", 4, Assignment)
-## all.equal(Assignment, Assignment2)
-## 
-## # Remove the same haul:
-## Assignment2 &lt;- assignment_removeHauls("T3", "L1", 4, Assignment1)
-## all.equal(Assignment, Assignment2)
-
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

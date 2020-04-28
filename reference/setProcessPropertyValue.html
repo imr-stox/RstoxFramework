@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>GUI function: Get possible tables, operators and unique values for use in the filter expression builder. — getFilterOptions • RstoxFramework</title>
+<title>GUI function: Set procecss properties. — setProcessPropertyValue • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="GUI function: Get possible tables, operators and unique values for use in the filter expression builder. — getFilterOptions" />
-<meta property="og:description" content="GUI function: Get possible tables, operators and unique values for use in the filter expression builder." />
+<meta property="og:title" content="GUI function: Set procecss properties. — setProcessPropertyValue" />
+<meta property="og:description" content="GUI function: Set procecss properties." />
 
 
 
@@ -108,20 +108,39 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>GUI function: Get possible tables, operators and unique values for use in the filter expression builder.</h1>
+    <h1>GUI function: Set procecss properties.</h1>
     <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Routes.R'><code>R/Routes.R</code></a></small>
-    <div class="hidden name"><code>getFilterOptions.Rd</code></div>
+    <div class="hidden name"><code>setProcessPropertyValue.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>GUI function: Get possible tables, operators and unique values for use in the filter expression builder.</p>
+    <p>GUI function: Set procecss properties.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getFilterOptions</span>(<span class='no'>projectPath</span>, <span class='no'>modelName</span>, <span class='no'>processID</span>, <span class='no'>tableName</span>)</pre>
+    <pre class="usage"><span class='fu'>setProcessPropertyValue</span>(
+  <span class='no'>groupName</span>,
+  <span class='no'>name</span>,
+  <span class='no'>value</span>,
+  <span class='no'>projectPath</span>,
+  <span class='no'>modelName</span>,
+  <span class='no'>processID</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>groupName</th>
+      <td><p>The name of the property group, one of "processArguments", "functionInputs" and "functionParameters".</p></td>
+    </tr>
+    <tr>
+      <th>name</th>
+      <td><p>The name of the property, such as "processName", "functionName", one of the process parameters ("enabled", "showInMap" and "fileOutput"), the name of a funciton input, or the name of a function parameter.</p></td>
+    </tr>
+    <tr>
+      <th>value</th>
+      <td><p>The value to set to the property (string).</p></td>
+    </tr>
     <tr>
       <th>projectPath</th>
       <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
@@ -133,10 +152,6 @@
     <tr>
       <th>processID</th>
       <td><p>The ID of the process.</p></td>
-    </tr>
-    <tr>
-      <th>tableName</th>
-      <td><p>The name of the output table to get from the process.</p></td>
     </tr>
     </table>
 

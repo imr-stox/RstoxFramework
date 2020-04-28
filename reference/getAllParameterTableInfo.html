@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>GUI function: Get possible tables, operators and unique values for use in the filter expression builder. — getFilterOptions • RstoxFramework</title>
+<title>GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all Rstox packages — getAllParameterTableInfo • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="GUI function: Get possible tables, operators and unique values for use in the filter expression builder. — getFilterOptions" />
-<meta property="og:description" content="GUI function: Get possible tables, operators and unique values for use in the filter expression builder." />
+<meta property="og:title" content="GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all Rstox packages — getAllParameterTableInfo" />
+<meta property="og:description" content="GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all Rstox packages" />
 
 
 
@@ -108,37 +108,17 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>GUI function: Get possible tables, operators and unique values for use in the filter expression builder.</h1>
+    <h1>GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all Rstox packages</h1>
     <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Routes.R'><code>R/Routes.R</code></a></small>
-    <div class="hidden name"><code>getFilterOptions.Rd</code></div>
+    <div class="hidden name"><code>getAllParameterTableInfo.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>GUI function: Get possible tables, operators and unique values for use in the filter expression builder.</p>
+    <p>GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all Rstox packages</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getFilterOptions</span>(<span class='no'>projectPath</span>, <span class='no'>modelName</span>, <span class='no'>processID</span>, <span class='no'>tableName</span>)</pre>
+    <pre class="usage"><span class='fu'>getAllParameterTableInfo</span>()</pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>projectPath</th>
-      <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
-    </tr>
-    <tr>
-      <th>modelName</th>
-      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
-    </tr>
-    <tr>
-      <th>processID</th>
-      <td><p>The ID of the process.</p></td>
-    </tr>
-    <tr>
-      <th>tableName</th>
-      <td><p>The name of the output table to get from the process.</p></td>
-    </tr>
-    </table>
 
 
   </div>

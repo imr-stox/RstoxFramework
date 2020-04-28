@@ -69,18 +69,6 @@ getCanShowInMap <- function(functionName, dataType = NULL) {
 
 ##### Interactive: #####
 
-# RunProcess In the GUI
-
-# In a for loop:
-# 1. runProcess()
-# If success:
-#   1.2. getMapMode()
-#   1.3. getMapData()
-#   1.4. getInteractiveMode()
-#   1.5. getInteractiveData()
-#   1.6. getLog
-# 
-
 # Function for getting the interactive mode of the process:
 #' 
 #' @export
@@ -107,8 +95,14 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaPSUDataType")) {
         "sweptAreaPSU"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataType")) {
-        "assignment"
+    else if(dataType %in% getRstoxFrameworkDefinitions("acousticLayerDataType")) {
+        "acousticLayer"
+    }
+    else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaLayerDataType")) {
+        "sweptAreaLayer"
+    }
+    else if(dataType %in% getRstoxFrameworkDefinitions("bioticAssignmentDataType")) {
+        "bioticAssignment"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("stationDataType") && showInMap) {
         "station"
@@ -120,30 +114,6 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
         "none"
     }
 }
-
-### # Function for getting the map mode of the process:
-### getMapMode <- function(projectPath, modelName, processID) {
-###     # Get the data type of the process:
-###     dataType <- getDataType(
-###         projectPath = projectPath, 
-###         modelName = modelName, 
-###         processID = processID
-###     )
-###     
-###     # Select the type of interactive mode depending on the output data type from the process:
-###     if(dataType %in% getRstoxFrameworkDefinitions("strataDataTypes")) {
-###         "stratum"
-###     }
-###     else if(dataType %in% getRstoxFrameworkDefinitions("assignmentDataTypes")) {
-###         "station"
-###     }
-###     else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType")) {
-###         "EDSU"
-###     }
-###     else {
-###         stop("Invalid dataType")
-###     }
-### }
 
 
 # Functions for getting the appropriate process data from the process, called depending on the interactive mode:
@@ -163,8 +133,8 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
             processID = processID
         )
     }
-    else if(interactiveMode == "assignment") {
-        getAssignmentData(
+    else if(interactiveMode == "bioticAssignment") {
+        getBioticAssignmentData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -179,6 +149,20 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
     }
     else if(interactiveMode == "sweptAreaPSU") {
         getSweptAreaPSUData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else if(interactiveMode == "acousticLayer") {
+        getAcousticLayerData(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
+    else if(interactiveMode == "sweptAreaLayer") {
+        getSweptAreaLayerData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -221,19 +205,19 @@ getMapData  <- function(projectPath, modelName, processID) {
         )
     }
     else {
-        warning("No map data available from the process ", processID, " of model ", modelName, " of project ", projectPath)
+        warning("StoX: No map data available from the process ", processID, " of model ", modelName, " of project ", projectPath)
         geojsonio::geojson_json(getRstoxFrameworkDefinitions("emptyStratumPolygon"))
     }
 }
 
 
 # Individual get data functions:
-#' 
 getStratumData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Return an empty StratumPolygon if processData is empty:
+    # Change this to an error?????????????????
     if(length(processData) == 0) {
         return(getRstoxFrameworkDefinitions("emptyStratumPolygon"))
     }
@@ -241,7 +225,7 @@ getStratumData <- function(projectPath, modelName, processID) {
     # Issue an error of the process data are not of StratumPolygon type:
     if(names(processData) != "StratumPolygon"){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type StratumPolygon")
+        warning("StoX: The process ", processName, " does not return process data of type StratumPolygon")
         return(NULL)
     }
     
@@ -252,42 +236,30 @@ getStratumData <- function(projectPath, modelName, processID) {
     #    includeInTotal = 
     #)
     
-    stratumPolygon
+    return(
+        list(
+            stratumPolygon = stratumPolygon
+        )
+    )
+    #stratumPolygon
 }
 
-#' 
+# Function to get acousic PSU data:
 getAcousticPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
     # Issue an error of the process data are not of AcousticPSU type:
-    #if(!all(names(processData) %in% c("Stratum_PSU", "EDSU_PSU"))){
     if(! "EDSU_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type AcousticPSU")
+        warning("StoX: The process ", processName, " does not return process data of type AcousticPSU")
         return(NULL)
     }
     
-    ## Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    #EDSU_PSU <- processData$AcousticPSU[, c("EDSU", "PSU")]
-    #PSU_Stratum <- unique(processData$AcousticPSU[, c("PSU", "Stratum")])
-    #Stratum = unique(processData$AcousticPSU$Stratum)
-    # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    #Stratum = data.table::data.table(
-    #    Stratum = unique(processData$Stratum_PSU$Stratum)
-    #)
-    
-    # Return the list of data.tables:
-    #output <- c(
-    #    processData, 
-    #    list(Stratum = Stratum)
-    #)
-    #
-    #return(output)
     return(processData)
 }
 
-#' 
+# Function to get swept-area PSU data:
 getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -295,33 +267,52 @@ getSweptAreaPSUData <- function(projectPath, modelName, processID) {
     # Issue an error of the process data are not of SweptAreaPSU type:
     if(! "Station_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type SweptAreaPSU")
+        warning("StoX: The process ", processName, " does not return process data of type SweptAreaPSU")
         return(NULL)
     }
     
-    ### # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    ### Station_PSU <- processData$SweptAreaPSU[, c("Station", "PSU")]
-    ### PSU_Stratum <- unique(processData$c[, c("PSU", "Stratum")])
-    ### Stratum = unique(processData$SweptAreaPSU$Stratum)
-    ### 
-    ### # Return the list of data.tables:
-    ### list(
-    ###     Station_PSU = Station_PSU, 
-    ###     PSU_Stratum = PSU_Stratum, 
-    ###     Stratum = Stratum
-    ### )
     return(processData)
 }
 
-#' 
-getAssignmentData <- function(projectPath, modelName, processID) {
+# Function to get acousic PSU data:
+getAcousticLayerData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
-    # Issue an error of the process data are not of Assignment type:
-    if(names(processData) != "Assignment"){
+    # Issue an error of the process data are not of AcousticPSU type:
+    if(! "AcousticLayer" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type Assignment")
+        warning("StoX: The process ", processName, " does not return process data of type AcousticLayer")
+        return(NULL)
+    }
+    
+    return(processData)
+}
+
+# Function to get swept-area PSU data:
+getSweptAreaLayerData <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Issue an error of the process data are not of SweptAreaPSU type:
+    if(! "SweptAreaLayer" %in% names(processData)){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("StoX: The process ", processName, " does not return process data of type SweptAreaLayer")
+        return(NULL)
+    }
+    
+    return(processData)
+}
+
+# Function to get biotic assignment data:
+getBioticAssignmentData <- function(projectPath, modelName, processID) {
+    
+    # Get the process data:
+    processData <- getProcessData(projectPath, modelName, processID)
+    # Issue an error of the process data are not of BioticAssignment type:
+    if(names(processData) != "BioticAssignment"){
+        processName <- getProcessName(projectPath, modelName, processID)
+        warning("StoX: The process ", processName, " does not return process data of type BioticAssignment")
         return(NULL)
     }
     
@@ -334,11 +325,11 @@ getAssignmentData <- function(projectPath, modelName, processID) {
     ###     PSU_Layer_AssignmentID = PSU_Layer_AssignmentID, 
     ###     AssignmentID_Station_StationWeight = AssignmentID_Station_StationWeight
     ### )
-    processData$Assignment
+    return(processData)
 }
 
 
-#' 
+# Function to get a list of strata names:
 getStratumList <- function(projectPath, modelName, processID) {
     
     # Get the process data:
@@ -351,7 +342,7 @@ getStratumList <- function(projectPath, modelName, processID) {
     # Issue an error of the process data are not of StratumPolygon type:
     if(names(processData) != "StratumPolygon"){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("The process ", processName, " does not return process data of type StratumPolygon")
+        warning("StoX: The process ", processName, " does not return process data of type StratumPolygon")
         return(list())
     }
     
@@ -365,22 +356,30 @@ getStratumList <- function(projectPath, modelName, processID) {
     list(stratumList)
 }
 
-#' 
+# Function to get a list of station data:
 getStationData <- function(projectPath, modelName, processID) {
     # Get the station data:
     Cruise <- getProcessOutput(projectPath, modelName, processID, tableName = "Cruise")$Cruise
     Station <- getProcessOutput(projectPath, modelName, processID, tableName = "Station")$Station
     CruiseStation <- merge(Cruise, Station, by = intersect(names(Cruise), names(Station)))
-    #Haul <- getProcessOutput(projectPath, modelName, processID, tableName = "Haul")$Haul
-    #Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
+    
+    Haul <- getProcessOutput(projectPath, modelName, processID, tableName = "Haul")$Haul
+    Station_Haul <- merge(Station, Haul, by = intersect(names(Station), names(Haul)))
     
     # Split the Station table into the coordinates and the properties:
     coordinateNames <- c("Longitude", "Latitude")
     coordinates <- CruiseStation[, ..coordinateNames]
+    
     #rownames(coordinates) <- Station$Station
     #infoToKeep <- c("CruiseKey", "Platform", "StationKey", "Station", "CatchPlatform", "DateTime", "Longitude", "Latitude", "BottomDepth")
-    infoToKeep <- c("Station", "Platform", "DateTime", "Longitude", "Latitude", "BottomDepth")
-    properties <- CruiseStation[, ..infoToKeep]
+    stationInfoToKeep <- c("Station", "Platform", "DateTime", "Longitude", "Latitude", "BottomDepth")
+    stationInfo <- CruiseStation[, ..stationInfoToKeep]
+    properties <- stationInfo[, "Station"]
+    
+    haulInfoToKeep <- c("Station", "Haul", "Gear", "EffectiveTowedDistance", "MinHaulDepth", "MaxHaulDepth")
+    haulInfo <- Station_Haul[, ..haulInfoToKeep]
+    
+    
     #properties <- Station[, !(colnames(Station) %in% c("Longitude", "Latitude")), with = FALSE]
     #rownames(properties) <- Station$Station
     
@@ -389,13 +388,19 @@ getStationData <- function(projectPath, modelName, processID) {
     #properties$HaulInfo <- HaulInfo$HaulInfo
     
     # Create a spatial points data frame and convert to geojson:
-    StationData <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)
-    StationData <- geojsonio::geojson_json(StationData)
+    stationPoints <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)
+    stationPoints <- geojsonio::geojson_json(stationPoints)
     
-    StationData
+    return(
+        list(
+            stationPoints = stationPoints, 
+            stationInfo = stationInfo, 
+            haulInfo = haulInfo
+        )
+    )
 }
 
-#' 
+# Function to get EDSU data:
 getEDSUData <- function(projectPath, modelName, processID) {
     
     # Get the Log data:
@@ -417,8 +422,9 @@ getEDSUData <- function(projectPath, modelName, processID) {
     
     # ...and define the properties:
     #infoToKeep <- c("CruiseKey", "Platform", "LogKey", "Log", "EDSU", "DateTime", "Longitude", "Latitude", "LogOrigin", "Longitude2", "Latitude2", "LogOrigin2", "LogDuration", "LogDistance", "EffectiveLogDistance", "BottomDepth")
-    infoToKeep <- c("Platform", "EDSU", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
-    properties <- CruiseLog[, ..infoToKeep]
+    EDSUInfoToKeep <- c("EDSU", "Platform", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
+    EDSUInfo <- CruiseLog[, ..EDSUInfoToKeep]
+    properties <- EDSUInfo[, "EDSU"]
     
     # Create a spatial points data frame and convert to geojson:
     EDSUPoints <- sp::SpatialPointsDataFrame(clickPoints, properties, match.ID = FALSE)
@@ -436,13 +442,20 @@ getEDSUData <- function(projectPath, modelName, processID) {
     EDSULines <- sp::SpatialLinesDataFrame(EDSULines, data = CruiseLog[, "interpolated"], match.ID = FALSE)
     EDSULines <- geojsonio::geojson_json(EDSULines)
     
-    # List the points and lines and return:
-    EDSUData <- list(
-        EDSUPoints = EDSUPoints, 
-        EDSULines = EDSULines
-    )
+    ## List the points and lines and return:
+    #EDSUData <- list(
+    #    EDSUPoints = EDSUPoints, 
+    #    EDSULines = EDSULines
+    #)
     
-    return(EDSUData)
+    return(
+        list(
+            EDSUPoints = EDSUPoints, 
+            EDSULines = EDSULines, 
+            EDSUInfo = EDSUInfo
+        )
+    )
+    #return(EDSUData)
 }
 
 
@@ -942,7 +955,7 @@ cellToJSONString <- function(DT, cols) {
 }
 cellToJSONStringOne <- function(x) {
     if(length(x) == 0) {
-        warning("Length 1 required for process properties except possibleValues.")
+        warning("StoX: Length 1 required for process properties except possibleValues.")
         x <- ""
     }
     if(!is.character(x)) {
@@ -1208,7 +1221,7 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 
 #' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
 #' 
-#' @inheritParams general_arguments Add a doc for projectPath, modelName, processID, tableName!!!!!!!
+#' @inheritParams general_arguments
 #' 
 #' @export
 #' 
@@ -1232,12 +1245,11 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     
     # Get the requested table:
     if(tableName %in% names(processOutput)) {
-        
+        processOutput <- processOutput[[tableName]]
     }
     else {
         stop("Table name should be one of the following:\n\t", paste(names(processOutput), collapse = "\n\t"))
     }
-    processOutput <- processOutput[[tableName]]
     
     # Convert to a list of tables:
     #processOutput <- unlistToDataType(processOutput)
@@ -1284,43 +1296,142 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
     return(output)
 }
 
-getOptionList <- function(option, digits = 6) {
-    option <- data.table::data.table(
-        name = format(option, digits = digits), 
-        value = option
+
+#' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
+#' 
+#' @inheritParams general_arguments
+#' 
+#' @export
+#' 
+getFilterOptionsAll <- function(projectPath, modelName, processID, include.numeric = TRUE) {
+
+    # Run the process without saving and without filter:
+    # Add a stop if the previvous process has not been run!!!!!!!!!!!!!
+    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
+    # If the process output is a list of lists, unlist the top level and add names separated by slash:
+    processOutput <- unlistProcessOutput(processOutput)
+    
+    # Get the column names:
+    name <- lapply(processOutput, names)
+    
+    # Get the data types:
+    type <- lapply(processOutput, function(x) sapply(x, firstClass))
+    
+    # Get the operators:
+    operators <- lapply(type, function(x) if(length(x)) getRstoxFrameworkDefinitions("filterOperators")[x] else NULL)
+    
+    # Get a list of unique values for each column of each table:
+    #options <- lapply(processOutput, getPossibleValuesOneTable, include.numeric = include.numeric)
+    options <- mapply(getPossibleValuesOneTable, processOutput, type, include.numeric = include.numeric, SIMPLIFY = FALSE)
+    options <- lapply(options, function(x) lapply(x, getOptionList))
+    
+    # Return the
+    output <- lapply(
+        seq_along(options),
+        function(ind)
+            structure(
+                list(
+                    mapply(
+                        list,
+                            name = name[[ind]],
+                            type = type[[ind]],
+                            operators = operators[[ind]],
+                            options = options[[ind]],
+                            SIMPLIFY = FALSE
+                        )
+                    ), 
+                names = "fields"
+                )
+            )
+    
+    names(output) <- names(options)
+    
+    # Add the fields level:
+    output <- list(
+        tableNames = names(output),
+        allFields = output
     )
-    output <- unname(split(option, seq_len(nrow(option))))
-    output <- lapply(output, as.list)
+    
+    # Return a list of the tableNames, columnNames and possibleValues:
     return(output)
 }
 
+    
 
-getPossibleValuesOneTable <- function(table) {
-    # Unique and then sort each column:
-    sortUnique <- function(y) {
-        sort(unique(y))
+getOptionList <- function(option, digits = 6) {
+    ##pp <- proc.time()[3]
+    #browser()
+    #option <- data.table::data.table(
+    #    name = format(option, digits = digits), 
+    #    value = option
+    #)
+    ##cat("-1", proc.time()[3] - pp, "\n")
+    #output <- unname(split(option, seq_len(nrow(option))))
+    ##cat("-2", proc.time()[3] - pp, "\n")
+    #output <- lapply(output, as.list)
+    ##cat("-3", proc.time()[3] - pp, "\n")
+    #return(output)
+    
+    lapply(option, function(x) list(name = format(x, digits = digits), value = x))
+}
+
+
+getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE) {
+    # Return empty named list if no input:
+    if(length(table) == 0) {
+        return(list(a = 1)[0])
     }
-    lapply(table, sortUnique)
+    # Get the indices of the variables to get possible values from:
+    if(include.numeric) {
+        validInd <- seq_len(ncol(table))
+    }
+    else {
+        validInd <- which(! type %in% c("numeric", "integer", "double"))
+    }
+    
+    # Declare a list for the output, with empty on numeric type if include.numeric = FALSE
+    output <- vector("list", ncol(table))
+    # Unique and then sort each column:
+    output[validInd] <- lapply(table[, ..validInd], sortUnique)
+    
+    #lapply(table, sortUnique)
+    output
+}
+
+# Simple function to sort the unique values:
+sortUnique <- function(y) {
+    sort(unique(y))
 }
 
 
-#' 
-#' @export
-#' 
+
+
+
+
+##### Handle parameter tables: #####
+# Get the title of a parameter table:
 getParameterTableTitle <- function(format) {
-    getRstoxFrameworkDefinitions("parameterTableTitle")[[format]]
+    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+    parameterTableTitle <- parameterTableInfo[[format]]$title
+    return(parameterTableTitle)
 }
 
-#' 
-#' @export
-#' 
+# Get the column names of a parameter table:
 getParameterTableColumnNames <- function(format) {
-    getRstoxFrameworkDefinitions("parameterTableColumnNames")[[format]]
+    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+    parameterTableColumnNames <- parameterTableInfo[[format]]$info$name
+    return(parameterTableColumnNames)
+}
+
+# Get the variable types of a parameter table:
+getParameterTableVariableTypes <- function(format) {
+    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+    parameterTableVariableTypes <- parameterTableInfo[[format]]$info$type
+    return(parameterTableVariableTypes)
 }
     
-#' 
-#' @export
-#' 
+# Get the possible values of a parameter table:
+# Unfinished!!!!!!!!!!!!!!!
 getParameterTablePossibleValues <- function(projectPath, modelName, processID, format) {
     columnNames <- getParameterTableColumnNames(format)
     rep(list(list()), length(columnNames))
@@ -1328,12 +1439,16 @@ getParameterTablePossibleValues <- function(projectPath, modelName, processID, f
 
 #' GUI function: Function to get the info required for populating a parameter table builder in the GUI
 #' 
+#' @inheritParams general_arguments
+#' @param format A character string naming the format to get info for.
+#' 
 #' @export
 #' 
 getParameterTableInfo <- function(projectPath, modelName, processID, format) {
     list(
         parameterTableTitle = getParameterTableTitle(format), 
         parameterTableColumnNames = getParameterTableColumnNames(format), 
+        parameterTableVariableTypes = getParameterTableVariableTypes(format), 
         parameterTablePossibleValues = getParameterTablePossibleValues(
             projectPath = projectPath, 
             modelName = modelName, 
@@ -1343,5 +1458,16 @@ getParameterTableInfo <- function(projectPath, modelName, processID, format) {
     )
 }
 
+#' GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all Rstox packages
+#' 
+#' @export
+#' 
+getAllParameterTableInfo <- function() {
+    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+    info <- lapply(parameterTableInfo, function(x) x$info)
+    info <- unique(data.table::rbindlist(info))
+    return(info)
+}
+#####
 
 

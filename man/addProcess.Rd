@@ -4,7 +4,14 @@
 \alias{addProcess}
 \title{Add a StoX process to a model.}
 \usage{
-addProcess(projectPath, modelName, values = NULL, returnProcessTable = TRUE)
+addProcess(
+  projectPath,
+  modelName,
+  values = NULL,
+  returnProcessTable = TRUE,
+  archive = TRUE,
+  add.defaults = FALSE
+)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}

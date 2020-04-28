@@ -1,17 +1,3 @@
-# TODO:
-# getModelNameFromProcessID
-
-# RstoxFramework functions run by Modify-processes in the GUI will return update flags
-# 
-# updateProcessTable
-# updateProcessProperties
-# updateMapData: showInMap & canShowInMap
-# updateLog
-
-
-
-# 
-# 
 # 
 # In DefineAcousticPSU and other functions requiring specific inputs we were for a while # thinking that these inputs should define which layers to plot in the map. We divert from # this and reserve the resposibility of plotting the appropriate layers to the user!
 
@@ -60,6 +46,7 @@ initiateRstoxFramework <- function(){
     
     # Get the stoxLibrary as the list of function attributes from all official packages:
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
+    stoxLibraryPackageFunctionNames <- unname(sapply(stoxLibrary, "[[", "functionName"))
     
     #### Data types: ####
     oldStoxModelDataTypes <- c(
@@ -141,73 +128,41 @@ initiateRstoxFramework <- function(){
             "numeric"
         )
     )
-    # Define the process property formats:
-    processPropertyFormats <- list(
-        default = "none", 
-        single = list(
-            "filePath", 
-            "directoryPath"
-        ), 
-        vector = list(
-            "filePaths"
-        ), 
-        list = list(
-            "filterExpressionList"
-        ), 
-        table = list(
-            "speciesCategoryTable", 
-            "acousticCategoryTable", 
-            "catchCompensationTable", 
-            "selectivityTable", 
-            "speciesLinktable", 
-            "acousticTargetStrengthTable"
-        )
-    )
     
-    # Define the column names of the different parameter tables:
-    parameterTableColumnNames <- list(
-        speciesCategoryTable = c(
-            "SpeciesCategory", 
-            "NewSpeciesCategory"
-        ),
-        acousticCategoryTable = c(
-            "AcousticCategory", 
-            "NewAcousticCategory"
-        ),
-        catchCompensationTable = c(
-            "SpeciesCategory", 
-            "Alpha", 
-            "Beta", 
-            "LMin", 
-            "LMax"
-        ),
-        selectivityTable = c(
-            "SpeciesCategory", 
-            "Alpha", 
-            "Beta", 
-            "LMax"
-        ),
-        speciesLinktable = c(
-            "AcousticCategory",
-            "SpeciesCategory"
-        ),
-        acousticTargetStrengthTable = c(
-            "AcousticCategory", 
-            "m", 
-            "a", 
-            "d"
+    # Get the function returning the definitions of a package:
+    getDefinitionsFunctionFromPackage <- function(packageName) {
+        # Get the function returning the definitions:
+        definitionsFunctionName <- paste0("get", packageName, "Definitions")
+        definitionsFunction <- tryCatch(
+            getExportedValue(packageName, definitionsFunctionName), 
+            error = function(err) NULL
         )
-    )
+        return(definitionsFunction)
+    }
+    # Get the parameterTableInfo defined by a package:
+    getParameterTableInfoFromPackage <- function(packageName) {
+        # Get the function returning the definitions:
+        definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
+        # Run the function:
+        do.call(definitionsFunctionName, list("parameterTableInfo"))
+    }
+    # Get the processPropertyFormats defined by a package:
+    getProcessPropertyFormats <- function(packageName) {
+        # Get the function returning the definitions:
+        definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
+        # Run the function:
+        do.call(definitionsFunctionName, list("processPropertyFormats"))
+    }
     
-    # Define the titles of the different parameter tables:
-    parameterTableTitle <- list(
-        speciesCategoryTable = "Define new species categories",
-        acousticCategoryTable = "Define new acoustic categories",
-        catchCompensationTable = "Define parameters for length dependent catch compensation",
-        selectivityTable = "Define parameters for length dependent selectivity",
-        speciesLinktable = "Link acoustic categories and species categories",
-        acousticTargetStrengthTable = "Define parameters of acoustic target strength by length"
-    )
+    # Get the parameterTableInfo from all packages, and combine into a list:
+    parameterTableInfo <- lapply(officialStoxLibraryPackages, getParameterTableInfoFromPackage)
+    parameterTableInfo <- unlist(parameterTableInfo, recursive = FALSE)
+
+    # Get the processPropertyFormats of all packages, and merge the lists and add the default ("none"):
+    processPropertyFormats <- lapply(officialStoxLibraryPackages, getProcessPropertyFormats)
+    allFormatClasses <- unique(unlist(lapply(processPropertyFormats, names)))
+    processPropertyFormats <- lapply(allFormatClasses, function(x) unlist(lapply(processPropertyFormats, "[[", x)))
+    names(processPropertyFormats) <- allFormatClasses
     
     # Define filter operators for the different data types:
     filterOperators <- list(
@@ -282,7 +237,9 @@ initiateRstoxFramework <- function(){
     stratumDataType <- "StratumPolygon"
     acousticPSUDataType <- "AcousticPSU"
     sweptAreaPSUDataType <- "SweptAreaPSU"
-    assignmentDataType <- "BioticAssignment"
+    acousticLayerDataType <- "AcousticLayer"
+    sweptAreaLayerDataType <- "SweptAreaLayer"
+    bioticAssignmentDataType <- "BioticAssignment"
     stationDataType <- "StoxBioticData"
     EDSUDataType <- "StoxAcousticData"
     
@@ -337,7 +294,6 @@ initiateRstoxFramework <- function(){
     projectSessionFolder <- file.path(stoxFolders["Process"], "projectSession")
     # Sub folders:
     dataFolder <- file.path(projectSessionFolder, "data")
-    GUIFolder <- file.path(projectSessionFolder, "GUI")
     projectMemoryFolder <- file.path(projectSessionFolder, "projectMemory")
     
     currentMemoryFolder <- file.path(projectMemoryFolder, "current")
@@ -347,7 +303,6 @@ initiateRstoxFramework <- function(){
     # Return also a vector of all session folders, to generate the folder structure recursively:
     projectSessionFolderStructure <- c(
         dataFolder, 
-        GUIFolder, 
         projectMemoryFolder, 
         statusFolder, 
         currentMemoryFolder, 
@@ -386,7 +341,6 @@ initiateRstoxFramework <- function(){
             # Project session:
             projectSessionFolder = projectSessionFolder, 
             dataFolder = dataFolder, 
-            GUIFolder = GUIFolder, 
             projectMemoryFolder = projectMemoryFolder, 
             currentMemoryFolder = currentMemoryFolder, 
             historyMemoryFolder = historyMemoryFolder, 
@@ -467,6 +421,50 @@ initiateRstoxFramework <- function(){
     
     #### Return the definitions: ####
     definitions
+}
+
+# This function gets the stoxFunctionAttributes of the specified packages.
+getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
+    
+    # Validate the pakcages:
+    packageNames <- packageNames[sapply(packageNames, validateStoxLibraryPackage)]
+    # Get a list of the 'stoxFunctionAttributes' from each package:
+    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
+    
+    # Collapse to one list:
+    stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
+    
+    # Check for duplicaetd function names:
+    functionNames <- names(stoxFunctionAttributes)
+    packageNames <- sapply(stoxFunctionAttributes, "[[", "packageName")
+    areDuplicatedFunctionNames <- duplicated(functionNames)
+    
+    # If there are any duplicated function names, report a warning stating which function names and from which packages:
+    if(any(areDuplicatedFunctionNames)) {
+        # Get the package strings as concatenations of the packages with common function names:
+        packageNamesString <- as.character(
+            by(
+                functionNames[areDuplicatedFunctionNames], 
+                packageNames[areDuplicatedFunctionNames], 
+                paste, 
+                collapse = ", "
+            )
+        )
+        # Get the unique duplicated function names, and paste the packageNamesString to these:
+        uniqueDuplicatedFunctionNames <- unique(functionNames[areDuplicatedFunctionNames])
+        functionNamePackageNamesString <- paste0(
+            uniqueDuplicatedFunctionNames, 
+            "(", 
+            packageNamesString, 
+            ")"
+        )
+        
+        warning("StoX: The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
+    }
+    
+    # Keep only the non-duplicated functions: 
+    stoxFunctionAttributes <- stoxFunctionAttributes[!areDuplicatedFunctionNames]
+    return(stoxFunctionAttributes)
 }
 
 

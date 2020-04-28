@@ -4,7 +4,14 @@
 \alias{modifyProcess}
 \title{Modify a process}
 \usage{
-modifyProcess(projectPath, modelName, processName, newValues)
+modifyProcess(
+  projectPath,
+  modelName,
+  processName,
+  newValues,
+  archive = TRUE,
+  add.defaults = FALSE
+)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}

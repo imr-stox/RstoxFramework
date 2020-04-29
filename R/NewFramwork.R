@@ -190,7 +190,7 @@ getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL
     
     # Read the memory files:
     output <- rapply(argumentFilePaths, readRDS, how = "replace")
-        
+    
     # Drop the levels with only one elements if requested:
     if(drop1) {
         if(length(modelName) == 1) {

@@ -16,18 +16,19 @@
 
 ############################################################
 ############################################################
-#' Add or remove biotic hauls from assignments
+#' Add or remove biotic hauls to/from assignment of hauls to acoustic PSU/Layer
 #' 
-#' The functions \code{addHaulsToAssignment} and \code{removeHaulsFromAssignment} adds or removes biotic hauls from the BioticAssignment process data of the specified process.
+#' The functions \code{addHaulsToAssignment} and \code{removeHaulsFromAssignment} adds or removes biotic hauls from the \code{\link{BioticAssignment}} process data of the specified process.
 #' 
-#' @param PSU   The acoustic primary sampling unit (PSU) for which to remove the haul
-#' @param Layer The acoustic Layer for which to remove the haul
-#' @param Haul       The biotic haul to remove (can be a vector of hauls).
+#' @param Stratum The stratum name related to the PSU.
+#' @param PSU The acoustic primary sampling unit (PSU) for which to add/remove the haul.
+#' @param Layer The acoustic Layer for which to add/remove the haul.
+#' @param Haul The biotic haul to add/remove (can be a vector of hauls).
+#' @inheritParams general_arguments
 #' 
 #' @details 
 #' The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.
 #' 
-#' @inheritParams getProcessOutput
 #' @name BioticAssignment
 #' 
 NULL
@@ -37,12 +38,13 @@ NULL
 #' 
 addHaulToAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID) {
     modifyAssignment(
-        PSU, 
-        Layer, 
-        Haul, 
-        projectPath, 
-        modelName, 
-        processID, 
+        Stratum = Stratum, 
+        PSU = PSU, 
+        Layer = Layer, 
+        Haul = Haul, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
         action = "add"
     )
 }
@@ -52,12 +54,13 @@ addHaulToAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelNam
 #' 
 removeHaulFromAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID) {
     modifyAssignment(
-        PSU, 
-        Layer, 
-        Haul, 
-        projectPath, 
-        modelName, 
-        processID, 
+        Stratum = Stratum, 
+        PSU = PSU, 
+        Layer = Layer, 
+        Haul = Haul, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
         action = "remove"
     )
 }

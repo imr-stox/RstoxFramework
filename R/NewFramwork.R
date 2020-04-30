@@ -84,7 +84,8 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     
     # The default is to get all models:
     if(length(modelName) == 0 && length(processID) == 0 && length(argumentName) == 0) {
-        modelName <- list.dirs(currentMemoryFolder, recursive = FALSE, full.names = FALSE)
+        #modelName <- list.dirs(currentMemoryFolder, recursive = FALSE, full.names = FALSE)
+        modelName <- getRstoxFrameworkDefinitions("stoxModelNames")
     }
     
     # If no models were detected, return an empty list:

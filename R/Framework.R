@@ -1061,39 +1061,12 @@ appendProjectDescription <- function(projectDescription, modelName, processID, a
 }
 
 
-# Unused: Read the process argument files to a list of the elements modelName, processID, argumentName, argumentValue:
-getArgumentFileTable <- function(projectPath, modelName = NULL, processID = NULL) {
-    
-    # Read the current project memory file, which contains the list of files holding the current process arguments:
-    projectMemoryFile <- getProjectPaths(projectPath, "currentProjectMemoryFile")
-    
-    # If the projectMemoryFile does not exist, return an empty data.table:
-    if(file.exists(projectMemoryFile)) {
-        # Read the projectMemoryFile:
-        argumentFileTable <- readRDS(projectMemoryFile)$argumentFileTable
-        # Subset out the model if requested:
-        if(length(modelName)) {
-            argumentFileTable <- subset(argumentFileTable, modelName == modelName)
-        }
-        if(length(processID)) {
-            argumentFileTable <- subset(argumentFileTable, processID == processID)
-        }
-    }
-    else {
-        argumentFileTable <- data.table::data.table()
-    }
-    
-    argumentFileTable
-}
-
-
-
 # Function for getting the file path of one specific process argument rds file.
 getNewArgumentFile <- function(projectPath, modelName, processID, argumentName) {
     
     # Get the folder holding the project descriptions:
-    projectMemoryFolder <- getProjectPaths(projectPath, "projectMemoryFolder")
-    argumentFolder <- file.path(projectMemoryFolder, modelName, processID, argumentName)
+    memoryModelsFolder <- getProjectPaths(projectPath, "memoryModelsFolder")
+    argumentFolder <- file.path(memoryModelsFolder, modelName, processID, argumentName)
     
     # Define a string with time in ISO 8601 format:
     timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
@@ -1107,27 +1080,17 @@ getNewArgumentFile <- function(projectPath, modelName, processID, argumentName) 
 # Function for getting the file path of a new project memory file.
 getNewProjectMemoryFile <- function(projectPath) {
     # Get the folder holding the project descriptions:
-    projectMemoryFolder <- getProjectPaths(projectPath, "historyMemoryFolder")
+    memoryFolder <- getProjectPaths(projectPath, "memoryHistoryFolder")
     
     # Define a string with time in ISO 8601 format:
     timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
     # Define the file name including the time string, and build the path to the file:
     fileName <- paste0("projectMemory", "_", timeString, ".rds")
-    filePath <- file.path(projectMemoryFolder, fileName)
+    filePath <- file.path(memoryFolder, fileName)
     filePath
 }
 
 
-# Function for getting the file path of a current project memory file.
-getCurrentProjectMemoryFile <- function(projectPath) {
-    getProjectPaths(projectPath, "currentProjectMemoryFile")
-}
-
-
-## Function for getting the file path of a original project memory file:
-#getOriginalProjectMemoryFile <- function(projectPath) {
-#    getProjectPaths(projectPath, "originalProjectMemoryFile")
-#}
 
 
 
@@ -1142,14 +1105,6 @@ saveArgumentFile <- function(projectPath, modelName, processID, argumentName, ar
     }
     # Save the argument to the file, and return the file path:
     saveRDS(argumentValue, file = argumentFile)
-    
-    # Return a list with the modelName, processID, argumentName and argumentFile:
-    # data.table::data.table(
-    #     modelName = modelName, 
-    #     processID = processID, 
-    #     argumentName = argumentName, 
-    #     argumentFile = argumentFile
-    # )
     
     # Return the file path relative to the project path:
     relativePath <- sub(projectPath, "", argumentFile)
@@ -1229,52 +1184,7 @@ removeFromArgumentFileTable <- function(argumentFileTable, modelName, processID)
     argumentFileTable
 }
 
-# Function for saving an argument file table (defining the process memory files comprising the process memory).
-saveProjectMemory <- function(projectPath, argumentFileTable) {
-    # Save the list of project argument files to the current project description file and to the new project description file:
-    currentProjectMemoryFile <- getCurrentProjectMemoryFile(projectPath)
-    newProjectMemoryFile     <- getNewProjectMemoryFile(projectPath)
-    # Add the processIndexTable, the activeProcessID and the maxProcessIntegerID to the data to write:
-    fullProjectMemory <- list(
-        argumentFileTable = argumentFileTable, 
-        processIndexTable = readProcessIndexTable(projectPath),  
-        activeProcessIDTable = getActiveProcess(projectPath), 
-        maxProcessIntegerIDTable = getMaxProcessIntegerID(projectPath)
-    )
-    # Write the project memory to the new file:
-    saveRDS(fullProjectMemory, file = newProjectMemoryFile)
-    
-    # Write the project memory for the individual processes:
-    saveRDS(fullProjectMemory, file = currentProjectMemoryFile)
-    # Also write the current project memory as a folder structure of individual files with path to the memory file:
-    
-    # Update the projectDescriptionIndexFile:
-    projectMemoryIndex <- readProjectMemoryIndex(projectPath)
-    
-    # Delete any files with positive index:
-    hasPositiveIndex <- projectMemoryIndex$Index > 0
-    if(any(hasPositiveIndex)) {
-        #unlink(projectMemoryIndex$Path[hasPositiveIndex])
-        deleteProjectMemoryFile(projectPath, projectMemoryIndex$Path[hasPositiveIndex])
-        projectMemoryIndex <- projectMemoryIndex[!hasPositiveIndex, ]
-    }
-    # Subtract 1 from the indices, and add the new project description relative file path:
-    newProjectMemoryFile_relativePath <- sub(projectPath, "", newProjectMemoryFile)
-    projectMemoryIndex$Index <- projectMemoryIndex$Index - 1
-    projectMemoryIndex <- rbind(
-        projectMemoryIndex, 
-        data.table::data.table(
-            Index = 0, 
-            Path = newProjectMemoryFile_relativePath
-        ), 
-        fill = TRUE
-    )
-    # Write the projectDescriptionIndex to file:
-    writeProjectMemoryIndex(projectPath, projectMemoryIndex)
-    
-    # Return the new project description file path:
-    newProjectMemoryFile
-}
+
 deleteProjectMemoryFile <- function(projectPath, projectMemoryFileRelativePath) {
     unlink(file.path(projectPath, projectMemoryFileRelativePath))
 }
@@ -1350,12 +1260,12 @@ unReDoProject <- function(projectPath, shift = 0) {
         projectPath, 
         projectMemoryIndex$Path[projectMemoryIndex$Index == 0]
     )
-    file.copy(
-        from = fileWithNewCurrentProjectMemory, 
-        to = getProjectPaths(projectPath, "currentProjectMemoryFile"), 
-        overwrite = TRUE, 
-        copy.date = TRUE
-    )
+    #file.copy(
+    #    from = fileWithNewCurrentProjectMemory, 
+    #    to = getProjectPaths(projectPath, "currentProjectMemoryFile"), 
+    #    overwrite = TRUE, 
+    #    copy.date = TRUE
+    #)
     
     # Rewrite the text file holding processIndexTable, activeProcessIDTable and maxProcessIntegerIDTable:
     unwrapProjectMemoryFile(fileWithNewCurrentProjectMemory)
@@ -2839,8 +2749,14 @@ createProcessIDString <- function(integerID) {
     # Create the processID and return this:
     numDigitsOfProcessIntegerID <- getRstoxFrameworkDefinitions("numDigitsOfProcessIntegerID")
     # Paste P to the process integer ID:
-    processID <- paste0("P", formatC(integerID, width = numDigitsOfProcessIntegerID, format = "d", flag = "0"))
-    processID
+    if(length(integerID)) {
+        processID <- paste0("P", formatC(integerID, width = numDigitsOfProcessIntegerID, format = "d", flag = "0"))
+    }
+    else {
+        processID <- NULL
+    }
+    
+    return(processID)
 }
 
 
@@ -3481,7 +3397,7 @@ readFolderWithRSDFiles <- function(folderPath) {
 
 
 getProcessOutputFolder <- function(projectPath, modelName, processID) {
-    file.path(getProjectPaths(projectPath, "dataFolder"), modelName, processID)
+    file.path(getProjectPaths(projectPath, "dataModelsFolder"), modelName, processID)
 }
 
 
@@ -3661,12 +3577,7 @@ getFolderDepth <- function(folderPath) {
     folderDepth
 }
 
-## Small function to get the file name of a memory file:
-#getProcessOutputMemoryFileNames <- function(processOutput, processName) {
-#    output <- paste(processName, names(processOutput), sep = "_")
-#    output <- paste(output, "rds", sep = ".")
-#    return(output)
-#}
+
 # Small function to get the file name of a memory file:
 getProcessOutputMemoryFileNames <- function(processOutput) {
     paste(names(processOutput), "rds", sep = ".")
@@ -3678,7 +3589,7 @@ getProcessOutputMemoryFileNames <- function(processOutput) {
 #' 
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
 runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force.restart = FALSE) {
-        
+
     ## Get the processIDs:
     #processIndexTable <- readProcessIndexTable(projectPath, modelName)
     ## Rstrict the startProcess and endProcess to the range of process indices:

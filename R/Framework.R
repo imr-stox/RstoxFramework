@@ -3469,10 +3469,12 @@ deleteProcessOutput <- function(projectPath, modelName, processID) {
     unlink(folderPath, recursive = FALSE, force = TRUE)
 }
 
-# Function for reading all RDS files in a folder non-recursively:
+# Function for reading all memory files in a folder non-recursively:
 readFolderWithRSDFiles <- function(folderPath) {
     # Get the paths to the output files:
     filePaths <- list.files(folderPath, full.names = FALSE, pattern = "\\.rds$")
+    #memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat")
+    #filePaths <- list.files(folderPath, full.names = FALSE, pattern = paste("\\.", memoryFileFormat, "$"), ignore.case=TRUE)
     # Read the files to a list:
     processOutput <- lapply(filePahts, readRDS)
 }

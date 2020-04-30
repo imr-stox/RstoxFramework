@@ -23,6 +23,8 @@
 #' 
 initiateRstoxFramework <- function(){
     
+    memoryFileFormat <- "rds"
+    
     ##### Packages: #####
     officialStoxLibraryPackages <- c(
         "RstoxBase", 
@@ -299,14 +301,19 @@ initiateRstoxFramework <- function(){
     currentMemoryFolder <- file.path(projectMemoryFolder, "current")
     historyMemoryFolder <- file.path(projectMemoryFolder, "history")
     
+    modelFolders <- file.path(projectMemoryFolder, stoxModelFolders)
+    currentModelFolders <- file.path(currentMemoryFolder, stoxModelFolders)
+    
     statusFolder <- file.path(projectSessionFolder, "status")
     # Return also a vector of all session folders, to generate the folder structure recursively:
     projectSessionFolderStructure <- c(
         dataFolder, 
-        projectMemoryFolder, 
         statusFolder, 
+        projectMemoryFolder, 
+        historyMemoryFolder, 
+        modelFolders, 
         currentMemoryFolder, 
-        historyMemoryFolder
+        currentModelFolders
     )
     
     

@@ -475,3 +475,34 @@ verifyPaths <- function(x) {
     return(x[valid])
 }
 
+
+writeMemoryFile <- function(x, filePathSansExt) {
+    memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat")
+    filePath <- paste(filePathSansExt, memoryFileFormat, sep = ".")
+    if(memoryFileFormat == "fst") {
+        saveRDS(x, file = filePath)
+    }
+    else if(memoryFileFormat == "rds") {
+        fst::write_fst(x, file = filePath)
+    }
+    else {
+        stop("Wrong memoryFileFormat")
+    }
+    filePath
+}
+
+
+readMemoryFile <- function(filePathSansExt) {
+    memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat")
+    filePath <- paste(filePathSansExt, memoryFileFormat, sep = ".")
+    if(memoryFileFormat == "fst") {
+        output <- readRDS(filePath)
+    }
+    else if(memoryFileFormat == "rds") {
+        output <- fst::read_fst(filePath)
+    }
+    else {
+        stop("Wrong memoryFileFormat")
+    }
+    return(output)
+}

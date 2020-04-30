@@ -4,7 +4,7 @@
 #' @export
 #' 
 getModelNames <- function() {
-    getRstoxFrameworkDefinitions("stoxModelTypes")
+    getRstoxFrameworkDefinitions("stoxModelNames")
 }
 #' 
 #' @export

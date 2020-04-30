@@ -165,26 +165,7 @@ getNewDefaultName <- function(names, prefix) {
     # Add 1 to the latest integer:
     newName <- paste0(prefix, newInteger)
     
-    newName
-    #currentMax <- 1
-    #detectedTheLast <- TRUE
-    #
-    #while(detectedTheLast) {
-    #    # Create a vector of potential names, pasting the prefix and a sequence of integer:
-    #    sequence <- currentMax - 1 + seq_len(length)
-    #    potentialNames <- paste0(prefix, sequence)
-    #    # Fin the latest name:
-    #    latest <- max(which(names %in% potentialNames))
-    #    # Break the loop 
-    #}
-    #
-    ## Create a vector of potential names, pasting the prefix and a sequence of integer:
-    #potentialNames <- paste0(prefix, seq_len(length(names) * lengthFact))
-    ## Fin the latest name:
-    #latest <- max(which(names %in% potentialNames))
-    #
-    ## Return the new default name, as the next in the sequence:
-    #potentialNames[latest + 1]
+    return(newName)
 }
 
 # Function to convert from json to R expression:
@@ -205,7 +186,6 @@ list2expression <- function(l, parentHasSiblings=FALSE) {
     # Declare the resulting expression
     result <- NULL
     # If the current rules or expression should be negated, we need to enclose the expression in paretheses:
-    #print(l)
     negate <- isTRUE(l$negate)
     needParentheses <- negate
     
@@ -312,24 +292,6 @@ splitStrByOpAtLevel0 = function(expr, splitOperator){
     unlist(res)
 }
 
-
-#j2expr = function(json_str) {
-#    #convert from json to list
-#    json_l <- jsonlite::fromJSON(json_str, simplifyVector = F)
-#    
-#    l2expr(json_l)
-#}
-
-#expr <- j2expr(json_str)
-
-#setRefClass("Log", fields=list(entries="list"))
-#log <- new("Log",entries=list())
-#writeToLog = function(level, s, lg) {
-#	lg$entries[[length(lg$entries) + 1]] <- paste(level, s);
-#}
-#writeToLog(1, 'start', l)
-
-# Here, a function expression2json is not neede, since openCPU converts to JSON:
 
 #' Parse an R expression to a nested list:
 #' 

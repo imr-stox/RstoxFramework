@@ -19,28 +19,16 @@ listArgumentFilesWithBasenamesAsNames <- function(path) {
     return(out)
 }
 
-#listArgumentFiles <- function(dir, processID = NULL) {
-#    # Get processIDs:
-#    if(length(processID) == 0) {
-#        processID <- list.dirs(dir, recursive = FALSE, full.names = FALSE)
-#    }
-#    
-#    # Loop through the processIDs and list the argument files:
-#    sapply(
-#        processID, 
-#        function(x) listArgumentFilesWithBasenamesAsNames(file.path(dir, x)), 
-#        simplify = FALSE
-#    )
-#}
+
 
 
 listArgumentFiles <- function(projectPath, modelName, processID = NULL) {
     
     # Get the folder of files holding the memory file paths:
-    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    memoryCurrentModelsFolder <- getProjectPaths(projectPath, "memoryCurrentModelsFolder")
     
     # Get the path to the directory of the model:
-    dir <- file.path(currentMemoryFolder, modelName)
+    dir <- file.path(memoryCurrentModelsFolder, modelName)
     
     # Get processIDs:
     if(length(processID) == 0) {
@@ -70,9 +58,9 @@ verifyPaths <- function(x) {
 
 getArgumentFilesDir <- function(projectPath, modelName, processID) {
     # Get the folder of files holding the memory file paths:
-    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    memoryCurrentModelsFolder <- getProjectPaths(projectPath, "memoryCurrentModelsFolder")
     # Get and return the directory of one process:
-    dir <- file.path(currentMemoryFolder, modelName, processID)
+    dir <- file.path(memoryCurrentModelsFolder, modelName, processID)
     return(dir)
 }
 
@@ -80,11 +68,11 @@ getArgumentFilesDir <- function(projectPath, modelName, processID) {
 getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL) {
     
     # Get the folder of files holding the memory file paths:
-    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    memoryCurrentModelsFolder <- getProjectPaths(projectPath, "memoryCurrentModelsFolder")
     
     # The default is to get all models:
     if(length(modelName) == 0 && length(processID) == 0 && length(argumentName) == 0) {
-        #modelName <- list.dirs(currentMemoryFolder, recursive = FALSE, full.names = FALSE)
+        #modelName <- list.dirs(memoryCurrentModelsFolder, recursive = FALSE, full.names = FALSE)
         modelName <- getRstoxFrameworkDefinitions("stoxModelNames")
     }
     
@@ -106,7 +94,7 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
                                 # Return only the existing files:
                                 verifyPaths(
                                     # Build the paths:
-                                    file.path(currentMemoryFolder, modelName, processID, paste0(argumentName, ".rds"))
+                                    file.path(memoryCurrentModelsFolder, modelName, processID, paste0(argumentName, ".rds"))
                                 )
                             ), 
                             names = argumentName
@@ -120,16 +108,6 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     }
     else if(length(modelName) == 1 && length(processID) >= 1 && length(argumentName) == 0) {
         # Create a list named by the modelName:
-        #dir <- file.path(currentMemoryFolder, modelName)
-        #pointerFilePaths <- structure(
-        #    list(
-        #        # Loop through the processIDs and list the argument files:
-        #        listArgumentFiles(dir, processID = processID)
-        #    ), 
-        #    names = modelName
-        #)
-        #
-        
         pointerFilePaths <- structure(
             list(
                 listArgumentFiles(projectPath = projectPath, modelName = modelName, processID = processID)
@@ -139,16 +117,6 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     }
     else if(length(modelName) >= 1 && length(processID) == 0 && length(argumentName) == 0) {
         # Create a list named by the modelName:
-        #dirs <- file.path(currentMemoryFolder, modelName)
-        #pointerFilePaths <- structure(
-        #    lapply(
-        #        dirs, 
-        #        function(dir) listArgumentFiles(dir, processID = processID)
-        #    ), 
-        #    names = modelName
-        #)
-        
-        
         pointerFilePaths <- structure(
             lapply(
                 modelName,
@@ -342,9 +310,9 @@ savePointerFile <- function(projectPath, modelName, processID, argumentName, arg
 # Function to get the path to a single pointer file:
 getPointerFile <- function(projectPath, modelName, processID, argumentName) {
     # Get the folder of the current memory:
-    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    memoryCurrentModelsFolder <- getProjectPaths(projectPath, "memoryCurrentModelsFolder")
     # Build the path to the memory path file:
-    pointerFile <- file.path(currentMemoryFolder, modelName, processID, paste0(argumentName, ".rds"))
+    pointerFile <- file.path(memoryCurrentModelsFolder, modelName, processID, paste0(argumentName, ".rds"))
     return(pointerFile)
 }
 
@@ -367,10 +335,10 @@ removeProcessMemory <- function(projectPath, modelName, processID) {
 
 savePointerFilesTableAsPointerFiles <- function(projectPath, pointerFilesTable) {
     # Get the folder of files holding the memory file paths:
-    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    memoryCurrentModelsFolder <- getProjectPaths(projectPath, "memoryCurrentModelsFolder")
     # Get the paths to the files holding the memory file paths:
     filePaths <- file.path(
-        currentMemoryFolder, 
+        memoryCurrentModelsFolder, 
         pointerFilesTable$modelname, 
         pointerFilesTable$processID, 
         paste0(pointerFilesTable$argumentName, ".rds"), 
@@ -383,10 +351,10 @@ savePointerFilesTableAsPointerFiles <- function(projectPath, pointerFilesTable) 
 getPointerFilesTable <- function(projectPath) {
     
     # Get the folder of files holding the memory file paths:
-    currentMemoryFolder <- getProjectPaths(projectPath, "currentMemoryFolder")
+    memoryCurrentModelsFolder <- getProjectPaths(projectPath, "memoryCurrentModelsFolder")
     
     # Get the paths to the files holding the memory file paths:
-    filePaths <- list.files(currentMemoryFolder, full.names = TRUE, recursive = TRUE)
+    filePaths <- list.files(memoryCurrentModelsFolder, full.names = TRUE, recursive = TRUE)
     fileparts <- strsplit(filePaths, "/")
     filepartsRev <- lapply(fileparts, rev)
     modelname <- sapply(filepartsRev, "[", 3)

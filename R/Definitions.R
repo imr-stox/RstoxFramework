@@ -102,15 +102,8 @@ initiateRstoxFramework <- function(){
     # Define the permitted classes for individual outputs from StoX functions:
     validOutputDataClasses <- c(
         "data.table", 
-        #"SpatialPolygons"
         "SpatialPolygonsDataFrame"
     )
-    ## Define the valid output data classes:
-    #validOutputDataClasses <- c(
-    #    "data.table", 
-    #    "json", 
-    #    "geojson"
-    #)
     
     # Define the regular expression listing lower and upper characters, integers, underscore and dot:
     validProcessNameSet <- "[[:alnum:]_.]"
@@ -230,9 +223,6 @@ initiateRstoxFramework <- function(){
         StoxBioticData = "StoxBioticData", 
         StoxAcousticData = "StoxAcousticData", 
         StratumPolygon = "StratumPolygon"#, 
-        #Assignment = "Assignment", 
-        #AcousticPSU = "AcousticPSU", 
-        #SweptAreaPSU = "SweptAreaPSU"
     )
     
     # Define the data types for the interactive modes:
@@ -294,26 +284,38 @@ initiateRstoxFramework <- function(){
     
     #### Define the folders and paths used when a project is open: ####
     projectSessionFolder <- file.path(stoxFolders["Process"], "projectSession")
-    # Sub folders:
+    
+    # Sub folders 1:
     dataFolder <- file.path(projectSessionFolder, "data")
-    projectMemoryFolder <- file.path(projectSessionFolder, "projectMemory")
-    
-    currentMemoryFolder <- file.path(projectMemoryFolder, "current")
-    historyMemoryFolder <- file.path(projectMemoryFolder, "history")
-    
-    modelFolders <- file.path(projectMemoryFolder, stoxModelFolders)
-    currentModelFolders <- file.path(currentMemoryFolder, stoxModelFolders)
-    
+    memoryFolder <- file.path(projectSessionFolder, "memory")
     statusFolder <- file.path(projectSessionFolder, "status")
+    
+    # Sub folders of the data folder:
+    dataModelsFolder <- file.path(dataFolder, "models")
+    dataModelsFolders <- file.path(dataModelsFolder, stoxModelFolders)
+    
+    # Sub folders of the memory folder:
+    memoryCurrentFolder <- file.path(memoryFolder, "current")
+    memoryHistoryFolder <- file.path(memoryFolder, "history")
+    memoryModelsFolder <- file.path(memoryFolder, "models")
+    memoryModelsFolders <- file.path(memoryModelsFolder, stoxModelFolders)
+    
+    memoryCurrentModelsFolder <- file.path(memoryCurrentFolder, "models")
+    memoryCurrentModelsFolders <- file.path(memoryCurrentModelsFolder, stoxModelFolders)
+    
     # Return also a vector of all session folders, to generate the folder structure recursively:
     projectSessionFolderStructure <- c(
         dataFolder, 
+        memoryFolder, 
         statusFolder, 
-        projectMemoryFolder, 
-        historyMemoryFolder, 
-        modelFolders, 
-        currentMemoryFolder, 
-        currentModelFolders
+        dataModelsFolder, 
+        dataModelsFolders, 
+        memoryCurrentFolder, 
+        memoryHistoryFolder, 
+        memoryModelsFolder, 
+        memoryModelsFolders, 
+        memoryCurrentModelsFolder, 
+        memoryCurrentModelsFolders
     )
     
     
@@ -323,18 +325,15 @@ initiateRstoxFramework <- function(){
     projectJSONFile <- file.path(stoxFolders["Process"], "project.json")
     projectSavedStatusFile <- file.path(statusFolder, "projectSavedStatus.txt")
     projectIsRunningFile <- file.path(statusFolder, "projectIsRunning.txt")
-    #currentProcessFile = file.path(statusFolder, "currentProcess.txt")
     
     # Memory files:
-    #originalProjectMemoryFile <- file.path(projectMemoryFolder, "originalProjectMemory.rds")
-    currentProjectMemoryFile <- file.path(currentMemoryFolder, "currentProjectMemory.rds")
-    projectMemoryIndexFile <- file.path(historyMemoryFolder, "projectMemoryIndex.txt")
+    projectMemoryIndexFile <- file.path(memoryHistoryFolder, "projectMemoryIndex.txt")
     # The file containing a table of modelName, processID and processName, where the rows are ordered by the processIndex:
-    processIndexTableFile <- file.path(currentMemoryFolder, "processIndexTable.txt")
+    processIndexTableFile <- file.path(memoryCurrentFolder, "processIndexTable.txt")
     # The file containing a table of one row holding the index of the active process for each model (columns named by the model names):
-    activeProcessIDFile <- file.path(currentMemoryFolder, "activeProcessID.txt")
+    activeProcessIDFile <- file.path(memoryCurrentFolder, "activeProcessID.txt")
     # The file containing a table of one row holding the maximum process ID (sequential integer starting from 1 at the firstly generated process) for each model (columns named by the model names):
-    maxProcessIntegerIDFile <- file.path(currentMemoryFolder, "maxProcessIntegerID.txt")
+    maxProcessIntegerIDFile <- file.path(memoryCurrentFolder, "maxProcessIntegerID.txt")
     
     
     #### Define an object with all path objects for convenience in getProjectPaths(): ####
@@ -347,11 +346,19 @@ initiateRstoxFramework <- function(){
             
             # Project session:
             projectSessionFolder = projectSessionFolder, 
+            
             dataFolder = dataFolder, 
-            projectMemoryFolder = projectMemoryFolder, 
-            currentMemoryFolder = currentMemoryFolder, 
-            historyMemoryFolder = historyMemoryFolder, 
+            memoryFolder = memoryFolder, 
             statusFolder = statusFolder, 
+            dataModelsFolder = dataModelsFolder, 
+            dataModelsFolders = dataModelsFolders, 
+            memoryCurrentFolder = memoryCurrentFolder, 
+            memoryHistoryFolder = memoryHistoryFolder, 
+            memoryModelsFolder = memoryModelsFolder, 
+            memoryModelsFolders = memoryModelsFolders, 
+            memoryCurrentModelsFolder = memoryCurrentModelsFolder, 
+            memoryCurrentModelsFolders = memoryCurrentModelsFolders, 
+            
             projectSessionFolderStructure = projectSessionFolderStructure, 
             
             # Project description:
@@ -360,9 +367,7 @@ initiateRstoxFramework <- function(){
             projectJSONFile = projectJSONFile, 
             projectSavedStatusFile = projectSavedStatusFile, 
             projectIsRunningFile = projectIsRunningFile, 
-            #currentProcessFile = currentProcessFile, 
-            #originalProjectMemoryFile = originalProjectMemoryFile, 
-            currentProjectMemoryFile = currentProjectMemoryFile, 
+            
             projectMemoryIndexFile = projectMemoryIndexFile, 
             processIndexTableFile = processIndexTableFile, 
             activeProcessIDFile = activeProcessIDFile, 

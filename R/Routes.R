@@ -4,7 +4,7 @@
 #' @export
 #' 
 getModelNames <- function() {
-    getRstoxFrameworkDefinitions("stoxModelNames")
+    getRstoxFrameworkDefinitions("stoxModelTypes")
 }
 #' 
 #' @export
@@ -36,19 +36,6 @@ getAvailableTemplatesDescriptions <- function() {
 
 
 ##### Processes: #####
-getCurrentProcessID <- function(projectPath, modelName) {
-    # Get the path to the currentProcessFile:
-    currentProcessFile <- getProjectPaths(projectPath, "currentProcessFile")
-    # Missing file implies not saved:
-    if(!file.exists(currentProcessFile)) {
-        FALSE
-    }
-    else {
-        as.logical(readLines(currentProcessFile)[1])
-    }
-}
-
-
 getCanShowInMap <- function(functionName, dataType = NULL) {
     # Get the data types returned by the functions of the processes:
     if(length(dataType) == 0) {
@@ -955,7 +942,7 @@ cellToJSONString <- function(DT, cols) {
 }
 cellToJSONStringOne <- function(x) {
     if(length(x) == 0) {
-        #warning("StoX: Length 1 required for process properties except possibleValues.")
+        warning("StoX: Length 1 required for process properties except possibleValues.")
         x <- ""
     }
     if(!is.character(x)) {

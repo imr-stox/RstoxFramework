@@ -1061,54 +1061,79 @@ appendProjectDescription <- function(projectDescription, modelName, processID, a
 }
 
 
-# Function for getting the file path of one specific process argument rds file.
-getNewArgumentFile <- function(projectPath, modelName, processID, argumentName) {
+# Function for getting the file path of one specific process argument file.
+getNewArgumentFileSansExt <- function(projectPath, modelName, processID, argumentName) {
     
     # Get the folder holding the project descriptions:
     memoryModelsFolder <- getProjectPaths(projectPath, "memoryModelsFolder")
     argumentFolder <- file.path(memoryModelsFolder, modelName, processID, argumentName)
     
-    # Define a string with time in ISO 8601 format:
-    timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
-    # Define the file name including the time string, and build the path to the file:
-    fileName <- paste0(argumentName, "_", timeString, ".rds")
-    filePath <- file.path(argumentFolder, fileName)
-    filePath
+    addTimeToFileName(
+        fileName = argumentName, 
+        dir = argumentFolder
+    )
+    
+    ## Define a string with time in ISO 8601 format:
+    #timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
+    ## Define the file name including the time string, and build the path to the file:
+    ##fileName <- paste0(argumentName, "_", timeString, ".rds")
+    #fileName <- paste0(argumentName, "_", timeString)
+    #filePath <- file.path(argumentFolder, fileName)
+    #filePath
 }
 
 
 # Function for getting the file path of a new project memory file.
-getNewProjectMemoryFile <- function(projectPath) {
+getNewProjectMemoryFileSansExt <- function(projectPath) {
     # Get the folder holding the project descriptions:
     memoryFolder <- getProjectPaths(projectPath, "memoryHistoryFolder")
     
-    # Define a string with time in ISO 8601 format:
-    timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
-    # Define the file name including the time string, and build the path to the file:
-    fileName <- paste0("projectMemory", "_", timeString, ".rds")
-    filePath <- file.path(memoryFolder, fileName)
-    filePath
+    addTimeToFileName(
+        fileName = "projectMemory", 
+        dir = memoryFolder
+    )
+    #
+    ## Define a string with time in ISO 8601 format:
+    #timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
+    ## Define the file name including the time string, and build the path to the file:
+    ##fileName <- paste0("projectMemory", "_", timeString, ".rds")
+    #fileName <- paste0("projectMemory", "_", timeString)
+    #filePath <- file.path(memoryFolder, fileName)
+    #filePath
 }
 
 
 
 
+addTimeToFileName <- function(fileName, dir) {
+    # Define a string with time in ISO 8601 format:
+    timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
+    # Define the file name including the time string, and build the path to the file:
+    fileName <- paste0(fileName, "_", timeString)
+    filePath <- file.path(dir, fileName)
+    
+    return(filePath)
+}
 
 
-# Unused: Function for saving an argument value to one process argument rds file:
-saveArgumentFile <- function(projectPath, modelName, processID, argumentName, argumentValue) {
+
+
+# Function for saving an argument value to one process argument file:
+saveArgumentFile <- function(projectPath, modelName, processID, argumentName, argumentValue, ext = "rds") {
     
     # Get the path to the new argument file:
-    argumentFile <- getNewArgumentFile(projectPath, modelName, processID, argumentName)
-    if(!file.exists(dirname(argumentFile))) {
-        dir.create(dirname(argumentFile), showWarnings = FALSE, recursive = TRUE)
-    }
+    argumentFileSansExt <- getNewArgumentFileSansExt(projectPath, modelName, processID, argumentName)
+    
     # Save the argument to the file, and return the file path:
-    saveRDS(argumentValue, file = argumentFile)
+    argumentFilePath <- writeMemoryFile(
+        argumentValue, 
+        filePathSansExt = argumentFileSansExt, 
+        ext = ext
+    )
     
     # Return the file path relative to the project path:
-    relativePath <- sub(projectPath, "", argumentFile)
-    #argumentFile
+    relativePath <- sub(projectPath, "", argumentFilePath)
+    
     return(relativePath)
 }
 
@@ -1270,9 +1295,14 @@ unReDoProject <- function(projectPath, shift = 0) {
     # Rewrite the text file holding processIndexTable, activeProcessIDTable and maxProcessIntegerIDTable:
     unwrapProjectMemoryFile(fileWithNewCurrentProjectMemory)
 }
+
+# Function to unwrap a project memory history file to multiple individual files
 unwrapProjectMemoryFile <- function(projectMemoryFile) {
     # Read the project memory to get the data to write to the text files:
-    projectMemory <- readRDS(projectMemoryFile)
+    #projectMemory <- readRDS(projectMemoryFile)
+    projectMemory <- readMemoryFile(
+        projectMemoryFile
+    )
     
     # Unwrap and overwrite the process index table file:
     writeProcessIndexTable(projectPath, projectMemory$processIndexTable)
@@ -1282,6 +1312,8 @@ unwrapProjectMemoryFile <- function(projectMemoryFile) {
     
     # Unwrap and overwrite the maximum process integer ID file:
     writeMaxProcessIntegerIDTable(projectPath, projectMemory$maxProcessIntegerIDTable)
+    
+    stop("Here we need to code replacing the memory files!!!!!!!!!!!!!")
 }
 
 
@@ -3108,7 +3140,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         }
         
         # Write to memory files:
-        writeProcessOutputMemoryFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
+        writeProcessOutputMemoryFiles(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
         
         # Write to text files:
         if(process$processParameters$fileOutput) {
@@ -3248,7 +3280,7 @@ unlistProcessOutput <- function(processOutput) {
 readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pageindex = integer(0), linesPerPage = 1000L, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
     
     # Read the process output file:
-    data <- readRDS(filePath)
+    data <- readMemoryFile(filePath)
     
     # Flatten the output so that cells which are vectors are transposed and the non-vector cells of the same line repeated:
     if(flatten) {
@@ -3308,23 +3340,6 @@ flattenProcessOutput <- function(processOutput) {
 #' 
 getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNames = FALSE) {
     
-    # Function to list RDS file in a folder:
-    listRDSFiles <- function(folderPath) {
-        # Create a list of the files, and name it with the file names sans ext:
-        out <- as.list(list.files(folderPath, full.names = TRUE, pattern = "\\.rds$"))
-        names(out) <- basename(tools::file_path_sans_ext(unlist(out)))
-        
-        # Read the order file if present:
-        orderFile <- file.path(folderPath, "tableOrder.txt")
-        if(file.exists(orderFile)) {
-            tableOrder <- readLines(orderFile)
-            tableOrder <- basename(tools::file_path_sans_ext(unlist(tableOrder)))
-            out <- out[tableOrder]
-        }
-        
-        out
-    }
-    
     # Get the directory holding the output files:
     folderPath <- getProcessOutputFolder(
         projectPath = projectPath, 
@@ -3335,7 +3350,7 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     # If the folder does not exist, it is a sign that the process does not exist:
     if(length(folderPath) == 0 || !file.exists(folderPath)) {
         #processName <- getProcessName(projectPath, modelName, processID)
-        stop("Has the previous processes been run? The folder ", folderPath, " does not exist. This is likely due to non-existing process")
+        stop("Has the previous processes been run? The folder ", folderPath, " does not exist.")
     }
     
     # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
@@ -3343,12 +3358,12 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     
     # Get the file paths of the memory files and prepare the processOutput for writing to these files:
     if(folderDepth == 1) {
-        processOutputFiles <- listRDSFiles(folderPath)
+        processOutputFiles <- listMemoryFiles(folderPath)
     }
     else {
         # Get the sub folder paths and create the folders:
         folderPaths <- list.dirs(folderPath, recursive = FALSE)
-        processOutputFiles <- lapply(folderPaths, listRDSFiles)
+        processOutputFiles <- lapply(folderPaths, listMemoryFiles)
         names(processOutputFiles) <- basename(folderPaths)
     }
     
@@ -3361,6 +3376,26 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     }
     
     processOutputFiles
+}
+
+# Function to list RDS file in a folder:
+listMemoryFiles <- function(folderPath) {
+    # Create a list of the files, and name it with the file names sans ext representing the output name:
+    ext <- getRstoxFrameworkDefinitions("allMemoryFileFormats")
+    extPattern <- paste0("\\.", ext, "$", collapse = "|")
+    #out <- as.list(list.files(folderPath, full.names = TRUE, pattern = "\\.rds$"))
+    out <- as.list(list.files(folderPath, full.names = TRUE, pattern = extPattern))
+    names(out) <- basename(tools::file_path_sans_ext(unlist(out)))
+    
+    # Read the order file if present:
+    orderFile <- file.path(folderPath, "tableOrder.txt")
+    if(file.exists(orderFile)) {
+        tableOrder <- readLines(orderFile)
+        tableOrder <- basename(tools::file_path_sans_ext(unlist(tableOrder)))
+        out <- out[tableOrder]
+    }
+    
+    out
 }
 
 #' 
@@ -3385,15 +3420,7 @@ deleteProcessOutput <- function(projectPath, modelName, processID) {
     unlink(folderPath, recursive = FALSE, force = TRUE)
 }
 
-# Function for reading all memory files in a folder non-recursively:
-readFolderWithRSDFiles <- function(folderPath) {
-    # Get the paths to the output files:
-    filePaths <- list.files(folderPath, full.names = FALSE, pattern = "\\.rds$")
-    #memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat")
-    #filePaths <- list.files(folderPath, full.names = FALSE, pattern = paste("\\.", memoryFileFormat, "$"), ignore.case=TRUE)
-    # Read the files to a list:
-    processOutput <- lapply(filePahts, readRDS)
-}
+
 
 
 getProcessOutputFolder <- function(projectPath, modelName, processID) {
@@ -3505,15 +3532,9 @@ unlistToDataType <- function(processOutput) {
 
 
 # Function to write process output to a memory file:
-writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, modelName) {
+writeProcessOutputMemoryFiles <- function(processOutput, process, projectPath, modelName) {
     
     if(length(processOutput)) {
-        
-        saveRDSs <- function(objects, files) {
-            orderFileName <- file.path(dirname(files[1]), "tableOrder.txt")
-            write(files, orderFileName)
-            mapply(saveRDS, objects, files)
-        }
         
         # Get the path to the folder to place the memory file in:
         folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = process$processID)
@@ -3525,12 +3546,11 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
         
         # Get the file paths of the memory files and prepare the processOutput for writing to these files:
         if(outputDepth == 1) {
-            fileNames <- getProcessOutputMemoryFileNames(processOutput)
-            #fileNames <- getProcessOutputMemoryFileNames(processOutput, processName = process$processName)
-            #filePaths <- file.path(folderPath, fileNames)
-            filePaths <- file.path(folderPath, fileNames)
+            #fileNames <- getProcessOutputMemoryFileNames(processOutput)
+            fileNamesSansExt <- names(processOutput)
+            filePaths <- file.path(folderPath, fileNamesSansExt)
             
-            # Wrap in a list to coordinate using the saveRDSs():
+            # Wrap in a list to coordinate with using the saveRDSs():
             filePaths <- list(filePaths)
             processOutput <- list(processOutput)
         }
@@ -3540,17 +3560,12 @@ writeProcessOutputMemoryFile <- function(processOutput, process, projectPath, mo
             lapply(folderPaths, dir.create, recursive = TRUE, showWarnings = FALSE)
             
             # Create the file names and add the folder paths to the file names (flattening the output):
-            fileNames <- lapply(processOutput, getProcessOutputMemoryFileNames)
-            #fileNames <- lapply(processOutput, getProcessOutputMemoryFileNames)
-            #filePaths <- unlist(mapply(file.path, folderPaths, fileNames, SIMPLIFY = FALSE))
-            filePaths <- mapply(file.path, folderPaths, fileNames, SIMPLIFY = FALSE)
-            
-            # Flatten the processOutput:
-            #processOutput <- unlist(processOutput, recursive = FALSE)
+            fileNamesSansExt <- lapply(processOutput, names)
+            filePaths <- mapply(file.path, folderPaths, fileNamesSansExt, SIMPLIFY = FALSE)
         }
         
         # Write the individual tables:
-        mapply(saveRDSs, processOutput, filePaths)
+        mapply(writeMemoryFiles, processOutput, filePaths)
     }
     else {
         NULL
@@ -3575,12 +3590,6 @@ getFolderDepth <- function(folderPath) {
         folderDepth <- 2
     }
     folderDepth
-}
-
-
-# Small function to get the file name of a memory file:
-getProcessOutputMemoryFileNames <- function(processOutput) {
-    paste(names(processOutput), "rds", sep = ".")
 }
 
 

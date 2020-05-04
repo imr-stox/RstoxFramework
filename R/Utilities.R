@@ -438,33 +438,81 @@ verifyPaths <- function(x) {
 }
 
 
-writeMemoryFile <- function(x, filePathSansExt) {
-    memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat")
-    filePath <- paste(filePathSansExt, memoryFileFormat, sep = ".")
-    if(memoryFileFormat == "fst") {
-        saveRDS(x, file = filePath)
+
+getMemoryFileFormat <- function(x) {
+    
+    if(length(x) == 0) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Empty")
     }
-    else if(memoryFileFormat == "rds") {
-        fst::write_fst(x, file = filePath)
+    else if(data.table::is.data.table(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Table")
+    }
+    else if("SpatialPolygonsDataFrame" %in% class(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Spatial")
+    }
+    else if("SpatialPointsDataFrame" %in% class(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Spatial")
+    }
+    else if(is.list(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_List")
     }
     else {
-        stop("Wrong memoryFileFormat")
+        stop("Wrong memory file class", class(x)[1])
     }
-    filePath
+    return(memoryFileFormat)
 }
 
 
-readMemoryFile <- function(filePathSansExt) {
-    memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat")
-    filePath <- paste(filePathSansExt, memoryFileFormat, sep = ".")
-    if(memoryFileFormat == "fst") {
-        output <- readRDS(filePath)
+writeMemoryFile <- function(x, filePathSansExt, ext = NULL) {
+    
+    if(length(ext) == 0) {
+        # Get the memory file format and append this as a file extension to the file to write:
+        ext <- getMemoryFileFormat(x)
     }
-    else if(memoryFileFormat == "rds") {
-        output <- fst::read_fst(filePath)
+    
+    filePath <- paste(filePathSansExt, ext, sep = ".")
+    
+    # Create the directory if missing:
+    dir <- dirname(filePath)
+    if(!file.exists(dir)) {
+        dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+    }
+    
+    # Write the file:
+    if(ext == "fst") {
+        fst::write_fst(as.data.frame(x), path = filePath)
+    }
+    else if(ext == "rds") {
+        saveRDS(x, file = filePath)
     }
     else {
         stop("Wrong memoryFileFormat")
     }
+    
+    return(filePath)
+}
+
+writeMemoryFiles <- function(objects, filePathsSansExt) {
+    orderFileName <- file.path(dirname(filePathsSansExt[1]), "tableOrder.txt")
+    filePaths <- mapply(writeMemoryFile, objects, filePathsSansExt)
+    write(filePaths, orderFileName)
+}
+
+readMemoryFile <- function(filePath) {
+    
+    # Get the file extension:
+    ext <- tools::file_ext(filePath)
+    
+    # Read the file:
+    if(grepl("fst", ext, ignore.case = TRUE)) {
+        output <- data.table::as.data.table(fst::read_fst(path = filePath))
+    }
+    else if(grepl("rds", ext, ignore.case = TRUE)) {
+        output <- readRDS(file = filePath)
+    }
+    else {
+        stop("Unsupported file format")
+    }
+    
     return(output)
 }

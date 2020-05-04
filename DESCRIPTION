@@ -23,12 +23,12 @@ Imports:
     geojsonio (>= 0.8.0),
     jsonlite (>= 1.6),
     sp (>= 1.3.2),
-    RstoxData (>= 0.8.4),
+    RstoxData (>= 0.8.6),
     RstoxBase (>= 1.2.6)
 Suggests: 
     testthat
 Remotes: 
-	StoXProject/RstoxData@RstoxData-v0.8.4, 
+	StoXProject/RstoxData@RstoxData-v0.8.6, 
 	StoXProject/RstoxBase@RstoxBase-v1.2.6
 Additional_repositories: 
 	https://stoxproject.github.io/repo

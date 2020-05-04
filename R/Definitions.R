@@ -34,6 +34,22 @@ initiateRstoxFramework <- function(){
         #"RstoxReport"
     )
     
+    # Define formats for files saved by Rstox:
+    memoryFileFormat_Empty <- "rds"
+    memoryFileFormat_Table <- "fst"
+    memoryFileFormat_Spatial <- "rds"
+    memoryFileFormat_List <- "rds"
+    memoryFileFormat_Other <- "rds"
+    allMemoryFileFormats <- unique(
+        c(
+            memoryFileFormat_Empty, 
+            memoryFileFormat_Table, 
+            memoryFileFormat_Spatial, 
+            memoryFileFormat_List, 
+            memoryFileFormat_Other
+        )
+    )
+    
     # Define the requested (all) function attributes:
     requestedFunctionAttributeNames <- c(
         "packageName", 

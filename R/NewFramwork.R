@@ -250,9 +250,12 @@ archiveProject <- function(projectPath) {
         maxProcessIntegerIDTable = getMaxProcessIntegerID(projectPath)
     )
     
-    # Write the project memory to the new file:
-    newProjectMemoryFile <- getNewProjectMemoryFile(projectPath)
-    saveRDS(fullProjectMemory, file = newProjectMemoryFile)
+    # Write the project memory to the new file, which is a rds file (since this is a list of R objects, which cannot be written as a columnar format such as fst or feather):
+    newProjectMemoryFileSansExt <- getNewProjectMemoryFileSansExt(projectPath)
+    newProjectMemoryFile <- writeMemoryFile(
+        fullProjectMemory, 
+        filePathSansExt = newProjectMemoryFileSansExt, 
+        ext = "rds")
     
     
     # 2. Update the projectMemoryIndex file:

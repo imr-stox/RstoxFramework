@@ -1405,7 +1405,7 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
         if(length(atArgumentName)) {
             # Loop through the occurrences of the argumentName in the functionArgumentHierarchy, applying &&:
             hitsAnd <- logical(length(atArgumentName))
-            for(ind in seq_len(atArgumentName)) {
+            for(ind in seq_along(atArgumentName)) {
                 # Loop through the conditions and set hitsAnd tot TRUE if at least one condition is fullfilled:
                 conditionNames <- names(functionArgumentHierarchy[[atArgumentName[ind]]])
                 hitsOr <- logical(length(conditionNames))

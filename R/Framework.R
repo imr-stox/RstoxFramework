@@ -1401,14 +1401,25 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
     names(toShow) <- names(functionArguments)
     for(argumentName in names(toShow)) {
         # Check whether the argument is given in the functionArgumentHierarchy. If not, it will be shown:
-        if(argumentName %in% names(functionArgumentHierarchy)) {
-            # Loop through the functionArgumentHierarchy of the current argumentName and set to show if at least one condition is fullfilled:
-            for(conditionArgument in names(functionArgumentHierarchy[[argumentName]])) {
-                #if(functionArguments[[conditionArgument]] == functionArgumentHierarchy[[argumentName]][[conditionArgument]]) {
-                if(identical(functionArguments[[conditionArgument]], functionArgumentHierarchy[[argumentName]][[conditionArgument]])) {
-                    toShow[[argumentName]] <- TRUE
+        atArgumentName <- which(argumentName == names(functionArgumentHierarchy))
+        if(length(atArgumentName)) {
+            # Loop through the occurrences of the argumentName in the functionArgumentHierarchy, applying &&:
+            hitsAnd <- logical(length(atArgumentName))
+            for(ind in seq_len(atArgumentName)) {
+                # Loop through the conditions and set hitsAnd tot TRUE if at least one condition is fullfilled:
+                conditionNames <- names(functionArgumentHierarchy[[atArgumentName[ind]]])
+                hitsOr <- logical(length(conditionNames))
+                names(hitsOr) <- conditionNames
+                for(conditionName in conditionNames) {
+                    if(identical(functionArguments[[conditionName]], functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]])) {
+                        #toShow[[argumentName]] <- TRUE
+                        hitsOr[conditionName] <- TRUE
+                    }
                 }
+                # Apply the OR condition, implying that hitsOr is TRUE if any are TRUE:
+                hitsAnd[ind] <- any(hitsOr)
             }
+            toShow[[argumentName]] <- all(hitsAnd)
         }
         else {
             toShow[[argumentName]] <- TRUE

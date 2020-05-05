@@ -340,7 +340,8 @@ getStratumList <- function(projectPath, modelName, processID) {
     #    includeInTotal = 
     #)
     
-    list(stratumList)
+    #list(stratumList)
+    return(stratumList)
 }
 
 # Function to get a list of station data:

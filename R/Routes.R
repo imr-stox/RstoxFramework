@@ -1364,18 +1364,27 @@ getOptionList <- function(option, digits = 6) {
 }
 
 
-getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE) {
+getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE, include.POSIXct = FALSE) {
     # Return empty named list if no input:
     if(length(table) == 0) {
         return(list(a = 1)[0])
     }
     # Get the indices of the variables to get possible values from:
-    if(include.numeric) {
-        validInd <- seq_len(ncol(table))
+    validInd <- seq_len(ncol(table))
+    if(!include.numeric) {
+        validInd <- setdiff(validInd, which(type %in% c("numeric", "integer", "double")))
     }
-    else {
-        validInd <- which(! type %in% c("numeric", "integer", "double"))
+    if(!include.POSIXct) {
+        validInd <- setdiff(validInd, which(type %in% c("POSIXct")))
     }
+    
+    
+    #if(include.numeric) {
+    #    validInd <- seq_len(ncol(table))
+    #}
+    #else {
+    #    validInd <- which(! type %in% c("numeric", "integer", "double"))
+    #}
     
     # Declare a list for the output, with empty on numeric type if include.numeric = FALSE
     output <- vector("list", ncol(table))

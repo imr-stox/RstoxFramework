@@ -483,7 +483,7 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
     
     # Add the coordinates:
     # Modify the coordinates:
-    atModify <- match( 
+    atRemove <- match( 
         stratumName, 
         RstoxBase::getStratumNames(StratumPolygon$StratumPolygon)
     )

@@ -488,7 +488,8 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
         RstoxBase::getStratumNames(StratumPolygon$StratumPolygon)
     )
     if(!any(is.na(atRemove))) {
-        StratumPolygon$StratumPolygon@polygons <- StratumPolygon$StratumPolygon@polygons[-atRemove]
+        #StratumPolygon$StratumPolygon@polygons <- StratumPolygon$StratumPolygon@polygons[-atRemove]
+        StratumPolygon$StratumPolygon <- StratumPolygon$StratumPolygon[-atRemove, ]
     }
     
     # Set the StratumPolygon back to the process data of the process:

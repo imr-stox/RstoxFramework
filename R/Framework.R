@@ -704,6 +704,11 @@ writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON"
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     
+    projectSessionFolder <- getProjectPaths(projectPath, "projectSessionFolder")
+    if(!file.exists(projectSessionFolder)) {
+        stop("The project memory folder ", projectSessionFolder, " does not exist. Project ", projectPath, " cannot be saved.")
+    }
+    
     functionName <- paste0("writeProjectDescription", type)
     do.call(functionName, list(projectPath = projectPath))
     
@@ -3296,38 +3301,42 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
         data <- flattenProcessOutput(data)
     }
     
-    # Extract the requested lines:
-    numberOfLines <- nrow(data)
-    numberOfPages <- ceiling(numberOfLines / linesPerPage)
-    if(length(pageindex)) {
-        linesToExtract <- seq_len(linesPerPage) + rep((pageindex - 1) * linesPerPage, each = linesPerPage)
-        linesToExtract <- linesToExtract[linesToExtract <= numberOfLines]
-        data <- data[linesToExtract, ]
+    # If a table, allow additional options:
+    if(data.table::is.data.table(data)) {
+        # Extract the requested lines:
+        numberOfLines <- nrow(data)
+        numberOfPages <- ceiling(numberOfLines / linesPerPage)
+        if(length(pageindex)) {
+            linesToExtract <- seq_len(linesPerPage) + rep((pageindex - 1) * linesPerPage, each = linesPerPage)
+            linesToExtract <- linesToExtract[linesToExtract <= numberOfLines]
+            data <- data[linesToExtract, ]
+        }
+        
+        # Convert to pretty view, which inserts spaces to obtain 
+        if(pretty) {
+            data <- fixedWidthDataTable(
+                data, 
+                columnSeparator = columnSeparator, 
+                lineSeparator = lineSeparator, 
+                na = na, 
+                list.pretty = list.pretty
+            )
+            # In the pretty model, output a list containing the number of lines and the number of pages:
+            data <- list(
+                data = data, 
+                numberOfLines = numberOfLines, 
+                numberOfPages = numberOfPages
+            )
+        }
     }
     
-    # Convert to pretty view, which inserts spaces to obtain 
-    if(pretty) {
-        data <- fixedWidthDataTable(
-            data, 
-            columnSeparator = columnSeparator, 
-            lineSeparator = lineSeparator, 
-            na = na, 
-            list.pretty = list.pretty
-        )
-        # In the pretty model, output a list containing the number of lines and the number of pages:
-        data <- list(
-            data = data, 
-            numberOfLines = numberOfLines, 
-            numberOfPages = numberOfPages
-        )
-    }
     data
 }
 
 flattenProcessOutput <- function(processOutput) {
     #if(firstClass(processOutput) == "SpatialPolygons") {
     if(firstClass(processOutput) == "SpatialPolygonsDataFrame") {
-        geojsonio::geojson_json(processOutput)
+        geojsonio::geojson_json(processOutput, pretty = TRUE)
     }
     else if(firstClass(processOutput) == "data.table") {
         # Check whether the table is rugged:

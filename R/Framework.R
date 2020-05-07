@@ -940,7 +940,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     
     # Get the processIndex, that is the index of the process to reset to:
-    if(length(processID) == 0) {
+    if(length(processID) == 0 || is.na(processID)) {
         processIndex <- 0
     }
     else {
@@ -1832,7 +1832,15 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
         
         # Set the activev process index as the first changed process minus 1:
         activeProcessIndex <- min(changed) - 1
-        activeProcessID <- processIndexTable$processID[activeProcessIndex]
+        
+        # If reset to the start, return NA:
+        if(activeProcessIndex == 0) {
+            activeProcessID <- NA
+        }
+        else {
+            activeProcessID <- processIndexTable$processID[activeProcessIndex]
+        }
+        
         return(activeProcessID)
     }
     else {

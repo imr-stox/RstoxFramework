@@ -334,7 +334,7 @@ getStratumList <- function(projectPath, modelName, processID) {
     }
     
     # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    stratumList <- getStratumNames(processData$StratumPolygon)
+    stratumList <- as.list(RstoxBase::getStratumNames(processData$StratumPolygon))
     #stratum <- data.table::data.table(
     #    stratum = names(processData), 
     #    includeInTotal = 

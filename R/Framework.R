@@ -3036,9 +3036,11 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
     
     # Return the process table:
     processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
     return(
         list(
             processTable = processTable, 
+            activeProcess = activeProcess, 
             saved = isSaved(projectPath)
         )
     )

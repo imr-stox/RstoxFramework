@@ -709,54 +709,73 @@ writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON"
         stop("The project memory folder ", projectSessionFolder, " does not exist. Project ", projectPath, " cannot be saved.")
     }
     
+    # Get full project description:
+    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
+    # Get the file to write it to:
+    projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
+    
+    # Run the appropriate saveing function:
     functionName <- paste0("writeProjectDescription", type)
-    do.call(functionName, list(projectPath = projectPath))
-    
-    #switch(
-    #    type,
-    #    RData = writeProjectDescriptionRData(projectPath),
-    #    XML = writeProjectDescriptionXML(projectPath),
-    #    JSON = writeProjectDescriptionJSON(projectPath)
-    #)
+    do.call(functionName, list(
+        projectDescription = projectDescription, 
+        projectDescriptionFile = projectDescriptionFile
+    ))
 }
-writeProjectDescriptionRData <- function(projectPath) {
-    # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
-    
-    ## Stop if the projectDescription is empty:
-    #if(length(projectDescription) == 0) {
-    #    stop("You cannot save an empty project.")
-    #}
-    
+writeProjectDescriptionRData <- function(projectDescription, projectDescriptionFile) {
     # Get the path to the project description file, and save the current project description:
-    projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
-    save(projectDescription, file = projectRDataFile)
+    save(projectDescription, file = projectDescriptionFile)
 }
-writeProjectDescriptionXML <- function(projectPath) {
-    # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
-    
-    ## Stop if the projectDescription is empty:
-    #if(length(projectDescription) == 0) {
-    #    stop("You cannot save an empty project.")
-    #}
-    
-    # Get the path to the project description file, and save the current project description:
-    projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
-    writeProjectXML(projectDescription, projectXMLFile)
+writeProjectDescriptionXML <- function(projectDescription, projectDescriptionFile) {
+    writeProjectXML(projectDescription, projectDescriptionFile)
 }
-writeProjectDescriptionJSON <- function(projectPath) {
-    # Get the current project description:
-    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
+writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile) {
     
-    ## Stop if the projectDescription is empty:
-    #if(length(projectDescription) == 0) {
-    #    stop("You cannot save an empty project.")
-    #}
+    # 1. Convert spatial to geojson string: 
+    convertProcessDataToGeojson <- function(projectDescription) {
+        # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
+        for(modelName in names(projectDescription)) {
+            for(processIndex in seq_along(projectDescription [[modelName]])) {
+                for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
+                    this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
+                    if("SpatialPolygonsDataFrame" %in% class(this)) {
+                        projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_json(this)
+                    }
+                }
+            }
+        }
+        
+        return(projectDescription)
+    }
     
-    # Get the path to the project description file, and save the current project description:
-    projectJSONFile <- getProjectPaths(projectPath, "projectJSONFile")
-    writeProjectJSON(projectDescription, projectJSONFile)
+    
+    
+    
+    
+    projectDescription <- convertProcessDataToGeojson(projectDescription)
+    
+    # 2. Convert to json structure:
+    for(ind in seq_along(projectDescription)) {
+        #names(projectDescription[[ind]]) <- "process"
+        projectDescription[[ind]] <- c(
+            modelName = unname(names(projectDescription)[ind]),
+            processes = list(unname(projectDescription[[ind]]))
+        )
+    }
+    projectDescription <- unname(projectDescription)
+    
+    
+    
+    # 3. Write project.json file:
+    system.time(json <- jsonlite::toJSON(projectDescription, pretty = TRUE, auto_unbox = TRUE))
+    
+    # 4 . Validate the json:
+    
+    
+    # 5. Write the validated json:
+    write(json, projectDescriptionFile)
+    
+    
+    
 }
 writeProjectXML <- function(projectDescription, projectXMLFile) {
     # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():

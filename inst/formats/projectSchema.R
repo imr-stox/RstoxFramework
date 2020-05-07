@@ -15,30 +15,15 @@
                             "type": "object",
                             "properties": {
                                 "functionInputs": {
-                                    "type": "object"
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
                                 },
                                 "functionName": {
                                     "type": "string"
                                 },
-                                "functionParameters": {
-                                    "type": "object",
-                                    "properties": {
-                                        "DefinitionMethod": {
-                                            "type": "string"
-                                        },
-                                        "FileName": {
-                                            "type": "string"
-                                        },
-                                        "UseProcessData": {
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "required": [
-                                        "DefinitionMethod",
-                                        "FileName",
-                                        "UseProcessData"
-                                        ]
-                                },
+                                "functionParameters": {},
                                 "processData": {
                                     "type": "processDataObject",
                                     "properties": {
@@ -48,7 +33,7 @@
                                     },
                                     "required": [
                                         "StratumPolygon"
-                                        ]
+                                    ]
                                 },
                                 "processName": {
                                     "type": "string"
@@ -70,7 +55,7 @@
                                         "enabled",
                                         "showInMap",
                                         "fileOutput"
-                                        ]
+                                    ]
                                 }
                             },
                             "required": [
@@ -80,112 +65,17 @@
                                 "processData",
                                 "processName",
                                 "processParameters"
-                                ]
-                        },
-                        {
-                            "type": "object",
-                            "properties": {
-                                "functionInputs": {
-                                    "type": "object",
-                                    "properties": {
-                                        "StratumPolygon": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "StratumPolygon"
-                                        ]
-                                },
-                                "functionName": {
-                                    "type": "string"
-                                },
-                                "functionParameters": {
-                                    "type": "object",
-                                    "properties": {
-                                        "AreaMethod": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "AreaMethod"
-                                        ]
-                                },
-                                "processData": {
-                                    "type": "array",
-                                    "items": {}
-                                },
-                                "processName": {
-                                    "type": "string"
-                                },
-                                "processParameters": {
-                                    "type": "object",
-                                    "properties": {
-                                        "enabled": {
-                                            "type": "boolean"
-                                        },
-                                        "showInMap": {
-                                            "type": "boolean"
-                                        },
-                                        "fileOutput": {
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "required": [
-                                        "enabled",
-                                        "showInMap",
-                                        "fileOutput"
-                                        ]
-                                }
-                            },
-                            "required": [
-                                "functionInputs",
-                                "functionName",
-                                "functionParameters",
-                                "processData",
-                                "processName",
-                                "processParameters"
-                                ]
+                            ]
                         }
-                        ]
+                    ]
                 }
             },
             "required": [
                 "modelName",
                 "processes"
                 ]
-        },
-        {
-            "type": "object",
-            "properties": {
-                "modelName": {
-                    "type": "string"
-                },
-                "processes": {
-                    "type": "array",
-                    "items": {}
-                }
-            },
-            "required": [
-                "modelName",
-                "processes"
-                ]
-        },
-        {
-            "type": "object",
-            "properties": {
-                "modelName": {
-                    "type": "string"
-                },
-                "processes": {
-                    "type": "array",
-                    "items": {}
-                }
-            },
-            "required": [
-                "modelName",
-                "processes"
-                ]
-        }
+        }, 
+        "minItems": 0
         ]
 
     
@@ -193,20 +83,6 @@
     
     
     
-    
-    "definitions_functionInputs": {
-        "type": "array",
-        "items": {
-            "type": "string"
-        }
-    },
-    
-    "definitions_functionParameters": {
-        "type": "array",
-        "items": {
-            "type": "string"
-        }
-    },
     
     "definitions_processData_DefineStrata": {
         "DefineStrata": {

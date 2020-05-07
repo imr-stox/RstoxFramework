@@ -3329,8 +3329,21 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
             )
         }
     }
+    else {
+        # Add numberOfLines = 1 and numberOfPages = 1 to conform to the output used for tables in the GUI:
+        if(pretty) {
+            data <- list(
+                data = list(data), 
+                numberOfLines = 1, 
+                numberOfPages = 1
+            )
+        }
+        else {
+            
+        }
+    }
     
-    data
+    return(data)
 }
 
 flattenProcessOutput <- function(processOutput) {

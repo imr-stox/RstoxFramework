@@ -455,6 +455,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     # Set the active process ID to 0 for all models:
     initiateActiveProcessID(projectPath)
     
+    
     # Set the project memory:
     temp <- addProcesses(
         projectPath = projectPath, 
@@ -513,7 +514,7 @@ closeProject <- function(projectPath, save = NULL) {
 #' @export
 #' @rdname Projects
 #' 
-saveProject <- function(projectPath, type = c("RData", "XML", "JSON")) {
+saveProject <- function(projectPath, type = c("RData", "JSON")) {
     # Get the current project description and save it to the project.RData file:
     writeProjectDescription(projectPath, type = type)
     # Set the status of the projcet as saved:
@@ -623,7 +624,7 @@ isOpenProject <- function(projectPath) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-readProjectDescription <- function(projectPath, type = c("RData", "XML")) {
+readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     switch(
@@ -645,13 +646,8 @@ readProjectDescriptionRData <- function(projectPath) {
     # Define the process IDs and return the project description:
     defineProcessIDs(projectDescription)
 }
-readProjectDescriptionXML <- function(projectPath) {
-    # Get the path to the project description file:
-    projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
-    projectDescription <- readProjectXML(projectXMLFile) # Creates the object
-    # Define the process IDs and return the project description:
-    defineProcessIDs(projectDescription)
-}
+
+
 readProjectXML <- function(projectXMLFile) {
     # This is Edvins work, which will be completed later. Process data needs to be converted from JSON using JSON2processData():
     readProject(projectXMLFile)
@@ -788,7 +784,7 @@ convertProcessDataToGeojson <- function(projectDescription) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
+readProjectDescriptionNew <- function(projectPath, type = c("RData", "JSON")) {
     # Read the project.RData or json file depending on the 'type':
     type <- match.arg(type)
     
@@ -800,21 +796,6 @@ readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
 }
 
-convertProcessDataToGeojson <- function(projectDescription) {
-    # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
-    for(modelName in names(projectDescription)) {
-        for(processIndex in seq_along(projectDescription [[modelName]])) {
-            for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
-                this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
-                if("SpatialPolygonsDataFrame" %in% class(this)) {
-                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_json(this)
-                }
-            }
-        }
-    }
-    
-    return(projectDescription)
-}
 
 # writeProjectXML <- function(projectDescription, projectXMLFile) {
 #     # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
@@ -868,6 +849,13 @@ convertGeojsonToProcessData <- function(projectDescription) {
     return(projectDescription)
 }
 
+
+
+readProjectDescriptionRDataNew <- function(projectDescriptionFile) {
+    # Creates/replaces the object 'projectDescription':
+    projectDescription <- NULL
+    load(projectDescriptionFile)
+}
 
 #' Initiate the actige processID.
 #' 
@@ -1224,13 +1212,6 @@ addTimeToFileName <- function(fileName, dir) {
 }
 
 
-<<<<<<< HEAD
-
-
-=======
-
-
->>>>>>> 3c73bfcf794bfb227be7ac7a2140e30ff3335040
 # Function for saving an argument value to one process argument file:
 saveArgumentFile <- function(projectPath, modelName, processID, argumentName, argumentValue, ext = "rds") {
     
@@ -3263,9 +3244,10 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
             # Set the function parameters UseProcessData to TRUE:
             setUseProcessDataToTRUE(projectPath, modelName, processID)
         }
-        
-        # Set the propertyDirty flag to TRUE, so that a GUI can update the properties:
-        writeActiveProcessID(projectPath, modelName, propertyDirty = isProcessDataFunction(process$functionName))
+        else {
+            # Set the propertyDirty flag to TRUE, so that a GUI can update the properties:
+            writeActiveProcessID(projectPath, modelName, propertyDirty = FALSE) 
+        }
         
         # Write to memory files:
         writeProcessOutputMemoryFiles(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
@@ -3282,7 +3264,12 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
 
 
 setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
-    modifyFunctionParameters(projectPath, modelName, processID, list(UseProcessData = TRUE))
+    # Try setting UseProcessData to TRUE:
+    modified <- modifyFunctionParameters(projectPath, modelName, processID, list(UseProcessData = TRUE))
+    # If modified, set propertyDirty to TRUE:
+    if(modified) {
+        writeActiveProcessID(projectPath, modelName, propertyDirty = TRUE) 
+    }
 }
 
 

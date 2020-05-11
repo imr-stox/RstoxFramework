@@ -7,6 +7,7 @@
 \alias{isOpenProject}
 \alias{readProjectDescription}
 \alias{writeProjectDescription}
+\alias{readProjectDescriptionNew}
 \alias{initiateActiveProcessID}
 \alias{isRunning}
 \alias{setRunning}
@@ -19,9 +20,11 @@ isSaved(projectPath)
 
 isOpenProject(projectPath)
 
-readProjectDescription(projectPath, type = c("RData", "XML"))
+readProjectDescription(projectPath, type = c("RData", "JSON"))
 
-writeProjectDescription(projectPath, type = c("RData", "XML", "JSON"))
+writeProjectDescription(projectPath, type = c("RData", "JSON"))
+
+readProjectDescriptionNew(projectPath, type = c("RData", "JSON"))
 
 initiateActiveProcessID(projectPath)
 
@@ -40,6 +43,8 @@ setNotRunning(projectPath)
 Utilities for projects.
 
 Write the project description.
+
+Read the project description.
 
 Initiate the actige processID.
 

@@ -728,29 +728,22 @@ writeProjectDescriptionRData <- function(projectDescription, projectDescriptionF
 writeProjectDescriptionXML <- function(projectDescription, projectDescriptionFile) {
     writeProjectXML(projectDescription, projectDescriptionFile)
 }
+
+##################################################
+##################################################
+#' Write project description to a file in json format
+#' 
+#' This function writes project description to json file.
+#' 
+#' @param projectDescription  a list of lists with project description.
+#' @param projectDescriptionFile  a file name.
+#' 
+#' 
+#' @export
+#'
 writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile) {
     
     # 1. Convert spatial to geojson string: 
-    convertProcessDataToGeojson <- function(projectDescription) {
-        # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
-        for(modelName in names(projectDescription)) {
-            for(processIndex in seq_along(projectDescription [[modelName]])) {
-                for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
-                    this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
-                    if("SpatialPolygonsDataFrame" %in% class(this)) {
-                        projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_json(this)
-                    }
-                }
-            }
-        }
-        
-        return(projectDescription)
-    }
-    
-    
-    
-    
-    
     projectDescription <- convertProcessDataToGeojson(projectDescription)
     
     # 2. Convert to json structure:
@@ -761,26 +754,40 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
             processes = list(unname(projectDescription[[ind]]))
         )
     }
+
     projectDescription <- unname(projectDescription)
-    
-    
-    
-    # 3. Write project.json file:
+
+    # 3. Convert project description to json structure
     system.time(json <- jsonlite::toJSON(projectDescription, pretty = TRUE, auto_unbox = TRUE))
     
-    # 4 . Validate the json:
+    # 4 . Validate the json structure with json schema
+    # TODO
     
-    
-    # 5. Write the validated json:
-    write(json, projectDescriptionFile)
-    
-    
-    
+    # 5. Write the validated json to file
+    write(json, projectDescriptionFile) 
 }
+
+convertProcessDataToGeojson <- function(projectDescription) {
+    # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
+    for(modelName in names(projectDescription)) {
+        for(processIndex in seq_along(projectDescription [[modelName]])) {
+            for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
+                this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
+                if("SpatialPolygonsDataFrame" %in% class(this)) {
+                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_json(this)
+                }
+            }
+        }
+    }
+    
+    return(projectDescription)
+}
+
 writeProjectXML <- function(projectDescription, projectXMLFile) {
     # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
     #saveProject(projectDescription, projectXMLFile)
 }
+
 writeProjectJSON <- function(projectDescription, projectJSONFile) {
     
     # Convert all proseddData sp objects to geojson:

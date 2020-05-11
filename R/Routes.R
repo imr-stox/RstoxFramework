@@ -877,12 +877,14 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         )
     )
     
+    # Set the propertyDirty flag to FALSE, so that a GUI can update the properties:
+    writeActiveProcessID(projectPath, modelName, propertyDirty = FALSE)
+    
+    # Return the list of process property groups (process property sheet):
     output <- list(
         propertySheet = propertySheet, 
         activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
     )
-    
-    # Return the list of process property groups (process property sheet):
     output
 }
 
@@ -1347,19 +1349,6 @@ getFilterOptionsAll <- function(projectPath, modelName, processID, include.numer
     
 
 getOptionList <- function(option, digits = 6) {
-    ##pp <- proc.time()[3]
-    #browser()
-    #option <- data.table::data.table(
-    #    name = format(option, digits = digits), 
-    #    value = option
-    #)
-    ##cat("-1", proc.time()[3] - pp, "\n")
-    #output <- unname(split(option, seq_len(nrow(option))))
-    ##cat("-2", proc.time()[3] - pp, "\n")
-    #output <- lapply(output, as.list)
-    ##cat("-3", proc.time()[3] - pp, "\n")
-    #return(output)
-    
     lapply(option, function(x) list(name = format(x, digits = digits), value = x))
 }
 
@@ -1377,14 +1366,6 @@ getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE, incl
     if(!include.POSIXct) {
         validInd <- setdiff(validInd, which(type %in% c("POSIXct")))
     }
-    
-    
-    #if(include.numeric) {
-    #    validInd <- seq_len(ncol(table))
-    #}
-    #else {
-    #    validInd <- which(! type %in% c("numeric", "integer", "double"))
-    #}
     
     # Declare a list for the output, with empty on numeric type if include.numeric = FALSE
     output <- vector("list", ncol(table))

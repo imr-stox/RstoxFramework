@@ -8,7 +8,7 @@ resetModel(
   projectPath,
   modelName,
   processID = NULL,
-  modified = FALSE,
+  processDirty = FALSE,
   shift = 0
 )
 }
@@ -19,7 +19,7 @@ resetModel(
 
 \item{processID}{The ID of the process.}
 
-\item{modified}{Logical: Indicates whether the model has been modified when reseting.}
+\item{processDirty}{Logical: Indicates whether the model has been modified when reseting.}
 
 \item{shift}{The position relative to the current memory status to un/redo to.}
 }

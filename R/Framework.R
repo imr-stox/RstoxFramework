@@ -739,7 +739,7 @@ writeProjectDescriptionXML <- function(projectDescription, projectDescriptionFil
 #' @param projectDescriptionFile  a file name.
 #' 
 #' 
-#' @export
+#'
 #'
 writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile) {
     
@@ -816,19 +816,19 @@ convertProcessDataToGeojson <- function(projectDescription) {
     return(projectDescription)
 }
 
-writeProjectXML <- function(projectDescription, projectXMLFile) {
-    # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
-    #saveProject(projectDescription, projectXMLFile)
-}
+# writeProjectXML <- function(projectDescription, projectXMLFile) {
+#     # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
+#     #saveProject(projectDescription, projectXMLFile)
+# }
 
-writeProjectJSON <- function(projectDescription, projectJSONFile) {
+# writeProjectJSON <- function(projectDescription, projectJSONFile) {
     
-    # Run the appropriate reading function:
-    functionName <- paste0("readProjectDescription", type)
-    do.call(functionName, list(
-        projectDescriptionFile = projectDescriptionFile
-    ))
-}
+#     # Run the appropriate reading function:
+#     functionName <- paste0("readProjectDescription", type)
+#     do.call(functionName, list(
+#         projectDescriptionFile = projectDescriptionFile
+#     ))
+# }
 
 readProjectDescriptionJSON <- function(projectDescriptionFile) {
 

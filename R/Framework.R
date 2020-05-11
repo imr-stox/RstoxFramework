@@ -624,7 +624,7 @@ isOpenProject <- function(projectPath) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
+readProjectDescriptionOld <- function(projectPath, type = c("RData", "JSON")) {
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     switch(
@@ -633,7 +633,7 @@ readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
         XML = readProjectDescriptionXML(projectPath)
     )
 }
-readProjectDescriptionRData <- function(projectPath) {
+readProjectDescriptionRDataOld <- function(projectPath) {
     # Get the path to the project description file:
     projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
     projectDescription <- NULL
@@ -648,13 +648,94 @@ readProjectDescriptionRData <- function(projectPath) {
 }
 
 
-readProjectXML <- function(projectXMLFile) {
-    # This is Edvins work, which will be completed later. Process data needs to be converted from JSON using JSON2processData():
-    readProject(projectXMLFile)
+
+
+
+#' Read the project description.
+#' 
+#' @export
+#' @rdname ProjectUtils
+#' 
+readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
+    # Read the project.RData or json file depending on the 'type':
+    type <- match.arg(type)
+    
+    projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
+    
+    if(!file.exists(projectDescriptionFile)) {
+        stop("The project description file ", projectDescriptionFile, " does not exist.")
+    }    
+    
+    # Run the appropriate reading function:
+    functionName <- paste0("readProjectDescription", type)
+    do.call(functionName, list(
+        projectDescriptionFile = projectDescriptionFile
+    ))    
+}
+
+#readProjectXML <- function(projectXMLFile) {
+#    # This is Edvins work, which will be completed later. Process data needs to be converted from JSON using JSON2processData():
+#    readProject(projectXMLFile)
+#}
+#
+
+readProjectDescriptionJSON <- function(projectDescriptionFile) {
+    
+    # Read project.json file to R list:
+    json <- jsonlite::read_json(projectDescriptionFile)
+    
+    # validate json object against schema
+    # TODO
+    
+    # Get the model names:
+    modelNames <- sapply(json, "[[", "modelName")
+    # Remove the model names from each model:
+    projectDescription <- lapply(json, removeNamedElement, name = "modelName")
+    # Add the modelNames as names to the list of models:
+    names(projectDescription) <- modelNames
+    
+    # Move the processes one level up in each model:
+    projectDescription <- lapply(projectDescription, unlist, recursive = FALSE)
+    
+    # Introduce process IDs: 
+    projectDescription <- defineProcessIDs(projectDescription)
+    
+    # Convert geojson to spatial string:
+    projectDescription <- convertGeojsonToProcessData(projectDescription)
+    
+    return(projectDescription)
+}
+
+removeNamedElement <- function(list, name) {
+    list[!names(list) %in% name]
+}
+
+
+convertGeojsonToProcessData <- function(projectDescription) {
+    # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
+    for(modelName in names(projectDescription)) {
+        for(processIndex in seq_along(projectDescription [[modelName]])) {
+            for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
+                this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
+                if(is.character(this) && grepl("FeatureCollection", substring(this, 1, 100))) {
+                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(this)
+                }
+            }
+        }
+    }
+    
+    return(projectDescription)
 }
 
 
 
+readProjectDescriptionRData <- function(projectDescriptionFile) {
+    # Creates/replaces the object 'projectDescription':
+    projectDescription <- NULL
+    load(projectDescriptionFile)
+    
+    return(projectDescription)
+}
 
 
 
@@ -779,83 +860,7 @@ convertProcessDataToGeojson <- function(projectDescription) {
     return(projectDescription)
 }
 
-#' Read the project description.
-#' 
-#' @export
-#' @rdname ProjectUtils
-#' 
-readProjectDescriptionNew <- function(projectPath, type = c("RData", "JSON")) {
-    # Read the project.RData or json file depending on the 'type':
-    type <- match.arg(type)
-    
-    projectSessionFolder <- getProjectPaths(projectPath, "projectSessionFolder")
-    if(!file.exists(projectSessionFolder)) {
-        stop("The project memory folder ", projectSessionFolder, " does not exist. Project ", projectPath, " cannot be saved.")
-    }
-    
-    projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
-}
 
-
-# writeProjectXML <- function(projectDescription, projectXMLFile) {
-#     # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
-#     #saveProject(projectDescription, projectXMLFile)
-# }
-
-# writeProjectJSON <- function(projectDescription, projectJSONFile) {
-    
-#     # Run the appropriate reading function:
-#     functionName <- paste0("readProjectDescription", type)
-#     do.call(functionName, list(
-#         projectDescriptionFile = projectDescriptionFile
-#     ))
-# }
-
-readProjectDescriptionJSON <- function(projectDescriptionFile) {
-
-    # Read project.json file to R list:
-    system.time(json <- jsonlite::read_json(projectDescriptionFile))
-
-    # validate json object against schema
-    # TODO
-
-    # introduce process ids in json object and restructure
-    # TODO
-
-    # remove modelName in json object
-    # TODO
-
-    projectDescription <- json
-
-    # Convert geojson to spatial string:
-    projectDescription <- convertGeojsonToProcessData(projectDescription);
-
-    projectDescription
-}
-
-convertGeojsonToProcessData <- function(projectDescription) {
-    # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
-    for(modelName in names(projectDescription)) {
-        for(processIndex in seq_along(projectDescription [[modelName]])) {
-            for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
-                this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
-                if(is.character(this) && grepl("FeatureCollection", substring(this, 1, 100))) {
-                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(this)
-                }
-            }
-        }
-    }
-    
-    return(projectDescription)
-}
-
-
-
-readProjectDescriptionRDataNew <- function(projectDescriptionFile) {
-    # Creates/replaces the object 'projectDescription':
-    projectDescription <- NULL
-    load(projectDescriptionFile)
-}
 
 #' Initiate the actige processID.
 #' 

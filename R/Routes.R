@@ -1107,7 +1107,7 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
-        modified = TRUE
+        processDirty = TRUE
     )
     
     # Return the modified process properties:

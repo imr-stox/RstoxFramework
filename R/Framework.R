@@ -700,7 +700,7 @@ JSON2processData <- function(JSON) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-writeProjectDescription <- function(projectPath, type = c("RData", "XML", "JSON")) {
+writeProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     
@@ -739,7 +739,7 @@ writeProjectDescriptionXML <- function(projectDescription, projectDescriptionFil
 #' @param projectDescriptionFile  a file name.
 #' 
 #' 
-#' @export
+#'
 #'
 writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile) {
     
@@ -783,27 +783,90 @@ convertProcessDataToGeojson <- function(projectDescription) {
     return(projectDescription)
 }
 
-writeProjectXML <- function(projectDescription, projectXMLFile) {
-    # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
-    #saveProject(projectDescription, projectXMLFile)
+#' Read the project description.
+#' 
+#' @export
+#' @rdname ProjectUtils
+#' 
+readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
+    # Read the project.RData or json file depending on the 'type':
+    type <- match.arg(type)
+    
+    projectSessionFolder <- getProjectPaths(projectPath, "projectSessionFolder")
+    if(!file.exists(projectSessionFolder)) {
+        stop("The project memory folder ", projectSessionFolder, " does not exist. Project ", projectPath, " cannot be saved.")
+    }
+    
+    projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
 }
 
-writeProjectJSON <- function(projectDescription, projectJSONFile) {
-    
-    # Convert all proseddData sp objects to geojson:
+convertProcessDataToGeojson <- function(projectDescription) {
+    # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
     for(modelName in names(projectDescription)) {
-        for(processID in names(projectDescription[[modelName]])) {
-            projectDescription[[modelName]][[processID]]$processData <- processData2JSON(projectDescription[[modelName]][[processID]]$processData)
+        for(processIndex in seq_along(projectDescription [[modelName]])) {
+            for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
+                this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
+                if("SpatialPolygonsDataFrame" %in% class(this)) {
+                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_json(this)
+                }
+            }
         }
     }
     
-    jsonlite::write_json(projectDescription, projectJSONFile, pretty = TRUE)
-    
-    
+    return(projectDescription)
 }
 
+# writeProjectXML <- function(projectDescription, projectXMLFile) {
+#     # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
+#     #saveProject(projectDescription, projectXMLFile)
+# }
 
+# writeProjectJSON <- function(projectDescription, projectJSONFile) {
+    
+#     # Run the appropriate reading function:
+#     functionName <- paste0("readProjectDescription", type)
+#     do.call(functionName, list(
+#         projectDescriptionFile = projectDescriptionFile
+#     ))
+# }
 
+readProjectDescriptionJSON <- function(projectDescriptionFile) {
+
+    # Read project.json file to R list:
+    system.time(json <- jsonlite::read_json(projectDescriptionFile))
+
+    # validate json object against schema
+    # TODO
+
+    # introduce process ids in json object and restructure
+    # TODO
+
+    # remove modelName in json object
+    # TODO
+
+    projectDescription <- json
+
+    # Convert geojson to spatial string:
+    projectDescription <- convertGeojsonToProcessData(projectDescription);
+
+    projectDescription
+}
+
+convertGeojsonToProcessData <- function(projectDescription) {
+    # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
+    for(modelName in names(projectDescription)) {
+        for(processIndex in seq_along(projectDescription [[modelName]])) {
+            for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
+                this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
+                if(is.character(this) && grepl("FeatureCollection", substring(this, 1, 100))) {
+                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(this)
+                }
+            }
+        }
+    }
+    
+    return(projectDescription)
+}
 
 
 #' Initiate the actige processID.
@@ -1161,8 +1224,13 @@ addTimeToFileName <- function(fileName, dir) {
 }
 
 
+<<<<<<< HEAD
 
 
+=======
+
+
+>>>>>>> 3c73bfcf794bfb227be7ac7a2140e30ff3335040
 # Function for saving an argument value to one process argument file:
 saveArgumentFile <- function(projectPath, modelName, processID, argumentName, argumentValue, ext = "rds") {
     

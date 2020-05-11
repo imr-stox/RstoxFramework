@@ -1374,6 +1374,14 @@ getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE, incl
         validInd <- setdiff(validInd, which(type %in% c("POSIXct")))
     }
     
+    
+    #if(include.numeric) {
+    #    validInd <- seq_len(ncol(table))
+    #}
+    #else {
+    #    validInd <- which(! type %in% c("numeric", "integer", "double"))
+    #}
+    
     # Declare a list for the output, with empty on numeric type if include.numeric = FALSE
     output <- vector("list", ncol(table))
     # Unique and then sort each column:

@@ -414,7 +414,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' @export
 #' @rdname Projects
 #' 
-openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE) {
+openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE, type = c("RData", "JSON")) {
     if(!force && isOpenProject(projectPath)) {
         warning("StoX: Project ", projectPath, "is already open.")
         
@@ -450,7 +450,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
     # Read the project description file:
-    projectMemory <- readProjectDescription(projectPath)
+    projectMemory <- readProjectDescription(projectPath, type = type)
     
     # Set the active process ID to 0 for all models:
     initiateActiveProcessID(projectPath)
@@ -484,11 +484,13 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
 #' @rdname Projects
 #' 
 closeProject <- function(projectPath, save = NULL) {
-    
     # Check that the project has been saved:
     if(!isSaved(projectPath)) {
         if(isTRUE(save)) {
             saveProject(projectPath)
+        }
+        else if(is.character(save)) {
+            saveProject(projectPath, type = save)
         }
         else if(!isFALSE(save)) {
             answer <- readline(paste("The project", projectPath, "has not been saved. Do you with to save before closing (y/n)?"))

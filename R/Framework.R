@@ -788,19 +788,18 @@ convertProcessDataToGeojson <- function(projectDescription) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
+readProjectDescriptionNew <- function(projectPath, type = c("RData", "JSON")) {
     # Read the project.RData or json file depending on the 'type':
     type <- match.arg(type)
     
-    projectSessionFolder <- getProjectPaths(projectPath, "projectSessionFolder")
-    if(!file.exists(projectSessionFolder)) {
-        stop("The project memory folder ", projectSessionFolder, " does not exist. Project ", projectPath, " cannot be saved.")
-    }
-    
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
 
+    if(!file.exists(projectDescriptionFile)) {
+        stop("The project description file ", projectDescriptionFile, " does not exist.")
+    }    
+
     # Run the appropriate reading function:
-    functionName <- paste0("readProjectDescription", type)
+    functionName <- paste0("readProjectDescription", type, "New")
     do.call(functionName, list(
         projectDescriptionFile = projectDescriptionFile
     ))    
@@ -820,7 +819,7 @@ readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
 #     ))
 # }
 
-readProjectDescriptionJSON <- function(projectDescriptionFile) {
+readProjectDescriptionJSONNew <- function(projectDescriptionFile) {
 
     # Read project.json file to R list:
     system.time(json <- jsonlite::read_json(projectDescriptionFile))

@@ -798,22 +798,12 @@ readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     }
     
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
-}
 
-convertProcessDataToGeojson <- function(projectDescription) {
-    # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
-    for(modelName in names(projectDescription)) {
-        for(processIndex in seq_along(projectDescription [[modelName]])) {
-            for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
-                this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
-                if("SpatialPolygonsDataFrame" %in% class(this)) {
-                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_json(this)
-                }
-            }
-        }
-    }
-    
-    return(projectDescription)
+    # Run the appropriate reading function:
+    functionName <- paste0("readProjectDescription", type)
+    do.call(functionName, list(
+        projectDescriptionFile = projectDescriptionFile
+    ))    
 }
 
 # writeProjectXML <- function(projectDescription, projectXMLFile) {

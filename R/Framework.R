@@ -997,9 +997,9 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
         }
         
         # Write the active process ID:
-        if(is.na(newActiveProcessID) || newActiveProcessID != currentActiveProcessID) {
+        #if(is.na(newActiveProcessID) || newActiveProcessID != currentActiveProcessID) {
             writeActiveProcessID(projectPath, modelName, newActiveProcessID, processDirty = processDirty)
-        }
+        #}
         
         ##### (2) Delete process output of the processes from the new active process: #####
         if(currentActiveProcessIndex > processIndex) {

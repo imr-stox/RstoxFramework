@@ -1116,11 +1116,18 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         modelName = modelName, 
         processID = processID
     )
-    # Add updateHelp:
-    output$updateHelp <- updateHelp
-    # Add the process table, so that the GUI can update the list of processes, and all its symbols:
-    output$processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
     
+    # Add the process table, so that the GUI can update the list of processes, and all its symbols:
+    output <- c(
+        list(processTable = getProcessTable(projectPath = projectPath, modelName = modelName)), 
+        output
+    )
+    
+    # Add updateHelp:
+    output <- c(
+        list(updateHelp = updateHelp), 
+        output
+    )
     # Add also the saved status:
     output$saved <- isSaved(projectPath)
     

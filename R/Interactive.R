@@ -317,16 +317,6 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     atEDSUs <- AcousticPSU$EDSU_PSU$EDSU %in% EDSU
     AcousticPSU$EDSU_PSU[atEDSUs, PSU := ..PSU]
     
-    ## Add the acsoutic PSU:
-    #toAdd <- data.table::data.table(
-    #    PSU = PSU, 
-    #    EDSU = EDSU
-    #)
-    #AcousticPSU$PSU_EDSU <- data.table::data.table(
-    #    AcousticPSU$PSU_EDSU, 
-    #    toAdd
-    #)
-    
     # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 

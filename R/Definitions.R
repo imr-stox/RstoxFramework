@@ -66,6 +66,16 @@ initiateRstoxFramework <- function(){
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     stoxLibraryPackageFunctionNames <- unname(sapply(stoxLibrary, "[[", "functionName"))
     
+    # Get the json schema for RstoxFramework and the processData json schemas of the other packages. Then check that all processData functions (those starting with "Define" have JSON schema):
+    #schema <- readLines(system.file("formats", "projectSchema.json", package = "RstoxFramework"))
+    #subSchemaFiles <- sapply(officialStoxLibraryPackages, function(packageName) system.file("formats", "processDataSchema.json", package = pack#ageName))
+    #if(any(nchar(subSchemaFiles) == 0)) {
+    #    war
+    #}
+    #schema <- paste(c(schema, subSchemas), collapse = "\n")
+    #projectJsonValidator <- jsonvalidate::json_validator(schema)
+    
+    
     #### Data types: ####
     oldStoxModelDataTypes <- c(
         "AcousticData",
@@ -413,7 +423,7 @@ initiateRstoxFramework <- function(){
         "..functionName", 
         "..functionParameters", 
         "..infoToKeep", 
-        "..modified", 
+        "..processDirty", 
         "..newProcessName", 
         "CruiseKey", 
         "Latitude", 
@@ -431,7 +441,7 @@ initiateRstoxFramework <- function(){
         "hasBeenRun", 
         "hasProcessData", 
         "modelName", 
-        "modified", 
+        "processDirty", 
         "name", 
         "possibleValues", 
         "processID", 

@@ -729,6 +729,18 @@ writeProjectDescriptionXML <- function(projectDescription, projectDescriptionFil
     writeProjectXML(projectDescription, projectDescriptionFile)
 }
 
+##################################################
+##################################################
+#' Write project description to a file in json format
+#' 
+#' This function writes project description to json file.
+#' 
+#' @param projectDescription  a list of lists with project description.
+#' @param projectDescriptionFile  a file name.
+#' 
+#' 
+#' @export
+#'
 writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile) {
     
     # 1. Convert spatial to geojson string: 
@@ -786,6 +798,30 @@ readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     }
     
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
+}
+
+convertProcessDataToGeojson <- function(projectDescription) {
+    # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
+    for(modelName in names(projectDescription)) {
+        for(processIndex in seq_along(projectDescription [[modelName]])) {
+            for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
+                this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
+                if("SpatialPolygonsDataFrame" %in% class(this)) {
+                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_json(this)
+                }
+            }
+        }
+    }
+    
+    return(projectDescription)
+}
+
+writeProjectXML <- function(projectDescription, projectXMLFile) {
+    # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
+    #saveProject(projectDescription, projectXMLFile)
+}
+
+writeProjectJSON <- function(projectDescription, projectJSONFile) {
     
     # Run the appropriate reading function:
     functionName <- paste0("readProjectDescription", type)
@@ -832,28 +868,6 @@ convertGeojsonToProcessData <- function(projectDescription) {
     return(projectDescription)
 }
 
-# writeProjectXML <- function(projectDescription, projectXMLFile) {
-#     # This is Edvins work, which will be completed later. This function will have to call processData2JSON to convert all process data except Stratum to JSON. Maybe Stratum should be recocnized using processData2JSON(), and converted to JSON. I see that writeProcessOutputTextFile() does convert geojson to json and then writes. Maybe this is the simnples way. We also need a function readProjectXML():
-#     #saveProject(projectDescription, projectXMLFile)
-# }
-
-# writeProjectJSON <- function(projectDescription, projectJSONFile) {
-    
-#     # Convert all proseddData sp objects to geojson:
-#     for(modelName in names(projectDescription)) {
-#         for(processID in names(projectDescription[[modelName]])) {
-#             projectDescription[[modelName]][[processID]]$processData <- processData2JSON(projectDescription[[modelName]][[processID]]$processData)
-#         }
-#     }
-    
-#     jsonlite::write_json(projectDescription, projectJSONFile, pretty = TRUE)
-    
-    
-# }
-
-
-
-
 
 #' Initiate the actige processID.
 #' 
@@ -867,7 +881,8 @@ initiateActiveProcessID <- function(projectPath) {
     activeProcessIDTable <- data.table::data.table(
         modelName = getRstoxFrameworkDefinitions("stoxModelNames"), 
         processID = as.character(NA), 
-        modified = NA
+        processDirty = NA, 
+        propertyDirty = NA 
     )
     #colnames(activeProcessIDTable) <- getRstoxFrameworkDefinitions("stoxModelNames")
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
@@ -936,7 +951,11 @@ resolveProjectPath <- function(filePath) {
 getActiveProcess <- function(projectPath, modelName = NULL) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
+    if(!file.exists(activeProcessIDFile)) {
+        warning("The active process ID file has not been initiated.")
+    }
     activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
+    
     if(length(modelName)) {
         #return(activeProcessIDTable[[modelName]])
         thisModelName <- modelName
@@ -951,23 +970,32 @@ getActiveProcess <- function(projectPath, modelName = NULL) {
     
 }
 
-writeActiveProcessID <- function(projectPath, modelName, activeProcessID, modified = FALSE) {
-    # Read the active process ID for the model:
-    activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
-    if(!file.exists(activeProcessIDFile)) {
-        warning("The active process ID file has not been initiated.")
-    }
-    activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
+writeActiveProcessID <- function(projectPath, modelName, activeProcessID = NULL, processDirty = NULL, propertyDirty = NULL) {
     
-    # Set the active process ID and the modified status:
+    # Read the active process ID for the model:
+    activeProcessIDTable <- getActiveProcess(projectPath, modelName = NULL)
+    # Probably unelegant trick to avoid using the same name as the variable to modify:
+    thisModelName <- modelName
+    # Make sure the active processID is character prior to modification:
     if(!is.character(activeProcessIDTable$processID)) {
         activeProcessIDTable[, processID := as.character(processID)]
     }
-    thisModelName <- modelName
-    activeProcessIDTable[modelName == thisModelName, processID := ..activeProcessID]
-    activeProcessIDTable[modelName == thisModelName, modified := ..modified]
+    
+    # Set the active process ID:
+    if(length(activeProcessID)) {
+        activeProcessIDTable[modelName == thisModelName, processID := ..activeProcessID]
+    }
+    # Set the processDirty status:
+    if(length(processDirty)) {
+        activeProcessIDTable[modelName == thisModelName, processDirty := ..processDirty]
+    }
+    # Set the propertyDirty status:
+    if(length(propertyDirty)) {
+        activeProcessIDTable[modelName == thisModelName, propertyDirty := ..propertyDirty]
+    }
     
     # Write and return the activeProcessIDTable:
+    activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
     
     return(activeProcessIDFile)
@@ -985,12 +1013,12 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
 #' Reset a StoX model.
 #' 
 #' @inheritParams general_arguments
-#' @param modified Logical: Indicates whether the model has been modified when reseting.
+#' @param processDirty Logical: Indicates whether the model has been modified when reseting.
 #' @inheritParams unReDoProject
 #' 
 #' @export
 #'
-resetModel <- function(projectPath, modelName, processID = NULL, modified = FALSE, shift = 0) {
+resetModel <- function(projectPath, modelName, processID = NULL, processDirty = FALSE, shift = 0) {
     
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -1033,7 +1061,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
         
         # Write the active process ID:
         if(is.na(newActiveProcessID) || newActiveProcessID != currentActiveProcessID) {
-            writeActiveProcessID(projectPath, modelName, newActiveProcessID, modified = modified)
+            writeActiveProcessID(projectPath, modelName, newActiveProcessID, processDirty = processDirty)
         }
         
         ##### (2) Delete process output of the processes from the new active process: #####
@@ -1071,8 +1099,8 @@ resetModel <- function(projectPath, modelName, processID = NULL, modified = FALS
     
     # Return a list of the active process and the process table:
     output <- list(
-        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
-        processTable = getProcessTable(projectPath = projectPath, modelName = modelName)
+        processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
+        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
     )
     return(output)
 }
@@ -1196,8 +1224,13 @@ addTimeToFileName <- function(fileName, dir) {
 }
 
 
+<<<<<<< HEAD
 
 
+=======
+
+
+>>>>>>> 3c73bfcf794bfb227be7ac7a2140e30ff3335040
 # Function for saving an argument value to one process argument file:
 saveArgumentFile <- function(projectPath, modelName, processID, argumentName, argumentValue, ext = "rds") {
     
@@ -2006,12 +2039,9 @@ getProcessTable <- function(projectPath, modelName, beforeProcessID = NULL, argu
     # Check whether the process returns process data:
     processTable[, hasProcessData := lapply(functionName, isProcessDataFunction)]
     
-    # Add hasBeenRun and modified:
+    # Add hasBeenRun:
     activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
-    
     processTable[, hasBeenRun := FALSE]
-    processTable[, modified := FALSE]
-    
     if(!is.na(activeProcess$processID)) {
         activeProcessIndex <- getProcessIndexFromProcessID(
             projectPath = projectPath, 
@@ -2019,9 +2049,6 @@ getProcessTable <- function(projectPath, modelName, beforeProcessID = NULL, argu
             processID = activeProcess$processID
         )
         processTable[seq_len(min(activeProcessIndex, nrow(processTable))), hasBeenRun := TRUE]
-        if(activeProcessIndex <= nrow(processTable)) {
-            processTable[activeProcessIndex, modified := activeProcess$modified]
-        }
     }
     
     return(processTable[])
@@ -3221,7 +3248,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     }
     else{
         # Update the active process ID:
-        writeActiveProcessID(projectPath, modelName, processID, modified = FALSE)
+        writeActiveProcessID(projectPath, modelName, processID, processDirty = FALSE)
         
         # If a valid output class, wrap the function output to a list named with the data type:
         if(firstClass(processOutput) %in% getRstoxFrameworkDefinitions("validOutputDataClasses")) {
@@ -3235,8 +3262,10 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
             
             # Set the function parameters UseProcessData to TRUE:
             setUseProcessDataToTRUE(projectPath, modelName, processID)
-            #process$processData <- processOutput
         }
+        
+        # Set the propertyDirty flag to TRUE, so that a GUI can update the properties:
+        writeActiveProcessID(projectPath, modelName, propertyDirty = isProcessDataFunction(process$functionName))
         
         # Write to memory files:
         writeProcessOutputMemoryFiles(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
@@ -3255,6 +3284,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
 setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
     modifyFunctionParameters(projectPath, modelName, processID, list(UseProcessData = TRUE))
 }
+
 
 
 ##################################################
@@ -3793,8 +3823,8 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     #status
     list(
         processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
-        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
         interactiveMode = getInteractiveMode(projectPath = projectPath, modelName = modelName, processID = processID), 
+        activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
         saved = isSaved(projectPath)
     )
 }

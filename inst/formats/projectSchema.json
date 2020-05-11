@@ -1,58 +1,75 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "model",
-    "description": "A StoX model",
-    "type": "object",
-    "properties": {
-        "modelName": {
-            "description": "The name of the model, one of baseline, analysis and report.",
-            "type": "string"
-        },
-        "process": {
-            "description": "A Stox process of the appropriate model.",
-            "type": "object", 
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "array",
+    "items": [
+        {
+            "type": "object",
             "properties": {
-                "processName": {
-                    "description": "The (unique) name of the process.",
+                "modelName": {
                     "type": "string"
                 },
-                "functionName": {
-                    "description": "The name of the R function used by the process, of the form packageName:functionName.",
-                    "type": "string"
-                },
-                "processParameters": {
-                    "description": "Parameters of the process independent of the function.",
-                    "type": "object",
-                    "properties": {
-                        "enabled": {
-                            "type": "boolean"
-                        },
-                        "showInMap": {
-                            "type": "boolean"
-                        },
-                        "fileOutput": {
-                            "type": "boolean"
+                "processes": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "functionInputs": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                "functionName": {
+                                    "type": "string"
+                                },
+                                "functionParameters": {},
+                                "processData": {
+                                    "oneOf": [
+                                        "$ref": "#/definitions_processData_DefineStrata/DefineStrata",
+                                        "$ref": "#/definitions_processData_DefineStrata/AcousticPSU"
+                                        ]
+                                },
+                                "processName": {
+                                    "type": "string"
+                                },
+                                "processParameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "showInMap": {
+                                            "type": "boolean"
+                                        },
+                                        "fileOutput": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "enabled",
+                                        "showInMap",
+                                        "fileOutput"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "functionInputs",
+                                "functionName",
+                                "functionParameters",
+                                "processData",
+                                "processName",
+                                "processParameters"
+                            ]
                         }
-                    },
-                    "required": [ "enabled", "width", "height" ]
-                    
-                },
-                "processData": {
-                    "description": "Function outputs which are saved to the recipe file for reproducibility.",
-                    "type": "object"
-                },
-                "functionParameters": {
-                    "description": "The parameters of the function which are not named by StoX data types. The functionParameters are defined and documented by the R function . For functions producing process data the first parameter, processData, is not included as part of the functionParameters.",
-                    "type": "object"
-                },
-                "functionInputs": {
-                    "description": "The parameters of the function that named by StoX data types, thus denoting process output data to retrieve from previous processes in the model",
-                    "type": "object"
+                    ]
                 }
             },
-            "required": [ "processName", "functionName", "processParameters", "processData", "functionParameters", "functionInputs" ]
+            "required": [
+                "modelName",
+                "processes"
+            ]
         }, 
-        "minProperties": 0
-    },
-    "required": [ "modelName", "processprocess" ]
+        "minItems": 0
+    ]
 }

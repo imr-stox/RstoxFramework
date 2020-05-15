@@ -64,17 +64,41 @@ initiateRstoxFramework <- function(){
     
     # Get the stoxLibrary as the list of function attributes from all official packages:
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
-    stoxLibraryPackageFunctionNames <- unname(sapply(stoxLibrary, "[[", "functionName"))
     
-    # Get the json schema for RstoxFramework and the processData json schemas of the other packages. Then check that all processData functions (those starting with "Define" have JSON schema):
-    #schema <- readLines(system.file("formats", "projectSchema.json", package = "RstoxFramework"))
-    #subSchemaFiles <- sapply(officialStoxLibraryPackages, function(packageName) system.file("formats", "processDataSchema.json", package = pack#ageName))
-    #if(any(nchar(subSchemaFiles) == 0)) {
-    #    war
-    #}
-    #schema <- paste(c(schema, subSchemas), collapse = "\n")
-    #projectJsonValidator <- jsonvalidate::json_validator(schema)
+    # Get the json schema for RstoxFramework:
+    schema <- jsonlite::read_json(system.file("formats", "projectSchema.json", package = "RstoxFramework"))
     
+    # Get the schemas of the Rstox packages:
+    processDataSchemas <- lapply(officialStoxLibraryPackages, readProcessDataSchema)
+    processDataSchemas <- unlist(processDataSchemas, recursive = FALSE)
+    
+    # Get the names of the processData schemas:
+    processDataSchemaNames <- names(processDataSchemas)
+    processDataSchema <- list(
+        processData = list(
+            oneOf = lapply(
+                processDataSchemaNames, 
+                function(x) list(
+                    "$ref" = paste0("\"#/", x, "\"")
+                )
+            ) 
+        )
+    )
+    
+    # Paste the subSchemas to the RstoxFramework schema:
+    schema <- jsonlite::toJSON(
+        c(
+            schema, 
+            processDataSchema, 
+            processDataSchemas
+        ), 
+        pretty = TRUE, 
+        auto_unbox = TRUE
+    )
+    # Create a project.json validator:
+    projectValidator <- jsonvalidate::json_validator(schema)
+    
+   
     
     #### Data types: ####
     oldStoxModelDataTypes <- c(
@@ -100,6 +124,7 @@ initiateRstoxFramework <- function(){
         functionOutputDataType = sapply(stoxLibrary, "[[", "functionOutputDataType"), 
         functionType = sapply(stoxLibrary, "[[", "functionType")
     )
+    
     
     ##### Data: #####
     speciesVariables <- list(
@@ -130,6 +155,10 @@ initiateRstoxFramework <- function(){
         "data.table", 
         "SpatialPolygonsDataFrame"
     )
+    
+    # Define code words for the start and end of files to write geojson data to, which are read into the project.json after being written for a project:
+    spatialFileReferenceCodeStart <- "<stratumpolygontempfile:"
+    spatialFileReferenceCodeEnd <- ":stratumpolygontempfile>"
     
     # Define the regular expression listing lower and upper characters, integers, underscore and dot:
     validProcessNameSet <- "[[:alnum:]_.]"
@@ -461,48 +490,18 @@ initiateRstoxFramework <- function(){
     definitions
 }
 
-# This function gets the stoxFunctionAttributes of the specified packages.
-getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
-    
-    # Validate the pakcages:
-    packageNames <- packageNames[sapply(packageNames, validateStoxLibraryPackage)]
-    # Get a list of the 'stoxFunctionAttributes' from each package:
-    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
-    
-    # Collapse to one list:
-    stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
-    
-    # Check for duplicaetd function names:
-    functionNames <- names(stoxFunctionAttributes)
-    packageNames <- sapply(stoxFunctionAttributes, "[[", "packageName")
-    areDuplicatedFunctionNames <- duplicated(functionNames)
-    
-    # If there are any duplicated function names, report a warning stating which function names and from which packages:
-    if(any(areDuplicatedFunctionNames)) {
-        # Get the package strings as concatenations of the packages with common function names:
-        packageNamesString <- as.character(
-            by(
-                functionNames[areDuplicatedFunctionNames], 
-                packageNames[areDuplicatedFunctionNames], 
-                paste, 
-                collapse = ", "
-            )
-        )
-        # Get the unique duplicated function names, and paste the packageNamesString to these:
-        uniqueDuplicatedFunctionNames <- unique(functionNames[areDuplicatedFunctionNames])
-        functionNamePackageNamesString <- paste0(
-            uniqueDuplicatedFunctionNames, 
-            "(", 
-            packageNamesString, 
-            ")"
-        )
-        
-        warning("StoX: The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
+
+readProcessDataSchema <- function(packageName) {
+    # Get the file to the schema:
+    schemaFile <- system.file("formats", "processDataSchema.json", package = packageName)
+    if(nchar(schemaFile) > 0) {
+        schema <- jsonlite::read_json(schemaFile)
+    }
+    else {
+        schema <- NULL
     }
     
-    # Keep only the non-duplicated functions: 
-    stoxFunctionAttributes <- stoxFunctionAttributes[!areDuplicatedFunctionNames]
-    return(stoxFunctionAttributes)
+    return(schema)
 }
 
 

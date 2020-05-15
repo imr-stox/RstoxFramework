@@ -175,6 +175,18 @@ validateStoxLibraryPackage <- function(packageName) {
         return(FALSE)
     }
     
+    # Check that all the exported functions have a valid JSON schema:
+    processDataSchema <- readProcessDataSchema(packageName)
+    processDataSchemaNames <- names(processDataSchema)
+    exportedProcessDataFunctions <- names(stoxFunctionAttributes)[sapply(stoxFunctionAttributes, "[[", "functionType") == "processData"]
+    exportedProcessDataFunctionsSansDefine <- sub("Define", "", exportedProcessDataFunctions)
+    
+    if(!all(exportedProcessDataFunctionsSansDefine %in% processDataSchemaNames)) {
+        missingJSONs <- setdiff(exportedProcessDataFunctionsSansDefine, processDataSchemaNames)
+        warning("The package ", packageName, " exports processData functions specified in the 'stoxFunctionAttributes' object that are not documented with a JSON schema in the processDataSchema.json file:\n", paste(missingJSONs, collapse = ", "))
+        #return(FALSE)
+    }
+    
     TRUE
 }
 
@@ -485,7 +497,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
 #' 
 closeProject <- function(projectPath, save = NULL) {
     # Check that the project has been saved:
-    if(!isSaved(projectPath)) {
+    #if(!isSaved(projectPath)) {
         if(isTRUE(save)) {
             saveProject(projectPath)
         }
@@ -498,7 +510,7 @@ closeProject <- function(projectPath, save = NULL) {
                 saveProject(projectPath)
             }
         }
-    }
+    #}
     
     # Delete the project session folder structure:
     projectSessionFolderStructure <- getProjectPaths(projectPath, "projectSessionFolder")
@@ -683,26 +695,34 @@ readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
 
 readProjectDescriptionJSON <- function(projectDescriptionFile) {
     
+    # Validate json object against schema
+    projectValidator <- getRstoxFrameworkDefinitions("projectValidator")
+    valid <- projectValidator(projectDescriptionFile)
+    if(!isTRUE(valid)) {
+        cat("Output from project.json validator:\n")
+        print(projectValidator(projectDescriptionFile, verbose = TRUE))
+        stop("The file ", projectDescriptionFile, " is not a valid project.json file.")
+    }
+    
     # Read project.json file to R list:
     json <- jsonlite::read_json(projectDescriptionFile)
     
-    # validate json object against schema
-    # TODO
-    
     # Get the model names:
-    modelNames <- sapply(json, "[[", "modelName")
+    #modelNames <- sapply(json, "[[", "modelName")
     # Remove the model names from each model:
-    projectDescription <- lapply(json, removeNamedElement, name = "modelName")
+    #projectDescription <- lapply(json, removeNamedElement, name = "modelName")
     # Add the modelNames as names to the list of models:
-    names(projectDescription) <- modelNames
+    #names(projectDescription) <- modelNames
     
     # Move the processes one level up in each model:
-    projectDescription <- lapply(projectDescription, unlist, recursive = FALSE)
+    #projectDescription <- lapply(projectDescription, unlist, recursive = FALSE)
+    
+    projectDescription <- json$project$models
     
     # Introduce process IDs: 
     projectDescription <- defineProcessIDs(projectDescription)
     
-    # Convert geojson to spatial string:
+    # Convert geojson to spatial object:
     projectDescription <- convertGeojsonToProcessData(projectDescription)
     
     return(projectDescription)
@@ -719,8 +739,10 @@ convertGeojsonToProcessData <- function(projectDescription) {
         for(processIndex in seq_along(projectDescription [[modelName]])) {
             for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
                 this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
-                if(is.character(this) && grepl("FeatureCollection", substring(this, 1, 100))) {
-                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(this)
+                #if(is.character(this) && grepl("FeatureCollection", substring(this, 1, 100))) {
+                    #projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(this)
+                if(is.list(this) && "features" %in% tolower(names(this))) {
+                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(jsonlite::toJSON(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]], pretty = TRUE, auto_unbox = TRUE))
                 }
             }
         }
@@ -822,27 +844,48 @@ writeProjectDescriptionXML <- function(projectDescription, projectDescriptionFil
 #'
 writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile) {
     
-    # 1. Convert spatial to geojson string: 
+    # Convert spatial to geojson string, and write to temporary files for modifying the project.json to have geojson instead of geojson string: 
     projectDescription <- convertProcessDataToGeojson(projectDescription)
     
-    # 2. Convert to json structure:
-    for(ind in seq_along(projectDescription)) {
-        #names(projectDescription[[ind]]) <- "process"
-        projectDescription[[ind]] <- c(
-            modelName = unname(names(projectDescription)[ind]),
-            processes = list(unname(projectDescription[[ind]]))
+    # Unname the models (removing procecssIDs):
+    projectDescription <- lapply(projectDescription, unname)
+    
+    # Add attributes and wrap the models into an object:
+    projectDescription <- list(
+        project = list(
+            Template = "", 
+            RstoxFrameworkVersion = as.character(utils::packageVersion("RstoxFramework")),
+            TimeSaved = strftime(as.POSIXlt(Sys.time(), "UTC", "%Y-%m-%dT%H:%M:%S") , "%Y-%m-%dT%H:%M:%S%z"), 
+            RVersion = R.version.string, 
+            models = projectDescription
         )
+    )
+    
+    # Convert project description to json structure: 
+    json <- jsonlite::toJSON(projectDescription)
+    # Read any geojson objects stored in temporary file by convertProcessDataToGeojson():
+    json <- replaceSpatialFileReference(json)
+    browser()
+    
+    # Fix pretty formatting by reading in and writing back the file:
+    write(json, projectDescriptionFile)
+    json <- jsonlite::toJSON(
+        jsonlite::read_json(projectDescriptionFile), 
+        pretty = TRUE, 
+        auto_unbox = TRUE
+    )
+    
+    # Validate the json structure with json schema
+    projectValidator <- getRstoxFrameworkDefinitions("projectValidator")
+    valid <- projectValidator(json)
+    if(!isTRUE(valid)) {
+        cat("Output from project.json validator:\n")
+        print(projectValidator(json, verbose = TRUE))
+        stop("Cannot write the project.json file. It is not a valid project.json file.")
     }
-
-    projectDescription <- unname(projectDescription)
-
-    # 3. Convert project description to json structure
-    system.time(json <- jsonlite::toJSON(projectDescription, pretty = TRUE, auto_unbox = TRUE))
+    #jsonvalidate::json_validate(json)
     
-    # 4 . Validate the json structure with json schema
-    # TODO
-    
-    # 5. Write the validated json to file
+    # 5. Write the validated json to file: 
     write(json, projectDescriptionFile) 
 }
 
@@ -853,7 +896,8 @@ convertProcessDataToGeojson <- function(projectDescription) {
             for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
                 this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
                 if("SpatialPolygonsDataFrame" %in% class(this)) {
-                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_json(this)
+                    #projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_json(this)
+                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- buildSpatialFileReferenceString(this)
                 }
             }
         }
@@ -862,6 +906,51 @@ convertProcessDataToGeojson <- function(projectDescription) {
     return(projectDescription)
 }
 
+
+replaceSpatialFileReference <- function(x) {
+    spatialFileReferenceCodeStart <- getRstoxFrameworkDefinitions("spatialFileReferenceCodeStart")
+    spatialFileReferenceCodeEnd <- getRstoxFrameworkDefinitions("spatialFileReferenceCodeEnd")
+    start <- unlist(gregexpr(spatialFileReferenceCodeStart, x))
+    
+    # Return unaltered if no hits:
+    if(length(start) == 1 && start == -1) {
+        return(x)
+    }
+    
+    end <- unlist(gregexpr(spatialFileReferenceCodeEnd, x))
+    spatialFile <- mapply(substr, x, start + nchar(spatialFileReferenceCodeStart), end - 1)
+    spatialString <- sapply(spatialFile, readCharAll)
+    
+    # Replace in reverse order to avoid messing up the start and end indices:
+    for(ind in rev(seq_along(spatialString))) {
+        x <- paste0(
+            substr(x, 1, start[ind] - 2), 
+            spatialString[ind], 
+            substring(x, end[ind] + nchar(spatialFileReferenceCodeEnd) + 1)
+        )
+    }
+    
+    return(x)
+}
+
+readCharAll <- function(spatialFile) {
+    readChar(spatialFile, file.info(spatialFile)$size)
+}
+
+
+
+
+
+buildSpatialFileReferenceString <- function(x) {
+    filePath <- tempfile()
+    write(geojsonio::geojson_json(x), file = filePath)
+    SpatialFileReferenceString <- paste0(
+        getRstoxFrameworkDefinitions("spatialFileReferenceCodeStart"), 
+        filePath, 
+        getRstoxFrameworkDefinitions("spatialFileReferenceCodeEnd")
+    )
+    return(SpatialFileReferenceString)
+}
 
 
 #' Initiate the actige processID.
@@ -1013,7 +1102,7 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
 #' 
 #' @export
 #'
-resetModel <- function(projectPath, modelName, processID = NULL, processDirty = FALSE, shift = 0) {
+resetModel <- function(projectPath, modelName, processID = NULL, processDirty = FALSE, shift = 0, returnProcessTable = FALSE) {
     
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -1094,7 +1183,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
     
     # Return a list of the active process and the process table:
     output <- list(
-        processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
+        if(returnProcessTable) processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
         activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
     )
     return(output)
@@ -2007,7 +2096,7 @@ getProcessIDFromProcessName <- function(projectPath, modelName, processName) {
 #' 
 #' @export
 #' 
-getProcessTable <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
+getProcessTable <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -2015,7 +2104,13 @@ getProcessTable <- function(projectPath, modelName, beforeProcessID = NULL, argu
     }
     
     # Get a table of all the processes including function inputs, parameters and input errors:
-    processTable <- scanForModelError(projectPath, modelName, beforeProcessID = beforeProcessID, argumentFilePaths = argumentFilePaths)
+    processTable <- scanForModelError(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        afterProcessID = afterProcessID, 
+        beforeProcessID = beforeProcessID, 
+        argumentFilePaths = argumentFilePaths
+    )
     # Return an empty data.table if the processTable is empty:
     if(nrow(processTable) == 0) {
         return(data.table::data.table())
@@ -2045,12 +2140,13 @@ getProcessTable <- function(projectPath, modelName, beforeProcessID = NULL, argu
 #' @export
 #' @rdname getProcessTable
 #' 
-scanForModelError <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
+scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
     # Get the processes:
     processTable <- getProcessesSansProcessData(
         projectPath = projectPath, 
         modelName = modelName, 
+        afterProcessID = afterProcessID, 
         beforeProcessID = beforeProcessID, 
         argumentFilePaths = argumentFilePaths
     )
@@ -2089,7 +2185,46 @@ scanForModelError <- function(projectPath, modelName, beforeProcessID = NULL, ar
 #' @export
 #' @rdname getProcessTable
 #' 
-getProcessesSansProcessData <- function(projectPath, modelName, beforeProcessID = NULL, argumentFilePaths = NULL) {
+getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
+    
+    processTable <- getProcessAndFunctionNames(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        afterProcessID = afterProcessID, 
+        beforeProcessID = beforeProcessID, 
+        argumentFilePaths = argumentFilePaths
+    )
+    
+    ##### (1) Add process parameters: #####
+    processParameters <- mapply(
+        getProcessParameters, 
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processTable$processID, 
+        MoreArgs = list(argumentFilePaths = argumentFilePaths), 
+        SIMPLIFY = FALSE
+    )
+    processParameters <- data.table::rbindlist(processParameters)
+    processTable <- data.table::data.table(
+        processTable, 
+        processParameters
+    )
+    
+    ##### (2) Add function inputs: #####
+    functionInputs <- lapply(processTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = TRUE, argumentFilePaths = argumentFilePaths))
+    processTable[, functionInputs := ..functionInputs]
+    
+    ##### (3) Add function parameters: #####
+    functionParameters <- lapply(processTable$processID, function(processID) getFunctionParameters(projectPath, modelName, processID, only.valid = TRUE, argumentFilePaths = argumentFilePaths))
+    processTable[, functionParameters := ..functionParameters]
+    
+    return(processTable)
+}
+#' 
+#' @export
+#' @rdname getProcessTable
+#' 
+getProcessAndFunctionNames <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
     ##### (1) Get the table of process name and ID: #####
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -2102,9 +2237,17 @@ getProcessesSansProcessData <- function(projectPath, modelName, beforeProcessID 
     if(length(beforeProcessID)) {
         atProcessID <- which(beforeProcessID == processIndexTable$processID)
         if(length(atProcessID) == 0) {
-            stop("The processID specified in 'beforeProcessID' does not exist in the model ", modelName, " of projecct ", projectPath, ".")
+            stop("The processID specified in 'beforeProcessID' does not exist in the model ", modelName, " of project ", projectPath, ".")
         }
         processIndexTable <- processIndexTable[seq_len(atProcessID - 1), ]
+    }
+    # Remove the table up until the reuqested afterProcessID, if given:
+    if(length(afterProcessID)) {
+        atProcessID <- which(afterProcessID == processIndexTable$processID)
+        if(length(atProcessID) == 0) {
+            stop("The processID specified in 'afterProcessID' does not exist in the model ", modelName, " of project ", projectPath, ".")
+        }
+        processIndexTable <- processIndexTable[- seq_len(atProcessID), ]
     }
     
     # Add the projectPath:
@@ -2119,29 +2262,6 @@ getProcessesSansProcessData <- function(projectPath, modelName, beforeProcessID 
         MoreArgs = list(argumentFilePaths = argumentFilePaths)
     )
     processIndexTable[, functionName := ..functionName]
-    
-    ##### (3) Add process parameters: #####
-    processParameters <- mapply(
-        getProcessParameters, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processIndexTable$processID, 
-        MoreArgs = list(argumentFilePaths = argumentFilePaths), 
-        SIMPLIFY = FALSE
-    )
-    processParameters <- data.table::rbindlist(processParameters)
-    processIndexTable <- data.table::data.table(
-        processIndexTable, 
-        processParameters
-    )
-    
-    ##### (4) Add function inputs: #####
-    functionInputs <- lapply(processIndexTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = TRUE, argumentFilePaths = argumentFilePaths))
-    processIndexTable[, functionInputs := ..functionInputs]
-    
-    ##### (5) Add function parameters: #####
-    functionParameters <- lapply(processIndexTable$processID, function(processID) getFunctionParameters(projectPath, modelName, processID, only.valid = TRUE, argumentFilePaths = argumentFilePaths))
-    processIndexTable[, functionParameters := ..functionParameters]
     
     return(processIndexTable)
 }
@@ -2310,15 +2430,16 @@ checkProcessNameAgainstExisting <- function(projectPath, modelName, newProcessNa
     # Check the process names of the model:
     processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
     if(newProcessName %in% processIndexTable$processName) {
-        warning("The new process name (", newProcessName, ") cannot be identical to the name of an existing process within the same model (", paste(processIndexTable$processName, collapse = ", "), ")")
-        FALSE
+        #warning("StoX: The new process name (", newProcessName, ") cannot be identical to the name of an existing process #within the same model (", paste(processIndexTable$processName, collapse = ", "), ")")
+        #FALSE
+        stop("StoX: The new process name (", newProcessName, ") cannot be identical to the name of an existing process within the same model (", paste(processIndexTable$processName, collapse = ", "), ")")
     }
     else {
         TRUE
     }
 }
 
-validateProcessnName <- function(projectPath, modelName, newProcessName) {
+validateProcessName <- function(projectPath, modelName, newProcessName) {
     onlyValidCharactersInProcessnName(newProcessName) & checkProcessNameAgainstExisting(projectPath = projectPath, modelName = modelName, newProcessName = newProcessName)
 }
 
@@ -2406,7 +2527,7 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName,
     # Change the process name only if different from the existing:
     if(!identical(processName, newProcessName)) {
         # Validate the new process name (for invalid characters):
-        if(validateProcessnName(projectPath = projectPath, modelName = modelName, newProcessName = newProcessName)) {
+        if(validateProcessName(projectPath = projectPath, modelName = modelName, newProcessName = newProcessName)) {
             setProcessMemory(
                 projectPath = projectPath, 
                 modelName = modelName, 
@@ -2810,7 +2931,9 @@ parseParameter <- function(parameter, simplifyVector = TRUE) {
     if("json" %in% class(parameter)) {
         parameter <- jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
     }
-    else if(is.character(parameter) && jsonlite::validate(parameter)) {
+    #else if(is.character(parameter) && jsonlite::validate(parameter)) {
+    # No need to validate, as inavlid json will lead to error in jsonlite::parse_json:
+    else if(is.character(parameter)) {
         parameter <- jsonlite::parse_json(parameter, simplifyVector = simplifyVector)
     }
     parameter
@@ -2914,7 +3037,7 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive 
     
     # Get a default new process name, or check the validity of the given process name:
     if(length(processName)) {
-        validProcessnName <- validateProcessnName(
+        validProcessnName <- validateProcessName(
             projectPath = projectPath, 
             modelName = modelName, 
             newProcessName = processName

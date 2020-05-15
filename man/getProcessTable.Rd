@@ -4,11 +4,13 @@
 \alias{getProcessTable}
 \alias{scanForModelError}
 \alias{getProcessesSansProcessData}
+\alias{getProcessAndFunctionNames}
 \title{Functions to get the process table of a model.}
 \usage{
 getProcessTable(
   projectPath,
   modelName,
+  afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL
 )
@@ -16,6 +18,7 @@ getProcessTable(
 scanForModelError(
   projectPath,
   modelName,
+  afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL
 )
@@ -23,6 +26,15 @@ scanForModelError(
 getProcessesSansProcessData(
   projectPath,
   modelName,
+  afterProcessID = NULL,
+  beforeProcessID = NULL,
+  argumentFilePaths = NULL
+)
+
+getProcessAndFunctionNames(
+  projectPath,
+  modelName,
+  afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL
 )

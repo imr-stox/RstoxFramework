@@ -9,7 +9,8 @@ resetModel(
   modelName,
   processID = NULL,
   processDirty = FALSE,
-  shift = 0
+  shift = 0,
+  returnProcessTable = FALSE
 )
 }
 \arguments{

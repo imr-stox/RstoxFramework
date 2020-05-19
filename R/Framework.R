@@ -2917,26 +2917,26 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
     return(modified)
 }
 
-#' 
-#' 
-#' @param parameter 
-#' @param simplifyVector 
-#' 
-#' @export
-#' 
-# Convert JSON input to list:
-parseParameter <- function(parameter, simplifyVector = TRUE) {
-    # If the parameter is JSON, convert to list:
-    if("json" %in% class(parameter)) {
-        parameter <- jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
-    }
-    #else if(is.character(parameter) && jsonlite::validate(parameter)) {
-    # No need to validate, as inavlid json will lead to error in jsonlite::parse_json:
-    else if(is.character(parameter)) {
-        parameter <- jsonlite::parse_json(parameter, simplifyVector = simplifyVector)
-    }
-    parameter
-}
+##' 
+##' 
+##' @param parameter 
+##' @param simplifyVector 
+##' 
+##' @export
+##' 
+## Convert JSON input to list:
+#parseParameter <- function(parameter, simplifyVector = TRUE) {
+#    # If the parameter is JSON, convert to list:
+#    if("json" %in% class(parameter)) {
+#        parameter <- jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
+#    }
+#    #else if(is.character(parameter) && jsonlite::validate(parameter)) {
+#    # No need to validate, as inavlid json will lead to error in jsonlite::parse_json:
+#    else if(is.character(parameter)) {
+#        parameter <- jsonlite::parse_json(parameter, simplifyVector = simplifyVector)
+#    }
+#    parameter
+#}
 
 
 

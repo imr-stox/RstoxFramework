@@ -1601,8 +1601,7 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
                 hitsOr <- logical(length(conditionNames))
                 names(hitsOr) <- conditionNames
                 for(conditionName in conditionNames) {
-                    if(identical(functionArguments[[conditionName]], functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]])) {
-                        #toShow[[argumentName]] <- TRUE
+                    if(functionArguments[[conditionName]] %in% functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]]) {
                         hitsOr[conditionName] <- TRUE
                     }
                 }
@@ -3115,9 +3114,11 @@ addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE, 
     # Return the process table:
     if(returnProcessTable) {
         processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
+        activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
         return(
             list(
                 processTable = processTable, 
+                activeProcess = activeProcess, 
                 saved = isSaved(projectPath)
             )
         )
@@ -3177,9 +3178,11 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
     # Return the process table if requested:
     if(returnProcessTable) {
         processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
+        activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
         return(
             list(
                 processTable = processTable, 
+                activeProcess = activeProcess, 
                 saved = isSaved(projectPath)
             )
         )
@@ -3211,9 +3214,11 @@ removeProcess <- function(projectPath, modelName, processID) {
     
     # Return the process table:
     processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
+    activeProcess <- getActiveProcess(projectPath = projectPath, modelName = modelName)
     return(
         list(
             processTable = processTable, 
+            activeProcess = activeProcess, 
             saved = isSaved(projectPath)
         )
     )

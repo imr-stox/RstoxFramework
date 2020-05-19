@@ -191,3 +191,7 @@ if (file.exists(tempfile)){
 
 # expected errors reading
 expect_error(project <- readProject("../../inst/testresources/dummy_project_functionparametererror.xml"))
+
+
+# testing legacy stox reader
+

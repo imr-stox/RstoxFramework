@@ -2917,14 +2917,17 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
     return(modified)
 }
 
-##' 
-##' 
-##' @param parameter 
-##' @param simplifyVector 
-##' 
-##' @export
-##' 
-## Convert JSON input to list:
+#' 
+#' 
+#' @param parameter 
+#' @param simplifyVector 
+#' 
+#' @export
+#' 
+# Convert JSON input to list:
+parseParameter <- function(parameter, simplifyVector = TRUE) {
+    jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
+}
 #parseParameter <- function(parameter, simplifyVector = TRUE) {
 #    # If the parameter is JSON, convert to list:
 #    if("json" %in% class(parameter)) {
@@ -2937,6 +2940,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
 #    }
 #    parameter
 #}
+
+
 
 
 

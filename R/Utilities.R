@@ -173,8 +173,8 @@ getNewDefaultName <- function(names, prefix) {
 #' @export
 #' 
 json2expression <- function(json) {
-    #l <- parseParameter(json, simplifyVector = FALSE)
-    l <- jsonlite::fromJSON(json, simplifyVector = FALSE)
+    l <- parseParameter(json, simplifyVector = FALSE)
+    #l <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     list2expression(l)
 }
 

@@ -111,6 +111,8 @@ processStox27process <- function(node, strict){
   process$output <- character()
   
   children <- xml2::xml_children(node)
+  
+  parameterIndex <- 1
 
   for (c in children){
     n <- xml2::xml_name(c)
@@ -130,7 +132,8 @@ processStox27process <- function(node, strict){
       process$fileoutput <- as.logical(get_simple_content(c))
     }
     else if (n=="parameter"){
-      process$parameter <- processStox27parameter(c, strict)
+      process$parameter[[parameterIndex]] <- processStox27parameter(c, strict)
+      parameterIndex <- parameterIndex + 1
     }
     else if (n=="output"){
       process$output <- get_simple_content(c)
@@ -360,6 +363,7 @@ processStox27Project <- function(node, strict){
   project$processdata <- list()
   
   modelIndex <- 1
+  processDataIndex <- 1
   
   children <- xml2::xml_children(node)
   for (c in children){
@@ -372,7 +376,8 @@ processStox27Project <- function(node, strict){
       modelIndex <- modelIndex + 1
     }
     else if (n=="processdata"){
-      project$processdata <- processStox27Processdata(c, strict)
+      project$processdata[[processDataIndex]] <- processStox27Processdata(c, strict)
+      processDataIndex <- processDataIndex + 1
     }
     else{
       skipping(paste("Unrecognized child element of project:", n), strict)
@@ -510,11 +515,20 @@ isMeta <- function(meta){
 #' @noRd
 isParameter <- function(parameter){
   
-  if (isEmptyList(parameter)){
-    return(T)
+  if (!is.list(parameter)){
+    return(F)
+  }
+  if (!is.null(names(parameter))){
+    return(F)
   }
   
-  isNestedList(parameter, c("name", "parameter"), c(is.character, is.character))
+  for (p in parameter){
+    if (!isNestedList(p, c("name", "parameter"), c(is.character, is.character))){
+      return(F)
+    }
+  }
+  
+  return(T)
 }
 
 #' check for unbounded list process
@@ -549,9 +563,12 @@ isModel <- function(model){
   }
   
   for (m in model){
-    return(isNestedList(m, c("name", "process"), c(is.character, isProcess)))  
+    if(!isNestedList(m, c("name", "process"), c(is.character, isProcess))){
+      return(F)
+    }
   }
   
+  return(T)
 }
 
 #' Checks an optional list is containing an  unbounded list with only character members
@@ -635,8 +652,22 @@ isCovparam <- function(covparam){
 
 #' @noRd
 isProcessData <- function(processdata){
-  return(isNestedList(processdata, c("bioticassignment", "suassignment", "assignmentresolution", "edsupsu", "psustratum", "stratumpolygon", "temporal", "gearfactor", "spatial", "ageerror", "stratumneighbour", "platformfactor", "covparam"), 
-                                  c(isBioticassignment, isSuassignment, isAssignmentresolution, isEdsupsu, isPsustratum, isStratumpolygon, isCovariatesourcetype, isCovariatesourcetype, isCovariatesourcetype, isAgeerror, isStratumneighbour, isPlatformfactor, isCovparam)))
+  
+  if (!is.list(processdata)){
+    return(F)
+  }
+  if (!is.null(names(processdata))){
+    return(F)
+  }
+  
+  for (p in processdata){
+    if (!isNestedList(p, c("bioticassignment", "suassignment", "assignmentresolution", "edsupsu", "psustratum", "stratumpolygon", "temporal", "gearfactor", "spatial", "ageerror", "stratumneighbour", "platformfactor", "covparam"), 
+                        c(isBioticassignment, isSuassignment, isAssignmentresolution, isEdsupsu, isPsustratum, isStratumpolygon, isCovariatesourcetype, isCovariatesourcetype, isCovariatesourcetype, isAgeerror, isStratumneighbour, isPlatformfactor, isCovparam))){
+      return(F)
+    }
+  }
+  
+  return(T)
 }
 
 #' valid stox 2.7 project

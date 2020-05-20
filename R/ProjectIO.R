@@ -1,9 +1,4 @@
-#library(xml2)
-#library(data.table)
 
-#
-# parsing XML
-#
 
 #' Extracts text value form node with n attributes
 #'@keywords internal
@@ -18,799 +13,763 @@ get_simple_content <- function(node){
   return(xml2::xml_text(node,trim=T))
 }
 
-# Parses covariate definitions from xml
-process_covardef <- function(node){
-  
-  table <- data.table(covariatesourcetype=character(), covariate=character(), value=character())
-  for (cc in xml2::xml_children(node)){
-    sourcestype <- xml2::xml_attr(cc, "covariatesourcetype")
-    covariate <- xml2::xml_attr(cc, "covariate")
-    value <- xml2::xml_text(cc, T)
-    table <- rbind(table, data.table(covariatesourcetype=c(sourcestype), covariate=c(covariate), value=c(value)))
+#
+# Legacy stox project parsers
+#
+
+#' response when unrecognized elements are encountered.
+#' @param message message to user
+#' @param strict logical, error is raised if strict is true, otherwise a warning is generated
+#' @noRd
+skipping <- function(message, strict){
+  if (strict){
+    stop(message)
   }
-  return(table)
+  else{
+    warning(message)
+  }
 }
 
-#' Parses processdata from xml
-#'@keywords internal
-#'@noRd
-process_processdata <- function(node){
+#' @noRd
+processStox27Meta <- function(node, strict){
+  
+  meta <- list()
+  attributes <- xml2::xml_attrs(node)
+  if (length(attributes)>0){
+    skipping("attributes on element 'meta' are not recognized.", strict)
+  }
+  
+  meta$description <- character()
+  meta$surveyTimeseriesName <- character()
+  
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n=="description"){
+      meta$description <- get_simple_content(c)
+    }
+    else if (n=="surveyTimeseriesName"){
+      meta$surveyTimeseriesName <- get_simple_content(c)
+    }
+    else{
+      skipping(paste("Unrecognized attribute of meta:", n), strict)
+    }
+  }
+  
+  return(meta)
+}
+
+#' @noRd
+processStox27parameter <- function(node, strict){
+  parameter <- list()
+  attributes <- xml2::xml_attrs(node)
+  
+  parameter$name <- character()
+  for(n in names(attributes)){
+    if (n=="name"){
+      parameter$name <- attributes[[n]]
+    }
+    else{
+      skipping(paste("Unrecognized attribute of parameter:", n), strict)
+    }
+  }
+  
+  if (length(parameter$name) <1){
+    skipping(paste("Missing required attribute of parameter: 'name'"), strict)
+  }
+  
+  
+  children <- xml2::xml_children(node)
+  
+  for (c in children){
+    n <- xml2::xml_name(c)
+    skipping(paste("Unrecognized child element of parameter:", n), strict)
+  }
+  
+  parameter$parameter <- xml2::xml_text(node)
+  
+  return(parameter)
+}
+
+#' @noRd
+processStox27process <- function(node, strict){
+  process <- list()
+  attributes <- xml2::xml_attrs(node)
+  
+  process$name <- character()
+  
+  for(n in names(attributes)){
+    if (n=="name"){
+      process$name <- attributes[[n]]
+    }
+    else{
+      skipping(paste("Unrecognized attribute of process:", n), strict)
+    }
+  }
+  
+  if (length(process$name) <1){
+    skipping(paste("Missing required attribute of process: 'name'"), strict)
+  }
+  
+  
+  process[["function"]] <- character()
+  process$enabled <- logical()
+  process$respondingui <- logical()
+  process$breakingui <- logical()
+  process$fileoutput <- logical()
+  process$parameter <- list()
+  process$output <- character()
+  
+  children <- xml2::xml_children(node)
+  
+  parameterIndex <- 1
+
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n=="function"){
+      process[["function"]] <- get_simple_content(c)
+    }
+    else if (n=="enabled"){
+      process$enabled <- as.logical(get_simple_content(c))
+    }
+    else if (n=="respondingui"){
+      process$respondingui <- as.logical(get_simple_content(c))
+    }
+    else if (n=="breakingui"){
+      process$breakingui <- as.logical(get_simple_content(c))
+    }
+    else if (n=="fileoutput"){
+      process$fileoutput <- as.logical(get_simple_content(c))
+    }
+    else if (n=="parameter"){
+      process$parameter[[parameterIndex]] <- processStox27parameter(c, strict)
+      parameterIndex <- parameterIndex + 1
+    }
+    else if (n=="output"){
+      process$output <- get_simple_content(c)
+    }
+    
+    else{
+      skipping(paste("Unrecognized child element of process:", n), strict)
+    }
+  }
+  return(process)
+}
+
+#' @noRd
+processStox27Model <- function(node, strict){
+  model <- list()
+  attributes <- xml2::xml_attrs(node)
+  
+  model$name <- character()
+  for(n in names(attributes)){
+    if (n=="name"){
+      model$name <- attributes[[n]]
+    }
+    else{
+      skipping(paste("Unrecognized attribute of model:", n), strict)
+    }
+  }
+  
+  if (length(model$name) <1){
+    skipping(paste("Missing required attribute of model: 'name'"), strict)
+  }
+  
+  model$process <- list()
+  
+  processIndex <- 1
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n=="process"){
+      model$process[[processIndex]] <- processStox27process(c, strict)
+      processIndex <- processIndex + 1
+    }
+    else{
+      skipping(paste("Unrecognized child element of model:", n), strict)
+    }
+  }
+  return(model)
+}
+
+processStox27ValueWattribute <- function(node, strict, attributenames){
+  value <- list()
+  
+  for (attributename in attributenames){
+    value[[attributename]] <- character()    
+  }
   
   attributes <- xml2::xml_attrs(node)
-  for (n in names(attributes)){
-    stop(paste("Parsing of attribute", n, "not supported"))
+  for(n in names(attributes)){
+    
+    if (n %in% attributenames){
+      value[[n]] <- attributes[[n]]
+    }
+    else{
+      nodename <- xml2::xml_name(node)
+      skipping(paste("Unrecognized attribute of",nodename,":", n), strict)  
+    }
   }
+  
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml2::xml_name(c)
+    skipping(paste("Unrecognized child element of element", xml2::xml_name(node), ":", n), strict)
+  }
+  
+  value[[xml2::xml_name(node)]] <- xml2::xml_text(node)
+  
+  return(value)
+}
 
-  pd <- list()  
-  pd$BioticAssignment <- data.table(assignmentid=character(), station=character(), stationweight=character())
-  pd$SuAssignment <- data.table(sampleunit=character(), estlayer=character(), assignmentid=character())
-  pd$AssignmentResolution <- list()
-  pd$EdsuPsu <- list()
-  pd$PsuStratum <- list()
-  pd$StratumPolygon <- list()
-  pd$Temporal <- data.table(covariatesourcetype=character(), covariate=character(), value=character())
-  pd$Gearfactor <- data.table(covariatesourcetype=character(), covariate=character(), value=character())
-  pd$Spatial <- data.table(covariatesourcetype=character(), covariate=character(), value=character())
-  pd$Platformfactor <- data.table(covariatesourcetype=character(), covariate=character(), value=character())
-  pd$CovParam <- list()
-  pd$AgeError <-  data.table(readage=character(), realage=character(), probability=character())
-  pd$StratumNeighbour <- list()
+#' @noRd
+processStox27ValueWattributeList <- function(node, strict, elementname, attributenames){
+  l <- list()
+  
+  attributes <- xml2::xml_attrs(node)
+  for(n in names(attributes)){
+    skipping(paste("Unrecognized attribute of assignmentresolution:", n), strict)
+  }
+  
+  l[[elementname]] <- list()
+  index <- 1
+  
+  children <- xml2::xml_children(node)
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n==elementname){
+      l[[elementname]][[index]] <- processStox27ValueWattribute(c, strict, attributenames)
+      index <- index + 1
+    }
+    else{
+      skipping(paste("Unrecognized child element of", elementname, ":", n), strict)
+    }
+  }
+  
+  return(l) 
+}
+
+#' @noRd
+processStox27Processdata <- function(node, strict){
+  processdata <- list()
+  attributes <- xml2::xml_attrs(node)
+  for(n in names(attributes)){
+    skipping(paste("Unrecognized attribute of processdata:", n), strict)
+  }
+  
+  processdata$bioticassignment <- list()
+  processdata$suassignment <- list()
+  processdata$assignmentresolution <- list()
+  processdata$edsupsu <- list()
+  processdata$psustratum <- list()
+  processdata$stratumpolygon <- list()
+  processdata$temporal <- list()
+  processdata$gearfactor <- list()
+  processdata$spatial <- list()
+  processdata$ageerror <- list()
+  processdata$stratumneighbour <- list()
+  processdata$platformfactor <- list()
+  processdata$covparam <- list()
   
   children <- xml2::xml_children(node)
   for (c in children){
     n <- xml2::xml_name(c)
     if (n=="bioticassignment"){
-      for (cc in xml2::xml_children(c)){
-        pd$BioticAssignment <- rbind(pd$BioticAssignment, data.table(assignmentid=c(xml2::xml_attr(cc, "assignmentid")), station=c(xml2::xml_attr(cc, "station")), stationweight=c(xml2::xml_text(cc, T))))  
-      }
+      processdata$bioticassignment <- processStox27ValueWattributeList(c, strict, "stationweight", c("assignmentid", "station"))
     }
     else if (n=="suassignment"){
-      for (cc in xml2::xml_children(c)){
-        pd$SuAssignment <- rbind(pd$SuAssignment, data.table(sampleunit=c(xml2::xml_attr(cc, "sampleunit")), estlayer=c(xml2::xml_attr(cc, "estlayer")), assignmentid=c(xml2::xml_text(cc, T))))  
-      }
+      processdata$suassignment <- processStox27ValueWattributeList(c, strict, "assignmentid", c("sampleunit", "estlayer"))
     }
     else if (n=="assignmentresolution"){
-      for (cc in xml2::xml_children(c)){
-        var <- xml2::xml_attr(cc, "variable")
-        value <- xml2::xml_text(cc, T)
-        pd$AssignmentResolution[[var]]<-value
-      }
+      processdata$assignmentresolution <- processStox27ValueWattributeList(c, strict, "value", "variable")
     }
     else if (n=="edsupsu"){
-      for (cc in xml2::xml_children(c)){
-        edsu <- xml2::xml_attr(cc, "edsu")
-        value <- xml2::xml_text(cc, T)
-        pd$EdsuPsu[[edsu]]<-value
-      }
+      processdata$edsupsu <- processStox27ValueWattributeList(c, strict, "psu", "edsu")
     }
     else if (n=="psustratum"){
-      for (cc in xml2::xml_children(c)){
-        psu <- xml2::xml_attr(cc, "psu")
-        value <- xml2::xml_text(cc, T)
-        pd$PsuStratum[[psu]]<-value
-      }
+      processdata$psustratum <- processStox27ValueWattributeList(c, strict, "stratum", "psu")
     }
     else if (n=="stratumpolygon"){
-      for (cc in xml2::xml_children(c)){
-        key <- xml2::xml_attr(cc, "polygonkey")
-        var <- xml2::xml_attr(cc, "polygonvariable")
-        value <- xml2::xml_text(cc, T)
-        if (is.null(pd$StratumPolygon[[key]])){
-          pd$StratumPolygon[[key]]<-list()          
-        }
-        pd$StratumPolygon[[key]][[var]]<-value
-      }
+      processdata$stratumpolygon <- processStox27ValueWattributeList(c, strict, "value", c("polygonkey", "polygonvariable"))
     }
     else if (n=="temporal"){
-      pd$Temporal <- process_covardef(c)
+      processdata$temporal <- processStox27ValueWattributeList(c, strict, "value", c("covariatesourcetype", "covariate"))
     }
     else if (n=="gearfactor"){
-      pd$Gearfactor <- process_covardef(c)
+      processdata$gearfactor <- processStox27ValueWattributeList(c, strict, "value", c("covariatesourcetype", "covariate"))
     }
     else if (n=="spatial"){
-      pd$Spatial <- process_covardef(c)
-    }
-    else if (n=="platformfactor"){
-      pd$Platformfactor <- process_covardef(c)
-    }
-    else if (n=="covparam"){
-      for (cc in xml2::xml_children(c)){
-        covariatetable <- xml2::xml_attr(cc, "covariatetable")
-        parameter <- xml2::xml_attr(cc, "parameter")
-        value <- xml2::xml_text(cc, T)
-        if (is.null(pd$CovParam[[covariatetable]])){
-          pd$CovParam[[covariatetable]]<-list()          
-        }
-        pd$CovParam[[covariatetable]][[parameter]]<-value
-      }
+      processdata$spatial <- processStox27ValueWattributeList(c, strict, "value", c("covariatesourcetype", "covariate"))
     }
     else if (n=="ageerror"){
-      for (cc in xml2::xml_children(c)){
-        readage <- xml2::xml_attr(cc, "readage")
-        realage <- xml2::xml_attr(cc, "realage")
-        value <- xml2::xml_text(cc, T)
-        pd$AgeError <-rbind(pd$AgeError, data.table(readage=c(readage), realage=c(realage), probability=c(value)))
-      }
+      processdata$ageerror <- processStox27ValueWattributeList(c, strict, "probability", c("readage", "realage"))
     }
     else if (n=="stratumneighbour"){
-      for (cc in xml2::xml_children(c)){
-        stratum <- xml2::xml_attr(cc, "variable")
-        neighbour <- xml2::xml_text(cc, T)
-        if (!is.null(pd$StratumNeighbour[[stratum]])){
-          pd$StratumNeighbour[[stratum]] <- c(pd$StratumNeighbour[[stratum]], neighbour)
-        }else{
-          pd$StratumNeighbour[[stratum]] <- c(neighbour)
-        }
-      }
+      processdata$stratumneighbour <- processStox27ValueWattributeList(c, strict, "value", "variable")
+    }
+    else if (n=="platformfactor"){
+      processdata$platformfactor <- processStox27ValueWattributeList(c, strict, "value", c("covariatesourcetype", "covariate"))
+    }
+    else if (n=="covparam"){
+      processdata$covparam <- processStox27ValueWattributeList(c, strict, "value", c("covariatetable", "parameter"))
     }
     else{
-      stop(paste("Parsing of element", n, "not supported"))
+      skipping(paste("Unrecognized child element of processdata:", n), strict)
     }
   }
   
-  return(pd)
+  return(processdata)
 }
 
-#' Parses function inputs from xml
-#'@keywords internal
-#'@noRd
-process_processparameters <- function(node){
-  
-  attributes <- xml2::xml_attrs(node)
-  for (n in names(attributes)){
-      stop(paste("Parsing of attribute", n, "not supported"))
-  }
-  
-  
-  fi <- list()
-  fi$Enabled <- logical()
-  fi$FileOutput <- logical()
-  fi$BreakInGUI <- logical()
-  
-  children <- xml2::xml_children(node)
-  for (c in children){
-    n <- xml2::xml_name(c)
-    if (n=="enabled"){
-      fi$Enabled <- as.logical(get_simple_content(c))
-    }
-    else if (n=="breakingui"){
-      fi$BreakInGUI <- as.logical(get_simple_content(c))
-    }
-    else if (n=="fileoutput"){
-      fi$FileOutput <- as.logical(get_simple_content(c))
-    }
-    else{
-      stop(paste("Parsing of element", n, "not supported"))
-    }
-  }
-
-  return(fi)
-}
-
-#' Parses function parameter
-#' @parvalue string representation of value
-#' @typename type of value
-#' @keywords internal
 #' @noRd
-parse_function_parameter <- function(parvalue, typename){
-  if (typename=="character"){
-    return(parvalue)
-  }
-  else if (typename=="logical"){
-    return(as.logical(parvalue))
-  }
-  else if (typename=="integer"){
-    return(as.integer(parvalue))
-  }
-  else if (typename=="numeric"){
-    return(as.numeric(parvalue))
-  }
-  else{
-    stop("Parameter type", typename, "not supported.")
-  }
-}
-
-#'Parses process from xml
-#'@param node
-#'@param baselineprocess indicate whether the process to parse is a baselineprocess (may contain processdata)
-#'@keywords internal
-#'@noRd
-parse_process <- function(node, baselineprocess=F){
+processStox27Project <- function(node, strict){
   
-  process <- list()
-  process$ProcessName <- character()
-  
+  project <- list()
   attributes <- xml2::xml_attrs(node)
-  for (n in names(attributes)){
-    if (n=="processname"){
-      process$ProcessName <- attributes[n]
-    }
-    else{
-      stop(paste("Parsing of attribute", n, "not supported"))
-    }
-  }
-  
-  process$FunctionName <- character()
-  process$ProcessParameters <- list()
-  process$FunctionParameters <- list()
-  process$FunctionInputs <- list()
-  process$Output <- character()
-  
-  if (baselineprocess){
-    process$ProcessData <- list()
-  }
-  
-  children <- xml2::xml_children(node)
-  for (c in children){
-    n <- xml2::xml_name(c)
-    if (n == "functionname"){
-      process$FunctionName <- get_simple_content(c)
-    }
-    else if (n == "processparameters"){
-      process$ProcessParameters <- process_processparameters(c)
-    }
-    else if (n == "functioninput"){
-      if (length(xml2::xml_attrs(c))!=2){
-        stop(paste("Unexpected number of attributes for element", n))
-      }
-      if (nchar(xml2::xml_text(c,trim=T))!=0){
-        stop(paste("Unexpected content for element", n))
-      }
-      inputname <- xml2::xml_attr(c, "dataparameter")
-      inputprocess <- xml2::xml_attr(c, "inputprocessname")
-      process$FunctionInputs[[inputname]] <- inputprocess
-    }
-    else if (n == "functionparameter"){
-      if (length(xml2::xml_attrs(c))!=2){
-        stop(paste("Unexpected number of attributes for element", n))
-      }
-      parname <- xml2::xml_attr(c, "name")
-      typename <- xml2::xml_attr(c, "paramtypename")
-      parvalue <- xml2::xml_text(c,trim=T)
-      
-      if (is.null(process$FunctionParameters[[parname]])){
-        process$FunctionParameters[[parname]] <- parse_function_parameter(parvalue, typename)
-      } else{
-        process$FunctionParameters[[parname]] <- c(process$FunctionParameters[[parname]], parse_function_parameter(parvalue, typename))
-      }
-      
-    }
-    else if (n == "output"){
-      process$Output <- get_simple_content(c)
-    }
-    else if (n == "processdata"){
-      if (!baselineprocess){
-        stop("Processdata found when parsing without baselineprocessing options enabled")
-      }
-      else{
-        process$ProcessData <- process_processdata(c)
-      }
-    }
-    
-    else{
-      stop(paste("Parsing of element", n, "not supported"))
-    }
-  }
-  
-  return(process)
-}
-
-#'Parses rstoxdependencies from xml
-#'@keywords internal
-#'@noRd
-process_rstoxdependencies <- function(node){
-  
-  attributes <- xml2::xml_attrs(node)
-  for (n in names(attributes)){
-    stop(paste("Parsing of attribute", n, "not supported"))
-  }
-  
-  deps <- list()
-  children <- xml2::xml_children(node)
-  for (c in children){
-    n <- xml2::xml_name(c)
-    if (n=="rlibrary"){
-      if (length(xml2::xml_attrs(c))!=2){
-        stop(paste("Unexpected number of attributes for element", n))
-      }
-      if (nchar(xml2::xml_text(c,trim=T))!=0){
-        stop(paste("Unexpected content for element", n))
-      }
-      libraryname <- xml2::xml_attr(c, "library")
-      version <- xml2::xml_attr(c, "version")
-      deps[[libraryname]] <- version
-    }
-    else{
-      stop(paste("Parsing of element", n, "not supported"))
-    }
-  }
-  
-  return(deps) 
-}
-
-#'Parses models from xml
-#'@keywords internal
-#'@noRd
-process_model <- function(node){
-  attributes <- xml2::xml_attrs(node)
-  
-  for (n in names(attributes)){
-    stop(paste("Parsing of attribute", n, "not supported"))
-  }
-  
-  model <- list()
-  children <- xml2::xml_children(node)
-  for (c in children){
-    n <- xml2::xml_name(c)
-    if (n=="process"){
-      processname <- xml2::xml_attr(c, "processname")
-      if (processname %in% names(model)){
-        stop(paste("Recurring processname in model:",processname))
-      }
-      model[[processname]] <- parse_process(c, F)
-    }
-    else if (n=="baselineprocess"){
-      processname <- xml2::xml_attr(c, "processname")
-      if (processname %in% names(model)){
-        stop(paste("Recurring processname in model:",processname))
-      }
-      model[[processname]] <- parse_process(c, T)
-    }
-    else{
-        stop(paste("Parsing of element", n, "not supported"))
-    }
-  }
-  
-  return(model) 
-}
-
-#'Parses project from xml
-#'@keywords internal
-#'@noRd
-process_project <- function(node){
-  
-  projectDescription <- list()
-  attributes <- xml2::xml_attrs(node)
-  
-  #
-  # check that namespace is given
-  #
-  
-  if (!("xmlns" %in% names(attributes))){
-    stop("No default namespace provided. Namespace prefix not supported.")
-  }
-  
   
   #
   # handle attributes
   #
+  project$template <- character()
+  project$lastmodified <- character()
+  project$rstoxversion <- character()
+  project$stoxversion <- character()
+  project$rversion <- character()
+  project$resourceversion <- character()
+  project$version <- character()
   
-  projectDescription$Template <- character()
-  projectDescription$Description <- character()
-  projectDescription$Lastmodified <- .POSIXct(character(0))
-  projectDescription$Rstoxversion <- character()
-  projectDescription$Stoxversion <- character()
-  projectDescription$Rversion <- character()
-
   for(n in names(attributes)){
     if (n=="template"){
-      projectDescription$Template <- attributes[[n]]
-    }
-    else if (n=="description"){
-      projectDescription$Description <- attributes[[n]]
+      project$template <- attributes[[n]]
     }
     else if (n=="lastmodified"){
-      if (nchar(attributes[[n]])>0){
-        projectDescription$Lastmodified <- as.POSIXct(gsub("T", " ", attributes[[n]]))  
-      }
+      project$lastmodified <- attributes[[n]]
     }
     else if (n=="rstoxversion"){
-      projectDescription$Rstoxversion <- attributes[[n]]
+      project$rstoxversion <- attributes[[n]]
     }
     else if (n=="stoxversion"){
-      projectDescription$Stoxversion <- attributes[[n]]
+      project$stoxversion <- attributes[[n]]
     }
     else if (n=="rversion"){
-      projectDescription$Rversion <- attributes[[n]]
+      project$rversion <- attributes[[n]]
+    }
+    else if (n=="resourceversion"){
+      project$resourceversion <- attributes[[n]]
+    }
+    else if (n=="version"){
+      project$version <- attributes[[n]]
     }
     else if (n=="xmlns"){
-      compatibleFormats = c("http://www.imr.no/formats/stox/v3")
-      if (!(attributes[n] %in% compatibleFormats)){
-        warning(paste("default xml namespace", attributes[n], "is not a compatible format"))
-      }
+      project$xmlns <- attributes[[n]]
     }
     else{
-      stop(paste("Parsing of attribute", n, "not supported"))
+      skipping(paste("Unrecognized attribute of project:", n), strict)
     }
   }
-
+  
   #
   #handle child elements
   #
   
-  projectDescription$Baseline <- list()
-  projectDescription$Statistics <- list()
-  projectDescription$Report <- list()
-  projectDescription$RstoxDependencies <- list()
+  project$meta <- list()
+  project$model <- list()
+  project$processdata <- list()
+  
+  modelIndex <- 1
+  processDataIndex <- 1
   
   children <- xml2::xml_children(node)
   for (c in children){
     n <- xml2::xml_name(c)
-    if (n=="baselinemodel"){
-      projectDescription$Baseline <- process_model(c)
+    if (n=="meta"){
+      project$meta <- processStox27Meta(c, strict)
     }
-    else if (n=="statistics"){
-      projectDescription$Statistics <- process_model(c)
+    else if (n=="model"){
+      project$model[[modelIndex]] <- processStox27Model(c, strict)
+      modelIndex <- modelIndex + 1
     }
-    else if (n=="report"){
-      projectDescription$Report <- process_model(c)
-    }
-    else if (n=="rstoxdependencies"){
-      projectDescription$RstoxDependencies <- process_rstoxdependencies(c)
+    else if (n=="processdata"){
+      project$processdata[[processDataIndex]] <- processStox27Processdata(c, strict)
+      processDataIndex <- processDataIndex + 1
     }
     else{
-      stop(paste("Parsing of element", n, "not supported"))
+      skipping(paste("Unrecognized child element of project:", n), strict)
     }
   }
-  return(projectDescription)
+  return(project)
 }
 
-#' Inspects all elements and attributes and processes them.
+#' @noRd
+processStox27Projects <- function(root, strict){
+  projects <- list()
+  
+  projects$xmlns <- character()
+  
+  attributes <- xml2::xml_attrs(root)
+  for(n in names(attributes)){
+    if (n=="xmlns"){
+      projects$xmlns <- attributes[[n]]
+    }
+    else{
+      skipping(paste("Unrecognized attribute of projects:", n), strict)
+    }
+  }
+  
+  children <- xml2::xml_children(root)
+  projectIndex = 1
+  for (c in children){
+    n <- xml2::xml_name(c)
+    if (n=="project"){
+      projects[[projectIndex]] <- processStox27Project(c, strict)
+      projectIndex <- projectIndex + 1
+    }
+    else{
+      skipping(paste("Unrecognized child element of project:", n), strict)
+    }
+  }
+  
+  return(projects)
+}
+
+#' @noRd
+processStox27Xml <- function(root, strict){
+  
+  projects <- list()
+  if (xml2::xml_name(root) == "projects"){
+    projects <- processStox27Projects(root, strict)
+  }
+  else if (xml2::xml_name(root) == "project"){
+    projects[[1]] <- processStox27Project(root, strict)
+  }
+  else{
+    stop("Root name", xml2::xml_name(root), "not recognized.")
+  }
+  
+  return(projects)
+}
+
 #'
-#' @keywords internal
+#' Stox 2.7 project
+#' 
+#' @description
+#' Nested list representation of Stox 2.7 projects.
+#' 
+#' @details
+#' Naming and definitions follow the XML.
+#' Stox 2.7 projects conforms roughly to the namespace http://www.imr.no/formats/stox/v1.2,
+#' defined at http://www.imr.no/formats/stox/v1.2/stoxv1_2.xsd and in formats/stoxv2.7.xsd.
+#' 
+#' This schema is used with some additions in the representation, with the data type mapping:
+#' \describe{
+#'  \item{xs:string}{character}
+#'  \item{xs:boolean}{logical}
+#' }
+#' 
+#' In addition to structures defined in this schema, stox 2.7 may store the following structures:
+#' \describe{
+#'  \item{platformfactor}{list of lists with members 'value', 'covariatesourcetype', 'covariate'.}
+#'  \item{covparam}{list of lists with members 'value', 'covariatetable', 'parameter'}
+#' }
+#'  
+#' @name stox27project
+#' 
+NULL
+
+#' Checks that object is a list with the given members, and that the given typechecks are OK
+#' @param members character names that object should have
+#' @param typecheks functions mapping object to logical for checking types of corresponding members
+#' @return logical
 #' @noRd
-process_xml <- function(root){
-  return(process_project(root))
+isNestedList <- function(object, members, typechecks){
+  
+  stopifnot(length(members) == length(typechecks))
+  
+  if (!is.list(object)){
+    return(F)
+  }
+  if (!all(members %in% names(object))){
+    return(F)
+  }
+  
+  for (i in 1:length(members)){
+    member <- members[[i]]
+    check <- typechecks[[i]]
+    if(!check(object[[member]])){
+      return(F)
+    }
+  }
+
+  return(T)
 }
 
-
-#
-# /parsing XML
-#
-
-#
-# writing XML
-#
-
-#' Create XML node for processparameters
-#' @keywords internal
 #' @noRd
-getProcessParametersXml <- function(processparameters){
-  node <- xml2::xml_new_root("processparameters")
-  
-  enabled <- xml2::xml_new_root("enabled")
-  xml2::xml_text(enabled) <- tolower(as.character(processparameters$Enabled))
-  xml2::xml_add_child(node, enabled)
-  
-  if (!is.null(processparameters$BreakInGUI)){
-    bi <- xml2::xml_new_root("breakingui")
-    xml2::xml_text(bi) <- tolower(as.character(processparameters$BreakInGUI))
-    xml2::xml_add_child(node, bi)
+isEmptyList <- function(emptylist){
+  if (!is.list(emptylist)){
+    return(F)
+  }
+  if (length(emptylist)>0){
+    return(F)
   }
   
-  fo <- xml2::xml_new_root("fileoutput")
-  xml2::xml_text(fo) <- tolower(as.character(processparameters$FileOutput))
-  xml2::xml_add_child(node, fo)
-  
-  return(node)
+  return(T)
 }
 
-#' Get xml for covariate definitions
-#' @keywords internal
+#' optional
 #' @noRd
-getCovarDefXml <- function(dataframe, rootname){
-  rootnode <- xml2::xml_new_root(rootname)
-  nodename <- names(dataframe)[3]
-  att1 <- names(dataframe)[1]
-  att2 <- names(dataframe)[2]
-  for (i in 1:nrow(dataframe)){
-    node <- xml2::xml_new_root(nodename)
-    xml2::xml_attr(node, att1) <- dataframe[[att1]][[i]]
-    xml2::xml_attr(node, att2) <- dataframe[[att2]][[i]]
-    xml2::xml_text(node) <- dataframe[[nodename]][[i]]
-    xml2::xml_add_child(rootnode, node)
+isMeta <- function(meta){
+  
+  if (isEmptyList(meta)){
+    return(T)
   }
-  return(rootnode)
+  
+  return(isNestedList(meta, c("description", "surveyTimeseriesName"), c(is.character, is.character)))
 }
 
-#' Create XML node for processdata
-#' @keywords internal
+#' unbounded and optional, with required member 'name'
 #' @noRd
-getProcessDataXml <- function(processdata){
-  node <- xml2::xml_new_root("processdata")
+isParameter <- function(parameter){
   
-  if (!is.null(processdata$BioticAssignment)){
-    pd <- xml2::xml_new_root("bioticassignment")
-    for (i in 1:nrow(processdata$BioticAssignment)){
-      assignment <- xml2::xml_new_root("stationweight")
-      xml2::xml_attr(assignment, "assignmentid") <- processdata$BioticAssignment$assignmentid[i]
-      xml2::xml_attr(assignment, "station") <- processdata$BioticAssignment$station[i]
-      xml2::xml_text(assignment) <- processdata$BioticAssignment$stationweight[i]
-      xml2::xml_add_child(pd, assignment)
-    }
-    xml2::xml_add_child(node, pd)
+  if (!is.list(parameter)){
+    return(F)
+  }
+  if (!is.null(names(parameter))){
+    return(F)
   }
 
-
-  if (!is.null(processdata$SuAssignment)){
-    pd <- xml2::xml_new_root("suassignment")
-    for (i in 1:nrow(processdata$SuAssignment)){
-      assignment <- xml2::xml_new_root("assignmentid")
-      xml2::xml_attr(assignment, "sampleunit") <- processdata$SuAssignment$sampleunit[i]
-      xml2::xml_attr(assignment, "estlayer") <- processdata$SuAssignment$estlayer[i]
-      xml2::xml_text(assignment) <- processdata$SuAssignment$assignmentid
-      xml2::xml_add_child(pd, assignment)
+  for (p in parameter){
+    if (!isNestedList(p, c("name", "parameter"), c(is.character, is.character))){
+      return(F)
+    }    
+    if (length(p$name)<1){
+      return(F)
     }
-    xml2::xml_add_child(node, pd)
   }
   
-  if (!is.null(processdata$AssignmentResolution)){
-    pd <- xml2::xml_new_root("assignmentresolution")
-    for (n in names(processdata$AssignmentResolution)){
-      assignment <- xml2::xml_new_root("value")
-      xml2::xml_attr(assignment, "variable") <- n
-      xml2::xml_text(assignment) <- processdata$AssignmentResolution[[n]]
-      xml2::xml_add_child(pd, assignment)
-    }
-    xml2::xml_add_child(node, pd)
-  }
-  
-  if (!is.null(processdata$EdsuPsu)){
-    pd <- xml2::xml_new_root("edsupsu")
-    for (n in names(processdata$EdsuPsu)){
-      psu <- xml2::xml_new_root("psu")
-      xml2::xml_attr(psu, "edsu") <- n
-      xml2::xml_text(psu) <- processdata$EdsuPsu[[n]]
-      xml2::xml_add_child(pd, psu)
-    }
-    xml2::xml_add_child(node, pd)
-  }
-  
-  if (!is.null(processdata$PsuStratum)){
-    pd <- xml2::xml_new_root("psustratum")
-    for (n in names(processdata$PsuStratum)){
-      stratum <- xml2::xml_new_root("stratum")
-      xml2::xml_attr(stratum, "psu") <- n
-      xml2::xml_text(stratum) <- processdata$PsuStratum[[n]]
-      xml2::xml_add_child(pd, stratum)
-    }
-    xml2::xml_add_child(node, pd)
-  }
-
-  if (!is.null(processdata$StratumPolygon)){
-    pd <- xml2::xml_new_root("stratumpolygon")
-    for (n in names(processdata$StratumPolygon)){
-      for (entry in names(processdata$StratumPolygon[[n]])){
-        value <- xml2::xml_new_root("value")
-        xml2::xml_attr(value, "polygonkey") <- n
-        xml2::xml_attr(value, "polygonvariable") <- entry
-        xml2::xml_text(value) <- processdata$StratumPolygon[[n]][[entry]]
-        xml2::xml_add_child(pd, value)
-      }
-    }
-    xml2::xml_add_child(node, pd)
-  }
-
-  if (!is.null(processdata$Temporal)){
-    xml2::xml_add_child(node, getCovarDefXml(processdata$Temporal, "temporal"))  
-  }
-
-  if (!is.null(processdata$Gearfactor)){
-    xml2::xml_add_child(node, getCovarDefXml(processdata$Gearfactor, "gearfactor"))  
-  }
-  
-  if (!is.null(processdata$Spatial)){
-    xml2::xml_add_child(node, getCovarDefXml(processdata$Spatial, "spatial"))  
-  }
-  
-  if (!is.null(processdata$Platformfactor)){
-    xml2::xml_add_child(node, getCovarDefXml(processdata$Platformfactor, "platformfactor"))  
-  }
-  
-  
-  if (!is.null(processdata$CovParam)){
-    pd <- xml2::xml_new_root("covparam")
-    for (n in names(processdata$CovParam)){
-      for (entry in names(processdata$CovParam[[n]])){
-        value <- xml2::xml_new_root("value")
-        xml2::xml_attr(value, "covariatetable") <- n
-        xml2::xml_attr(value, "parameter") <- entry
-        xml2::xml_text(value) <- processdata$CovParam[[n]][[entry]]
-        xml2::xml_add_child(pd, value)
-      }
-    }
-    xml2::xml_add_child(node, pd)
-  }
-
-  if (!is.null(processdata$AgeError)){
-    pd <- xml2::xml_new_root("ageerror")
-    for (i in 1:nrow(processdata$AgeError)){
-      ageerror <- xml2::xml_new_root("probability")
-      xml2::xml_attr(ageerror, "readage") <- processdata$AgeError$readage[i]
-      xml2::xml_attr(ageerror, "realage") <- processdata$AgeError$realage[i]
-      xml2::xml_text(ageerror) <- processdata$AgeError$probability[i]
-      xml2::xml_add_child(pd, ageerror)
-    }
-    xml2::xml_add_child(node, pd) 
-  }
-  
-  if (!is.null(processdata$StratumNeighbour)){
-    pd <- xml2::xml_new_root("stratumneighbour")
-    for (n in names(processdata$StratumNeighbour)){
-      for (v in processdata$StratumNeighbour[[n]]){
-        value <- xml2::xml_new_root("value")
-        xml2::xml_attr(value, "variable") <- n
-        xml2::xml_text(value) <- v
-        xml2::xml_add_child(pd, value)
-      }
-    }
-    xml2::xml_add_child(node, pd)
-  }
-  
-  return(node)
+  return(T)
 }
 
-#' Create XML node for function parameter
-#' @keywords internal
+#' unbounded and optional, with required member 'name'
 #' @noRd
-getFunctionParameterXml <- function(name, paramvalue, paramclass){
-  paramnode <- xml2::xml_new_root("functionparameter")
-  xml2::xml_attr(paramnode, "name") <- name
+isProcess <- function(process){
   
-  if (paramclass=="character"){
-    xml2::xml_attr(paramnode, "paramtypename") <- "character"
-    xml2::xml_text(paramnode) <- as.character(paramvalue)    
+  if (!is.list(process)){
+    return(F)
   }
-  else if (paramclass=="integer"){
-    xml2::xml_attr(paramnode, "paramtypename") <- "integer"
-    xml2::xml_text(paramnode) <- as.character(paramvalue)    
-  }
-  else if (paramclass=="numeric"){
-    xml2::xml_attr(paramnode, "paramtypename") <- "numeric"
-    xml2::xml_text(paramnode) <- as.character(paramvalue)    
-  }
-  else if (paramclass=="logical"){
-    xml2::xml_attr(paramnode, "paramtypename") <- "logical"
-    xml2::xml_text(paramnode) <- as.character(paramvalue)    
-  }
-  else{
-    stop(paste("Function parameter of class", paramclass, "is not supported."))
+  if (!is.null(names(process))){
+    return(F)
   }
   
-  return(paramnode)
+  for (p in process){
+    if (!isNestedList(p, c("name", "function", "enabled", "respondingui", "breakingui", "fileoutput", "parameter", "output"), c(is.character, is.character, is.logical, is.logical, is.logical, is.logical, isParameter, is.character))){
+      return(F)
+    }
+    if (length(p$name)<1){
+      return(F)
+    }
+  }
+  
+  return(T)
 }
 
-#' Create XML node for process
-#' @param model nested list representation of model
-#' @param baselineprocess logical, whether to write baseline process (with processdata)
-#' @keywords internal
+#' unbounded and optional, with required member 'name'
 #' @noRd
-getProcessXml <- function(process, baselineprocess=F){
+isModel <- function(model){
   
-  if (baselineprocess){
-    node <- xml2::xml_new_root("baselineprocess")
+  if (!is.list(model)){
+    return(F)
   }
-  else{
-    node <- xml2::xml_new_root("process")  
+  if (!is.null(names(model))){
+    return(F)
   }
   
+  for (m in model){
+    if(!isNestedList(m, c("name", "process"), c(is.character, isProcess))){
+      return(F)
+    }
+    if (length(m$name)<1){
+      return(F)
+    }
+  }
   
-  functionnamenode <- xml2::xml_new_root("functionname")
-  xml2::xml_text(functionnamenode) <- process$FunctionName
-  xml2::xml_add_child(node, functionnamenode)
-  
-  xml2::xml_add_child(node, getProcessParametersXml(process$ProcessParameters))
+  return(T)
+}
 
-  for (n in names(process$FunctionInputs)){
-    finode <- xml2::xml_new_root("functioninput")
-    xml2::xml_attr(finode, "dataparameter") <- n
-    xml2::xml_attr(finode, "inputprocessname") <- process$FunctionInputs[[n]]
-    xml2::xml_add_child(node, finode)
+#' Checks an optional list is containing an optional unbounded list with only character members
+#' @noRd
+containsOptionalListOfCharValues <- function(charlist, listname, members){
+  if (isEmptyList(charlist)){
+    return(T)
   }
   
+  if (!(listname %in% names(charlist))){
+    return(F)
+  }
+  
+  if (!is.list(charlist[[listname]])){
+    return(F)
+  }
+  
+  if (!is.null(names(charlist[[listname]]))){
+    return(F)
+  }
+  
+  typecheckers <- c()
+  for (m in members){
+    typecheckers <- c(typecheckers, is.character)
+  }
+  
+  for (entry in charlist[[listname]]){
+    if (!isNestedList(entry, members, typecheckers)){
+      return(F)
+    }
+  }
+  
+  return(T)
+}
+
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isBioticassignment <- function(bioticassignment){
+  return(containsOptionalListOfCharValues(bioticassignment, "stationweight", c("assignmentid", "station", "stationweight")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isSuassignment <- function(suassignment){
+  return(containsOptionalListOfCharValues(suassignment, "assignmentid", c("sampleunit", "estlayer", "assignmentid")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isAssignmentresolution <- function(assignmentresolution){
+  return(containsOptionalListOfCharValues(assignmentresolution, "value", c("variable", "value")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isEdsupsu <- function(edsupsu){
+  return(containsOptionalListOfCharValues(edsupsu, "psu", c("edsu", "psu")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isPsustratum <- function(psustratum){
+  return(containsOptionalListOfCharValues(psustratum, "stratum", c("psu", "stratum")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isStratumpolygon <- function(stratumpolygon){
+  return(containsOptionalListOfCharValues(stratumpolygon, "value", c("polygonkey", "polygonvariable", "value")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isCovariatesourcetype <- function(temporal){
+  return(containsOptionalListOfCharValues(temporal, "value", c("covariatesourcetype", "covariate", "value")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isAgeerror <- function(ageerror){
+  return(containsOptionalListOfCharValues(ageerror, "probability", c("readage", "realage", "probability")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isStratumneighbour <- function(stratumneighbour){
+  return(containsOptionalListOfCharValues(stratumneighbour, "value", c("variable", "value")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isPlatformfactor <- function(platformfactor){
+  return(containsOptionalListOfCharValues(platformfactor, "value", c("covariatesourcetype", "covariate", "value")))
+}
+#' optional, with an unbounded and optional subconstruct with all character members
+#' @noRd
+isCovparam <- function(covparam){
+  return(containsOptionalListOfCharValues(covparam, "value", c("covariatetable", "parameter", "value")))
+}
+
+#' unbounded and optional
+#' @noRd
+isProcessData <- function(processdata){
+  
+  if (!is.list(processdata)){
+    return(F)
+  }
+  if (!is.null(names(processdata))){
+    return(F)
+  }
+  
+  for (p in processdata){
+    if (!isNestedList(p, c("bioticassignment", "suassignment", "assignmentresolution", "edsupsu", "psustratum", "stratumpolygon", "temporal", "gearfactor", "spatial", "ageerror", "stratumneighbour", "platformfactor", "covparam"), 
+                        c(isBioticassignment, isSuassignment, isAssignmentresolution, isEdsupsu, isPsustratum, isStratumpolygon, isCovariatesourcetype, isCovariatesourcetype, isCovariatesourcetype, isAgeerror, isStratumneighbour, isPlatformfactor, isCovparam))){
+      return(F)
+    }
+  }
+  
+  return(T)
+}
+
+#' valid stox 2.7 project
+#' @description checks if an object is a valid ~\code{\link[RstoxFramework]{stox27project}}
+#' @param stox27project object to check for validity
+#' @return logical true if 'stox27project' is a valid ~\code{\link[RstoxFramework]{stox27project}}
+#' @export
+isStox27project <- function(stox27project){
+  if (!is.list(stox27project)){
+    return(F)
+  }
+  if (length(stox27project) < 1){
+    return(F)
+  }
+  for (project in stox27project){
+    projectmembers <- c("template", "lastmodified", "rstoxversion", "stoxversion", "rversion", "resourceversion", "version", "meta", "model", "processdata")
+    if (!all(projectmembers %in% names(project))){
+      return(F)
+    }
+    if (!is.character(project$template)){
+      return(F)
+    }
+    if (!is.character(project$lastmodified)){
+      return(F)
+    }
+    if (!is.character(project$rstoxversion)){
+      return(F)
+    }
+    if (!is.character(project$stoxversion)){
+      return(F)
+    }
+    if (!is.character(project$rversion)){
+      return(F)
+    }
+    if (!is.character(project$resourceversion)){
+      return(F)
+    }
+    if (!is.character(project$version)){
+      return(F)
+    }
     
-  for (n in names(process$FunctionParameters)){
-    
-    for (p in process$FunctionParameters[[n]]){
-      xml2::xml_add_child(node, getFunctionParameterXml(n, p, class(process$FunctionParameters[[n]])))
+    if (!isMeta(project$meta)){
+      return(F)
     }
+    
+    if (!isModel(project$model)){
+      return(F)
+    }
+    
+    if (!isProcessData(project$processdata)){
+      return(F)
+    }
+    
   }
   
-  if (!is.null(process$Output)){
-    outputnode <- xml2::xml_new_root("output")
-    xml2::xml_text(outputnode) <- process$Output
-    xml2::xml_add_child(node, outputnode)
-  }
-  
-  if (baselineprocess){
-    xml2::xml_add_child(node, getProcessDataXml(process$ProcessData))
-  }
-  
-
-  
-  return(node)
+  return(T)
 }
-
-#' Create XML node for model
-#' @param model nested list representation of model
-#' @param baselinemodel logical, whether to write baselinemodel
-#' @param nodename name to use for node
-#' @keywords internal
-#' @noRd
-getModelXml <- function(model, baselinemodel, nodename){
-  node <- xml2::xml_new_root(nodename)
-  for (n in names(model)){
-    processnode <- getProcessXml(model[[n]], baselinemodel)
-    xml2::xml_attr(processnode, "processname") <- n 
-    xml2::xml_add_child(node, processnode)
-  }
-  return(node)
-}
-
-#' Create XML node for restox dependencies
-#' @param rstoxdependencies nested list representation of model
-#' @param baselinemodel logical, whether to write baselinemodel
-#' @param nodename name to use for node
-#' @keywords internal
-#' @noRd
-getRstoxDependenciesXml <- function(rstoxdependencies){
-  node <- xml2::xml_new_root("rstoxdependencies")
-  for (n in names(rstoxdependencies)){
-    depnode <- xml2::xml_new_root("rlibrary")
-    xml2::xml_attr(depnode, "library") <- n
-    xml2::xml_attr(depnode, "version") <- rstoxdependencies[[n]]
-    xml2::xml_add_child(node, depnode)
-  }
-  return(node)
-}
-
-#
-# /writing XML
-#
-
-
-#
-# public functions
-#
 
 #' Read Stox project from project xml
-#' @param projectxml xml filename
-#' @return Nested list representation of project
+#' @param projectxml xml filename of stox v2.7 project file
+#' @param strict logical, whether errors should be raised for unkown elements and attributes or missing required attributes, if False warnings will be issued.
+#' @return Nested list representation of project, formatted as: \code{\link[RstoxFramework]{stox27project}}
 #' @export
-readProject <- function(projectxml){
+readStox27Project <- function(projectxml, strict=T){
   tree <- xml2::read_xml(projectxml)
   
   root <- xml2::xml_root(tree)
   
-  projectDescription <- list()
-  return(process_xml(root))
-}
-
-#' Save Stox project to project xml file using namespace http://www.imr.no/formats/stox/v3
-#' @param projectDescription nested list representation of StoX project
-#' @param filename to write to
-#' @export
-saveProjectEdvin <- function(projectDescription, filename){
-  namespace = "http://www.imr.no/formats/stox/v3"
-  
-  doc <- xml2::xml_new_document()
-  xml2::xml_add_child(doc, "project")
-  root <- xml2::xml_root(doc)
-  xml2::xml_attr(root, "xmlns") <- namespace
-  
-  xml2::xml_attr(root, "template") <- projectDescription$Template
-  xml2::xml_attr(root, "description") <- projectDescription$Description
-  if (!is.null(projectDescription$Lastmodified)){
-    xml2::xml_attr(root, "lastmodified") <- gsub("\ ","T",as.character(projectDescription$Lastmodified))
-  }
-  xml2::xml_attr(root, "rstoxversion") <- projectDescription$Rstoxversion
-  xml2::xml_attr(root, "stoxversion") <- projectDescription$Stoxversion
-  xml2::xml_attr(root, "rversion") <- projectDescription$Rversion
-  
-  xml2::xml_add_child(root, getModelXml(projectDescription$Baseline, T, "baselinemodel"))
-  xml2::xml_add_child(root, getModelXml(projectDescription$Statistics, F, "statistics"))
-  xml2::xml_add_child(root, getModelXml(projectDescription$Report, F, "report"))
-  xml2::xml_add_child(root, getRstoxDependenciesXml(projectDescription$RstoxDependencies))
-  
-  xml2::write_xml(doc, filename)
+  return(processStox27Xml(root, strict))
 }

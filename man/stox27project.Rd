@@ -16,4 +16,10 @@ Data types from this schema is used in the representation, with the data type ma
  \item{xs:string}{character}
  \item{xs:boolean}{loical}
 }
+
+In addition to structures defined in this schema, stox 2.7 may store the following structures:
+\describe{
+ \item{platformfactor}{list of lists with members 'value', 'covariatesourcetype', 'covariate'.}
+ \item{covparam}{list of lists with members 'value', 'covariatetable', 'parameter'}
+}
 }

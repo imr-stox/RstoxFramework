@@ -52,7 +52,7 @@ processStox27Meta <- function(node, strict){
       meta$surveyTimeseriesName <- get_simple_content(c)
     }
     else{
-      skipping(paste("Unrecoginzed attribute of meta:", n), strict)
+      skipping(paste("Unrecognized attribute of meta:", n), strict)
     }
   }
   
@@ -70,7 +70,7 @@ processStox27parameter <- function(node, strict){
       parameter$name <- attributes[[n]]
     }
     else{
-      skipping(paste("Unrecoginzed attribute of parameter:", n), strict)
+      skipping(paste("Unrecognized attribute of parameter:", n), strict)
     }
   }
   
@@ -78,7 +78,7 @@ processStox27parameter <- function(node, strict){
   
   for (c in children){
     n <- xml2::xml_name(c)
-    skipping(paste("Unrecoginzed child element of parameter:", n), strict)
+    skipping(paste("Unrecognized child element of parameter:", n), strict)
   }
   
   parameter$parameter <- xml2::xml_text(node)
@@ -98,7 +98,7 @@ processStox27process <- function(node, strict){
       process$name <- attributes[[n]]
     }
     else{
-      skipping(paste("Unrecoginzed attribute of process:", n), strict)
+      skipping(paste("Unrecognized attribute of process:", n), strict)
     }
   }
   
@@ -137,7 +137,7 @@ processStox27process <- function(node, strict){
     }
     
     else{
-      skipping(paste("Unrecoginzed child element of process:", n), strict)
+      skipping(paste("Unrecognized child element of process:", n), strict)
     }
   }
   return(process)
@@ -154,7 +154,7 @@ processStox27Model <- function(node, strict){
       model$name <- attributes[[n]]
     }
     else{
-      skipping(paste("Unrecoginzed attribute of model:", n), strict)
+      skipping(paste("Unrecognized attribute of model:", n), strict)
     }
   }
   
@@ -169,7 +169,7 @@ processStox27Model <- function(node, strict){
       processIndex <- processIndex + 1
     }
     else{
-      skipping(paste("Unrecoginzed child element of model:", n), strict)
+      skipping(paste("Unrecognized child element of model:", n), strict)
     }
   }
   return(model)
@@ -189,14 +189,15 @@ processStox27ValueWattribute <- function(node, strict, attributenames){
       value[[n]] <- attributes[[n]]
     }
     else{
-      skipping(paste("Unrecoginzed attribute of assignmentresolution:", n), strict)  
+      nodename <- xml2::xml_name(node)
+      skipping(paste("Unrecognized attribute of",nodename,":", n), strict)  
     }
   }
   
   children <- xml2::xml_children(node)
   for (c in children){
     n <- xml2::xml_name(c)
-    skipping(paste("Unrecoginzed child element of element 'value':", n), strict)
+    skipping(paste("Unrecognized child element of element", xml2::xml_name(node), ":", n), strict)
   }
   
   value[[xml2::xml_name(node)]] <- xml2::xml_text(node)
@@ -210,7 +211,7 @@ processStox27ValueWattributeList <- function(node, strict, elementname, attribut
   
   attributes <- xml2::xml_attrs(node)
   for(n in names(attributes)){
-    skipping(paste("Unrecoginzed attribute of assignmentresolution:", n), strict)
+    skipping(paste("Unrecognized attribute of assignmentresolution:", n), strict)
   }
   
   l[[elementname]] <- list()
@@ -224,7 +225,7 @@ processStox27ValueWattributeList <- function(node, strict, elementname, attribut
       index <- index + 1
     }
     else{
-      skipping(paste("Unrecoginzed child element of", elementname, ":", n), strict)
+      skipping(paste("Unrecognized child element of", elementname, ":", n), strict)
     }
   }
   
@@ -236,7 +237,7 @@ processStox27Processdata <- function(node, strict){
   processdata <- list()
   attributes <- xml2::xml_attrs(node)
   for(n in names(attributes)){
-    skipping(paste("Unrecoginzed attribute of processdata:", n), strict)
+    skipping(paste("Unrecognized attribute of processdata:", n), strict)
   }
   
   processdata$bioticassignment <- list()
@@ -250,6 +251,8 @@ processStox27Processdata <- function(node, strict){
   processdata$spatial <- list()
   processdata$ageerror <- list()
   processdata$stratumneighbour <- list()
+  processdata$platformfactor <- list()
+  processdata$covparam <- list()
   
   children <- xml2::xml_children(node)
   for (c in children){
@@ -287,8 +290,14 @@ processStox27Processdata <- function(node, strict){
     else if (n=="stratumneighbour"){
       processdata$stratumneighbour <- processStox27ValueWattributeList(c, strict, "value", "variable")
     }
+    else if (n=="platformfactor"){
+      processdata$platformfactor <- processStox27ValueWattributeList(c, strict, "value", c("covariatesourcetype", "covariate"))
+    }
+    else if (n=="covparam"){
+      processdata$covparam <- processStox27ValueWattributeList(c, strict, "value", c("covariatetable", "parameter"))
+    }
     else{
-      skipping(paste("Unrecoginzed child element of processdata:", n), strict)
+      skipping(paste("Unrecognized child element of processdata:", n), strict)
     }
   }
   
@@ -304,7 +313,6 @@ processStox27Project <- function(node, strict){
   #
   # handle attributes
   #
-  
   project$template <- character()
   project$lastmodified <- character()
   project$rstoxversion <- character()
@@ -335,8 +343,11 @@ processStox27Project <- function(node, strict){
     else if (n=="version"){
       project$version <- attributes[[n]]
     }
+    else if (n=="xmlns"){
+      project$xmlns <- attributes[[n]]
+    }
     else{
-      skipping(paste("Unrecoginzed attribute of project:", n), strict)
+      skipping(paste("Unrecognized attribute of project:", n), strict)
     }
   }
   
@@ -364,7 +375,7 @@ processStox27Project <- function(node, strict){
       project$processdata <- processStox27Processdata(c, strict)
     }
     else{
-      skipping(paste("Unrecoginzed child element of project:", n), strict)
+      skipping(paste("Unrecognized child element of project:", n), strict)
     }
   }
   return(project)
@@ -373,9 +384,17 @@ processStox27Project <- function(node, strict){
 #' @noRd
 processStox27Projects <- function(root, strict){
   projects <- list()
+  
+  projects$xmlns <- character()
+  
   attributes <- xml2::xml_attrs(root)
-  if (length(attributes)>0){
-    skipping("attributes on element 'projects' are not recognized.", strict)
+  for(n in names(attributes)){
+    if (n=="xmlns"){
+      projects$xmlns <- attributes[[n]]
+    }
+    else{
+      skipping(paste("Unrecognized attribute of projects:", n), strict)
+    }
   }
   
   children <- xml2::xml_children(root)
@@ -426,6 +445,12 @@ processStox27Xml <- function(root, strict){
 #' \describe{
 #'  \item{xs:string}{character}
 #'  \item{xs:boolean}{loical}
+#' }
+#' 
+#' In addition to structures defined in this schema, stox 2.7 may store the following structures:
+#' \describe{
+#'  \item{platformfactor}{list of lists with members 'value', 'covariatesourcetype', 'covariate'.}
+#'  \item{covparam}{list of lists with members 'value', 'covariatetable', 'parameter'}
 #' }
 #'  
 #' @name stox27project
@@ -599,11 +624,19 @@ isStratumneighbour <- function(stratumneighbour){
   return(containsOptionalListOfCharValues(stratumneighbour, "value", c("variable", "value")))
 }
 
+#' @noRd
+isPlatformfactor <- function(platformfactor){
+  return(containsOptionalListOfCharValues(platformfactor, "value", c("covariatesourcetype", "covariate", "value")))
+}
+#' @noRd
+isCovparam <- function(covparam){
+  return(containsOptionalListOfCharValues(covparam, "value", c("covariatetable", "parameter", "value")))
+}
 
 #' @noRd
 isProcessData <- function(processdata){
-  return(isNestedList(processdata, c("bioticassignment", "suassignment", "assignmentresolution", "edsupsu", "psustratum", "stratumpolygon", "temporal", "gearfactor", "spatial", "ageerror", "stratumneighbour"), 
-                                  c(isBioticassignment, isSuassignment, isAssignmentresolution, isEdsupsu, isPsustratum, isStratumpolygon, isCovariatesourcetype, isCovariatesourcetype, isCovariatesourcetype, isAgeerror, isStratumneighbour)))
+  return(isNestedList(processdata, c("bioticassignment", "suassignment", "assignmentresolution", "edsupsu", "psustratum", "stratumpolygon", "temporal", "gearfactor", "spatial", "ageerror", "stratumneighbour", "platformfactor", "covparam"), 
+                                  c(isBioticassignment, isSuassignment, isAssignmentresolution, isEdsupsu, isPsustratum, isStratumpolygon, isCovariatesourcetype, isCovariatesourcetype, isCovariatesourcetype, isAgeerror, isStratumneighbour, isPlatformfactor, isCovparam)))
 }
 
 #' valid stox 2.7 project

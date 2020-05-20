@@ -20,6 +20,7 @@ get_simple_content <- function(node){
 #' response when unrecognized elements are encountered.
 #' @param message message to user
 #' @param strict logical, error is raised if strict is true, otherwise a warning is generated
+#' @noRd
 skipping <- function(message, strict){
   if (strict){
     stop(message)
@@ -80,7 +81,7 @@ processStox27parameter <- function(node, strict){
     skipping(paste("Unrecoginzed child element of parameter:", n), strict)
   }
   
-  parameter$value <- xml2::xml_text(node)
+  parameter$parameter <- xml2::xml_text(node)
   
   return(parameter)
 }
@@ -180,7 +181,7 @@ processStox27ValueWattribute <- function(node, strict, attributenames){
   for (attributename in attributenames){
     value[[attributename]] <- character()    
   }
-
+  
   attributes <- xml2::xml_attrs(node)
   for(n in names(attributes)){
     
@@ -198,7 +199,7 @@ processStox27ValueWattribute <- function(node, strict, attributenames){
     skipping(paste("Unrecoginzed child element of element 'value':", n), strict)
   }
   
-  value$value <- xml2::xml_text(node)
+  value[[xml2::xml_name(node)]] <- xml2::xml_text(node)
   
   return(value)
 }
@@ -367,7 +368,7 @@ processStox27Project <- function(node, strict){
 }
 
 #' @noRd
-processprocessStox27Projects <- function(root, strict){
+processStox27Projects <- function(root, strict){
   projects <- list()
   attributes <- xml2::xml_attrs(root)
   if (length(attributes)>0){
@@ -395,10 +396,10 @@ processStox27Xml <- function(root, strict){
   
   projects <- list()
   if (xml2::xml_name(root) == "projects"){
-    projects <- processprocessStox27Projects(root, strict)
+    projects <- processStox27Projects(root, strict)
   }
   else if (xml2::xml_name(root) == "project"){
-    projects[[1]] <- processprocessStox27Project(root, strict)
+    projects[[1]] <- processStox27Project(root, strict)
   }
   else{
     stop("Root name", xml2::xml_name(root), "not recognized.")
@@ -410,16 +411,247 @@ processStox27Xml <- function(root, strict){
 #'
 #' Stox 2.7 project
 #' 
-#' xml is parsed as a netsed list with names corresponding to those used in the xml, and with the following type mappings:
-#' xs:string -> character
+#' @description
+#' Nested list representation of Stox 2.7 projects.
+#' Naming and definitions follow the XML. 
+#' 
+#' @details
+#' Stox 2.7 projects conforms roughly to the namespace http://www.imr.no/formats/stox/v1.2,
+#' defined at http://www.imr.no/formats/stox/v1.2/stoxv1_2.xsd.
+#' 
+#' Data types from this schema is used in the representation, with the data type mapping:
+#' \describe{
+#'  \item{xs:string}{character}
+#'  \item{xs:boolean}{loical}
+#' }
 #'  
-#'
 #' @name stox27project
+#' 
 NULL
+
+#' Checks that object is a list with the given members, and that the given typechecks are OK
+#' @param members character names that object should have
+#' @param typecheks functions mapping object to logical for checking types of corresponding members
+#' @return logical
+#' @noRd
+isNestedList <- function(object, members, typechecks){
+  
+  stopifnot(length(members) == length(typechecks))
+  
+  if (!is.list(object)){
+    return(F)
+  }
+  if (!all(members %in% names(object))){
+    return(F)
+  }
+  for (i in 1:length(members)){
+    member <- members[[i]]
+    check <- typechecks[[i]]
+    if(!check(object[[member]])){
+      return(F)
+    }
+  }
+
+  return(T)
+}
+
+#' @noRd
+isEmptyList <- function(emptylist){
+  if (!is.list(emptylist)){
+    return(F)
+  }
+  if (length(emptylist)>0){
+    return(F)
+  }
+  
+  return(T)
+}
+
+#' check for optional construct meta
+#' @noRd
+isMeta <- function(meta){
+  
+  if (isEmptyList(meta)){
+    return(T)
+  }
+  
+  return(isNestedList(meta, c("description", "surveyTimeseriesName"), c(is.character, is.character)))
+}
+
+#' check for optional construct parameter
+#' @noRd
+isParameter <- function(parameter){
+  
+  if (isEmptyList(parameter)){
+    return(T)
+  }
+  
+  isNestedList(parameter, c("name", "parameter"), c(is.character, is.character))
+}
+
+#' check for unbounded list process
+#' @noRd
+isProcess <- function(process){
+  
+  if (!is.list(process)){
+    return(F)
+  }
+  if (!is.null(names(process))){
+    return(F)
+  }
+  
+  for (p in process){
+    if (!isNestedList(p, c("name", "function", "enabled", "respondingui", "breakingui", "fileoutput", "parameter", "output"), c(is.character, is.character, is.logical, is.logical, is.logical, is.logical, isParameter, is.character))){
+      return(F)
+    }
+  }
+  
+  return(T)
+}
+
+#' Checks for mandatory construct 'model'
+#' @noRd
+isModel <- function(model){
+  return(isNestedList(model, c("name", "process"), c(is.character, isProcess)))
+}
+
+#' Checks an optional list is containing an  unbounded list with only character members
+#' @noRd
+containsOptionalListOfCharValues <- function(charlist, listname, members){
+  if (isEmptyList(charlist)){
+    return(T)
+  }
+  
+  if (!(listname %in% names(charlist))){
+    return(F)
+  }
+  
+  if (!is.list(charlist[[listname]])){
+    return(F)
+  }
+  
+  if (!is.null(names(charlist[[listname]]))){
+    return(F)
+  }
+  
+  typecheckers <- c()
+  for (m in members){
+    typecheckers <- c(typecheckers, is.character)
+  }
+  
+  for (entry in charlist[[listname]]){
+    if (!isNestedList(entry, members, typecheckers)){
+      return(F)
+    }
+  }
+  
+  return(T)
+}
+
+#' @noRd
+isBioticassignment <- function(bioticassignment){
+  return(containsOptionalListOfCharValues(bioticassignment, "stationweight", c("assignmentid", "station", "stationweight")))
+}
+#' @noRd
+isSuassignment <- function(suassignment){
+  return(containsOptionalListOfCharValues(suassignment, "assignmentid", c("sampleunit", "estlayer", "assignmentid")))
+}
+#' @noRd
+isAssignmentresolution <- function(assignmentresolution){
+  return(containsOptionalListOfCharValues(assignmentresolution, "value", c("variable", "value")))
+}
+#' @noRd
+isEdsupsu <- function(edsupsu){
+  return(containsOptionalListOfCharValues(edsupsu, "psu", c("edsu", "psu")))
+}
+#' @noRd
+isPsustratum <- function(psustratum){
+  return(containsOptionalListOfCharValues(psustratum, "stratum", c("psu", "stratum")))
+}
+#' @noRd
+isStratumpolygon <- function(stratumpolygon){
+  return(containsOptionalListOfCharValues(stratumpolygon, "value", c("polygonkey", "polygonvariable", "value")))
+}
+#' @noRd
+isCovariatesourcetype <- function(temporal){
+  return(containsOptionalListOfCharValues(temporal, "value", c("covariatesourcetype", "covariate", "value")))
+}
+#' @noRd
+isAgeerror <- function(ageerror){
+  return(containsOptionalListOfCharValues(ageerror, "probability", c("readage", "realage", "probability")))
+}
+#' @noRd
+isStratumneighbour <- function(stratumneighbour){
+  return(containsOptionalListOfCharValues(stratumneighbour, "value", c("variable", "value")))
+}
+
+
+#' @noRd
+isProcessData <- function(processdata){
+  return(isNestedList(processdata, c("bioticassignment", "suassignment", "assignmentresolution", "edsupsu", "psustratum", "stratumpolygon", "temporal", "gearfactor", "spatial", "ageerror", "stratumneighbour"), 
+                                  c(isBioticassignment, isSuassignment, isAssignmentresolution, isEdsupsu, isPsustratum, isStratumpolygon, isCovariatesourcetype, isCovariatesourcetype, isCovariatesourcetype, isAgeerror, isStratumneighbour)))
+}
+
+#' valid stox 2.7 project
+#' @description checks if an object is a valid ~\code{\link[RstoxFramework]{stox27project}}
+#' @param stox27project object to check for validity
+#' @return logical true if 'stox27project' is a valid ~\code{\link[RstoxFramework]{stox27project}}
+#' @export
+isStox27project <- function(stox27project){
+  if (!is.list(stox27project)){
+    return(F)
+  }
+  if (length(stox27project) < 1){
+    return(F)
+  }
+  for (project in stox27project){
+    projectmembers <- c("template", "lastmodified", "rstoxversion", "stoxversion", "rversion", "resourceversion", "version", "meta", "model", "processdata")
+    if (!all(projectmembers %in% names(project))){
+      return(F)
+    }
+    if (!is.character(project$template)){
+      return(F)
+    }
+    if (!is.character(project$lastmodified)){
+      return(F)
+    }
+    if (!is.character(project$rstoxversion)){
+      return(F)
+    }
+    if (!is.character(project$stoxversion)){
+      return(F)
+    }
+    if (!is.character(project$rversion)){
+      return(F)
+    }
+    if (!is.character(project$resourceversion)){
+      return(F)
+    }
+    if (!is.character(project$version)){
+      return(F)
+    }
+    
+    if (!isMeta(project$meta)){
+      return(F)
+    }
+    
+    if (!isModel(project$model)){
+      return(F)
+    }
+    
+    if (!isProcessData(project$processdata)){
+      return(F)
+    }
+    
+  }
+  
+  return(T)
+}
 
 #' Read Stox project from project xml
 #' @param projectxml xml filename
-#' @return Nested list representation of project
+#' @param strict logical, whether errors should be raised for unkown elements and attributes, if False warnings will be issued.
+#' @return Nested list representation of project, formatted as: \code{\link[RstoxFramework]{stox27project}}
 #' @export
 readStox27Project <- function(projectxml, strict=T){
   tree <- xml2::read_xml(projectxml)

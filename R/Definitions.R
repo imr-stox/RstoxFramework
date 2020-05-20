@@ -70,6 +70,7 @@ initiateRstoxFramework <- function(){
     availableFunctions <- names(stoxLibrary)
     # Get the possible values of the functions:
     availableFunctionPossibleValues <- lapply(availableFunctions, extractStoxFunctionParameterPossibleValues)
+    names(availableFunctionPossibleValues) <- availableFunctions
     
     # Get the json schema for RstoxFramework:
     schema <- jsonlite::read_json(system.file("formats", "projectSchema.json", package = "RstoxFramework"))

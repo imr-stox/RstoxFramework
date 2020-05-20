@@ -1634,7 +1634,7 @@ getStoxFunctionParameterPossibleValues <- function(functionName, fill.logical = 
     # Get the available functions:
     availableFunctions <- getRstoxFrameworkDefinitions("availableFunctions")
     
-    functionName <- getFunctionNameFromPackageFunctionName("DefineAcousticPSU")
+    functionName <- getFunctionNameFromPackageFunctionName(functionName)
     if(! functionName %in% availableFunctions) {
         warning("The function ", functionName, "is not an official StoX function.")
         return(list())

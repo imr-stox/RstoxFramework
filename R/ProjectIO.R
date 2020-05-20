@@ -348,6 +348,8 @@ processStox27Project <- function(node, strict){
   project$model <- list()
   project$processdata <- list()
   
+  modelIndex <- 1
+  
   children <- xml2::xml_children(node)
   for (c in children){
     n <- xml2::xml_name(c)
@@ -355,7 +357,8 @@ processStox27Project <- function(node, strict){
       project$meta <- processStox27Meta(c, strict)
     }
     else if (n=="model"){
-      project$model <- processStox27Model(c, strict)
+      project$model[[modelIndex]] <- processStox27Model(c, strict)
+      modelIndex <- modelIndex + 1
     }
     else if (n=="processdata"){
       project$processdata <- processStox27Processdata(c, strict)
@@ -509,10 +512,21 @@ isProcess <- function(process){
   return(T)
 }
 
-#' Checks for mandatory construct 'model'
+#' Checks for unbounded construct 'model'
 #' @noRd
 isModel <- function(model){
-  return(isNestedList(model, c("name", "process"), c(is.character, isProcess)))
+  
+  if (!is.list(model)){
+    return(F)
+  }
+  if (!is.null(names(model))){
+    return(F)
+  }
+  
+  for (m in model){
+    return(isNestedList(m, c("name", "process"), c(is.character, isProcess)))  
+  }
+  
 }
 
 #' Checks an optional list is containing an  unbounded list with only character members

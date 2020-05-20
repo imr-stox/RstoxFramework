@@ -1,193 +1,51 @@
-#
-#
-# Changes done to version from AJH
-# Require all function parameters to be strings (allow repititon)
-# Require ProcessData to be stored in dedicated lists according to processdata type
-# Can not write all elements and attributes missing from templates as empty nodes. Some have restrictions on values.
-#
-
-projectDescription <- list(
-  Description = "fasdvabadf", 
-  Baseline = list(
-    ReadAcoustic = list(
-      ProcessName = "ReadAcoustic", 
-      FunctionName = "ReadAcoustic", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        BreakInGUI = FALSE, 
-        FileOutput = TRUE
-      ), 
-      ProcessData = list(), 
-      FunctionParameters = list(
-        FileNames = c(
-          "input/acoustic/Echosounder-1618.xml", 
-          "input/acoustic/Echosounder-201605.xml", 
-          "input/acoustic/Echosounder-2016205.xml", 
-          "input/acoustic/Echosounder-2016857.xml", 
-          "input/acoustic/Echosounder-A6-2016.xml"
-        )
-      ), 
-      FunctionInputs = list(
-        BioticData = "FilterBiotic", 
-        Density = "AcousticDensity"
-      )
-    ), 
-    DefineStratum = list(
-      ProcessName = "DefineStratum", 
-      FunctionName = "ReadAcoustic", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        BreakInGUI = FALSE, 
-        FileOutput = TRUE
-      ), 
-      ProcessData = list(
-        StratumPolygon=list(stratum1=list(polygon="MUKLTIPOLYGIN((25)6(6)6rger)"))), 
-      FunctionParameters = list(
-        FileNames = c(
-          "input/acoustic/Echosounder-1618.xml"
-        ), 
-        UseProcessData = TRUE
-      ), 
-      FunctionInputs = list(
-        BioticData = "FilterBiotic", 
-        Density = "AcousticDensity", 
-        StoxAcousticData = NA
-      )
-    ), 
-    StoxAcoustic = list(
-      ProcessName = "StoxAcoustic", 
-      FunctionName = "StoxAcoustic", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        BreakInGUI = FALSE, 
-        FileOutput = TRUE
-      ), 
-      ProcessData = list(), 
-      FunctionParameters = list(
-        FileNames = c(
-          "input/acoustic/Echosounder-1618.xml", 
-          "input/acoustic/Echosounder-201605.xml", 
-          "input/acoustic/Echosounder-2016205.xml", 
-          "input/acoustic/Echosounder-2016857.xml", 
-          "input/acoustic/Echosounder-A6-2016.xml"
-        )
-      ), 
-      FunctionInputs = list(
-        BioticData = "FilterBiotic"
-      )
-    )
-  ),
-  
-  Statistics = list(
-    runBootstrap = list(
-      ProcessName = "runBootstrap", 
-      FunctionName = "runBootstrap", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        FileOutput = TRUE
-      ), 
-      FunctionParameters = list(
-        bootstrapMethod = "AcousticTrawl", 
-        acousticMethod = "PSU~Stratum", 
-        bioticMethod = "PSU~Stratum", 
-        startProcess = "TotalLengthDist", 
-        endProcess = "SuperIndAbundance", 
-        nboot = 50, 
-        seed = 1234, 
-        cores = 1
-      )
-    )
-  ),
-  
-  
-  Reports = list(
-    reportAbundance = list(
-      ProcessName = "reportAbundance", 
-      FunctionName = "reportAbundance", 
-      ProcessParameters = list(
-        Enabled = TRUE, 
-        FileOutput = TRUE
-      ), 
-      FunctionParameters = list(
-        var = "count", 
-        grp1 = "age",
-        grp2 = "sex"
-      )
-    )
-  )
-  
-)
-
-#
-# Tests for writing xml
-#
-
-context("save project")
-tempfile <- tempfile()
-skip('skip')
-# save
-saveProject(projectDescription, tempfile)
-# validate
-data <- read_xml(tempfile)
-schema <- read_xml("../../inst/formats/stoxProject.xsd")
-expect_true(xml_validate(data, schema))
-#read back in
-reread <- readProject(tempfile)
-file.remove(tempfile)
-#compare
-expect_equal(projectDescription$Description, reread$Description)
-expect_equal(projectDescription$Baseline$ReadAcoustic$FunctionParameters$FileNames, reread$Baseline$ReadAcoustic$FunctionParameters$FileNames)
-expect_gt(length(reread$Baseline$ReadAcoustic$ProcessData), length(projectDescription$Baseline$ReadAcoustic$ProcessData))
-
-# validate dummy file
-tempfile <- tempfile()
-project <- readProject("../../inst/testresources/dummy_project.xml")
-saveProject(project, tempfile)
-data <- read_xml(tempfile)
-schema <- read_xml("../../inst/formats/stoxProject.xsd")
-expect_true(xml_validate(data, schema))
-file.remove(tempfile)
 
 
-#
-# Tests for reading xml
-#
+# testing legacy stox reader
 
-context("read project")
-# path should be relative to testthat directory for working with devtools::test()
-project <- readProject("../../inst/testresources/dummy_project.xml")
-expect_true(all(names(project) %in% c("Template", "Rversion", "Description", "Baseline", "Lastmodified", "Statistics", "Rstoxversion", "Report", "Stoxversion", "RstoxDependencies")))
-expect_true(all(c("StratumPolygon", "BioticAssignment") %in% names(project$Baseline[[1]]$ProcessData)))
-expect_equal(project$Baseline$str1234$ProcessData$StratumNeighbour$str1234, "str1234")
+context("stox v 2.7 project parsing")
 
+dummy27project <- system.file("testresources", "stox2_7_dummy_project.xml", package="RstoxFramework")
 
-#
-# Tests for function parameter type handling
-#
+proj27 <- readStox27Project(dummy27project)
+expect_true(isStox27project(proj27))
+expect_true(is.null(names(proj27[[1]]$model)))
 
-context("function parameter data types")
+context("stox v 2.7 ECA project parsing")
 
-tempfile <- tempfile()
-# save
-saveProject(projectDescription, tempfile)
-# validate
-data <- read_xml(tempfile)
-schema <- read_xml("../../inst/formats/stoxProject.xsd")
-expect_true(xml_validate(data, schema))
-#read back in
-reread <- readProject(tempfile)
-file.remove(tempfile)
-expect_equal(class(projectDescription$Baseline$DefineStratum$FunctionParameters$FileNames), class(reread$Baseline$DefineStratum$FunctionParameters$FileNames))
-expect_equal(class(projectDescription$Baseline$DefineStratum$FunctionParameters$UseProcessData), class(reread$Baseline$DefineStratum$FunctionParameters$UseProcessData))
+ecatest <- readStox27Project(system.file("testresources", "ECA_proj.xml", package="RstoxFramework"))
+expect_true(isStox27project(ecatest))
 
-# expected errors writing
-tempfile <- tempfile()
-wrongobject <- projectDescription
-wrongobject$Baseline$DefineStratum$FunctionParameters$Area <- as.factor(c(1.2,2.1))
-expect_error(saveProject(wrongobject, tempfile))
-if (file.exists(tempfile)){
-  file.remove(tempfile)
-}
+#contains one project
+expect_equal(length(ecatest), 1)
 
-# expected errors reading
-expect_error(project <- readProject("../../inst/testresources/dummy_project_functionparametererror.xml"))
+#contains two models
+expect_equal(length(ecatest[[1]]$model), 2)
+
+#first model is baseline
+expect_equal(ecatest[[1]]$model[[1]]$name, "baseline")
+
+#contains two processes
+expect_equal(length(ecatest[[1]]$model[[1]]$process), 2)
+
+#second process is DefineAgeErrorMatrix
+expect_equal(ecatest[[1]]$model[[1]]$process[[2]]$name, "DefineAgeErrorMatrix")
+
+#has two parameters
+expect_equal(length(ecatest[[1]]$model[[1]]$process[[2]]$parameter), 2)
+
+# suassignment is empty (no tag in file)
+expect_true("suassignment" %in% names(ecatest[[1]]$processdata[[1]]))
+expect_equal(length(ecatest[[1]]$processdata[[1]]$suassignment), 0)
+
+# bioticassignment contains one empty element (empty tag in file)
+expect_equal(length(ecatest[[1]]$processdata[[1]]$bioticassignment),1)
+expect_equal(length(ecatest[[1]]$processdata[[1]]$bioticassignment$stationweight),0)
+
+# stratumpolygon contains list of 4 elements
+expect_equal(length(ecatest[[1]]$processdata[[1]]$stratumpolygon$value),4)
+
+context("stox v 2.7 loose parsing")
+expect_error(readStox27Project(system.file("testresources", "ECA_proj_extra_nodes.xml", package="RstoxFramework")), "Unrecognized child element of model: insert")
+expect_warning(loosetest <- readStox27Project(system.file("testresources", "ECA_proj_extra_nodes.xml", package="RstoxFramework"), strict = F), "Unrecognized child element of model: insert")
+expect_true(isStox27project(loosetest))
+expect_equal(length(loosetest[[1]]$model[[1]]$process[[2]]$parameter), 2)

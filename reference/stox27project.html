@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Save Stox project to project xml file using namespace http://www.imr.no/formats/stox/v3 — saveProjectEdvin • RstoxFramework</title>
+<title>Stox 2.7 project — stox27project • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Save Stox project to project xml file using namespace http://www.imr.no/formats/stox/v3 — saveProjectEdvin" />
-<meta property="og:description" content="Save Stox project to project xml file using namespace http://www.imr.no/formats/stox/v3" />
+<meta property="og:title" content="Stox 2.7 project — stox27project" />
+<meta property="og:description" content="Nested list representation of Stox 2.7 projects." />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
       </span>
     </div>
 
@@ -108,29 +108,33 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Save Stox project to project xml file using namespace http://www.imr.no/formats/stox/v3</h1>
+    <h1>Stox 2.7 project</h1>
     <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/ProjectIO.R'><code>R/ProjectIO.R</code></a></small>
-    <div class="hidden name"><code>saveProjectEdvin.Rd</code></div>
+    <div class="hidden name"><code>stox27project.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Save Stox project to project xml file using namespace http://www.imr.no/formats/stox/v3</p>
+    <p>Nested list representation of Stox 2.7 projects.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>saveProjectEdvin</span>(<span class='no'>projectDescription</span>, <span class='no'>filename</span>)</pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>projectDescription</th>
-      <td><p>nested list representation of StoX project</p></td>
-    </tr>
-    <tr>
-      <th>filename</th>
-      <td><p>to write to</p></td>
-    </tr>
-    </table>
+
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Naming and definitions follow the XML.
+Stox 2.7 projects conforms roughly to the namespace http://www.imr.no/formats/stox/v1.2,
+defined at http://www.imr.no/formats/stox/v1.2/stoxv1_2.xsd and in formats/stoxv2.7.xsd.</p>
+<p>This schema is used with some additions in the representation, with the data type mapping:</p><dl'>
+ <dt>xs:string</dt><dd><p>character</p></dd>
+ <dt>xs:boolean</dt><dd><p>logical</p></dd>
+
+</dl>
+
+<p>In addition to structures defined in this schema, stox 2.7 may store the following structures:</p><dl'>
+ <dt>platformfactor</dt><dd><p>list of lists with members 'value', 'covariatesourcetype', 'covariate'.</p></dd>
+ <dt>covparam</dt><dd><p>list of lists with members 'value', 'covariatetable', 'parameter'</p></dd>
+
+</dl>
 
 
   </div>

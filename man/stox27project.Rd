@@ -5,13 +5,13 @@
 \title{Stox 2.7 project}
 \description{
 Nested list representation of Stox 2.7 projects.
-Naming and definitions follow the XML.
 }
 \details{
+Naming and definitions follow the XML.
 Stox 2.7 projects conforms roughly to the namespace http://www.imr.no/formats/stox/v1.2,
-defined at http://www.imr.no/formats/stox/v1.2/stoxv1_2.xsd.
+defined at http://www.imr.no/formats/stox/v1.2/stoxv1_2.xsd and in formats/stoxv2.7.xsd.
 
-Data types from this schema is used in the representation, with the data type mapping:
+This schema is used with some additions in the representation, with the data type mapping:
 \describe{
  \item{xs:string}{character}
  \item{xs:boolean}{logical}

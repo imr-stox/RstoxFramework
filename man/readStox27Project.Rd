@@ -7,7 +7,7 @@
 readStox27Project(projectxml, strict = T)
 }
 \arguments{
-\item{projectxml}{xml filename}
+\item{projectxml}{xml filename of stox v2.7 project file}
 
 \item{strict}{logical, whether errors should be raised for unkown elements and attributes or missing required attributes, if False warnings will be issued.}
 }

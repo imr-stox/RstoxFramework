@@ -74,6 +74,11 @@ processStox27parameter <- function(node, strict){
     }
   }
   
+  if (length(parameter$name) <1){
+    skipping(paste("Missing required attribute of parameter: 'name'"), strict)
+  }
+  
+  
   children <- xml2::xml_children(node)
   
   for (c in children){
@@ -101,6 +106,11 @@ processStox27process <- function(node, strict){
       skipping(paste("Unrecognized attribute of process:", n), strict)
     }
   }
+  
+  if (length(process$name) <1){
+    skipping(paste("Missing required attribute of process: 'name'"), strict)
+  }
+  
   
   process[["function"]] <- character()
   process$enabled <- logical()
@@ -159,6 +169,10 @@ processStox27Model <- function(node, strict){
     else{
       skipping(paste("Unrecognized attribute of model:", n), strict)
     }
+  }
+  
+  if (length(model$name) <1){
+    skipping(paste("Missing required attribute of model: 'name'"), strict)
   }
   
   model$process <- list()
@@ -449,7 +463,7 @@ processStox27Xml <- function(root, strict){
 #' Data types from this schema is used in the representation, with the data type mapping:
 #' \describe{
 #'  \item{xs:string}{character}
-#'  \item{xs:boolean}{loical}
+#'  \item{xs:boolean}{logical}
 #' }
 #' 
 #' In addition to structures defined in this schema, stox 2.7 may store the following structures:
@@ -477,6 +491,7 @@ isNestedList <- function(object, members, typechecks){
   if (!all(members %in% names(object))){
     return(F)
   }
+  
   for (i in 1:length(members)){
     member <- members[[i]]
     check <- typechecks[[i]]
@@ -500,7 +515,7 @@ isEmptyList <- function(emptylist){
   return(T)
 }
 
-#' check for optional construct meta
+#' optional
 #' @noRd
 isMeta <- function(meta){
   
@@ -511,7 +526,7 @@ isMeta <- function(meta){
   return(isNestedList(meta, c("description", "surveyTimeseriesName"), c(is.character, is.character)))
 }
 
-#' check for optional construct parameter
+#' unbounded and optional, with required member 'name'
 #' @noRd
 isParameter <- function(parameter){
   
@@ -521,9 +536,12 @@ isParameter <- function(parameter){
   if (!is.null(names(parameter))){
     return(F)
   }
-  
+
   for (p in parameter){
     if (!isNestedList(p, c("name", "parameter"), c(is.character, is.character))){
+      return(F)
+    }    
+    if (length(p$name)<1){
       return(F)
     }
   }
@@ -531,7 +549,7 @@ isParameter <- function(parameter){
   return(T)
 }
 
-#' check for unbounded list process
+#' unbounded and optional, with required member 'name'
 #' @noRd
 isProcess <- function(process){
   
@@ -546,12 +564,15 @@ isProcess <- function(process){
     if (!isNestedList(p, c("name", "function", "enabled", "respondingui", "breakingui", "fileoutput", "parameter", "output"), c(is.character, is.character, is.logical, is.logical, is.logical, is.logical, isParameter, is.character))){
       return(F)
     }
+    if (length(p$name)<1){
+      return(F)
+    }
   }
   
   return(T)
 }
 
-#' Checks for unbounded construct 'model'
+#' unbounded and optional, with required member 'name'
 #' @noRd
 isModel <- function(model){
   
@@ -566,12 +587,15 @@ isModel <- function(model){
     if(!isNestedList(m, c("name", "process"), c(is.character, isProcess))){
       return(F)
     }
+    if (length(m$name)<1){
+      return(F)
+    }
   }
   
   return(T)
 }
 
-#' Checks an optional list is containing an  unbounded list with only character members
+#' Checks an optional list is containing an optional unbounded list with only character members
 #' @noRd
 containsOptionalListOfCharValues <- function(charlist, listname, members){
   if (isEmptyList(charlist)){
@@ -604,52 +628,63 @@ containsOptionalListOfCharValues <- function(charlist, listname, members){
   return(T)
 }
 
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isBioticassignment <- function(bioticassignment){
   return(containsOptionalListOfCharValues(bioticassignment, "stationweight", c("assignmentid", "station", "stationweight")))
 }
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isSuassignment <- function(suassignment){
   return(containsOptionalListOfCharValues(suassignment, "assignmentid", c("sampleunit", "estlayer", "assignmentid")))
 }
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isAssignmentresolution <- function(assignmentresolution){
   return(containsOptionalListOfCharValues(assignmentresolution, "value", c("variable", "value")))
 }
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isEdsupsu <- function(edsupsu){
   return(containsOptionalListOfCharValues(edsupsu, "psu", c("edsu", "psu")))
 }
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isPsustratum <- function(psustratum){
   return(containsOptionalListOfCharValues(psustratum, "stratum", c("psu", "stratum")))
 }
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isStratumpolygon <- function(stratumpolygon){
   return(containsOptionalListOfCharValues(stratumpolygon, "value", c("polygonkey", "polygonvariable", "value")))
 }
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isCovariatesourcetype <- function(temporal){
   return(containsOptionalListOfCharValues(temporal, "value", c("covariatesourcetype", "covariate", "value")))
 }
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isAgeerror <- function(ageerror){
   return(containsOptionalListOfCharValues(ageerror, "probability", c("readage", "realage", "probability")))
 }
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isStratumneighbour <- function(stratumneighbour){
   return(containsOptionalListOfCharValues(stratumneighbour, "value", c("variable", "value")))
 }
-
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isPlatformfactor <- function(platformfactor){
   return(containsOptionalListOfCharValues(platformfactor, "value", c("covariatesourcetype", "covariate", "value")))
 }
+#' optional, with an unbounded and optional subconstruct with all character members
 #' @noRd
 isCovparam <- function(covparam){
   return(containsOptionalListOfCharValues(covparam, "value", c("covariatetable", "parameter", "value")))
 }
 
+#' unbounded and optional
 #' @noRd
 isProcessData <- function(processdata){
   
@@ -728,7 +763,7 @@ isStox27project <- function(stox27project){
 
 #' Read Stox project from project xml
 #' @param projectxml xml filename
-#' @param strict logical, whether errors should be raised for unkown elements and attributes, if False warnings will be issued.
+#' @param strict logical, whether errors should be raised for unkown elements and attributes or missing required attributes, if False warnings will be issued.
 #' @return Nested list representation of project, formatted as: \code{\link[RstoxFramework]{stox27project}}
 #' @export
 readStox27Project <- function(projectxml, strict=T){

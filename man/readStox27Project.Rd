@@ -9,7 +9,7 @@ readStox27Project(projectxml, strict = T)
 \arguments{
 \item{projectxml}{xml filename}
 
-\item{strict}{logical, whether errors should be raised for unkown elements and attributes, if False warnings will be issued.}
+\item{strict}{logical, whether errors should be raised for unkown elements and attributes or missing required attributes, if False warnings will be issued.}
 }
 \value{
 Nested list representation of project, formatted as: \code{\link[RstoxFramework]{stox27project}}

@@ -14,7 +14,7 @@ defined at http://www.imr.no/formats/stox/v1.2/stoxv1_2.xsd.
 Data types from this schema is used in the representation, with the data type mapping:
 \describe{
  \item{xs:string}{character}
- \item{xs:boolean}{loical}
+ \item{xs:boolean}{logical}
 }
 
 In addition to structures defined in this schema, stox 2.7 may store the following structures:

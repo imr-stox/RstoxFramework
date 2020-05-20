@@ -36,19 +36,6 @@ getAvailableTemplatesDescriptions <- function() {
 
 
 ##### Processes: #####
-getCurrentProcessID <- function(projectPath, modelName) {
-    # Get the path to the currentProcessFile:
-    currentProcessFile <- getProjectPaths(projectPath, "currentProcessFile")
-    # Missing file implies not saved:
-    if(!file.exists(currentProcessFile)) {
-        FALSE
-    }
-    else {
-        as.logical(readLines(currentProcessFile)[1])
-    }
-}
-
-
 getCanShowInMap <- function(functionName, dataType = NULL) {
     # Get the data types returned by the functions of the processes:
     if(length(dataType) == 0) {
@@ -347,13 +334,14 @@ getStratumList <- function(projectPath, modelName, processID) {
     }
     
     # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    stratumList <- getStratumNames(processData$StratumPolygon)
+    stratumList <- as.list(RstoxBase::getStratumNames(processData$StratumPolygon))
     #stratum <- data.table::data.table(
     #    stratum = names(processData), 
     #    includeInTotal = 
     #)
     
-    list(stratumList)
+    #list(stratumList)
+    return(stratumList)
 }
 
 # Function to get a list of station data:
@@ -889,12 +877,14 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
         )
     )
     
+    # Set the propertyDirty flag to FALSE, so that a GUI can update the properties:
+    writeActiveProcessID(projectPath, modelName, propertyDirty = FALSE)
+    
+    # Return the list of process property groups (process property sheet):
     output <- list(
         propertySheet = propertySheet, 
         activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
     )
-    
-    # Return the list of process property groups (process property sheet):
     output
 }
 
@@ -1047,6 +1037,7 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     
     # Parse the value (this takes care of converting true to TRUE, interpret integers and strings, and even to parse JSON strings to R objects):
     value <- parseParameter(value)
+    #value <- jsonlite::fromJSON(value)
     
     # The flag updateHelp is TRUE only if the functionName is changed:
     updateHelp <- FALSE
@@ -1117,7 +1108,7 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
-        modified = TRUE
+        processDirty = TRUE
     )
     
     # Return the modified process properties:
@@ -1126,11 +1117,18 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         modelName = modelName, 
         processID = processID
     )
-    # Add updateHelp:
-    output$updateHelp <- updateHelp
-    # Add the process table, so that the GUI can update the list of processes, and all its symbols:
-    output$processTable <- getProcessTable(projectPath = projectPath, modelName = modelName)
     
+    # Add the process table, so that the GUI can update the list of processes, and all its symbols:
+    output <- c(
+        list(processTable = getProcessTable(projectPath = projectPath, modelName = modelName)), 
+        output
+    )
+    
+    # Add updateHelp:
+    output <- c(
+        list(updateHelp = updateHelp), 
+        output
+    )
     # Add also the saved status:
     output$saved <- isSaved(projectPath)
     
@@ -1359,35 +1357,31 @@ getFilterOptionsAll <- function(projectPath, modelName, processID, include.numer
     
 
 getOptionList <- function(option, digits = 6) {
-    ##pp <- proc.time()[3]
-    #browser()
-    #option <- data.table::data.table(
-    #    name = format(option, digits = digits), 
-    #    value = option
-    #)
-    ##cat("-1", proc.time()[3] - pp, "\n")
-    #output <- unname(split(option, seq_len(nrow(option))))
-    ##cat("-2", proc.time()[3] - pp, "\n")
-    #output <- lapply(output, as.list)
-    ##cat("-3", proc.time()[3] - pp, "\n")
-    #return(output)
-    
     lapply(option, function(x) list(name = format(x, digits = digits), value = x))
 }
 
 
-getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE) {
+getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE, include.POSIXct = FALSE) {
     # Return empty named list if no input:
     if(length(table) == 0) {
         return(list(a = 1)[0])
     }
     # Get the indices of the variables to get possible values from:
-    if(include.numeric) {
-        validInd <- seq_len(ncol(table))
+    validInd <- seq_len(ncol(table))
+    if(!include.numeric) {
+        validInd <- setdiff(validInd, which(type %in% c("numeric", "integer", "double")))
     }
-    else {
-        validInd <- which(! type %in% c("numeric", "integer", "double"))
+    if(!include.POSIXct) {
+        validInd <- setdiff(validInd, which(type %in% c("POSIXct")))
     }
+    
+    
+    #if(include.numeric) {
+    #    validInd <- seq_len(ncol(table))
+    #}
+    #else {
+    #    validInd <- which(! type %in% c("numeric", "integer", "double"))
+    #}
     
     # Declare a list for the output, with empty on numeric type if include.numeric = FALSE
     output <- vector("list", ncol(table))

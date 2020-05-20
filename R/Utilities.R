@@ -165,26 +165,7 @@ getNewDefaultName <- function(names, prefix) {
     # Add 1 to the latest integer:
     newName <- paste0(prefix, newInteger)
     
-    newName
-    #currentMax <- 1
-    #detectedTheLast <- TRUE
-    #
-    #while(detectedTheLast) {
-    #    # Create a vector of potential names, pasting the prefix and a sequence of integer:
-    #    sequence <- currentMax - 1 + seq_len(length)
-    #    potentialNames <- paste0(prefix, sequence)
-    #    # Fin the latest name:
-    #    latest <- max(which(names %in% potentialNames))
-    #    # Break the loop 
-    #}
-    #
-    ## Create a vector of potential names, pasting the prefix and a sequence of integer:
-    #potentialNames <- paste0(prefix, seq_len(length(names) * lengthFact))
-    ## Fin the latest name:
-    #latest <- max(which(names %in% potentialNames))
-    #
-    ## Return the new default name, as the next in the sequence:
-    #potentialNames[latest + 1]
+    return(newName)
 }
 
 # Function to convert from json to R expression:
@@ -193,6 +174,7 @@ getNewDefaultName <- function(names, prefix) {
 #' 
 json2expression <- function(json) {
     l <- parseParameter(json, simplifyVector = FALSE)
+    #l <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     list2expression(l)
 }
 
@@ -205,7 +187,6 @@ list2expression <- function(l, parentHasSiblings=FALSE) {
     # Declare the resulting expression
     result <- NULL
     # If the current rules or expression should be negated, we need to enclose the expression in paretheses:
-    #print(l)
     negate <- isTRUE(l$negate)
     needParentheses <- negate
     
@@ -312,24 +293,6 @@ splitStrByOpAtLevel0 = function(expr, splitOperator){
     unlist(res)
 }
 
-
-#j2expr = function(json_str) {
-#    #convert from json to list
-#    json_l <- jsonlite::fromJSON(json_str, simplifyVector = F)
-#    
-#    l2expr(json_l)
-#}
-
-#expr <- j2expr(json_str)
-
-#setRefClass("Log", fields=list(entries="list"))
-#log <- new("Log",entries=list())
-#writeToLog = function(level, s, lg) {
-#	lg$entries[[length(lg$entries) + 1]] <- paste(level, s);
-#}
-#writeToLog(1, 'start', l)
-
-# Here, a function expression2json is not neede, since openCPU converts to JSON:
 
 #' Parse an R expression to a nested list:
 #' 
@@ -475,3 +438,87 @@ verifyPaths <- function(x) {
     return(x[valid])
 }
 
+
+
+getMemoryFileFormat <- function(x) {
+    
+    if(length(x) == 0) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Empty")
+    }
+    else if(data.table::is.data.table(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Table")
+    }
+    else if("SpatialPolygonsDataFrame" %in% class(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Spatial")
+    }
+    else if("SpatialPointsDataFrame" %in% class(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Spatial")
+    }
+    else if(is.list(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_List")
+    }
+    else {
+        stop("Wrong memory file class", class(x)[1])
+    }
+    return(memoryFileFormat)
+}
+
+
+writeMemoryFile <- function(x, filePathSansExt, ext = NULL) {
+    
+    if(length(ext) == 0) {
+        # Get the memory file format and append this as a file extension to the file to write:
+        ext <- getMemoryFileFormat(x)
+    }
+    
+    filePath <- paste(filePathSansExt, ext, sep = ".")
+    
+    # Create the directory if missing:
+    dir <- dirname(filePath)
+    if(!file.exists(dir)) {
+        dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+    }
+    
+    # Write the file:
+    if(ext == "fst") {
+        fst::write_fst(as.data.frame(x), path = filePath)
+    }
+    else if(ext == "rds") {
+        saveRDS(x, file = filePath)
+    }
+    else {
+        stop("Wrong memoryFileFormat")
+    }
+    
+    return(filePath)
+}
+
+writeMemoryFiles <- function(objects, filePathsSansExt) {
+    orderFileName <- file.path(dirname(filePathsSansExt[1]), "tableOrder.txt")
+    filePaths <- mapply(writeMemoryFile, objects, filePathsSansExt)
+    write(filePaths, orderFileName)
+}
+
+readMemoryFile <- function(filePath) {
+    
+    # Get the file extension:
+    ext <- tools::file_ext(filePath)
+    
+    # Read the file:
+    if(grepl("fst", ext, ignore.case = TRUE)) {
+        output <- data.table::as.data.table(fst::read_fst(path = filePath))
+    }
+    else if(grepl("rds", ext, ignore.case = TRUE)) {
+        output <- readRDS(file = filePath)
+    }
+    else {
+        stop("Unsupported file format")
+    }
+    
+    return(output)
+}
+
+# Small function to expand a logical to possible values starting with the the givevn value:
+expandLogical <- function(x) {
+    c(x, !x)
+}

@@ -5,7 +5,6 @@
 \alias{createProject}
 \alias{openProject}
 \alias{closeProject}
-\alias{resetProject}
 \alias{saveProject}
 \alias{saveAsProject}
 \alias{copyProject}
@@ -19,13 +18,17 @@ createProject(
   open = TRUE
 )
 
-openProject(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE)
+openProject(
+  projectPath,
+  showWarnings = FALSE,
+  force = FALSE,
+  reset = FALSE,
+  type = c("RData", "JSON")
+)
 
 closeProject(projectPath, save = NULL)
 
-resetProject(projectPath, save = NULL)
-
-saveProject(projectPath, type = c("RData", "XML", "JSON"))
+saveProject(projectPath, type = c("RData", "JSON"))
 
 saveAsProject(projectPath, newProjectPath, ow = FALSE)
 
@@ -46,9 +49,9 @@ copyProject(projectPath, newProjectPath, ow = FALSE)
 
 \item{reset}{Logical: If TRUE reset each model to the start of the model.}
 
-\item{save}{Logical: If TRUE save the project before closing. Default (NULL) is to ask the user whether to save the project before closing.}
-
 \item{type}{The type of file to save the project to.}
+
+\item{save}{Logical: If TRUE save the project before closing. Default (NULL) is to ask the user whether to save the project before closing.}
 
 \item{newProjectPath}{The path to the copied StoX project.}
 }

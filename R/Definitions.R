@@ -23,6 +23,8 @@
 #' 
 initiateRstoxFramework <- function(){
     
+    memoryFileFormat <- "rds"
+    
     ##### Packages: #####
     officialStoxLibraryPackages <- c(
         "RstoxBase", 
@@ -30,6 +32,22 @@ initiateRstoxFramework <- function(){
         #"RstoxFDA", 
         #"RstoxAnalysis", 
         #"RstoxReport"
+    )
+    
+    # Define formats for files saved by Rstox:
+    memoryFileFormat_Empty <- "rds"
+    memoryFileFormat_Table <- "fst"
+    memoryFileFormat_Spatial <- "rds"
+    memoryFileFormat_List <- "rds"
+    memoryFileFormat_Other <- "rds"
+    allMemoryFileFormats <- unique(
+        c(
+            memoryFileFormat_Empty, 
+            memoryFileFormat_Table, 
+            memoryFileFormat_Spatial, 
+            memoryFileFormat_List, 
+            memoryFileFormat_Other
+        )
     )
     
     # Define the requested (all) function attributes:
@@ -44,9 +62,50 @@ initiateRstoxFramework <- function(){
         "functionArgumentHierarchy"
     )
     
+    # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
+    lapply(officialStoxLibraryPackages, library, character.only = TRUE)
+    
     # Get the stoxLibrary as the list of function attributes from all official packages:
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
-    stoxLibraryPackageFunctionNames <- unname(sapply(stoxLibrary, "[[", "functionName"))
+    availableFunctions <- names(stoxLibrary)
+    # Get the possible values of the functions:
+    availableFunctionPossibleValues <- lapply(availableFunctions, extractStoxFunctionParameterPossibleValues)
+    names(availableFunctionPossibleValues) <- availableFunctions
+    
+    # Get the json schema for RstoxFramework:
+    schema <- jsonlite::read_json(system.file("formats", "projectSchema.json", package = "RstoxFramework"))
+    
+    # Get the schemas of the Rstox packages:
+    processDataSchemas <- lapply(officialStoxLibraryPackages, readProcessDataSchema)
+    processDataSchemas <- unlist(processDataSchemas, recursive = FALSE)
+    
+    # Get the names of the processData schemas:
+    processDataSchemaNames <- names(processDataSchemas)
+    processDataSchema <- list(
+        processData = list(
+            oneOf = lapply(
+                processDataSchemaNames, 
+                function(x) list(
+                    "$ref" = paste0("\"#/", x, "\"")
+                )
+            ) 
+        )
+    )
+    
+    # Paste the subSchemas to the RstoxFramework schema:
+    schema <- jsonlite::toJSON(
+        c(
+            schema, 
+            processDataSchema, 
+            processDataSchemas
+        ), 
+        pretty = TRUE, 
+        auto_unbox = TRUE
+    )
+    # Create a project.json validator:
+    projectValidator <- jsonvalidate::json_validator(schema)
+    
+   
     
     #### Data types: ####
     oldStoxModelDataTypes <- c(
@@ -72,6 +131,7 @@ initiateRstoxFramework <- function(){
         functionOutputDataType = sapply(stoxLibrary, "[[", "functionOutputDataType"), 
         functionType = sapply(stoxLibrary, "[[", "functionType")
     )
+    
     
     ##### Data: #####
     speciesVariables <- list(
@@ -100,15 +160,12 @@ initiateRstoxFramework <- function(){
     # Define the permitted classes for individual outputs from StoX functions:
     validOutputDataClasses <- c(
         "data.table", 
-        #"SpatialPolygons"
         "SpatialPolygonsDataFrame"
     )
-    ## Define the valid output data classes:
-    #validOutputDataClasses <- c(
-    #    "data.table", 
-    #    "json", 
-    #    "geojson"
-    #)
+    
+    # Define code words for the start and end of files to write geojson data to, which are read into the project.json after being written for a project:
+    spatialFileReferenceCodeStart <- "<stratumpolygontempfile:"
+    spatialFileReferenceCodeEnd <- ":stratumpolygontempfile>"
     
     # Define the regular expression listing lower and upper characters, integers, underscore and dot:
     validProcessNameSet <- "[[:alnum:]_.]"
@@ -228,9 +285,6 @@ initiateRstoxFramework <- function(){
         StoxBioticData = "StoxBioticData", 
         StoxAcousticData = "StoxAcousticData", 
         StratumPolygon = "StratumPolygon"#, 
-        #Assignment = "Assignment", 
-        #AcousticPSU = "AcousticPSU", 
-        #SweptAreaPSU = "SweptAreaPSU"
     )
     
     # Define the data types for the interactive modes:
@@ -292,21 +346,38 @@ initiateRstoxFramework <- function(){
     
     #### Define the folders and paths used when a project is open: ####
     projectSessionFolder <- file.path(stoxFolders["Process"], "projectSession")
-    # Sub folders:
+    
+    # Sub folders 1:
     dataFolder <- file.path(projectSessionFolder, "data")
-    projectMemoryFolder <- file.path(projectSessionFolder, "projectMemory")
-    
-    currentMemoryFolder <- file.path(projectMemoryFolder, "current")
-    historyMemoryFolder <- file.path(projectMemoryFolder, "history")
-    
+    memoryFolder <- file.path(projectSessionFolder, "memory")
     statusFolder <- file.path(projectSessionFolder, "status")
+    
+    # Sub folders of the data folder:
+    dataModelsFolder <- file.path(dataFolder, "models")
+    dataModelsFolders <- file.path(dataModelsFolder, stoxModelFolders)
+    
+    # Sub folders of the memory folder:
+    memoryCurrentFolder <- file.path(memoryFolder, "current")
+    memoryHistoryFolder <- file.path(memoryFolder, "history")
+    memoryModelsFolder <- file.path(memoryFolder, "models")
+    memoryModelsFolders <- file.path(memoryModelsFolder, stoxModelFolders)
+    
+    memoryCurrentModelsFolder <- file.path(memoryCurrentFolder, "models")
+    memoryCurrentModelsFolders <- file.path(memoryCurrentModelsFolder, stoxModelFolders)
+    
     # Return also a vector of all session folders, to generate the folder structure recursively:
     projectSessionFolderStructure <- c(
         dataFolder, 
-        projectMemoryFolder, 
+        memoryFolder, 
         statusFolder, 
-        currentMemoryFolder, 
-        historyMemoryFolder
+        dataModelsFolder, 
+        dataModelsFolders, 
+        memoryCurrentFolder, 
+        memoryHistoryFolder, 
+        memoryModelsFolder, 
+        memoryModelsFolders, 
+        memoryCurrentModelsFolder, 
+        memoryCurrentModelsFolders
     )
     
     
@@ -316,18 +387,15 @@ initiateRstoxFramework <- function(){
     projectJSONFile <- file.path(stoxFolders["Process"], "project.json")
     projectSavedStatusFile <- file.path(statusFolder, "projectSavedStatus.txt")
     projectIsRunningFile <- file.path(statusFolder, "projectIsRunning.txt")
-    #currentProcessFile = file.path(statusFolder, "currentProcess.txt")
     
     # Memory files:
-    #originalProjectMemoryFile <- file.path(projectMemoryFolder, "originalProjectMemory.rds")
-    currentProjectMemoryFile <- file.path(currentMemoryFolder, "currentProjectMemory.rds")
-    projectMemoryIndexFile <- file.path(historyMemoryFolder, "projectMemoryIndex.txt")
+    projectMemoryIndexFile <- file.path(memoryHistoryFolder, "projectMemoryIndex.txt")
     # The file containing a table of modelName, processID and processName, where the rows are ordered by the processIndex:
-    processIndexTableFile <- file.path(currentMemoryFolder, "processIndexTable.txt")
+    processIndexTableFile <- file.path(memoryCurrentFolder, "processIndexTable.txt")
     # The file containing a table of one row holding the index of the active process for each model (columns named by the model names):
-    activeProcessIDFile <- file.path(currentMemoryFolder, "activeProcessID.txt")
+    activeProcessIDFile <- file.path(memoryCurrentFolder, "activeProcessID.txt")
     # The file containing a table of one row holding the maximum process ID (sequential integer starting from 1 at the firstly generated process) for each model (columns named by the model names):
-    maxProcessIntegerIDFile <- file.path(currentMemoryFolder, "maxProcessIntegerID.txt")
+    maxProcessIntegerIDFile <- file.path(memoryCurrentFolder, "maxProcessIntegerID.txt")
     
     
     #### Define an object with all path objects for convenience in getProjectPaths(): ####
@@ -340,11 +408,19 @@ initiateRstoxFramework <- function(){
             
             # Project session:
             projectSessionFolder = projectSessionFolder, 
+            
             dataFolder = dataFolder, 
-            projectMemoryFolder = projectMemoryFolder, 
-            currentMemoryFolder = currentMemoryFolder, 
-            historyMemoryFolder = historyMemoryFolder, 
+            memoryFolder = memoryFolder, 
             statusFolder = statusFolder, 
+            dataModelsFolder = dataModelsFolder, 
+            dataModelsFolders = dataModelsFolders, 
+            memoryCurrentFolder = memoryCurrentFolder, 
+            memoryHistoryFolder = memoryHistoryFolder, 
+            memoryModelsFolder = memoryModelsFolder, 
+            memoryModelsFolders = memoryModelsFolders, 
+            memoryCurrentModelsFolder = memoryCurrentModelsFolder, 
+            memoryCurrentModelsFolders = memoryCurrentModelsFolders, 
+            
             projectSessionFolderStructure = projectSessionFolderStructure, 
             
             # Project description:
@@ -353,9 +429,7 @@ initiateRstoxFramework <- function(){
             projectJSONFile = projectJSONFile, 
             projectSavedStatusFile = projectSavedStatusFile, 
             projectIsRunningFile = projectIsRunningFile, 
-            #currentProcessFile = currentProcessFile, 
-            #originalProjectMemoryFile = originalProjectMemoryFile, 
-            currentProjectMemoryFile = currentProjectMemoryFile, 
+            
             projectMemoryIndexFile = projectMemoryIndexFile, 
             processIndexTableFile = processIndexTableFile, 
             activeProcessIDFile = activeProcessIDFile, 
@@ -385,7 +459,7 @@ initiateRstoxFramework <- function(){
         "..functionName", 
         "..functionParameters", 
         "..infoToKeep", 
-        "..modified", 
+        "..processDirty", 
         "..newProcessName", 
         "CruiseKey", 
         "Latitude", 
@@ -403,7 +477,7 @@ initiateRstoxFramework <- function(){
         "hasBeenRun", 
         "hasProcessData", 
         "modelName", 
-        "modified", 
+        "processDirty", 
         "name", 
         "possibleValues", 
         "processID", 
@@ -416,56 +490,55 @@ initiateRstoxFramework <- function(){
     assign("definitions", definitions, envir=get("RstoxFrameworkEnv"))
     assign("projects", list(), envir=get("RstoxFrameworkEnv"))
     
-    # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
-    lapply(officialStoxLibraryPackages, library, character.only = TRUE)
-    
     #### Return the definitions: ####
     definitions
 }
 
-# This function gets the stoxFunctionAttributes of the specified packages.
-getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
-    
-    # Validate the pakcages:
-    packageNames <- packageNames[sapply(packageNames, validateStoxLibraryPackage)]
-    # Get a list of the 'stoxFunctionAttributes' from each package:
-    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
-    
-    # Collapse to one list:
-    stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
-    
-    # Check for duplicaetd function names:
-    functionNames <- names(stoxFunctionAttributes)
-    packageNames <- sapply(stoxFunctionAttributes, "[[", "packageName")
-    areDuplicatedFunctionNames <- duplicated(functionNames)
-    
-    # If there are any duplicated function names, report a warning stating which function names and from which packages:
-    if(any(areDuplicatedFunctionNames)) {
-        # Get the package strings as concatenations of the packages with common function names:
-        packageNamesString <- as.character(
-            by(
-                functionNames[areDuplicatedFunctionNames], 
-                packageNames[areDuplicatedFunctionNames], 
-                paste, 
-                collapse = ", "
-            )
-        )
-        # Get the unique duplicated function names, and paste the packageNamesString to these:
-        uniqueDuplicatedFunctionNames <- unique(functionNames[areDuplicatedFunctionNames])
-        functionNamePackageNamesString <- paste0(
-            uniqueDuplicatedFunctionNames, 
-            "(", 
-            packageNamesString, 
-            ")"
-        )
-        
-        warning("StoX: The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
+
+readProcessDataSchema <- function(packageName) {
+    # Get the file to the schema:
+    schemaFile <- system.file("formats", "processDataSchema.json", package = packageName)
+    if(nchar(schemaFile) > 0) {
+        schema <- jsonlite::read_json(schemaFile)
+    }
+    else {
+        schema <- NULL
     }
     
-    # Keep only the non-duplicated functions: 
-    stoxFunctionAttributes <- stoxFunctionAttributes[!areDuplicatedFunctionNames]
-    return(stoxFunctionAttributes)
+    return(schema)
 }
+
+
+extractStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData = TRUE) {
+    
+    # Split the function name into function name and package name, and get the formals in the package environment:
+    packageFunctionName <- strsplit(functionName, "::")[[1]]
+    if(length(packageFunctionName) == 1) {
+        f <- formals(functionName)
+    }
+    else {
+        packageName <- packageFunctionName[1]
+        functionName <- packageFunctionName[2]
+        f <- formals(functionName, envir = as.environment(paste("package", packageName, sep = ":")))
+    }
+    
+    # Convert missing inputs to NULL, to preserve the name-value-pair convention, and to allow evaluating the calls returned by formals():
+    areMissing <- sapply(f, class) == "name" & sapply(f, function(x) length(x) > 0 & sum(nchar(x)) == 0)
+    f[areMissing] <- vector("list", sum(areMissing))
+    
+    if(dropProcessData) {
+        f <- f[names(f) != "processData"]
+    }
+    
+    # Evaluate and return:
+    output <- f
+    for(i in seq_along(f)) {
+        assign(names(f[i]), if(!is.null(f[[i]])) output[[i]] <- eval(f[[i]]) else eval(f[[i]]))
+    }
+    
+    return(output)
+}
+
 
 
 ##################################################
@@ -503,3 +576,5 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
     
     definitions
 }
+
+

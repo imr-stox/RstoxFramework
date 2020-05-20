@@ -4,7 +4,7 @@
 \alias{BioticAssignment}
 \alias{addHaulToAssignment}
 \alias{removeHaulFromAssignment}
-\title{Add or remove biotic hauls from assignments}
+\title{Add or remove biotic hauls to/from assignment of hauls to acoustic PSU/Layer}
 \usage{
 addHaulToAssignment(
   Stratum,
@@ -27,11 +27,13 @@ removeHaulFromAssignment(
 )
 }
 \arguments{
-\item{PSU}{The acoustic primary sampling unit (PSU) for which to remove the haul}
+\item{Stratum}{The stratum name related to the PSU.}
 
-\item{Layer}{The acoustic Layer for which to remove the haul}
+\item{PSU}{The acoustic primary sampling unit (PSU) for which to add/remove the haul.}
 
-\item{Haul}{The biotic haul to remove (can be a vector of hauls).}
+\item{Layer}{The acoustic Layer for which to add/remove the haul.}
+
+\item{Haul}{The biotic haul to add/remove (can be a vector of hauls).}
 
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
@@ -40,7 +42,7 @@ removeHaulFromAssignment(
 \item{processID}{The ID of the process.}
 }
 \description{
-The functions \code{addHaulsToAssignment} and \code{removeHaulsFromAssignment} adds or removes biotic hauls from the BioticAssignment process data of the specified process.
+The functions \code{addHaulsToAssignment} and \code{removeHaulsFromAssignment} adds or removes biotic hauls from the \code{\link{BioticAssignment}} process data of the specified process.
 }
 \details{
 The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.

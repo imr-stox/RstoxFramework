@@ -865,7 +865,6 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     json <- jsonlite::toJSON(projectDescription)
     # Read any geojson objects stored in temporary file by convertProcessDataToGeojson():
     json <- replaceSpatialFileReference(json)
-    browser()
     
     # Fix pretty formatting by reading in and writing back the file:
     write(json, projectDescriptionFile)
@@ -1630,45 +1629,25 @@ isProcessDataFunction <- function(functionName) {
 
 
 # Function which gets the values defined for the parameters in the definition of a function:
-getStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData = TRUE, fill.logical = TRUE) {
+getStoxFunctionParameterPossibleValues <- function(functionName, fill.logical = TRUE) {
     
-    # Small function to expand a logical to possible values starting with the the givevn value:
-    expandLogical <- function(x) {
-        c(x, !x)
+    # Get the available functions:
+    availableFunctions <- getRstoxFrameworkDefinitions("availableFunctions")
+    
+    functionName <- getFunctionNameFromPackageFunctionName("DefineAcousticPSU")
+    if(! functionName %in% availableFunctions) {
+        warning("The function ", functionName, "is not an official StoX function.")
+        return(list())
     }
     
-    # Split the function name into function name and package name, and get the formals in the package environment:
-    packageFunctionName <- strsplit(functionName, "::")[[1]]
-    if(length(packageFunctionName) == 1) {
-        f <- formals(functionName)
-    }
-    else {
-        packageName <- packageFunctionName[1]
-        functionName <- packageFunctionName[2]
-        f <- formals(functionName, envir = as.environment(paste("package", packageName, sep = ":")))
-    }
-    
-    # Convert missing inputs to NULL, to preserve the name-value-pair convention, and to allow evaluating the calls returned by formals():
-    areMissing <- sapply(f, class) == "name" & sapply(f, function(x) length(x) > 0 & sum(nchar(x)) == 0)
-    f[areMissing] <- vector("list", sum(areMissing))
-    
-    if(dropProcessData) {
-        f <- f[names(f) != "processData"]
-    }
-    
-    # Evaluate and return:
-    output <- f
-    for(i in seq_along(f)) {
-        assign(names(f[i]), if(!is.null(f[[i]])) output[[i]] <- eval(f[[i]]) else eval(f[[i]]))
-    }
-    #f <- lapply(f, eval)    
+    # Get all possible values:
+    output <- getRstoxFrameworkDefinitions("availableFunctionPossibleValues")[[functionName]]
     
     # Insert c(FALSE, TRUE) for logicals:
     if(fill.logical) {
         areLogicals <- sapply(output, is.logical)
         if(sum(areLogicals)) {
             output[areLogicals] <- lapply(output[areLogicals], expandLogical)
-            # f[areLogicals] <- rep(list(c(FALSE, TRUE)), sum(areLogicals))
         }
     }
     
@@ -2193,6 +2172,9 @@ getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID =
         beforeProcessID = beforeProcessID, 
         argumentFilePaths = argumentFilePaths
     )
+    if(length(processTable) == 0) {
+        return(processTable)
+    }
     
     ##### (1) Add process parameters: #####
     processParameters <- mapply(

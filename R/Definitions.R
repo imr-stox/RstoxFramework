@@ -62,8 +62,14 @@ initiateRstoxFramework <- function(){
         "functionArgumentHierarchy"
     )
     
+    # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
+    lapply(officialStoxLibraryPackages, library, character.only = TRUE)
+    
     # Get the stoxLibrary as the list of function attributes from all official packages:
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
+    availableFunctions <- names(stoxLibrary)
+    # Get the possible values of the functions:
+    availableFunctionPossibleValues <- lapply(availableFunctions, extractStoxFunctionParameterPossibleValues)
     
     # Get the json schema for RstoxFramework:
     schema <- jsonlite::read_json(system.file("formats", "projectSchema.json", package = "RstoxFramework"))
@@ -483,9 +489,6 @@ initiateRstoxFramework <- function(){
     assign("definitions", definitions, envir=get("RstoxFrameworkEnv"))
     assign("projects", list(), envir=get("RstoxFrameworkEnv"))
     
-    # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
-    lapply(officialStoxLibraryPackages, library, character.only = TRUE)
-    
     #### Return the definitions: ####
     definitions
 }
@@ -503,6 +506,38 @@ readProcessDataSchema <- function(packageName) {
     
     return(schema)
 }
+
+
+extractStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData = TRUE) {
+    
+    # Split the function name into function name and package name, and get the formals in the package environment:
+    packageFunctionName <- strsplit(functionName, "::")[[1]]
+    if(length(packageFunctionName) == 1) {
+        f <- formals(functionName)
+    }
+    else {
+        packageName <- packageFunctionName[1]
+        functionName <- packageFunctionName[2]
+        f <- formals(functionName, envir = as.environment(paste("package", packageName, sep = ":")))
+    }
+    
+    # Convert missing inputs to NULL, to preserve the name-value-pair convention, and to allow evaluating the calls returned by formals():
+    areMissing <- sapply(f, class) == "name" & sapply(f, function(x) length(x) > 0 & sum(nchar(x)) == 0)
+    f[areMissing] <- vector("list", sum(areMissing))
+    
+    if(dropProcessData) {
+        f <- f[names(f) != "processData"]
+    }
+    
+    # Evaluate and return:
+    output <- f
+    for(i in seq_along(f)) {
+        assign(names(f[i]), if(!is.null(f[[i]])) output[[i]] <- eval(f[[i]]) else eval(f[[i]]))
+    }
+    
+    return(output)
+}
+
 
 
 ##################################################
@@ -540,3 +575,5 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
     
     definitions
 }
+
+

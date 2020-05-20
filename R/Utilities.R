@@ -517,3 +517,8 @@ readMemoryFile <- function(filePath) {
     
     return(output)
 }
+
+# Small function to expand a logical to possible values starting with the the givevn value:
+expandLogical <- function(x) {
+    c(x, !x)
+}

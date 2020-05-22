@@ -1600,7 +1600,8 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
                 hitsOr <- logical(length(conditionNames))
                 names(hitsOr) <- conditionNames
                 for(conditionName in conditionNames) {
-                    if(functionArguments[[conditionName]] %in% functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]]) {
+                    # Added requirement that functionArguments[[conditionName]] has positie length:
+                    if(length(functionArguments[[conditionName]]) && functionArguments[[conditionName]] %in% functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]]) {
                         hitsOr[conditionName] <- TRUE
                     }
                 }

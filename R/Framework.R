@@ -1182,9 +1182,19 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
     
     # Return a list of the active process and the process table:
     output <- list(
-        if(returnProcessTable) processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
         activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
     )
+    if(returnProcessTable) {
+        output <- c(
+            list(processTable = getProcessTable(projectPath = projectPath, modelName = modelName)), 
+            output
+        )
+    }
+   
+    #output <- list(
+    #    if(returnProcessTable) processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
+    #    activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
+    #)
     return(output)
 }
 

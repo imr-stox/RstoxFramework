@@ -1603,22 +1603,22 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
         atArgumentName <- which(argumentName == names(functionArgumentHierarchy))
         if(length(atArgumentName)) {
             # Loop through the occurrences of the argumentName in the functionArgumentHierarchy, applying &&:
-            hitsAnd <- logical(length(atArgumentName))
+            hitsOr <- logical(length(atArgumentName))
             for(ind in seq_along(atArgumentName)) {
-                # Loop through the conditions and set hitsAnd tot TRUE if at least one condition is fullfilled:
+                # Loop through the conditions and set hitsAnd to TRUE if at least one condition is fullfilled:
                 conditionNames <- names(functionArgumentHierarchy[[atArgumentName[ind]]])
-                hitsOr <- logical(length(conditionNames))
-                names(hitsOr) <- conditionNames
+                hitsAnd <- logical(length(conditionNames))
+                names(hitsAnd) <- conditionNames
                 for(conditionName in conditionNames) {
                     # Added requirement that functionArguments[[conditionName]] has positie length:
                     if(length(functionArguments[[conditionName]]) && functionArguments[[conditionName]] %in% functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]]) {
-                        hitsOr[conditionName] <- TRUE
+                        hitsAnd[conditionName] <- TRUE
                     }
                 }
-                # Apply the OR condition, implying that hitsOr is TRUE if any are TRUE:
-                hitsAnd[ind] <- any(hitsOr)
+                # Apply the AND condition, implying that hitsAnd is TRUE if all are TRUE:
+                hitsOr[ind] <- all(hitsAnd)
             }
-            toShow[[argumentName]] <- all(hitsAnd)
+            toShow[[argumentName]] <- any(hitsOr)
         }
         else {
             toShow[[argumentName]] <- TRUE

@@ -186,40 +186,48 @@ initiateRstoxFramework <- function(){
         )
     )
     
-    # Get the function returning the definitions of a package:
-    getDefinitionsFunctionFromPackage <- function(packageName) {
-        # Get the function returning the definitions:
-        definitionsFunctionName <- paste0("get", packageName, "Definitions")
-        definitionsFunction <- tryCatch(
-            getExportedValue(packageName, definitionsFunctionName), 
+    #### Get the function returning the definitions of a package:
+    ###getDefinitionsFunctionFromPackage <- function(packageName) {
+    ###    # Get the function returning the definitions:
+    ###    definitionsFunctionName <- paste0("get", packageName, "Definitions")
+    ###    definitionsFunction <- tryCatch(
+    ###        getExportedValue(packageName, definitionsFunctionName), 
+    ###        error = function(err) NULL
+    ###    )
+    ###    return(definitionsFunction)
+    ###}
+    #### Get the parameterTableInfo defined by a package:
+    ###getParameterTableInfoFromPackage <- function(packageName) {
+    ###    # Get the function returning the definitions:
+    ###    definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
+    ###    # Run the function:
+    ###    do.call(definitionsFunctionName, list("parameterTableInfo"))
+    ###}
+    #### Get the processPropertyFormats defined by a package:
+    ###getProcessPropertyFormats <- function(packageName) {
+    ###    # Get the function returning the definitions:
+    ###    definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
+    ###    # Run the function:
+    ###    do.call(definitionsFunctionName, list("processPropertyFormats"))
+    ###}
+    getProcessPropertyFormats <- function(packageName) {
+        processPropertyFormats <- tryCatch(
+            getExportedValue(packageName, "processPropertyFormats"), 
             error = function(err) NULL
         )
-        return(definitionsFunction)
-    }
-    # Get the parameterTableInfo defined by a package:
-    getParameterTableInfoFromPackage <- function(packageName) {
-        # Get the function returning the definitions:
-        definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
-        # Run the function:
-        do.call(definitionsFunctionName, list("parameterTableInfo"))
-    }
-    # Get the processPropertyFormats defined by a package:
-    getProcessPropertyFormats <- function(packageName) {
-        # Get the function returning the definitions:
-        definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
-        # Run the function:
-        do.call(definitionsFunctionName, list("processPropertyFormats"))
+        return(processPropertyFormats)
     }
     
-    # Get the parameterTableInfo from all packages, and combine into a list:
-    parameterTableInfo <- lapply(officialStoxLibraryPackages, getParameterTableInfoFromPackage)
-    parameterTableInfo <- unlist(parameterTableInfo, recursive = FALSE)
-
     # Get the processPropertyFormats of all packages, and merge the lists and add the default ("none"):
-    processPropertyFormats <- lapply(officialStoxLibraryPackages, getProcessPropertyFormats)
-    allFormatClasses <- unique(unlist(lapply(processPropertyFormats, names)))
-    processPropertyFormats <- lapply(allFormatClasses, function(x) unlist(lapply(processPropertyFormats, "[[", x)))
-    names(processPropertyFormats) <- allFormatClasses
+    processPropertyFormats <- unlist(lapply(officialStoxLibraryPackages, getProcessPropertyFormats), recursive = FALSE)
+    #
+    #allFormatClasses <- unique(unlist(lapply(processPropertyFormats, names)))
+    #processPropertyFormats <- lapply(allFormatClasses, function(x) unlist(lapply(processPropertyFormats, "[[", x)))
+    #names(processPropertyFormats) <- allFormatClasses
+    
+    # Get the parameterTableInfo from all packages, and combine into a list:
+    parameterTableInfo <- processPropertyFormats[sapply(processPropertyFormats, "[[", "type") == "table"]
+
     
     # Define filter operators for the different data types:
     filterOperators <- list(

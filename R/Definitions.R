@@ -68,6 +68,7 @@ initiateRstoxFramework <- function(){
     # Get the stoxLibrary as the list of function attributes from all official packages:
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     availableFunctions <- names(stoxLibrary)
+    
     # Get the possible values of the functions:
     availableFunctionPossibleValues <- lapply(availableFunctions, extractStoxFunctionParameterPossibleValues)
     names(availableFunctionPossibleValues) <- availableFunctions
@@ -129,8 +130,16 @@ initiateRstoxFramework <- function(){
     
     stoxDataTypes <- data.table::data.table(
         functionOutputDataType = sapply(stoxLibrary, "[[", "functionOutputDataType"), 
-        functionType = sapply(stoxLibrary, "[[", "functionType")
+        functionType = sapply(stoxLibrary, "[[", "functionType"), 
+        functionName = availableFunctions, 
+        packageName = sapply(stoxLibrary, "[[", "packageName")
     )
+    
+    # Check that there are no functions with the same name as a datatype:
+    commonFunctionAndDataTypeName <- intersect(stoxDataTypes$functionOutputDataType, stoxDataTypes$functionName)
+    if(length(commonFunctionAndDataTypeName)) {
+        warning("The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes[functionName == commonFunctionAndDataTypeName, "packageName"], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and RstoxAPI::runModel(). Please notify the packcage maintainer.")
+    }
     
     
     ##### Data: #####

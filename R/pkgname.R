@@ -1,6 +1,6 @@
-#' The engine of StoX
+#' The Engine of StoX
 #'
-#' This package contains all functions and framwork for running a StoX project.
+#' The framwork of StoX >= 3.0.
 #'
 #' The RstoxFramework package is the engine of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.
 #'

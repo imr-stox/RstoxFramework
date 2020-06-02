@@ -3294,7 +3294,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, replaceArgs = list(), setUseProcessDataToTRUE = TRUE, purge.processData = FALSE) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE) {
     
     # Get the process:
     process <- getProcess(
@@ -3426,7 +3426,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         writeProcessOutputMemoryFiles(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
         
         # Write to text files:
-        if(process$processParameters$fileOutput) {
+        if(if(length(fileOutput)) fileOutput else process$processParameters$fileOutput) {
             writeProcessOutputTextFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
         }
         
@@ -3901,7 +3901,7 @@ getFolderDepth <- function(folderPath) {
 #' @export
 #' 
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
-runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force.restart = FALSE, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE) {
+runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force.restart = FALSE, replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, ...) {
 
     ## Get the processIDs:
     #processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -3910,7 +3910,17 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     #endProcess <- min(nrow(processIndexTable), endProcess)
     ## Extract the requested process IDs:
     #processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
-    processIDs <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)$processID
+    processIndexTable <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)
+    processIDs <- processIndexTable$processID
+    processNames <- processIndexTable$processName
+    if(!length(processIDs)) {
+        warning("Empty project, ", projectPath)
+        return(NULL)
+    }
+    
+    # Check for parameters to override the processes by in "...":
+    #replaceArgs <- getReplaceArgs(replaceArgs, ..., processNames = processNames)
+    replaceArgs <- getReplaceArgs(replaceArgs, ...)
     
     # Check that the project exists:
     failedVector <- logical(length(processIDs))
@@ -3950,11 +3960,36 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     # Try running the processes, and retun the failedVector if craching:
     #tryCatch(
+    
+    #if(length(fileOutput)) {
+    #    replaceArgs <- list(fileOutput = fileOutput)
+    #}
+    #else {
+    #    replaceArgs = list()
+    #}
     #    {
-            for(processID in processIDs) {
-                #status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
-                runProcess(projectPath = projectPath, modelName = modelName, processID = processID, setUseProcessDataToTRUE = setUseProcessDataToTRUE, purge.processData = purge.processData)
-            }
+            
+    
+    
+    
+    #for(processID in processIDs) {
+    #    #status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
+    #    runProcess(projectPath = projectPath, modelName = modelName, processID = processID, replaceArgs = replaceArgs[[]], fileOutput = fileOutput, setUseProcessDataToTRUE = setUseProcessDataToTRUE, purge.processData = purge.processData)
+    #}
+    
+    mapply(
+        runProcess, 
+        processID = processIDs, 
+        replaceArgs = replaceArgs[processNames], 
+        MoreArgs = list(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            fileOutput = fileOutput, 
+            setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
+            purge.processData = purge.processData
+        )
+    )
+    
    #     }#, 
         #error = function(e) {
         #    err <<- e
@@ -3981,14 +4016,42 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     #status
     list(
         processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
-        interactiveMode = getInteractiveMode(projectPath = projectPath, modelName = modelName, processID = processID), 
+        interactiveMode = getInteractiveMode(projectPath = projectPath, modelName = modelName, processID = utils::tail(processIDs, 1)), 
         activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
         saved = isSaved(projectPath)
     )
 }
 
 
-
+#getReplaceArgs <- function(replaceArgs = list(), ..., processNames = NULL){
+#    
+#    # Get the specifications given as '...':
+#    dotlist <- list(...)
+#    
+#    # Merge and unique the inputs:
+#    replaceArgs <- c(replaceArgs, dotlist)
+#    # parlist <- unique(parlist) THIS REMOVED THE NAMES AND SHOULD NOT BE USED
+#    replaceArgs <- replaceArgs[!duplicated(replaceArgs)]
+#    
+#    # Keep only the elements named by a process:
+#    if(length(processNames)) {
+#        replaceArgs <- replaceArgs[names(replaceArgs) %in% processNames]
+#    }
+#    
+#    return(replaceArgs)
+#}
+getReplaceArgs <- function(replaceArgs = list(), ...){
+    
+    # Get the specifications given as '...':
+    dotlist <- list(...)
+    
+    # Merge and unique the inputs:
+    replaceArgs <- c(replaceArgs, dotlist)
+    # parlist <- unique(parlist) THIS REMOVED THE NAMES AND SHOULD NOT BE USED
+    replaceArgs <- replaceArgs[!duplicated(replaceArgs)]
+    
+    return(replaceArgs)
+}
 
 
 

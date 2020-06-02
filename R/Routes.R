@@ -1140,16 +1140,21 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
 
 # Convert to the type of the parameters:
 convertFunctionParameter <- function(functionParameterName, functionParameterValue, functionName) {
-    # Get the primitive type:
+    # Get the primitive type and the format:
     type <- getStoxFunctionParameterPropertyTypes(functionName)[functionParameterName]
-    # If empty string, convert to NULL for non-character type:
-    if(is.character(functionParameterValue) && nchar(functionParameterValue) == 0 && type != "character") {
-        functionParameterValue <- NULL
-    }
+    format = getFunctionParameterPropertyFormats(functionName)[functionParameterName]
+    
     # Apply the conversion function:
-    fun <- paste0("as.", type)
-    out <- do.call(fun, list(functionParameterValue))
-    return(out)
+    if(format %in% c("single", "vector")) {
+        # If empty string, convert to NULL for non-character type:
+        if(is.character(functionParameterValue) && nchar(functionParameterValue) == 0 && type != "character") {
+            functionParameterValue <- NULL
+        }
+        fun <- paste0("as.", type)
+        functionParameterValue <- do.call(fun, list(functionParameterValue))
+    }
+    
+    return(functionParameterValue)
 }
 
 ##########

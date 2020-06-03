@@ -18,6 +18,6 @@ A list of definitions.
 This function gets vital definitions from the RstoxFramework environment.
 }
 \examples{
-getRstoxFrameworkDefinitions()
+getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
 
 }

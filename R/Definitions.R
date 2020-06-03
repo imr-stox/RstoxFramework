@@ -571,7 +571,7 @@ extractStoxFunctionParameterPossibleValues <- function(functionName, dropProcess
 #' A list of definitions.
 #' 
 #' @examples
-#' getRstoxFrameworkDefinitions()
+#' getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
 #' 
 #' @export
 #' 

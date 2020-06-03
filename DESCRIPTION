@@ -1,5 +1,5 @@
 Package: RstoxFramework
-Title: The engine of StoX
+Title: The Engine of StoX
 Version: 1.2.7
 Authors@R: c(
   person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
@@ -12,7 +12,7 @@ Authors@R: c(
   person(given = "Atle", family = "Totland", role = "aut"), 
   person(given = "Mikko Juhani", family = "Vihtakari", role = "aut"))
 Depends: R (>= 3.6)
-Description: This package contains all functions and framwork for running a StoX project.
+Description: The framwork of StoX >= 3.0.
 URL: https://github.com/StoXProject/RstoxFramework
 BugReports: https://github.com/StoXProject/RstoxFramework/issues
 License: LGPL-3
@@ -25,13 +25,10 @@ Imports:
     jsonvalidate (>= 1.1.0),
     sp (>= 1.3.2),
     fst (>= 0.9.2),
-    RstoxData (>= 0.8.8),
-    RstoxBase (>= 1.2.7)
+    RstoxData (>= 0.8.10),
+    RstoxBase (>= 1.2.11)
 Suggests: 
     testthat
-Remotes: 
-	StoXProject/RstoxData@RstoxData-v0.8.8, 
-	StoXProject/RstoxBase@RstoxBase-v1.2.7
 Additional_repositories: 
 	https://stoxproject.github.io/repo
 RoxygenNote: 7.0.2

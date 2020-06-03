@@ -68,6 +68,7 @@ initiateRstoxFramework <- function(){
     # Get the stoxLibrary as the list of function attributes from all official packages:
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     availableFunctions <- names(stoxLibrary)
+    
     # Get the possible values of the functions:
     availableFunctionPossibleValues <- lapply(availableFunctions, extractStoxFunctionParameterPossibleValues)
     names(availableFunctionPossibleValues) <- availableFunctions
@@ -129,8 +130,16 @@ initiateRstoxFramework <- function(){
     
     stoxDataTypes <- data.table::data.table(
         functionOutputDataType = sapply(stoxLibrary, "[[", "functionOutputDataType"), 
-        functionType = sapply(stoxLibrary, "[[", "functionType")
+        functionType = sapply(stoxLibrary, "[[", "functionType"), 
+        functionName = availableFunctions, 
+        packageName = sapply(stoxLibrary, "[[", "packageName")
     )
+    
+    # Check that there are no functions with the same name as a datatype:
+    commonFunctionAndDataTypeName <- intersect(stoxDataTypes$functionOutputDataType, stoxDataTypes$functionName)
+    if(length(commonFunctionAndDataTypeName)) {
+        warning("The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes[functionName == commonFunctionAndDataTypeName, "packageName"], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and RstoxAPI::runModel(). Please notify the packcage maintainer.")
+    }
     
     
     ##### Data: #####
@@ -186,40 +195,48 @@ initiateRstoxFramework <- function(){
         )
     )
     
-    # Get the function returning the definitions of a package:
-    getDefinitionsFunctionFromPackage <- function(packageName) {
-        # Get the function returning the definitions:
-        definitionsFunctionName <- paste0("get", packageName, "Definitions")
-        definitionsFunction <- tryCatch(
-            getExportedValue(packageName, definitionsFunctionName), 
+    #### Get the function returning the definitions of a package:
+    ###getDefinitionsFunctionFromPackage <- function(packageName) {
+    ###    # Get the function returning the definitions:
+    ###    definitionsFunctionName <- paste0("get", packageName, "Definitions")
+    ###    definitionsFunction <- tryCatch(
+    ###        getExportedValue(packageName, definitionsFunctionName), 
+    ###        error = function(err) NULL
+    ###    )
+    ###    return(definitionsFunction)
+    ###}
+    #### Get the parameterTableInfo defined by a package:
+    ###getParameterTableInfoFromPackage <- function(packageName) {
+    ###    # Get the function returning the definitions:
+    ###    definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
+    ###    # Run the function:
+    ###    do.call(definitionsFunctionName, list("parameterTableInfo"))
+    ###}
+    #### Get the processPropertyFormats defined by a package:
+    ###getProcessPropertyFormats <- function(packageName) {
+    ###    # Get the function returning the definitions:
+    ###    definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
+    ###    # Run the function:
+    ###    do.call(definitionsFunctionName, list("processPropertyFormats"))
+    ###}
+    getProcessPropertyFormats <- function(packageName) {
+        processPropertyFormats <- tryCatch(
+            getExportedValue(packageName, "processPropertyFormats"), 
             error = function(err) NULL
         )
-        return(definitionsFunction)
-    }
-    # Get the parameterTableInfo defined by a package:
-    getParameterTableInfoFromPackage <- function(packageName) {
-        # Get the function returning the definitions:
-        definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
-        # Run the function:
-        do.call(definitionsFunctionName, list("parameterTableInfo"))
-    }
-    # Get the processPropertyFormats defined by a package:
-    getProcessPropertyFormats <- function(packageName) {
-        # Get the function returning the definitions:
-        definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
-        # Run the function:
-        do.call(definitionsFunctionName, list("processPropertyFormats"))
+        return(processPropertyFormats)
     }
     
-    # Get the parameterTableInfo from all packages, and combine into a list:
-    parameterTableInfo <- lapply(officialStoxLibraryPackages, getParameterTableInfoFromPackage)
-    parameterTableInfo <- unlist(parameterTableInfo, recursive = FALSE)
-
     # Get the processPropertyFormats of all packages, and merge the lists and add the default ("none"):
-    processPropertyFormats <- lapply(officialStoxLibraryPackages, getProcessPropertyFormats)
-    allFormatClasses <- unique(unlist(lapply(processPropertyFormats, names)))
-    processPropertyFormats <- lapply(allFormatClasses, function(x) unlist(lapply(processPropertyFormats, "[[", x)))
-    names(processPropertyFormats) <- allFormatClasses
+    processPropertyFormats <- unlist(lapply(officialStoxLibraryPackages, getProcessPropertyFormats), recursive = FALSE)
+    #
+    #allFormatClasses <- unique(unlist(lapply(processPropertyFormats, names)))
+    #processPropertyFormats <- lapply(allFormatClasses, function(x) unlist(lapply(processPropertyFormats, "[[", x)))
+    #names(processPropertyFormats) <- allFormatClasses
+    
+    # Get the parameterTableInfo from all packages, and combine into a list:
+    parameterTableInfo <- processPropertyFormats[sapply(processPropertyFormats, "[[", "type") == "table"]
+
     
     # Define filter operators for the different data types:
     filterOperators <- list(
@@ -554,7 +571,7 @@ extractStoxFunctionParameterPossibleValues <- function(functionName, dropProcess
 #' A list of definitions.
 #' 
 #' @examples
-#' getRstoxFrameworkDefinitions()
+#' getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
 #' 
 #' @export
 #' 

@@ -1,6 +1,6 @@
 stoxTemplates <- list(
-	#### AcousticAbundanceTransectTemplate: Acoustic abundance by transect and r-model with uncertainty: ####
-	AcousticAbundanceTransectTemplate = structure(
+	#### AcousticAbundance Template: Acoustic abundance by transect and r-model with uncertainty: ####
+	AcousticAbundanceTransect = structure(
 		list(
 			Baseline = list(
 				ReadProcessData = list(
@@ -412,8 +412,8 @@ stoxTemplates <- list(
 		), 
 		description = "Acoustic abundance by transect and r-model with uncertainty"
 	),
-	#### SweptAreaTemplate: Swept area (length dependent): ####
-	SweptAreaTemplate = structure(
+	#### SweptArea Template: Swept area (length dependent): ####
+	SweptArea = structure(
 		list(
 			Baseline = list(
 				ReadProcessData = list(
@@ -728,8 +728,8 @@ stoxTemplates <- list(
 		), 
 		description = "Swept area (length dependent)"
 	),
-	#### SweptAreaTotalTemplate: Swept area (total catch): ####
-	SweptAreaTotalTemplate = structure(
+	#### SweptAreaTotal Template: Swept area (total catch): ####
+	SweptAreaTotal = structure(
 		list(
 			Baseline = list(
 				ReadProcessData = list(
@@ -961,8 +961,8 @@ stoxTemplates <- list(
 		), 
 		description = "Swept area (total catch)"
 	),
-	#### SweptAreaTotalSpecCatTemplate: Station species category density: ####
-	SweptAreaTotalSpecCatTemplate = structure(
+	#### SweptAreaTotalSpecCat Template: Station species category density: ####
+	SweptAreaTotalSpecCat = structure(
 		list(
 			Baseline = list(
 				ReadProcessData = list(
@@ -1097,8 +1097,8 @@ stoxTemplates <- list(
 		), 
 		description = "Station species category density"
 	),
-	#### SplitNASCTemplate: Split NASC: ####
-	SplitNASCTemplate = structure(
+	#### SplitNASC Template: Split NASC: ####
+	SplitNASC = structure(
 		list(
 			Baseline = list(
 				ReadAcousticXML = list(
@@ -1319,8 +1319,8 @@ stoxTemplates <- list(
 		), 
 		description = "Split NASC"
 	),
-	#### LengthWeightRelationShipTemplate: Length Weight relationship: ####
-	LengthWeightRelationShipTemplate = structure(
+	#### LengthWeightRelationShip Template: Length Weight relationship: ####
+	LengthWeightRelationShip = structure(
 		list(
 			Baseline = list(
 				ReadProcessData = list(
@@ -1403,8 +1403,8 @@ stoxTemplates <- list(
 		), 
 		description = "Length Weight relationship"
 	),
-	#### StationLengthDistTemplate: Station length distribution: ####
-	StationLengthDistTemplate = structure(
+	#### StationLengthDist Template: Station length distribution: ####
+	StationLengthDist = structure(
 		list(
 			Baseline = list(
 				ReadBioticXML = list(
@@ -1458,8 +1458,8 @@ stoxTemplates <- list(
 		), 
 		description = "Station length distribution"
 	),
-	#### DATRASTemplate: DATRAS conversion: ####
-	DATRASTemplate = structure(
+	#### DATRAS Template: DATRAS conversion: ####
+	DATRAS = structure(
 		list(
 			Baseline = list(
 				ReadBioticXML = list(
@@ -1506,8 +1506,8 @@ stoxTemplates <- list(
 		), 
 		description = "DATRAS conversion"
 	),
-	#### UserDefinedTemplate: User defined (empty models): ####
-	UserDefinedTemplate = structure(
+	#### UserDefined Template: User defined (empty models): ####
+	UserDefined = structure(
 		list(), 
 		description = "User defined (empty models)"
 	), 

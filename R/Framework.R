@@ -1182,9 +1182,19 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
     
     # Return a list of the active process and the process table:
     output <- list(
-        if(returnProcessTable) processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
         activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
     )
+    if(returnProcessTable) {
+        output <- c(
+            list(processTable = getProcessTable(projectPath = projectPath, modelName = modelName)), 
+            output
+        )
+    }
+   
+    #output <- list(
+    #    if(returnProcessTable) processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
+    #    activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName)
+    #)
     return(output)
 }
 
@@ -1574,6 +1584,8 @@ getStoxFunctionMetaData <- function(functionName, metaDataName = NULL, showWarni
         NULL
     }
 }
+
+# Function to return the names of the arguments to show for a function:
 getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     
     # Get the function name and arguments:
@@ -1593,21 +1605,22 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
         atArgumentName <- which(argumentName == names(functionArgumentHierarchy))
         if(length(atArgumentName)) {
             # Loop through the occurrences of the argumentName in the functionArgumentHierarchy, applying &&:
-            hitsAnd <- logical(length(atArgumentName))
+            hitsOr <- logical(length(atArgumentName))
             for(ind in seq_along(atArgumentName)) {
-                # Loop through the conditions and set hitsAnd tot TRUE if at least one condition is fullfilled:
+                # Loop through the conditions and set hitsAnd to TRUE if at least one condition is fullfilled:
                 conditionNames <- names(functionArgumentHierarchy[[atArgumentName[ind]]])
-                hitsOr <- logical(length(conditionNames))
-                names(hitsOr) <- conditionNames
+                hitsAnd <- logical(length(conditionNames))
+                names(hitsAnd) <- conditionNames
                 for(conditionName in conditionNames) {
-                    if(functionArguments[[conditionName]] %in% functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]]) {
-                        hitsOr[conditionName] <- TRUE
+                    # Added requirement that functionArguments[[conditionName]] has positie length:
+                    if(length(functionArguments[[conditionName]]) && functionArguments[[conditionName]] %in% functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]]) {
+                        hitsAnd[conditionName] <- TRUE
                     }
                 }
-                # Apply the OR condition, implying that hitsOr is TRUE if any are TRUE:
-                hitsAnd[ind] <- any(hitsOr)
+                # Apply the AND condition, implying that hitsAnd is TRUE if all are TRUE:
+                hitsOr[ind] <- all(hitsAnd)
             }
-            toShow[[argumentName]] <- all(hitsAnd)
+            toShow[[argumentName]] <- any(hitsOr)
         }
         else {
             toShow[[argumentName]] <- TRUE
@@ -2120,6 +2133,11 @@ getProcessTable <- function(projectPath, modelName, afterProcessID = NULL, befor
 #' 
 scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
+    # Read the memory file paths once, and insert to the get* functions below to speed things up:
+    if(length(argumentFilePaths) == 0) {
+        argumentFilePaths <- getArgumentFilePaths(projectPath)
+    }
+    
     # Get the processes:
     processTable <- getProcessesSansProcessData(
         projectPath = projectPath, 
@@ -2165,6 +2183,12 @@ scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, bef
 #' 
 getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
+    # Read the memory file paths once, and insert to the get* functions below to speed things up:
+    if(length(argumentFilePaths) == 0) {
+        argumentFilePaths <- getArgumentFilePaths(projectPath)
+    }
+    
+    # Get the processes:
     processTable <- getProcessAndFunctionNames(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -2206,6 +2230,11 @@ getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID =
 #' @rdname getProcessTable
 #' 
 getProcessAndFunctionNames <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
+    
+    # Read the memory file paths once, and insert to the get* functions below to speed things up:
+    if(length(argumentFilePaths) == 0) {
+        argumentFilePaths <- getArgumentFilePaths(projectPath)
+    }
     
     ##### (1) Get the table of process name and ID: #####
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -2452,7 +2481,10 @@ setListElements <- function(list, insertList, projectPath, modelName, processID)
     # Insert the list elements (one by one for safety):
     if(length(insertNames)) {
         for(ind in seq_along(insertList)) {
-            list[[names(insertList[ind])]] <- insertList[[ind]]
+            # Added this if statement on 2020-04-03 (and re-added after some rebase trouble on 2020-05-25), since it prevents parameters from being deleted:
+            if(!is.null(insertList[[ind]])) {
+                list[[names(insertList[ind])]] <- insertList[[ind]]
+            }
         }
     }
     
@@ -2656,7 +2688,7 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
     
     #modifiedProcessParameters
 }
-modifyProcessData <- function(projectPath, modelName, processID, newProcessData, archive = TRUE) {
+modifyProcessData <- function(projectPath, modelName, processID, newProcessData, archive = TRUE, purge.processData = FALSE) {
     
     # Get the process data:
     processData<- getProcessData(
@@ -2666,13 +2698,18 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData,
     )
     
     # Modify the process data:
-    modifiedProcessData <- setListElements(
-        list = processData, 
-        insertList = newProcessData, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID
-    )
+    if(purge.processData) {
+        modifiedProcessData <- newProcessData
+    }
+    else {
+        modifiedProcessData <- setListElements(
+            list = processData, 
+            insertList = newProcessData, 
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+    }
     
     # Store the changes:
     if(!identical(processData, modifiedProcessData)) {
@@ -2805,7 +2842,7 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
 #' 
 #' @export
 #' 
-modifyProcess <- function(projectPath, modelName, processName, newValues, archive = TRUE, add.defaults = FALSE) {
+modifyProcess <- function(projectPath, modelName, processName, newValues, archive = TRUE, add.defaults = FALSE, purge.processData = FALSE) {
     
     # The values of the process must be changed in the following order:
     # 1. Function name
@@ -2892,7 +2929,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
             modelName = modelName, 
             processID = processID, 
             newProcessData = newValues$processData, 
-            archive = archive
+            archive = archive, 
+            purge.processData = purge.processData
         )
     }
     
@@ -2908,7 +2946,18 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
 #' 
 # Convert JSON input to list:
 parseParameter <- function(parameter, simplifyVector = TRUE) {
-    jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
+    # If empty string, convert to NULL for non-character type:
+    if(is.character(parameter) && nchar(parameter) == 0) {
+        return(NULL)
+    }
+    
+    # Parse the JSON:
+    out <- jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
+    # If data.frame, convert to data.table:
+    if(is.data.frame(out)) {
+        out <- data.table::as.data.table(out)
+    }
+    return(out)
 }
 #parseParameter <- function(parameter, simplifyVector = TRUE) {
 #    # If the parameter is JSON, convert to list:
@@ -3245,7 +3294,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, replaceArgs = list()) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE) {
     
     # Get the process:
     process <- getProcess(
@@ -3361,10 +3410,12 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         
         # Store the processData (this must be a named list of only one data table):
         if(isProcessDataFunction(process$functionName)) {
-            modifyProcessData(projectPath, modelName, processID, processOutput)
+            modifyProcessData(projectPath, modelName, processID, processOutput, purge.processData = purge.processData)
             
             # Set the function parameters UseProcessData to TRUE:
-            setUseProcessDataToTRUE(projectPath, modelName, processID)
+            if(setUseProcessDataToTRUE) {
+                setUseProcessDataToTRUE(projectPath, modelName, processID)
+            }
         }
         else {
             # Set the propertyDirty flag to TRUE, so that a GUI can update the properties:
@@ -3375,7 +3426,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         writeProcessOutputMemoryFiles(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
         
         # Write to text files:
-        if(process$processParameters$fileOutput) {
+        if(if(length(fileOutput)) fileOutput else process$processParameters$fileOutput) {
             writeProcessOutputTextFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
         }
         
@@ -3788,7 +3839,6 @@ unlistToDataType <- function(processOutput) {
 
 # Function to write process output to a memory file:
 writeProcessOutputMemoryFiles <- function(processOutput, process, projectPath, modelName) {
-    
     if(length(processOutput)) {
         
         # Get the path to the folder to place the memory file in:
@@ -3818,7 +3868,6 @@ writeProcessOutputMemoryFiles <- function(processOutput, process, projectPath, m
             fileNamesSansExt <- lapply(processOutput, names)
             filePaths <- mapply(file.path, folderPaths, fileNamesSansExt, SIMPLIFY = FALSE)
         }
-        
         # Write the individual tables:
         mapply(writeMemoryFiles, processOutput, filePaths)
     }
@@ -3852,7 +3901,7 @@ getFolderDepth <- function(folderPath) {
 #' @export
 #' 
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
-runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force.restart = FALSE) {
+runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force.restart = FALSE, replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, ...) {
 
     ## Get the processIDs:
     #processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -3861,7 +3910,17 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     #endProcess <- min(nrow(processIndexTable), endProcess)
     ## Extract the requested process IDs:
     #processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
-    processIDs <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)$processID
+    processIndexTable <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)
+    processIDs <- processIndexTable$processID
+    processNames <- processIndexTable$processName
+    if(!length(processIDs)) {
+        warning("Empty project, ", projectPath)
+        return(NULL)
+    }
+    
+    # Check for parameters to override the processes by in "...":
+    #replaceArgs <- getReplaceArgs(replaceArgs, ..., processNames = processNames)
+    replaceArgs <- getReplaceArgs(replaceArgs, ...)
     
     # Check that the project exists:
     failedVector <- logical(length(processIDs))
@@ -3901,11 +3960,36 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     # Try running the processes, and retun the failedVector if craching:
     #tryCatch(
+    
+    #if(length(fileOutput)) {
+    #    replaceArgs <- list(fileOutput = fileOutput)
+    #}
+    #else {
+    #    replaceArgs = list()
+    #}
     #    {
-            for(processID in processIDs) {
-                #status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
-                runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
-            }
+            
+    
+    
+    
+    #for(processID in processIDs) {
+    #    #status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
+    #    runProcess(projectPath = projectPath, modelName = modelName, processID = processID, replaceArgs = replaceArgs[[]], fileOutput = fileOutput, setUseProcessDataToTRUE = setUseProcessDataToTRUE, purge.processData = purge.processData)
+    #}
+    
+    mapply(
+        runProcess, 
+        processID = processIDs, 
+        replaceArgs = replaceArgs[processNames], 
+        MoreArgs = list(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            fileOutput = fileOutput, 
+            setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
+            purge.processData = purge.processData
+        )
+    )
+    
    #     }#, 
         #error = function(e) {
         #    err <<- e
@@ -3932,14 +4016,42 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     #status
     list(
         processTable = getProcessTable(projectPath = projectPath, modelName = modelName), 
-        interactiveMode = getInteractiveMode(projectPath = projectPath, modelName = modelName, processID = processID), 
+        interactiveMode = getInteractiveMode(projectPath = projectPath, modelName = modelName, processID = utils::tail(processIDs, 1)), 
         activeProcess = getActiveProcess(projectPath = projectPath, modelName = modelName), 
         saved = isSaved(projectPath)
     )
 }
 
 
-
+#getReplaceArgs <- function(replaceArgs = list(), ..., processNames = NULL){
+#    
+#    # Get the specifications given as '...':
+#    dotlist <- list(...)
+#    
+#    # Merge and unique the inputs:
+#    replaceArgs <- c(replaceArgs, dotlist)
+#    # parlist <- unique(parlist) THIS REMOVED THE NAMES AND SHOULD NOT BE USED
+#    replaceArgs <- replaceArgs[!duplicated(replaceArgs)]
+#    
+#    # Keep only the elements named by a process:
+#    if(length(processNames)) {
+#        replaceArgs <- replaceArgs[names(replaceArgs) %in% processNames]
+#    }
+#    
+#    return(replaceArgs)
+#}
+getReplaceArgs <- function(replaceArgs = list(), ...){
+    
+    # Get the specifications given as '...':
+    dotlist <- list(...)
+    
+    # Merge and unique the inputs:
+    replaceArgs <- c(replaceArgs, dotlist)
+    # parlist <- unique(parlist) THIS REMOVED THE NAMES AND SHOULD NOT BE USED
+    replaceArgs <- replaceArgs[!duplicated(replaceArgs)]
+    
+    return(replaceArgs)
+}
 
 
 

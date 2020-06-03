@@ -10,7 +10,8 @@ modifyProcess(
   processName,
   newValues,
   archive = TRUE,
-  add.defaults = FALSE
+  add.defaults = FALSE,
+  purge.processData = FALSE
 )
 }
 \arguments{

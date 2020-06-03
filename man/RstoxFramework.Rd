@@ -4,9 +4,9 @@
 \name{RstoxFramework}
 \alias{RstoxFramework}
 \alias{RstoxFramework-package}
-\title{The engine of StoX}
+\title{The Engine of StoX}
 \description{
-This package contains all functions and framwork for running a StoX project.
+The framwork of StoX >= 3.0.
 }
 \details{
 The RstoxFramework package is the engine of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.

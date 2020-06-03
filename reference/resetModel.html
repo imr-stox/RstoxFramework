@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
       </span>
     </div>
 
@@ -121,8 +121,9 @@
   <span class='no'>projectPath</span>,
   <span class='no'>modelName</span>,
   <span class='kw'>processID</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>modified</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>shift</span> <span class='kw'>=</span> <span class='fl'>0</span>
+  <span class='kw'>processDirty</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>shift</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>returnProcessTable</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -141,7 +142,7 @@
       <td><p>The ID of the process.</p></td>
     </tr>
     <tr>
-      <th>modified</th>
+      <th>processDirty</th>
       <td><p>Logical: Indicates whether the model has been modified when reseting.</p></td>
     </tr>
     <tr>

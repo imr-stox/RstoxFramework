@@ -41,6 +41,7 @@
 
 <meta property="og:title" content="Utilities for projects. — ProjectUtils" />
 <meta property="og:description" content="Utilities for projects.
+Read the project description.
 Write the project description.
 Initiate the actige processID.
 Check or set if a project is running or not." />
@@ -75,7 +76,7 @@ Check or set if a project is running or not." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
       </span>
     </div>
 
@@ -118,6 +119,7 @@ Check or set if a project is running or not." />
 
     <div class="ref-description">
     <p>Utilities for projects.</p>
+<p>Read the project description.</p>
 <p>Write the project description.</p>
 <p>Initiate the actige processID.</p>
 <p>Check or set if a project is running or not.</p>
@@ -129,9 +131,11 @@ Check or set if a project is running or not." />
 
 <span class='fu'>isOpenProject</span>(<span class='no'>projectPath</span>)
 
-<span class='fu'>readProjectDescription</span>(<span class='no'>projectPath</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"XML"</span>))
+<span class='fu'>readProjectDescriptionOld</span>(<span class='no'>projectPath</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"JSON"</span>))
 
-<span class='fu'>writeProjectDescription</span>(<span class='no'>projectPath</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"XML"</span>, <span class='st'>"JSON"</span>))
+<span class='fu'>readProjectDescription</span>(<span class='no'>projectPath</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"JSON"</span>))
+
+<span class='fu'>writeProjectDescription</span>(<span class='no'>projectPath</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"JSON"</span>))
 
 <span class='fu'>initiateActiveProcessID</span>(<span class='no'>projectPath</span>)
 

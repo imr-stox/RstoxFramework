@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function to read a single process output file, possibly by pages and in flattened and pretty view: — readProcessOutputFile • RstoxFramework</title>
+<title>Resamples Hauls. — resampleHaulsByStratum • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Function to read a single process output file, possibly by pages and in flattened and pretty view: — readProcessOutputFile" />
-<meta property="og:description" content="Function to read a single process output file, possibly by pages and in flattened and pretty view:" />
+<meta property="og:title" content="Resamples Hauls. — resampleHaulsByStratum" />
+<meta property="og:description" content="This function resamples Hauls with replacement by altering the LengthDistributionWeight." />
 
 
 
@@ -108,65 +108,23 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Function to read a single process output file, possibly by pages and in flattened and pretty view:</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
-    <div class="hidden name"><code>readProcessOutputFile.Rd</code></div>
+    <h1>Resamples Hauls.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/resample.R'><code>R/resample.R</code></a></small>
+    <div class="hidden name"><code>resampleHaulsByStratum.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Function to read a single process output file, possibly by pages and in flattened and pretty view:</p>
+    <p>This function resamples Hauls with replacement by altering the LengthDistributionWeight.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>readProcessOutputFile</span>(
-  <span class='no'>filePath</span>,
-  <span class='kw'>flatten</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>pageindex</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>integer</a></span>(<span class='fl'>0</span>),
-  <span class='kw'>linesPerPage</span> <span class='kw'>=</span> <span class='fl'>1000L</span>,
-  <span class='kw'>columnSeparator</span> <span class='kw'>=</span> <span class='st'>" "</span>,
-  <span class='kw'>lineSeparator</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>na</span> <span class='kw'>=</span> <span class='st'>"-"</span>,
-  <span class='kw'>list.pretty</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>resampleHaulsByStratum</span>(<span class='no'>data</span>, <span class='no'>seed</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>filePath</th>
-      <td><p>The file path of the process output file to read.</p></td>
-    </tr>
-    <tr>
-      <th>flatten</th>
-      <td><p>Logical: Should the output tables that contain cells of length &gt; 1 be expanded to that the other columns are repeated, resulting in a regular table.</p></td>
-    </tr>
-    <tr>
-      <th>pretty</th>
-      <td><p>Logical: If TRUE pad with space in each cell to the maximum number of characters of the column including header.</p></td>
-    </tr>
-    <tr>
-      <th>pageindex</th>
-      <td><p>A vevctor of the pages to return with <code>linesPerPage</code> number of lines (rows). Default is to not split into pages.</p></td>
-    </tr>
-    <tr>
-      <th>linesPerPage</th>
-      <td><p>The number of lines per page if <code>pageindex</code> is given.</p></td>
-    </tr>
-    <tr>
-      <th>columnSeparator</th>
-      <td><p>The string to separate columns by, defaulted to a single space.</p></td>
-    </tr>
-    <tr>
-      <th>lineSeparator</th>
-      <td><p>The string to separate lines by, defaulted to a NULL, which keeps the output as a vector of strings.</p></td>
-    </tr>
-    <tr>
-      <th>na</th>
-      <td><p>The string to replace NAs by, defaulted to "-".</p></td>
-    </tr>
-    <tr>
-      <th>list.pretty</th>
-      <td><p>Logical: If TRUE wrap the output in a list in the case that <code>pretty</code> is TRUE.</p></td>
+      <th>data</th>
+      <td><p>The <code><a href='https://rdrr.io/pkg/RstoxBase/man/LengthDistributionData.html'>LengthDistributionData</a></code> to resample Hauls in.</p></td>
     </tr>
     </table>
 

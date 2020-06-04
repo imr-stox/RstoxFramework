@@ -498,9 +498,6 @@ initiateRstoxFramework <- function(){
 
 
 # Define the default process property format:
-#' 
-#' @export
-#' 
 defaultProcessPropertyFormat <- list(
     none = list(
         title = "Default format", 

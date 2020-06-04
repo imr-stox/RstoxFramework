@@ -639,12 +639,15 @@ formatJSONString <- function(parameter) {
 #    return(isMultiple)
 #}
 isVectorParameter <- function(format) {
-    vector <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$vector)
-    isVector <- format %in% vector
+    # Find those formats that are vector:
+    processPropertyFormats <- getRstoxFrameworkDefinitions("processPropertyFormats")
+    isVector <- sapply(format, isVectorParameterOne, processPropertyFormats)
     return(isVector)
 }
 
-
+isVectorParameterOne <- function(format, processPropertyFormats) {
+    processPropertyFormats[[format]]$type == "vector"
+}
 
 
 
@@ -1145,7 +1148,8 @@ convertFunctionParameter <- function(functionParameterName, functionParameterVal
     format = getFunctionParameterPropertyFormats(functionName)[functionParameterName]
     
     # Apply the conversion function:
-    if(format %in% c("single", "vector")) {
+    #if(format %in% c("single", "vector")) {
+    if(format %in% "single") {
         # If empty string, convert to NULL for non-character type:
         if(is.character(functionParameterValue) && nchar(functionParameterValue) == 0 && type != "character") {
             functionParameterValue <- NULL

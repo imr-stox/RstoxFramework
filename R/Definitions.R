@@ -195,30 +195,7 @@ initiateRstoxFramework <- function(){
         )
     )
     
-    #### Get the function returning the definitions of a package:
-    ###getDefinitionsFunctionFromPackage <- function(packageName) {
-    ###    # Get the function returning the definitions:
-    ###    definitionsFunctionName <- paste0("get", packageName, "Definitions")
-    ###    definitionsFunction <- tryCatch(
-    ###        getExportedValue(packageName, definitionsFunctionName), 
-    ###        error = function(err) NULL
-    ###    )
-    ###    return(definitionsFunction)
-    ###}
-    #### Get the parameterTableInfo defined by a package:
-    ###getParameterTableInfoFromPackage <- function(packageName) {
-    ###    # Get the function returning the definitions:
-    ###    definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
-    ###    # Run the function:
-    ###    do.call(definitionsFunctionName, list("parameterTableInfo"))
-    ###}
-    #### Get the processPropertyFormats defined by a package:
-    ###getProcessPropertyFormats <- function(packageName) {
-    ###    # Get the function returning the definitions:
-    ###    definitionsFunctionName <- getDefinitionsFunctionFromPackage(packageName)
-    ###    # Run the function:
-    ###    do.call(definitionsFunctionName, list("processPropertyFormats"))
-    ###}
+    # Function getting formats of a package:
     getProcessPropertyFormats <- function(packageName) {
         processPropertyFormats <- tryCatch(
             getExportedValue(packageName, "processPropertyFormats"), 
@@ -228,7 +205,15 @@ initiateRstoxFramework <- function(){
     }
     
     # Get the processPropertyFormats of all packages, and merge the lists and add the default ("none"):
-    processPropertyFormats <- unlist(lapply(officialStoxLibraryPackages, getProcessPropertyFormats), recursive = FALSE)
+    processPropertyFormats <- unlist(
+        c(
+            lapply(officialStoxLibraryPackages, getProcessPropertyFormats), 
+            # Add the default format "none"
+            list(defaultProcessPropertyFormat)
+        ), 
+        recursive = FALSE
+    )
+    
     #
     #allFormatClasses <- unique(unlist(lapply(processPropertyFormats, names)))
     #processPropertyFormats <- lapply(allFormatClasses, function(x) unlist(lapply(processPropertyFormats, "[[", x)))
@@ -510,6 +495,17 @@ initiateRstoxFramework <- function(){
     #### Return the definitions: ####
     definitions
 }
+
+
+# Define the default process property format:
+defaultProcessPropertyFormat <- list(
+    none = list(
+        title = "Default format", 
+        type = "single"
+    )
+)
+
+
 
 
 readProcessDataSchema <- function(packageName) {

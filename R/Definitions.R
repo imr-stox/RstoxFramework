@@ -36,7 +36,8 @@ initiateRstoxFramework <- function(){
     
     # Define formats for files saved by Rstox:
     memoryFileFormat_Empty <- "rds"
-    memoryFileFormat_Table <- "fst"
+    #memoryFileFormat_Table <- "fst"
+    memoryFileFormat_Table <- "rds"
     memoryFileFormat_Spatial <- "rds"
     memoryFileFormat_List <- "rds"
     memoryFileFormat_Other <- "rds"

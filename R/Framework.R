@@ -2575,8 +2575,8 @@ modifyFunctionParameters <- function(projectPath, modelName, processID, newFunct
         processID = processID
     )
 
-    # Modify any file or directory paths to relative paths if possible, and issue a warning if the projectPath is not in the path:
-    newFunctionParameters <- getRelativePaths(
+    # Modify any file or directory paths to relative paths if possible:
+    newFunctionParameters <- convertToRelativePaths(
         functionParameters = newFunctionParameters, 
         projectPath = projectPath, 
         modelName = modelName, 
@@ -2745,7 +2745,7 @@ detectFilePaths <- function(functionParameters, projectPath, modelName, processI
 }
 
 # Function to detect function parameter format filePath, filePaths or directoryPath, and convert to relative paths if the projectPath is present in the paths:
-getRelativePaths <- function(functionParameters, projectPath, modelName, processID) {
+convertToRelativePaths <- function(functionParameters, projectPath, modelName, processID, warn = FALSE) {
     
     # Function to attempt to convert to relative path:
     getRelativePath <- function(filePath, projectPath) {
@@ -2765,7 +2765,7 @@ getRelativePaths <- function(functionParameters, projectPath, modelName, process
             # Remove also the trailing file separator:
             filePath <- substring(filePath, 2)
         }
-        else {
+        else if(warn) {
             warning("The specified file ", filePath, " is not present in the project folder (", projectPath, ")")
         }
         filePath

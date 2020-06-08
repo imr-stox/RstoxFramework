@@ -36,6 +36,7 @@ initiateRstoxFramework <- function(){
     
     # Define formats for files saved by Rstox:
     memoryFileFormat_Empty <- "rds"
+    # 2020-06-08: The fst::write_fst() does not retain the encoding, and has been discarded until these problems are fixed:s
     #memoryFileFormat_Table <- "fst"
     memoryFileFormat_Table <- "rds"
     memoryFileFormat_Spatial <- "rds"

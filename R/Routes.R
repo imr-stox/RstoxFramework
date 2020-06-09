@@ -1316,7 +1316,7 @@ getFilterOptions <- function(projectPath, modelName, processID, tableName) {
 getFilterOptionsAll <- function(projectPath, modelName, processID, include.numeric = TRUE) {
 
     # Run the process without saving and without filter:
-    # Add a stop if the previvous process has not been run!!!!!!!!!!!!!
+    # Add a stop if the previous process has not been run!!!!!!!!!!!!!
     processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
     # If the process output is a list of lists, unlist the top level and add names separated by slash:
     processOutput <- unlistProcessOutput(processOutput)

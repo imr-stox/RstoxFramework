@@ -36,58 +36,16 @@ getProjectPaths <- function(projectPath, name = NULL) {
     paths
 }
 
-# This function gets the stoxFunctionAttributes of the specified packages.
-getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
-    
-    # Validate the pakcages:
-    packageNames <- packageNames[sapply(packageNames, validateStoxLibraryPackage)]
-    # Get a list of the 'stoxFunctionAttributes' from each package:
-    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
-    
-    # Collapse to one list:
-    stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
-    
-    # Check for duplicaetd function names:
-    functionNames <- names(stoxFunctionAttributes)
-    packageNames <- sapply(stoxFunctionAttributes, "[[", "packageName")
-    areDuplicatedFunctionNames <- duplicated(functionNames)
-    
-    # If there are any duplicated function names, report a warning stating which function names and from which packages:
-    if(any(areDuplicatedFunctionNames)) {
-        # Get the package strings as concatenations of the packages with common function names:
-        packageNamesString <- as.character(
-            by(
-                functionNames[areDuplicatedFunctionNames], 
-                packageNames[areDuplicatedFunctionNames], 
-                paste, 
-                collapse = ", "
-            )
-        )
-        # Get the unique duplicated function names, and paste the packageNamesString to these:
-        uniqueDuplicatedFunctionNames <- unique(functionNames[areDuplicatedFunctionNames])
-        functionNamePackageNamesString <- paste0(
-            uniqueDuplicatedFunctionNames, 
-            "(", 
-            packageNamesString, 
-            ")"
-        )
-        
-        warning("The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
-    }
-    
-    # Keep only the non-duplicated functions: 
-    stoxFunctionAttributes <- stoxFunctionAttributes[!areDuplicatedFunctionNames]
-    return(stoxFunctionAttributes)
-}
-
 # Function for extracting the stoxFunctionAttributes of the package, and adding the package name and full function name (packageName::functionName) to each element (function) of the list.
 getStoxFunctionAttributes <- function(packageName, requestedFunctionAttributeNames = NULL) {
     
     # Get the exported object 'stoxFunctionAttributes' from the package:
-    stoxFunctionAttributes <- tryCatch(
-        getExportedValue(packageName, "stoxFunctionAttributes"), 
-        error = function(err) NULL
-    )
+    if(!identical(packageName, "RstoxFramework")) {
+        stoxFunctionAttributes <- tryCatch(
+            getExportedValue(packageName, "stoxFunctionAttributes"), 
+            error = function(err) NULL
+        )
+    }
     
     # Add function and package name:
     stoxFunctionAttributes <- lapply(stoxFunctionAttributes, append, list(packageName = packageName))
@@ -157,6 +115,10 @@ getBackwardCompatibility <- function(packageName) {
 # Function for validating a StoX function library package.
 validateStoxLibraryPackage <- function(packageName) {
     
+    if(identical(packageName, "RstoxFramework")) {
+        return(TRUE)
+    }
+    
     # Get the StoX function attributes:
     stoxFunctionAttributes <- getStoxFunctionAttributes(packageName)
     
@@ -185,6 +147,14 @@ validateStoxLibraryPackage <- function(packageName) {
         missingJSONs <- setdiff(exportedProcessDataFunctionsSansDefine, processDataSchemaNames)
         warning("The package ", packageName, " exports processData functions specified in the 'stoxFunctionAttributes' object that are not documented with a JSON schema in the processDataSchema.json file:\n", paste(missingJSONs, collapse = ", "))
         #return(FALSE)
+    }
+    
+    # Check that if any functions have format specified, the object "processPropertyFormats" must be exported:
+    if(any(sapply(stoxFunctionAttributes, function(x) length(x$functionParameterFormat) && !all(unlist(x$functionParameterFormat)  == "none")))) {
+        if(!"processPropertyFormats" %in% exports) {
+            warning("The package ", packageName, " does not export the required object 'processPropertyFormats'.")
+            return(FALSE)
+        }
     }
     
     TRUE
@@ -1161,7 +1131,8 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
                 function(thisProcessID) getProcessOutputFolder(
                     projectPath = projectPath, 
                     modelName = modelName, 
-                    processID = thisProcessID
+                    processID = thisProcessID, 
+                    type = "memory"
                 )
             )
             unlink(foldersToDelete, recursive = TRUE, force = TRUE)
@@ -1637,6 +1608,14 @@ isProcessDataFunction <- function(functionName) {
     #functionOutputDataType <- getStoxFunctionMetaData(functionName, "functionOutputDataType")
     #functionOutputDataType %in% getRstoxFrameworkDefinitions("stoxProcessDataTypes")
     identical(getStoxFunctionMetaData(functionName, "functionType"), "processData")
+}
+
+# Is the function a process data function?
+isBootstrapFunction <- function(functionName) {
+    # Get the function output data type and match against the defined process data types:
+    #functionOutputDataType <- getStoxFunctionMetaData(functionName, "functionOutputDataType")
+    #functionOutputDataType %in% getRstoxFrameworkDefinitions("stoxProcessDataTypes")
+    identical(getStoxFunctionMetaData(functionName, "functionType"), "bootstrap")
 }
 
 
@@ -2436,9 +2415,9 @@ onlyValidCharactersInProcessnName <- function(newProcessName) {
     }
 }
 
-checkProcessNameAgainstExisting <- function(projectPath, modelName, newProcessName) {
+checkProcessNameAgainstExisting <- function(projectPath, newProcessName) {
     # Check the process names of the model:
-    processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
+    processIndexTable <- readProcessIndexTable(projectPath = projectPath)
     if(newProcessName %in% processIndexTable$processName) {
         #warning("StoX: The new process name (", newProcessName, ") cannot be identical to the name of an existing process #within the same model (", paste(processIndexTable$processName, collapse = ", "), ")")
         #FALSE
@@ -2449,8 +2428,8 @@ checkProcessNameAgainstExisting <- function(projectPath, modelName, newProcessNa
     }
 }
 
-validateProcessName <- function(projectPath, modelName, newProcessName) {
-    onlyValidCharactersInProcessnName(newProcessName) & checkProcessNameAgainstExisting(projectPath = projectPath, modelName = modelName, newProcessName = newProcessName)
+validateProcessName <- function(projectPath, newProcessName) {
+    onlyValidCharactersInProcessnName(newProcessName) & checkProcessNameAgainstExisting(projectPath = projectPath, newProcessName = newProcessName)
 }
 
 
@@ -2540,7 +2519,7 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName,
     # Change the process name only if different from the existing:
     if(!identical(processName, newProcessName)) {
         # Validate the new process name (for invalid characters):
-        if(validateProcessName(projectPath = projectPath, modelName = modelName, newProcessName = newProcessName)) {
+        if(validateProcessName(projectPath = projectPath, newProcessName = newProcessName)) {
             setProcessMemory(
                 projectPath = projectPath, 
                 modelName = modelName, 
@@ -3074,7 +3053,6 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive 
     if(length(processName)) {
         validProcessnName <- validateProcessName(
             projectPath = projectPath, 
-            modelName = modelName, 
             newProcessName = processName
         )
         if(!validProcessnName) {
@@ -3294,7 +3272,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("text", "binary")) {
     
     # Get the process:
     process <- getProcess(
@@ -3320,6 +3298,12 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     if(isProcessDataFunction(process$functionName)) {
         functionArguments$processData <- process$processData
     }
+    # Add the processPath if a bootstrap function:
+    if(isBootstrapFunction(process$functionName)) {
+        functionArguments$projectPath <- projectPath
+    }
+    
+    
     
     # Get the function input as output from the previously run processes:
     functionInputProcessNames <- unlist(process$functionInputs)
@@ -3389,6 +3373,15 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
             stop(err)
         }
     )
+    # Apply the replaceData, which can be a function with first parameter the processOutput and additional parameters gievn in ..., or an actual object to replaec the output by:
+    #thisReplaceData <- replaceData[[process$processName]]
+    thisReplaceData <- replaceData
+    if(is.list(thisReplaceData) && is.character(thisReplaceData[[1]]) && exists(thisReplaceData[[1]])) {
+        processOutput <- do.call(thisReplaceData[[1]], c(list(processOutput), thisReplaceData[[2]]))
+    }
+    else if(length(replaceData)) {
+        processOutput <- thisReplaceData
+    }
     
     # Return the process output if not to be saved:
     if(!save) {
@@ -3423,11 +3416,12 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         }
         
         # Write to memory files:
-        writeProcessOutputMemoryFiles(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
+        writeProcessOutputMemoryFiles(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, type = "memory")
         
         # Write to text files:
+        # Use fileOutput if given and process$processParameters$fileOutput otherwise to determine whether to write the output to the output.file.type:
         if(if(length(fileOutput)) fileOutput else process$processParameters$fileOutput) {
-            writeProcessOutputTextFile(processOutput = processOutput, process = process, projectPath = projectPath, modelName = modelName)
+            writeProcessOutput(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, processName = process$processName, output.file.type = output.file.type)
         }
         
         #invisible(processOutput)
@@ -3476,13 +3470,6 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
         tableName <- sapply(subFolder_tableName, "[", 2)
     }
    
-    
-    # Get the directory holding the output files:
-    folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID)
-    
-    # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
-    folderDepth <- getFolderDepth(folderPath)
-    
     # Get the files 
     processOutputFiles <- getProcessOutputFiles(
         projectPath = projectPath, 
@@ -3490,6 +3477,10 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
         processID = processID
     )
     
+    # Get the directory holding the output files:
+    folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID, type = "memory")
+    # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
+    folderDepth <- getFolderDepth(folderPath)
     # Get the file paths of the requested memory files:
     if(folderDepth == 1) {
         # Get the selected tables:
@@ -3644,14 +3635,19 @@ flattenProcessOutput <- function(processOutput) {
 #' @param onlyTableNames Logical: If TRUE return only table names.
 #' @export
 #' 
-getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNames = FALSE) {
+getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNames = FALSE, type = "memory") {
     
     # Get the directory holding the output files:
     folderPath <- getProcessOutputFolder(
         projectPath = projectPath, 
         modelName = modelName, 
-        processID = processID
+        processID = processID, 
+        type = type
     )
+    
+    if(length(processID) > 1) {
+        stop("processID must have length 1 (was ", length(processID), ")")
+    }
     
     # If the folder does not exist, it is a sign that the process does not exist:
     if(length(folderPath) == 0 || !file.exists(folderPath)) {
@@ -3663,18 +3659,19 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     folderDepth <- getFolderDepth(folderPath)
     
     # Get the file paths of the memory files and prepare the processOutput for writing to these files:
-    if(folderDepth == 1) {
-        processOutputFiles <- listMemoryFiles(folderPath)
-    }
-    else {
-        # Get the sub folder paths and create the folders:
-        folderPaths <- list.dirs(folderPath, recursive = FALSE)
-        processOutputFiles <- lapply(folderPaths, listMemoryFiles)
-        names(processOutputFiles) <- basename(folderPaths)
-    }
+    processOutputFiles <- getFilesRecursiveWithOrder(folderPath)
+    #if(folderDepth == 1) {
+    #    processOutputFiles <- listMemoryFiles(folderPath)
+    #}
+    #else {
+    #    # Get the sub folder paths and create the folders:
+    #    folderPaths <- list.dirs(folderPath, recursive = FALSE)
+    #    processOutputFiles <- lapply(folderPaths, listMemoryFiles)
+    #    names(processOutputFiles) <- basename(folderPaths)
+    #}
     
     if(onlyTableNames) {
-        # Strip the table names of the folderPath:
+        # Strip to only the table names of the folderPath:
         processOutputFiles <- gsub(path.expand(folderPath), "", unname(unlist(processOutputFiles)))
         # Remove the resulting trailing "/" and the file extension:
         processOutputFiles <- substring(processOutputFiles, 2)
@@ -3683,6 +3680,21 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     
     processOutputFiles
 }
+
+
+# Function to get the file paths of the memory files recursively:
+getFilesRecursiveWithOrder <- function(folderPath) {
+    dirs <- list.dirs(folderPath, recursive = FALSE)
+    if(length(dirs)) {
+        output <- lapply(dirs, getFilesRecursiveWithOrder)
+        names(output) <- basename(dirs)
+        return(output)
+    }
+    else {
+        listMemoryFiles(folderPath)
+    }
+}
+
 
 # Function to list RDS file in a folder:
 listMemoryFiles <- function(folderPath) {
@@ -3720,17 +3732,33 @@ getProcessOutputTableNames <- function(projectPath, modelName, processID) {
 }
 
 
-deleteProcessOutput <- function(projectPath, modelName, processID) {
+deleteProcessOutput <- function(projectPath, modelName, processID, type = c("memory", "output")) {
     # Get the directory holding the output files:
-    folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID)
+    folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID, type = type)
     unlink(folderPath, recursive = FALSE, force = TRUE)
 }
 
 
 
 
-getProcessOutputFolder <- function(projectPath, modelName, processID) {
-    file.path(getProjectPaths(projectPath, "dataModelsFolder"), modelName, processID)
+getProcessOutputFolder <- function(projectPath, modelName, processID, type = c("memory", "output"), subfolder = NULL) {
+    type <- match.arg(type)
+    if(type == "memory") {
+        folderPath <- file.path(getProjectPaths(projectPath, "dataModelsFolder"), modelName, processID)
+    }
+    else if(type == "output") {
+        # Get the processName and build the folderPath:
+        processName <- getProcessNameFromProcessID(projectPath, modelName, processID)
+        folderPath <- file.path(getProjectPaths(projectPath, "Output"), modelName, processName)
+        # Add subfolder:
+        if(length(subfolder)) {
+            folderPath <- file.path(folderPath, subfolder)
+        }
+    }
+    else {
+        stop("typetype must be one of \"memory\" and \"output\"")
+    }
+    return(folderPath)
 }
 
 
@@ -3741,9 +3769,16 @@ getProcessIndexFromProcessID <- function(projectPath, modelName, processID) {
     processIndex
 }
 
+getProcessNameFromProcessID <- function(projectPath, modelName, processID) {
+    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    thisProcessID <- processID
+    processIndexTable[processID == thisProcessID, processName]
+}
+
+
 
 # Function to write process output to a text file in the output folder:
-writeProcessOutputTextFile <- function(processOutput, process, projectPath, modelName) {
+writeProcessOutput <- function(processOutput, projectPath, modelName, processID, processName, output.file.type = c("text", "binary")) {
     # Return NULL for empty process output:
     if(length(processOutput)) {
         # Unlist introduces dots, and we replace by underscore:
@@ -3755,12 +3790,13 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
             name = modelName
         )
         
-        processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = process$processID)
-        fileNamesSansExt <- paste(processIndex, process$processName, names(processOutput), sep = "_")
+        #processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = processID)
+        #fileNamesSansExt <- paste(processIndex, processName, names(processOutput), sep = "_")
+        fileNamesSansExt <- paste(processName, names(processOutput), sep = "_")
         filePathsSansExt <- file.path(folderPath, paste(fileNamesSansExt))
         
         # Set the file name:
-        mapply(reportFunctionOutputOne, processOutput, filePathsSansExt)
+        mapply(reportFunctionOutputOne, processOutput, filePathsSansExt, output.file.type = output.file.type)
         # lapply(processOutput, reportFunctionOutputOne)
     }
     else {
@@ -3769,30 +3805,48 @@ writeProcessOutputTextFile <- function(processOutput, process, projectPath, mode
 }
 
 # Function for writing one element of the function output list:
-reportFunctionOutputOne <- function(processOutputOne, filePathSansExt) {
-    if(length(processOutputOne)){
-        #if("SpatialPolygons" %in% class(processOutputOne)) {
-        if("SpatialPolygonsDataFrame" %in% class(processOutputOne)) {
-            # Add file extension:
-            filePath <- paste(filePathSansExt, "geojson", sep = ".")
-            # Write the file:
-            jsonObject <- geojsonio::geojson_json(processOutputOne)
-            
-            # Hack to rermove all IDs from the geojson:
-            jsonObject <- removeIDsFromGeojson(jsonObject)
-            
-            jsonlite::write_json(jsonObject, path = filePath)
-        }
-        else if("data.table" %in% class(processOutputOne)) {
-            # Add file extension:
-            filePath <- paste(filePathSansExt, "txt", sep = ".")
-            # Write the file:
-            data.table::fwrite(processOutputOne, filePath, sep = "\t")
-        }
-        else {
-            stop("Unknown function output: ", class(processOutputOne))
+reportFunctionOutputOne <- function(processOutputOne, filePathSansExt, output.file.type = c("text", "binary")) {
+    
+    output.file.type <- match.arg(output.file.type)
+    
+    if(output.file.type == "text") {
+        if(length(processOutputOne)){
+            #if("SpatialPolygons" %in% class(processOutputOne)) {
+            if("SpatialPolygonsDataFrame" %in% class(processOutputOne)) {
+                # Add file extension:
+                filePath <- paste(filePathSansExt, "geojson", sep = ".")
+                # Write the file:
+                jsonObject <- geojsonio::geojson_json(processOutputOne)
+                
+                # Hack to rermove all IDs from the geojson:
+                jsonObject <- removeIDsFromGeojson(jsonObject)
+                
+                jsonlite::write_json(jsonObject, path = filePath)
+            }
+            else if("data.table" %in% class(processOutputOne)) {
+                # Add file extension:
+                filePath <- paste(filePathSansExt, "txt", sep = ".")
+                # Write the file:
+                cat("", file = filePath)
+            }
+            else {
+                stop("Unknown function output: ", class(processOutputOne))
+            }
         }
     }
+    else if(output.file.type == "binary") {
+        if(length(processOutputOne)){
+            # Add file extension:
+            filePath <- paste(filePathSansExt, "rds", sep = ".")
+            # Write to rds file:
+            saveRDS(processOutputOne, file = filePath)
+        }
+    }
+    else {
+        stop("output.file.type must be one of \"text\" and \"binary\"")
+    }
+    
+    
 }
 
 removeIDsFromGeojson <- function(json) {
@@ -3838,12 +3892,25 @@ unlistToDataType <- function(processOutput) {
 
 
 # Function to write process output to a memory file:
-writeProcessOutputMemoryFiles <- function(processOutput, process, projectPath, modelName) {
+writeProcessOutputMemoryFiles <- function(processOutput, projectPath, modelName, processID, type = c("memory", "output"), subfolder = NULL) {
     if(length(processOutput)) {
-        
         # Get the path to the folder to place the memory file in:
-        folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = process$processID)
-        # Create the folder:
+        folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID, type = type, subfolder = subfolder)
+        writeProcessOutputTables(
+            processOutput, 
+            folderPath = folderPath, 
+            writeOrderFile = TRUE)
+    }
+    else {
+        NULL
+    }
+}
+
+
+# Function to write process output to a memory file:
+writeProcessOutputTables <- function(processOutput, folderPath, writeOrderFile = TRUE) {
+    if(length(processOutput)) {
+        # Create the folder if not existing:
         dir.create(folderPath, recursive = TRUE, showWarnings = FALSE)
         
         # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
@@ -3869,13 +3936,14 @@ writeProcessOutputMemoryFiles <- function(processOutput, process, projectPath, m
             filePaths <- mapply(file.path, folderPaths, fileNamesSansExt, SIMPLIFY = FALSE)
         }
         # Write the individual tables:
-        mapply(writeMemoryFiles, processOutput, filePaths)
+        mapply(writeMemoryFiles, processOutput, filePaths, writeOrderFile = writeOrderFile)
     }
     else {
         NULL
     }
-    
 }
+
+
 # Function to get the depth of the data, 1 for a list of valid output data objects, and 2 for a list of such lists:
 getOutputDepth <- function(x) {
     outputDepth <- 1
@@ -3901,15 +3969,9 @@ getFolderDepth <- function(folderPath) {
 #' @export
 #' 
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
-runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force.restart = FALSE, replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, ...) {
+runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, msg = TRUE, save = TRUE, force.restart = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceData = list(), replaceArgs = list(), output.file.type = c("text", "binary"), ...) {
 
-    ## Get the processIDs:
-    #processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    ## Rstrict the startProcess and endProcess to the range of process indices:
-    #startProcess <- max(1, startProcess)
-    #endProcess <- min(nrow(processIndexTable), endProcess)
-    ## Extract the requested process IDs:
-    #processIDs <- processIndexTable[seq(startProcess, endProcess)]$processID
+    # Get the processIDs:
     processIndexTable <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)
     processIDs <- processIndexTable$processID
     processNames <- processIndexTable$processName
@@ -3981,12 +4043,15 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
         runProcess, 
         processID = processIDs, 
         replaceArgs = replaceArgs[processNames], 
+        replaceData = replaceData[processNames], 
         MoreArgs = list(
             projectPath = projectPath, 
             modelName = modelName, 
             fileOutput = fileOutput, 
             setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
-            purge.processData = purge.processData
+            purge.processData = purge.processData, 
+            msg = msg, 
+            output.file.type = output.file.type
         )
     )
     

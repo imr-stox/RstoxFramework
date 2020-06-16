@@ -1,4 +1,4 @@
-# RstoxFramework version: 1.2.9 (latest alpha, 2020-06-08)
+# RstoxFramework version: 1.2.10 (latest alpha, 2020-06-15)
 # R version: 3.6
 
 # The framwork of StoX >= 3.0.
@@ -7,10 +7,12 @@
 # The package creates an evironment containing the StoX project(s) in separate environments. Each StoX project consists of a list of data tables holding e.g. biotic and acoustic data, filtered versions of the data, strata system, definitios of primary sampling units, accompanied by a list of specifications of the StoX processes comprising the StoX project. A StoX process is an R function taking as input the project name, the input data and parameters used by the function.
 # The package replaces the old Java library in StoX versions prior to StoX 4.0.
 
-# Install the latest GitHub release
-devtools::install_github("https://github.com/StoXProject/RstoxFramework", ref = "RstoxFramework-v1.2.9")
+# Install the latest binary:
+install.packages(RstoxFramework, repo = c("https://stoxproject.github.io/repo", "https://cloud.r-project.org"))
+# ... or install the latest develop version from GitHub:
+devtools::install_github("https://github.com/StoXProject/RstoxFramework", ref = "RstoxFramework-v1.2.10")
 
-# Release notes for RstoxFramework_1.2.9:
+# Release notes for RstoxFramework_1.2.10:
 # . 
 
 # For historical release notes see https://github.com/StoXProject/RstoxFramework/blob/master/NEWS

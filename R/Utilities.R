@@ -458,7 +458,7 @@ getMemoryFileFormat <- function(x) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_List")
     }
     else {
-        stop("Wrong memory file class", class(x)[1])
+        stop("Wrong memory file class ", class(x)[1])
     }
     return(memoryFileFormat)
 }
@@ -493,10 +493,14 @@ writeMemoryFile <- function(x, filePathSansExt, ext = NULL) {
     return(filePath)
 }
 
-writeMemoryFiles <- function(objects, filePathsSansExt) {
-    orderFileName <- file.path(dirname(filePathsSansExt[1]), "tableOrder.txt")
+writeMemoryFiles <- function(objects, filePathsSansExt, writeOrderFile = TRUE) {
+    # Write the files:
     filePaths <- mapply(writeMemoryFile, objects, filePathsSansExt)
-    write(filePaths, orderFileName)
+    # Write the orderfile:
+    if(writeOrderFile) {
+        orderFileName <- file.path(dirname(filePathsSansExt[1]), "tableOrder.txt")
+        write(filePaths, orderFileName)
+    }
 }
 
 readMemoryFile <- function(filePath) {

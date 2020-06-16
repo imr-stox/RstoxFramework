@@ -837,6 +837,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 7. value:
                 value = functionParameters
             )
+            print(functionParametersToReturn)
             
             # Convert to a JSON string if the parameter has a format:
             hasFormat <- functionParametersToReturn$format != "none"

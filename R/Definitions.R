@@ -23,8 +23,6 @@
 #' 
 initiateRstoxFramework <- function(){
     
-    memoryFileFormat <- "rds"
-    
     ##### Packages: #####
     officialStoxLibraryPackages <- c(
         "RstoxBase", 
@@ -33,6 +31,7 @@ initiateRstoxFramework <- function(){
         #"RstoxAnalysis", 
         #"RstoxReport"
     )
+    officialStoxLibraryPackagesAll <- c("RstoxFramework", officialStoxLibraryPackages)
     
     # Define formats for files saved by Rstox:
     memoryFileFormat_Empty <- "rds"
@@ -64,15 +63,21 @@ initiateRstoxFramework <- function(){
         "functionArgumentHierarchy"
     )
     
+    # Define parameters that are needed to run processData functions or bootstrap functions (or other kinds of special functions):
+    systemParameters <- c(
+        "processData", 
+        "projectPath"
+    )
+    
     # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
     lapply(officialStoxLibraryPackages, library, character.only = TRUE)
     
     # Get the stoxLibrary as the list of function attributes from all official packages:
-    stoxLibrary <- getStoxLibrary(officialStoxLibraryPackages, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
+    stoxLibrary <- getStoxLibrary(officialStoxLibraryPackagesAll, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     availableFunctions <- names(stoxLibrary)
     
     # Get the possible values of the functions:
-    availableFunctionPossibleValues <- lapply(availableFunctions, extractStoxFunctionParameterPossibleValues)
+    availableFunctionPossibleValues <- lapply(availableFunctions, extractStoxFunctionParameterPossibleValues, systemParameters = systemParameters)
     names(availableFunctionPossibleValues) <- availableFunctions
     
     # Get the json schema for RstoxFramework:
@@ -168,6 +173,9 @@ initiateRstoxFramework <- function(){
         JSON = 6
     )
     
+    # Define the length of the sequence to draw seeds from:
+    seedSequenceLength = 1e7
+    
     # Define the permitted classes for individual outputs from StoX functions:
     validOutputDataClasses <- c(
         "data.table", 
@@ -197,19 +205,10 @@ initiateRstoxFramework <- function(){
         )
     )
     
-    # Function getting formats of a package:
-    getProcessPropertyFormats <- function(packageName) {
-        processPropertyFormats <- tryCatch(
-            getExportedValue(packageName, "processPropertyFormats"), 
-            error = function(err) NULL
-        )
-        return(processPropertyFormats)
-    }
-    
     # Get the processPropertyFormats of all packages, and merge the lists and add the default ("none"):
     processPropertyFormats <- unlist(
         c(
-            lapply(officialStoxLibraryPackages, getProcessPropertyFormats), 
+            lapply(officialStoxLibraryPackagesAll, getProcessPropertyFormats), 
             # Add the default format "none"
             list(defaultProcessPropertyFormat)
         ), 
@@ -241,6 +240,8 @@ initiateRstoxFramework <- function(){
         Output = "output", 
         Process = "process"
     )
+    stoxFoldersList <- as.list(stoxFolders)
+    names(stoxFoldersList) <- names(stoxFolders)
     stoxDataSourceFolders <- c(
         Acoustic = "acoustic", 
         Biotic = "biotic", 
@@ -405,6 +406,7 @@ initiateRstoxFramework <- function(){
     #### Define an object with all path objects for convenience in getProjectPaths(): ####
     paths <- c(
         stoxFolderStructureList, 
+        stoxFoldersList, 
         list(
             # Folders:
             stoxFolders = stoxFolders, 
@@ -488,7 +490,8 @@ initiateRstoxFramework <- function(){
         "projectPath", 
         "value"
     ))
-        
+    
+    
     assign("RstoxFrameworkEnv", new.env(), parent.env(environment()))
     
     assign("definitions", definitions, envir=get("RstoxFrameworkEnv"))
@@ -499,6 +502,51 @@ initiateRstoxFramework <- function(){
 }
 
 
+# This function gets the stoxFunctionAttributes of the specified packages.
+getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
+    
+    # Validate the pakcages:
+    packageNames <- packageNames[sapply(packageNames, validateStoxLibraryPackage)]
+    # Get a list of the 'stoxFunctionAttributes' from each package:
+    stoxFunctionAttributeLists <- lapply(packageNames, getStoxFunctionAttributes, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
+    
+    # Collapse to one list:
+    stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
+    
+    # Check for duplicaetd function names:
+    functionNames <- names(stoxFunctionAttributes)
+    packageNames <- sapply(stoxFunctionAttributes, "[[", "packageName")
+    areDuplicatedFunctionNames <- duplicated(functionNames)
+    
+    # If there are any duplicated function names, report a warning stating which function names and from which packages:
+    if(any(areDuplicatedFunctionNames)) {
+        # Get the package strings as concatenations of the packages with common function names:
+        packageNamesString <- as.character(
+            by(
+                functionNames[areDuplicatedFunctionNames], 
+                packageNames[areDuplicatedFunctionNames], 
+                paste, 
+                collapse = ", "
+            )
+        )
+        # Get the unique duplicated function names, and paste the packageNamesString to these:
+        uniqueDuplicatedFunctionNames <- unique(functionNames[areDuplicatedFunctionNames])
+        functionNamePackageNamesString <- paste0(
+            uniqueDuplicatedFunctionNames, 
+            "(", 
+            packageNamesString, 
+            ")"
+        )
+        
+        warning("The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
+    }
+    
+    # Keep only the non-duplicated functions: 
+    stoxFunctionAttributes <- stoxFunctionAttributes[!areDuplicatedFunctionNames]
+    return(stoxFunctionAttributes)
+}
+
+
 # Define the default process property format:
 defaultProcessPropertyFormat <- list(
     none = list(
@@ -506,6 +554,19 @@ defaultProcessPropertyFormat <- list(
         type = "single"
     )
 )
+
+
+# Function getting formats of a package:
+getProcessPropertyFormats <- function(packageName) {
+    # Get the exported object 'stoxFunctionAttributes' from the package:
+    if(!identical(packageName, "RstoxFramework")) {
+        processPropertyFormats <- tryCatch(
+            getExportedValue(packageName, "processPropertyFormats"), 
+            error = function(err) NULL
+        )
+    }
+    return(processPropertyFormats)
+}
 
 
 
@@ -524,7 +585,7 @@ readProcessDataSchema <- function(packageName) {
 }
 
 
-extractStoxFunctionParameterPossibleValues <- function(functionName, dropProcessData = TRUE) {
+extractStoxFunctionParameterPossibleValues <- function(functionName, systemParameters, dropProcessData = TRUE) {
     
     # Split the function name into function name and package name, and get the formals in the package environment:
     packageFunctionName <- strsplit(functionName, "::")[[1]]
@@ -542,7 +603,8 @@ extractStoxFunctionParameterPossibleValues <- function(functionName, dropProcess
     f[areMissing] <- vector("list", sum(areMissing))
     
     if(dropProcessData) {
-        f <- f[names(f) != "processData"]
+        parameterNamesToKeep <- setdiff(names(f), systemParameters)
+        f <- f[parameterNamesToKeep]
     }
     
     # Evaluate and return:

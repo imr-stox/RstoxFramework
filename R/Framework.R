@@ -3779,6 +3779,9 @@ getProcessNameFromProcessID <- function(projectPath, modelName, processID) {
 
 # Function to write process output to a text file in the output folder:
 writeProcessOutput <- function(processOutput, projectPath, modelName, processID, processName, output.file.type = c("text", "binary")) {
+    
+    output.file.type <- match.arg(output.file.type)
+    
     # Return NULL for empty process output:
     if(length(processOutput)) {
         # Unlist introduces dots, and we replace by underscore:
@@ -3792,7 +3795,14 @@ writeProcessOutput <- function(processOutput, projectPath, modelName, processID,
         
         #processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = processID)
         #fileNamesSansExt <- paste(processIndex, processName, names(processOutput), sep = "_")
-        fileNamesSansExt <- paste(processName, names(processOutput), sep = "_")
+        
+        # Added on 2020-06-16. Add the data type in the file name only if multiple outputs:
+        if(length(processOutput) > 1) {
+            fileNamesSansExt <- paste(processName, names(processOutput), sep = "_")
+        }
+        else {
+            fileNamesSansExt <- processName
+        }
         filePathsSansExt <- file.path(folderPath, paste(fileNamesSansExt))
         
         # Set the file name:
@@ -3805,9 +3815,7 @@ writeProcessOutput <- function(processOutput, projectPath, modelName, processID,
 }
 
 # Function for writing one element of the function output list:
-reportFunctionOutputOne <- function(processOutputOne, filePathSansExt, output.file.type = c("text", "binary")) {
-    
-    output.file.type <- match.arg(output.file.type)
+reportFunctionOutputOne <- function(processOutputOne, filePathSansExt, output.file.type) {
     
     if(output.file.type == "text") {
         if(length(processOutputOne)){
@@ -3827,7 +3835,12 @@ reportFunctionOutputOne <- function(processOutputOne, filePathSansExt, output.fi
                 # Add file extension:
                 filePath <- paste(filePathSansExt, "txt", sep = ".")
                 # Write the file:
-                cat("", file = filePath)
+                if(length(processOutputOne) == 0) {
+                    cat("", file = filePath)
+                }
+                else {
+                    data.table::fwrite(processOutputOne, filePath, sep = "\t")
+                }
             }
             else {
                 stop("Unknown function output: ", class(processOutputOne))
@@ -3965,6 +3978,20 @@ getFolderDepth <- function(folderPath) {
 }
 
 
+#' Delete the contents of the output folder of a model.
+#' 
+#' This function is run by \code{\link[RstoxAPI]{runModel}} to clear off any files present in the output folder of a model. It should also be used by GUIs when running a model.
+#' 
+#' @inheritParams general_arguments
+#' 
+#' @export
+#' 
+purgeOutput <- function(projectPath, modelName) {
+    folderPath <- getProjectPaths(projectPath = projectPath, name = modelName)
+    unlink(folderPath, recursive = TRUE, force = TRUE)
+    dir.create(folderPath)
+}
+
 #' 
 #' @export
 #' 
@@ -4030,9 +4057,13 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     #    replaceArgs = list()
     #}
     #    {
-            
     
     
+    
+    # Empty the folder:
+    #folderPath <- getProjectPaths(projectPath = projectPath, name = modelName)
+    #unlink(folderPath, recursive = TRUE, force = TRUE)
+    #dir.create(folderPath)
     
     #for(processID in processIDs) {
     #    #status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)

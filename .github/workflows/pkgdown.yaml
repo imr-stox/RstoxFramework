@@ -18,6 +18,14 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@master
 
+      - name: MacOS dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install pkg-config
+          brew install udunits
+          brew install gdal
+          brew install v8
+
       - name: Query dependencies
         run: |
           install.packages('remotes')

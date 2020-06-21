@@ -75,7 +75,7 @@ getStoxFunctionAttributes <- function(packageName, requestedFunctionAttributeNam
         }
     }
     else {
-        warning("The file ", argumentDescriptionFile, " does not exist.")
+        warning("StoX: The file ", argumentDescriptionFile, " does not exist.")
     }
     
     stoxFunctionAttributes
@@ -124,7 +124,7 @@ validateStoxLibraryPackage <- function(packageName) {
     
     # Return FALSE if the stox funciton attributes list does not exist:
     if(length(stoxFunctionAttributes) == 0) {
-        warning("The package ", packageName, " does not export the required object 'stoxFunctionAttributes'.")
+        warning("StoX: The package ", packageName, " does not export the required object 'stoxFunctionAttributes'.")
         return(FALSE)
     }
     
@@ -133,7 +133,7 @@ validateStoxLibraryPackage <- function(packageName) {
     stoxFunctionNames <- names(stoxFunctionAttributes)
     stoxFunctionNamesPresent <- stoxFunctionNames %in% exports
     if(!all(stoxFunctionNamesPresent)) {
-        warning("The package ", packageName, " specifies functions in the 'stoxFunctionAttributes' object that are not exported:\n", paste(stoxFunctionNames[!stoxFunctionNamesPresent], collapse = ", "))
+        warning("StoX: The package ", packageName, " specifies functions in the 'stoxFunctionAttributes' object that are not exported:\n", paste(stoxFunctionNames[!stoxFunctionNamesPresent], collapse = ", "))
         return(FALSE)
     }
     
@@ -145,14 +145,14 @@ validateStoxLibraryPackage <- function(packageName) {
     
     if(!all(exportedProcessDataFunctionsSansDefine %in% processDataSchemaNames)) {
         missingJSONs <- setdiff(exportedProcessDataFunctionsSansDefine, processDataSchemaNames)
-        warning("The package ", packageName, " exports processData functions specified in the 'stoxFunctionAttributes' object that are not documented with a JSON schema in the processDataSchema.json file:\n", paste(missingJSONs, collapse = ", "))
+        warning("StoX: The package ", packageName, " exports processData functions specified in the 'stoxFunctionAttributes' object that are not documented with a JSON schema in the processDataSchema.json file:\n", paste(missingJSONs, collapse = ", "))
         #return(FALSE)
     }
     
     # Check that if any functions have format specified, the object "processPropertyFormats" must be exported:
     if(any(sapply(stoxFunctionAttributes, function(x) length(x$functionParameterFormat) && !all(unlist(x$functionParameterFormat)  == "none")))) {
         if(!"processPropertyFormats" %in% exports) {
-            warning("The package ", packageName, " does not export the required object 'processPropertyFormats'.")
+            warning("StoX: The package ", packageName, " does not export the required object 'processPropertyFormats'.")
             return(FALSE)
         }
     }
@@ -255,7 +255,7 @@ getTemplate <- function(template) {
         template <- templates[[template]]
     }
     else {
-        warning("Invalid template name ", template, ". Available templates are ", paste0(names(templates), collapse = ", "))
+        warning("StoX: Invalid template name ", template, ". Available templates are ", paste0(names(templates), collapse = ", "))
     }
     
     # Define the process IDs and return the template:
@@ -424,7 +424,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     
     projectPath <- resolveProjectPath(projectPath)
     if(length(projectPath) == 0) {
-        warning("The selected projectPath is not a StoX project or a folder/file inside a StoX project.")
+        warning("StoX: The selected projectPath is not a StoX project or a folder/file inside a StoX project.")
         return(NULL)
     }
     
@@ -599,7 +599,7 @@ isOpenProject <- function(projectPath) {
         hasActiveProcessData && length(existsFolders) && all(existsFolders)
     }
     else {
-        warning("Project ", projectPath, " does not exist.")
+        warning("StoX: Project ", projectPath, " does not exist.")
         NA
     }
 }
@@ -1005,7 +1005,7 @@ getActiveProcess <- function(projectPath, modelName = NULL) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     if(!file.exists(activeProcessIDFile)) {
-        warning("The active process ID file has not been initiated.")
+        warning("StoX: The active process ID file has not been initiated.")
     }
     activeProcessIDTable <- data.table::fread(activeProcessIDFile, sep = "\t")
     
@@ -1057,7 +1057,7 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
     # Read the active process ID for the model:
     activeProcessIDFile <- getProjectPaths(projectPath, "activeProcessIDFile")
     if(!file.exists(activeProcessIDFile)) {
-        warning("The active process ID file has not been initiated.")
+        warning("StoX: The active process ID file has not been initiated.")
     }
     data.table::fwrite(activeProcessIDTable, activeProcessIDFile, sep = "\t", na = "NA")
 }
@@ -1372,7 +1372,7 @@ removeFromArgumentFileTable <- function(argumentFileTable, modelName, processID)
         argumentFileTable <- argumentFileTable[!toRemove, ]
     }
     else {
-        warning("The process with processID ", processID, " was not found in the current state of the model")
+        warning("StoX: The process with processID ", processID, " was not found in the current state of the model")
     }
     
     # Return the argument file table:
@@ -1550,7 +1550,7 @@ getStoxFunctionMetaData <- function(functionName, metaDataName = NULL, showWarni
     }
     else {
         if(showWarnings) {
-            warning("The requested meta data ", metaDataName, " is not included in the stoxFunctionAttributes for function ", functionName, ".")
+            warning("StoX: The requested meta data ", metaDataName, " is not included in the stoxFunctionAttributes for function ", functionName, ".")
         }
         NULL
     }
@@ -1628,7 +1628,7 @@ getStoxFunctionParameterPossibleValues <- function(functionName, fill.logical = 
     
     functionName <- getFunctionNameFromPackageFunctionName(functionName)
     if(! functionName %in% availableFunctions) {
-        warning("The function ", functionName, "is not an official StoX function.")
+        warning("StoX: The function ", functionName, "is not an official StoX function.")
         return(list())
     }
     
@@ -2262,15 +2262,15 @@ checkFunctionInput <- function(functionInput, functionInputDataType, processInde
     functionInputError <- TRUE
     # (0) Chech that the function input is a string with positive number of characters:
     if(!is.character(functionInput)) {
-        warning("Function input must be a character string (", functionInputDataType, ").")
+        warning("StoX: Function input must be a character string (", functionInputDataType, ").")
     }
     # (1) Error if empty string:
     else if(nchar(functionInput) == 0) {
-        warning("Function input must be a non-empty character string (", functionInputDataType, ").")
+        warning("StoX: Function input must be a non-empty character string (", functionInputDataType, ").")
     }
     # (2) Error if not the name of a previous process:
     else if(! functionInput %in% processIndexTable$processName) {
-        warning("Function input ", functionInput, " is not the name of a previous process (", functionInputDataType, ").")
+        warning("StoX: Function input ", functionInput, " is not the name of a previous process (", functionInputDataType, ").")
     }
     else {
         atRequestedPriorProcess <- which(functionInput == processIndexTable$processName)
@@ -2278,15 +2278,15 @@ checkFunctionInput <- function(functionInput, functionInputDataType, processInde
         
         # (3) Error if the previous process returns the wrong data type:
         if(! functionInputDataType %in% outputDataTypeOfRequestedPriorProcess) {
-            warning("Function input of process ", processIndexTable$processName[atRequestedPriorProcess], " does not return the correct data type (", functionInputDataType, ").")
+            warning("StoX: Function input of process ", processIndexTable$processName[atRequestedPriorProcess], " does not return the correct data type (", functionInputDataType, ").")
         }
         # (4) Error if the previous process is not enabled:
         else if(!processIndexTable$enabled[atRequestedPriorProcess]) {
-            warning("The process ", processIndexTable$processName[atRequestedPriorProcess], " is not enabled.")
+            warning("StoX: The process ", processIndexTable$processName[atRequestedPriorProcess], " is not enabled.")
         }
         # (5) Error if the previous process has input error:
         else if(processIndexTable$functionInputError[atRequestedPriorProcess]) {
-            warning("The process ", processIndexTable$processName[atRequestedPriorProcess], " has input error.")
+            warning("StoX: The process ", processIndexTable$processName[atRequestedPriorProcess], " has input error.")
         }
         else {
             functionInputError <- FALSE
@@ -2745,7 +2745,7 @@ convertToRelativePaths <- function(functionParameters, projectPath, modelName, p
             filePath <- substring(filePath, 2)
         }
         else if(warn) {
-            warning("The specified file ", filePath, " is not present in the project folder (", projectPath, ")")
+            warning("StoX: The specified file ", filePath, " is not present in the project folder (", projectPath, ")")
         }
         filePath
     }
@@ -2788,7 +2788,7 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
             filePath
         }
         else {
-            warning("The file ", filePath, " does not exist.")
+            warning("StoX: The file ", filePath, " does not exist.")
             filePath
         }
     }
@@ -2831,7 +2831,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
     # 1. Process parameters
     # 1. Process data
     if(!isOpenProject(projectPath)) {
-        warning("The project ", projectPath, " is not open. Use openProject() to open the project.")
+        warning("StoX: The project ", projectPath, " is not open. Use openProject() to open the project.")
         return(NULL)
     }
     
@@ -3157,7 +3157,7 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
     
     # values must be a list:
     if(length(values) && !is.list(values)) {
-        warning("Process not added. Values must be a list of specifics of the process.")
+        warning("StoX: Process not added. Values must be a list of specifics of the process.")
     }
     
     # Create an empty process:
@@ -3502,7 +3502,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     }
     
     if(length(processOutputFiles) == 0) {
-        warning("Invalid specification of projectPath, modelName, processID or tableName (most likely tableName).")
+        warning("StoX: Invalid specification of projectPath, modelName, processID or tableName (most likely tableName).")
     }
     
     
@@ -4003,7 +4003,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     processIDs <- processIndexTable$processID
     processNames <- processIndexTable$processName
     if(!length(processIDs)) {
-        warning("Empty project, ", projectPath)
+        warning("StoX: Empty project, ", projectPath)
         return(NULL)
     }
     
@@ -4014,19 +4014,19 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     # Check that the project exists:
     failedVector <- logical(length(processIDs))
     if(!isProject(projectPath)) {
-        warning("The StoX project ", projectPath, " does not exist")
+        warning("StoX: The StoX project ", projectPath, " does not exist")
         return(failedVector)
     }
     
     # Check that the project is open:
     if(!isOpenProject(projectPath)) {
-        warning("The StoX project ", projectPath, " is not open. Use openProject() to open the project.")
+        warning("StoX: The StoX project ", projectPath, " is not open. Use openProject() to open the project.")
         return(failedVector)
     }
     
     # Chech that none of the models of the project are running:
     if(isRunning(projectPath) && !force.restart) {
-        warning("The project is running (", projectPath, "). Use force.restart = TRUE to force restart the project.")
+        warning("StoX: The project is running (", projectPath, "). Use force.restart = TRUE to force restart the project.")
         return(failedVector)
     }
     else {

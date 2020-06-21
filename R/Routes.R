@@ -837,7 +837,6 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 7. value:
                 value = functionParameters
             )
-            print(functionParametersToReturn)
             
             # Convert to a JSON string if the parameter has a format:
             hasFormat <- functionParametersToReturn$format != "none"
@@ -1407,7 +1406,8 @@ getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE, incl
 
 # Simple function to sort the unique values:
 sortUnique <- function(y) {
-    sort(unique(y))
+    # 2020-06-18 Added na.last = FALSE to include NAs in the filter options:
+    sort(unique(y), na.last = FALSE)
 }
 
 

@@ -34,7 +34,6 @@ Bootstrap <- function(
         runProcesses(projectPath, modelName = "baseline", startProcess = startProcess, endProcess = Inf, save = FALSE, fileOutput = FALSE, setUseProcessDataToTRUE = FALSE, replaceData = thisReplaceData, msg = FALSE)
         # Get the last process output:
         lastProcessOutput <- getProcessOutput(projectPath, modelName = "baseline", processID = lastProcessID, drop.datatype = FALSE)
-        print(lastProcessOutput)
         # Save the last process output:
         ###writeProcessOutputMemoryFiles(
         ###    processOutput = lastProcessOutput, 
@@ -85,7 +84,7 @@ readBootstrap <- function(projectPath, processName) {
     
     # Return NULL if the folder does not exist:
     if(!file.exists(folderPath)) {
-        warning("The process ", folderPath, " does not have an output folder. Has the proccess been run?")
+        warning("StoX: The process ", folderPath, " does not have an output folder. Has the proccess been run?")
         return(NULL)
     }
     

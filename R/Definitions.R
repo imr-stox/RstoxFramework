@@ -145,7 +145,7 @@ initiateRstoxFramework <- function(){
     # Check that there are no functions with the same name as a datatype:
     commonFunctionAndDataTypeName <- intersect(stoxDataTypes$functionOutputDataType, stoxDataTypes$functionName)
     if(length(commonFunctionAndDataTypeName)) {
-        warning("The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes[functionName == commonFunctionAndDataTypeName, "packageName"], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and RstoxAPI::runModel(). Please notify the packcage maintainer.")
+        warning("StoX: The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes[functionName == commonFunctionAndDataTypeName, "packageName"], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and RstoxAPI::runModel(). Please notify the packcage maintainer.")
     }
     
     
@@ -538,7 +538,7 @@ getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
             ")"
         )
         
-        warning("The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
+        warning("StoX: The following functions are present in several packages (package names in parenthesis): ", paste(functionNamePackageNamesString, collapse = ", "))
     }
     
     # Keep only the non-duplicated functions: 

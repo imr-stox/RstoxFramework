@@ -1172,7 +1172,7 @@ getPathToSingleFunctionPDF <- function(functionName) {
         system.file("extdata", "singleFunctionPDFs", package = packageName), 
         paste(functionName, "pdf", sep = ".")
     )
-    pathToSingleFunctionPDF
+    return(pathToSingleFunctionPDF)
 }
 
 
@@ -1197,7 +1197,7 @@ getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = N
     functionName <- getFunctionNameFromPackageFunctionName(packageName_functionName)
     # Get the help:
     html <- getObjectHelpAsHtml(packageName = packageName, objectName = functionName, outfile = outfile, stylesheet = stylesheet)
-    html
+    return(html)
 }
 
 
@@ -1222,10 +1222,23 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
     if(length(outfile) == 0) {
         outfile <- tempfile(fileext = ".html")
     }
-    tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links, stylesheet = stylesheet)
+    
+    tryCatch(
+        tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links, stylesheet = stylesheet), 
+        error = function(err) {
+            failed <<- TRUE
+            return("Error in function help (usually non-existing link to data type). Contact the package maintainer.")
+        }
+    )
+    
     html <- paste(readLines(outfile), collapse="\n")
     unlink(outfile, force = TRUE)
-    html
+    return(html)
+    
+    #tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links, stylesheet = stylesheet)
+    #html <- paste(readLines(outfile), collapse="\n")
+    #unlink(outfile, force = TRUE)
+    #html
 }
 
 

@@ -22,21 +22,19 @@ stoxFunctionAttributes <- list(
 #' 
 processPropertyFormats <- list(
     bootstrapMethodTable = list(
+        class = "table", 
         title = "Define the bootstrap method",
-        type = "table", 
-        info = data.table::data.table(
-            name = c(
-                "ProcessName", 
-                "ResampleFunction", 
-                "ResampleBy", 
-                "Seed"
-            ), 
-            type = c(
-                "character",
-                "character", 
-                "character",
-                "integer"
-            )
+        columnNames = c(
+            "ProcessName", 
+            "ResampleFunction", 
+            "ResampleBy", 
+            "Seed"
+        ), 
+        variableTypes = c(
+            "character",
+            "character", 
+            "character",
+            "integer"
         )
     )
 )

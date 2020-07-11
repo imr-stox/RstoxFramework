@@ -646,7 +646,8 @@ isVectorParameter <- function(format) {
 }
 
 isVectorParameterOne <- function(format, processPropertyFormats) {
-    processPropertyFormats[[format]]$type == "vector"
+    # 2020-06-24: Changed from == to identical (Jira, STOX-225):
+    identical(processPropertyFormats[[format]]$type, "vector")
 }
 
 
@@ -1172,7 +1173,7 @@ getPathToSingleFunctionPDF <- function(functionName) {
         system.file("extdata", "singleFunctionPDFs", package = packageName), 
         paste(functionName, "pdf", sep = ".")
     )
-    return(pathToSingleFunctionPDF)
+    pathToSingleFunctionPDF
 }
 
 
@@ -1197,7 +1198,7 @@ getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = N
     functionName <- getFunctionNameFromPackageFunctionName(packageName_functionName)
     # Get the help:
     html <- getObjectHelpAsHtml(packageName = packageName, objectName = functionName, outfile = outfile, stylesheet = stylesheet)
-    return(html)
+    html
 }
 
 
@@ -1222,23 +1223,10 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
     if(length(outfile) == 0) {
         outfile <- tempfile(fileext = ".html")
     }
-    
-    tryCatch(
-        tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links, stylesheet = stylesheet), 
-        error = function(err) {
-            failed <<- TRUE
-            return("Error in function help (usually non-existing link to data type). Contact the package maintainer.")
-        }
-    )
-    
+    tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links, stylesheet = stylesheet)
     html <- paste(readLines(outfile), collapse="\n")
     unlink(outfile, force = TRUE)
-    return(html)
-    
-    #tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links, stylesheet = stylesheet)
-    #html <- paste(readLines(outfile), collapse="\n")
-    #unlink(outfile, force = TRUE)
-    #html
+    html
 }
 
 
@@ -1429,31 +1417,74 @@ sortUnique <- function(y) {
 
 
 ##### Handle parameter tables: #####
-# Get the title of a parameter table:
-getParameterTableTitle <- function(format) {
+
+getParameterTableElement <- function(projectPath, modelName, processID, format, element) {
+    # Get the parameterTableInfo
     parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
-    parameterTableTitle <- parameterTableInfo[[format]]$title
-    return(parameterTableTitle)
+    
+    # If given as a function, apply that function to the function arguments:
+    if(is.function(parameterTableInfo[[format]][[element]])) {
+        # Get the function arguments:
+        functionArguments <- getFunctionArguments(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )$functionArguments
+        # Apply the function:
+        output <- do.call_robust(
+            parameterTableInfo[[format]][[element]], 
+            functionArguments
+        )
+    }
+    else {
+        output <- parameterTableInfo[[format]][[element]]
+    }
+    
+    return(output)
+}
+
+# Get the title of a parameter table:
+getParameterTableTitle <- function(projectPath, modelName, processID, format) {
+    getParameterTableElement(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        format = format, 
+        element = "title"
+    )
 }
 
 # Get the column names of a parameter table:
-getParameterTableColumnNames <- function(format) {
-    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
-    parameterTableColumnNames <- parameterTableInfo[[format]]$info$name
-    return(parameterTableColumnNames)
+getParameterTableColumnNames <- function(projectPath, modelName, processID, format) {
+    getParameterTableElement(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        format = format, 
+        element = "columnNames"
+    )
 }
 
 # Get the variable types of a parameter table:
-getParameterTableVariableTypes <- function(format) {
-    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
-    parameterTableVariableTypes <- parameterTableInfo[[format]]$info$type
-    return(parameterTableVariableTypes)
+getParameterTableVariableTypes <- function(projectPath, modelName, processID, format) {
+    getParameterTableElement(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        format = format, 
+        element = "variableTypes"
+    )
 }
     
 # Get the possible values of a parameter table:
 # Unfinished!!!!!!!!!!!!!!!
 getParameterTablePossibleValues <- function(projectPath, modelName, processID, format) {
-    columnNames <- getParameterTableColumnNames(format)
+    columnNames <- getParameterTableColumnNames(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        format = format
+    )
     rep(list(list()), length(columnNames))
 }
 
@@ -1466,9 +1497,24 @@ getParameterTablePossibleValues <- function(projectPath, modelName, processID, f
 #' 
 getParameterTableInfo <- function(projectPath, modelName, processID, format) {
     list(
-        parameterTableTitle = getParameterTableTitle(format), 
-        parameterTableColumnNames = getParameterTableColumnNames(format), 
-        parameterTableVariableTypes = getParameterTableVariableTypes(format), 
+        parameterTableTitle = getParameterTableTitle(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            format = format
+        ), 
+        parameterTableColumnNames = getParameterTableColumnNames(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            format = format
+        ), 
+        parameterTableVariableTypes = getParameterTableVariableTypes(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            format = format
+        ), 
         parameterTablePossibleValues = getParameterTablePossibleValues(
             projectPath = projectPath, 
             modelName = modelName, 
@@ -1478,16 +1524,21 @@ getParameterTableInfo <- function(projectPath, modelName, processID, format) {
     )
 }
 
-#' GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all Rstox packages
-#' 
-#' @export
-#' 
-getAllParameterTableInfo <- function() {
-    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
-    info <- lapply(parameterTableInfo, function(x) x$info)
-    info <- unique(data.table::rbindlist(info))
-    return(info)
-}
-#####
+
+
+
+
+
+##' GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all #Rstox packages
+##' 
+##' @export
+##' 
+#getAllParameterTableInfo <- function() {
+#    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+#    info <- lapply(parameterTableInfo, function(x) x$info)
+#    info <- unique(data.table::rbindlist(info))
+#    return(info)
+#}
+######
 
 

@@ -295,9 +295,9 @@ initiateRstoxFramework <- function(){
     # Define the data types for the interactive modes:
     stratumDataType <- "StratumPolygon"
     acousticPSUDataType <- "AcousticPSU"
-    sweptAreaPSUDataType <- "SweptAreaPSU"
+    bioticPSUDataType <- "BioticPSU"
     acousticLayerDataType <- "AcousticLayer"
-    sweptAreaLayerDataType <- "SweptAreaLayer"
+    bioticLayerDataType <- "BioticLayer"
     bioticAssignmentDataType <- "BioticAssignment"
     stationDataType <- "StoxBioticData"
     EDSUDataType <- "StoxAcousticData"

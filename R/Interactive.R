@@ -525,7 +525,7 @@ removePSUsByStratumOnePSUProcess <- function(processID, stratumName, projectPath
     PSUs <- getProcessData(projectPath, modelName, processID)
     
     # Get PSU type:
-    PSUType <- ifelse("Station_PSU" %in% names(PSUs), "SweptArea", "Acoustic")
+    PSUType <- ifelse("Station_PSU" %in% names(PSUs), "Biotic", "Acoustic")
     
     # Find all PSUs of the stratum to be removed:
     PSUs <- PSUs$Stratum_PSU[Stratum == stratumName]$PSU

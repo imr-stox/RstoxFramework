@@ -79,14 +79,14 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("acousticPSUDataType")) {
         "acousticPSU"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaPSUDataType")) {
-        "sweptAreaPSU"
+    else if(dataType %in% getRstoxFrameworkDefinitions("bioticPSUDataType")) {
+        "bioticPSU"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("acousticLayerDataType")) {
         "acousticLayer"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("sweptAreaLayerDataType")) {
-        "sweptAreaLayer"
+    else if(dataType %in% getRstoxFrameworkDefinitions("bioticLayerDataType")) {
+        "bioticLayer"
     }
     else if(dataType %in% getRstoxFrameworkDefinitions("bioticAssignmentDataType")) {
         "bioticAssignment"
@@ -134,8 +134,8 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
             processID = processID
         )
     }
-    else if(interactiveMode == "sweptAreaPSU") {
-        getSweptAreaPSUData(
+    else if(interactiveMode == "bioticPSU") {
+        getBioticPSUData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -148,8 +148,8 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
             processID = processID
         )
     }
-    else if(interactiveMode == "sweptAreaLayer") {
-        getSweptAreaLayerData(
+    else if(interactiveMode == "bioticLayer") {
+        getBioticLayerData(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID
@@ -247,14 +247,14 @@ getAcousticPSUData <- function(projectPath, modelName, processID) {
 }
 
 # Function to get swept-area PSU data:
-getSweptAreaPSUData <- function(projectPath, modelName, processID) {
+getBioticPSUData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
-    # Issue an error of the process data are not of SweptAreaPSU type:
+    # Issue an error of the process data are not of BioticPSU type:
     if(! "Station_PSU" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("StoX: The process ", processName, " does not return process data of type SweptAreaPSU")
+        warning("StoX: The process ", processName, " does not return process data of type BioticPSU")
         return(NULL)
     }
     
@@ -277,14 +277,14 @@ getAcousticLayerData <- function(projectPath, modelName, processID) {
 }
 
 # Function to get swept-area PSU data:
-getSweptAreaLayerData <- function(projectPath, modelName, processID) {
+getBioticLayerData <- function(projectPath, modelName, processID) {
     
     # Get the process data:
     processData <- getProcessData(projectPath, modelName, processID)
-    # Issue an error of the process data are not of SweptAreaPSU type:
-    if(! "SweptAreaLayer" %in% names(processData)){
+    # Issue an error of the process data are not of BioticPSU type:
+    if(! "BioticLayer" %in% names(processData)){
         processName <- getProcessName(projectPath, modelName, processID)
-        warning("StoX: The process ", processName, " does not return process data of type SweptAreaLayer")
+        warning("StoX: The process ", processName, " does not return process data of type BioticLayer")
         return(NULL)
     }
     

@@ -153,29 +153,29 @@ getReplaceData <- function(x, size) {
 
 
 
-#' Resamples Hauls.
+#' Resamples biotic PSUs
 #' 
-#' This function resamples Hauls with replacement by altering the LengthDistributionWeight.
+#' This function resamples PSUs with replacement by altering the LengthDistributionWeight.
 #' 
 #' @param LengthDistributionData The \code{\link[RstoxBase]{LengthDistributionData}} to resample Hauls in.
 #' 
 #' @export
 #' 
-ResampleHauls <- function(LengthDistributionData, Seed, ResampleBy = "Stratum") {
+ResampleBioticPSUs <- function(MeanLengthDistributionData, Seed, ResampleBy = "Stratum") {
     
     # Get the unique strata:
-    uniqueStrata <- unique(LengthDistributionData$Stratum)
+    uniqueStrata <- unique(MeanLengthDistributionData$Stratum)
     
-    # Build a table of Stratum and Seed and merge with the LengthDistributionData:
+    # Build a table of Stratum and Seed and merge with the MeanLengthDistributionData:
     SeedTable <- data.table::data.table(
         Stratum = uniqueStrata, 
         Seed = getSeedVector(Seed, size = length(uniqueStrata))
     )
-    LengthDistributionData <- merge(LengthDistributionData, SeedTable, by = ResampleBy)
+    MeanLengthDistributionData <- merge(MeanLengthDistributionData, SeedTable, by = ResampleBy)
     
     # Resample the Hauls:
-    LengthDistributionData[, LengthDistributionWeight := resampleOne(.SD, seed = Seed[1], var = "Haul"), by = ResampleBy]
-    return(LengthDistributionData)
+    MeanLengthDistributionData[, MeanLengthDistributionWeight := resampleOne(.SD, seed = Seed[1], var = "PSU"), by = ResampleBy]
+    return(MeanLengthDistributionData)
 }
 
 #' Resamples EDSUs

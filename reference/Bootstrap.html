@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Parse an R expression to a nested list: — expression2list • RstoxFramework</title>
+<title>Bootstrap the baseline model — Bootstrap • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Parse an R expression to a nested list: — expression2list" />
-<meta property="og:description" content="Parse an R expression to a nested list:" />
+<meta property="og:title" content="Bootstrap the baseline model — Bootstrap" />
+<meta property="og:description" content="Run a subset of the baseline model a number of times after resampling e.g. Hauls in each Stratum, EDUSs in each Stratum." />
 
 
 
@@ -108,27 +108,28 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Parse an R expression to a nested list:</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Utilities.R'><code>R/Utilities.R</code></a></small>
-    <div class="hidden name"><code>expression2list.Rd</code></div>
+    <h1>Bootstrap the baseline model</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/resample.R'><code>R/resample.R</code></a></small>
+    <div class="hidden name"><code>Bootstrap.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Parse an R expression to a nested list:</p>
+    <p>Run a subset of the baseline model a number of times after resampling e.g. Hauls in each Stratum, EDUSs in each Stratum.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>expression2list</span>(<span class='kw'>expr</span>, generateRuleset = <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>Bootstrap</span>(
+  <span class='kw'>projectPath</span>,
+  BootstrapMethodTable = <span class='kw'>data.table</span>::<span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span>(),
+  NumberOfBootstraps = <span class='fl'>1L</span>,
+  NumberOfCores = <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>integer</a></span>()
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>expr</th>
-      <td><p>An R expression string such as "a == 3 &amp;&amp; !(b &gt; 0)".</p></td>
-    </tr>
-    <tr>
-      <th>generateRuleset</th>
-      <td><p>Logical: If TRUE output the expressions as rules, which are lists of condition and rules.</p></td>
+      <th>LengthDistributionData</th>
+      <td><p>The <code><a href='https://rdrr.io/pkg/RstoxBase/man/LengthDistributionData.html'>LengthDistributionData</a></code> to resample Hauls in.</p></td>
     </tr>
     </table>
 

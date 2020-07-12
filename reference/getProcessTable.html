@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.13</span>
       </span>
     </div>
 
@@ -118,35 +118,38 @@
     </div>
 
     <pre class="usage"><span class='fu'>getProcessTable</span>(
-  <span class='no'>projectPath</span>,
-  <span class='no'>modelName</span>,
-  <span class='kw'>afterProcessID</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>beforeProcessID</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>argumentFilePaths</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  <span class='kw'>projectPath</span>,
+  <span class='kw'>modelName</span>,
+  afterProcessID = <span class='kw'>NULL</span>,
+  beforeProcessID = <span class='kw'>NULL</span>,
+  argumentFilePaths = <span class='kw'>NULL</span>,
+  only.valid = <span class='fl'>TRUE</span>
 )
 
 <span class='fu'>scanForModelError</span>(
-  <span class='no'>projectPath</span>,
-  <span class='no'>modelName</span>,
-  <span class='kw'>afterProcessID</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>beforeProcessID</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>argumentFilePaths</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  <span class='kw'>projectPath</span>,
+  <span class='kw'>modelName</span>,
+  afterProcessID = <span class='kw'>NULL</span>,
+  beforeProcessID = <span class='kw'>NULL</span>,
+  argumentFilePaths = <span class='kw'>NULL</span>,
+  only.valid = <span class='fl'>TRUE</span>
 )
 
 <span class='fu'>getProcessesSansProcessData</span>(
-  <span class='no'>projectPath</span>,
-  <span class='no'>modelName</span>,
-  <span class='kw'>afterProcessID</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>beforeProcessID</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>argumentFilePaths</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  <span class='kw'>projectPath</span>,
+  <span class='kw'>modelName</span>,
+  afterProcessID = <span class='kw'>NULL</span>,
+  beforeProcessID = <span class='kw'>NULL</span>,
+  argumentFilePaths = <span class='kw'>NULL</span>,
+  only.valid = <span class='fl'>FALSE</span>
 )
 
 <span class='fu'>getProcessAndFunctionNames</span>(
-  <span class='no'>projectPath</span>,
-  <span class='no'>modelName</span>,
-  <span class='kw'>afterProcessID</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>beforeProcessID</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>argumentFilePaths</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  <span class='kw'>projectPath</span>,
+  <span class='kw'>modelName</span>,
+  afterProcessID = <span class='kw'>NULL</span>,
+  beforeProcessID = <span class='kw'>NULL</span>,
+  argumentFilePaths = <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>

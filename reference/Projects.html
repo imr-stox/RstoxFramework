@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.13</span>
       </span>
     </div>
 
@@ -118,28 +118,28 @@
     </div>
 
     <pre class="usage"><span class='fu'>createProject</span>(
-  <span class='no'>projectPath</span>,
-  <span class='kw'>template</span> <span class='kw'>=</span> <span class='st'>"EmptyTemplate"</span>,
-  <span class='kw'>ow</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>showWarnings</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>open</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+  <span class='kw'>projectPath</span>,
+  template = <span class='st'>"EmptyTemplate"</span>,
+  ow = <span class='fl'>FALSE</span>,
+  showWarnings = <span class='fl'>FALSE</span>,
+  open = <span class='fl'>TRUE</span>
 )
 
 <span class='fu'>openProject</span>(
-  <span class='no'>projectPath</span>,
-  <span class='kw'>showWarnings</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>force</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>reset</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"JSON"</span>)
+  <span class='kw'>projectPath</span>,
+  showWarnings = <span class='fl'>FALSE</span>,
+  force = <span class='fl'>FALSE</span>,
+  reset = <span class='fl'>FALSE</span>,
+  type = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"JSON"</span>)
 )
 
-<span class='fu'>closeProject</span>(<span class='no'>projectPath</span>, <span class='kw'>save</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)
+<span class='fu'>closeProject</span>(<span class='kw'>projectPath</span>, save = <span class='kw'>NULL</span>)
 
-<span class='fu'>saveProject</span>(<span class='no'>projectPath</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"JSON"</span>))
+<span class='fu'>saveProject</span>(<span class='kw'>projectPath</span>, type = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"JSON"</span>))
 
-<span class='fu'>saveAsProject</span>(<span class='no'>projectPath</span>, <span class='no'>newProjectPath</span>, <span class='kw'>ow</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
+<span class='fu'>saveAsProject</span>(<span class='kw'>projectPath</span>, <span class='kw'>newProjectPath</span>, ow = <span class='fl'>FALSE</span>)
 
-<span class='fu'>copyProject</span>(<span class='no'>projectPath</span>, <span class='no'>newProjectPath</span>, <span class='kw'>ow</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+<span class='fu'>copyProject</span>(<span class='kw'>projectPath</span>, <span class='kw'>newProjectPath</span>, ow = <span class='fl'>FALSE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

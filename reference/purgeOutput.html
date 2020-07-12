@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Parse an R expression to a nested list: — expression2list • RstoxFramework</title>
+<title>Delete the contents of the output folder of a model. — purgeOutput • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Parse an R expression to a nested list: — expression2list" />
-<meta property="og:description" content="Parse an R expression to a nested list:" />
+<meta property="og:title" content="Delete the contents of the output folder of a model. — purgeOutput" />
+<meta property="og:description" content="This function is run by runModel to clear off any files present in the output folder of a model. It should also be used by GUIs when running a model." />
 
 
 
@@ -108,27 +108,27 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Parse an R expression to a nested list:</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Utilities.R'><code>R/Utilities.R</code></a></small>
-    <div class="hidden name"><code>expression2list.Rd</code></div>
+    <h1>Delete the contents of the output folder of a model.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
+    <div class="hidden name"><code>purgeOutput.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Parse an R expression to a nested list:</p>
+    <p>This function is run by <code>runModel</code> to clear off any files present in the output folder of a model. It should also be used by GUIs when running a model.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>expression2list</span>(<span class='kw'>expr</span>, generateRuleset = <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>purgeOutput</span>(<span class='kw'>projectPath</span>, <span class='kw'>modelName</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>expr</th>
-      <td><p>An R expression string such as "a == 3 &amp;&amp; !(b &gt; 0)".</p></td>
+      <th>projectPath</th>
+      <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
     </tr>
     <tr>
-      <th>generateRuleset</th>
-      <td><p>Logical: If TRUE output the expressions as rules, which are lists of condition and rules.</p></td>
+      <th>modelName</th>
+      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
     </tr>
     </table>
 

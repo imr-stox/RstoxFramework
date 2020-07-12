@@ -13,8 +13,6 @@
 #' 
 #' @noRd
 #'
-#' @import data.table
-#' 
 merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "length", "lengthresolution"), keys=c("cruise", "serialnumber", "samplenumber", "SpecCat"), keys.out=FALSE) {
     # Get the keys common for the two data tables:
     commonVar <- intersect(names(x), names(y))
@@ -526,3 +524,19 @@ readMemoryFile <- function(filePath) {
 expandLogical <- function(x) {
     c(x, !x)
 }
+
+
+
+do.call_robust <- function(what, args, quote = FALSE, envir = parent.frame()) {
+    # Get the formals of the function:
+    f <-  formals(what)
+    # Keep only the relevant args:
+    if(is.list(args)) {
+        args <- args[intersect(names(args), names(f))]
+    }
+    # Run the function:
+    do.call(what, args, quote = quote, envir = envir)
+}
+
+
+

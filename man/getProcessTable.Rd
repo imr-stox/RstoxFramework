@@ -12,7 +12,8 @@ getProcessTable(
   modelName,
   afterProcessID = NULL,
   beforeProcessID = NULL,
-  argumentFilePaths = NULL
+  argumentFilePaths = NULL,
+  only.valid = TRUE
 )
 
 scanForModelError(
@@ -20,7 +21,8 @@ scanForModelError(
   modelName,
   afterProcessID = NULL,
   beforeProcessID = NULL,
-  argumentFilePaths = NULL
+  argumentFilePaths = NULL,
+  only.valid = TRUE
 )
 
 getProcessesSansProcessData(
@@ -28,7 +30,8 @@ getProcessesSansProcessData(
   modelName,
   afterProcessID = NULL,
   beforeProcessID = NULL,
-  argumentFilePaths = NULL
+  argumentFilePaths = NULL,
+  only.valid = FALSE
 )
 
 getProcessAndFunctionNames(

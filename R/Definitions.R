@@ -221,7 +221,7 @@ initiateRstoxFramework <- function(){
     #names(processPropertyFormats) <- allFormatClasses
     
     # Get the parameterTableInfo from all packages, and combine into a list:
-    parameterTableInfo <- processPropertyFormats[sapply(processPropertyFormats, "[[", "type") == "table"]
+    parameterTableInfo <- processPropertyFormats[sapply(processPropertyFormats, "[[", "class") == "table"]
 
     
     # Define filter operators for the different data types:

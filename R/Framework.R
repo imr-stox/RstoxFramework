@@ -1799,14 +1799,25 @@ getProcessData <- function(projectPath, modelName, processID, argumentFilePaths 
     )
 }
 
-getProcess <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
-    getProjectMemoryData(
+getProcess <- function(projectPath, modelName, processID, argumentFilePaths = NULL, only.valid = FALSE) {
+    process <- getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
         processID = processID, 
         drop1 = TRUE, 
         argumentFilePaths = argumentFilePaths
     )
+    
+    # Add the processID:
+    process$processID <- processID
+    
+    if(only.valid) {
+        argumentsToShow <- getArgumentsToShow(projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
+        process$functionInputs <- process$functionInputs[intersect(names(process$functionInputs), argumentsToShow)]
+        process$functionParameters <- process$functionParameters[intersect(names(process$functionParameters), argumentsToShow)]
+    }
+    
+    return(process)
 }
 
 getDataType <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
@@ -2066,7 +2077,9 @@ getProcessIDFromProcessName <- function(projectPath, modelName, processName) {
 #' 
 #' @export
 #' 
-getProcessTable <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
+getProcessTable <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE) {
+    
+    # Maybe we should set only.valid to FALSE by default, just as is done in scanForModelError()???
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -2079,7 +2092,8 @@ getProcessTable <- function(projectPath, modelName, afterProcessID = NULL, befor
         modelName = modelName, 
         afterProcessID = afterProcessID, 
         beforeProcessID = beforeProcessID, 
-        argumentFilePaths = argumentFilePaths
+        argumentFilePaths = argumentFilePaths, 
+        only.valid = only.valid
     )
     # Return an empty data.table if the processTable is empty:
     if(nrow(processTable) == 0) {
@@ -2110,7 +2124,7 @@ getProcessTable <- function(projectPath, modelName, afterProcessID = NULL, befor
 #' @export
 #' @rdname getProcessTable
 #' 
-scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
+scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE) {
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -2123,7 +2137,8 @@ scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, bef
         modelName = modelName, 
         afterProcessID = afterProcessID, 
         beforeProcessID = beforeProcessID, 
-        argumentFilePaths = argumentFilePaths
+        argumentFilePaths = argumentFilePaths, 
+        only.valid = only.valid
     )
     # Return an empty data.table if the processTable is empty:
     if(nrow(processTable) == 0) {
@@ -2160,7 +2175,7 @@ scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, bef
 #' @export
 #' @rdname getProcessTable
 #' 
-getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
+getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = FALSE) {
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -2195,11 +2210,11 @@ getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID =
     )
     
     ##### (2) Add function inputs: #####
-    functionInputs <- lapply(processTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = TRUE, argumentFilePaths = argumentFilePaths))
+    functionInputs <- lapply(processTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = only.valid, argumentFilePaths = argumentFilePaths))
     processTable[, functionInputs := ..functionInputs]
     
     ##### (3) Add function parameters: #####
-    functionParameters <- lapply(processTable$processID, function(processID) getFunctionParameters(projectPath, modelName, processID, only.valid = TRUE, argumentFilePaths = argumentFilePaths))
+    functionParameters <- lapply(processTable$processID, function(processID) getFunctionParameters(projectPath, modelName, processID, only.valid = only.valid, argumentFilePaths = argumentFilePaths))
     processTable[, functionParameters := ..functionParameters]
     
     return(processTable)
@@ -2260,38 +2275,44 @@ checkFunctionInput <- function(functionInput, functionInputDataType, processInde
     
     # Expect an error, and return FALSE if all checks passes:
     functionInputError <- TRUE
-    # (0) Chech that the function input is a string with positive number of characters:
-    if(!is.character(functionInput)) {
-        warning("StoX: Function input must be a character string (", functionInputDataType, ").")
-    }
-    # (1) Error if empty string:
-    else if(nchar(functionInput) == 0) {
-        warning("StoX: Function input must be a non-empty character string (", functionInputDataType, ").")
-    }
-    # (2) Error if not the name of a previous process:
-    else if(! functionInput %in% processIndexTable$processName) {
-        warning("StoX: Function input ", functionInput, " is not the name of a previous process (", functionInputDataType, ").")
-    }
-    else {
-        atRequestedPriorProcess <- which(functionInput == processIndexTable$processName)
-        outputDataTypeOfRequestedPriorProcess <- getStoxFunctionMetaData(processIndexTable$functionName[atRequestedPriorProcess], "functionOutputDataType")
-        
-        # (3) Error if the previous process returns the wrong data type:
-        if(! functionInputDataType %in% outputDataTypeOfRequestedPriorProcess) {
-            warning("StoX: Function input of process ", processIndexTable$processName[atRequestedPriorProcess], " does not return the correct data type (", functionInputDataType, ").")
+    if(length(functionInput)) {
+        # (0) Chech that the function input is a string with positive number of characters:
+        if(length(functionInput) && !is.character(functionInput)) {
+            warning("StoX: Function input must be a character string (", functionInputDataType, ").")
         }
-        # (4) Error if the previous process is not enabled:
-        else if(!processIndexTable$enabled[atRequestedPriorProcess]) {
-            warning("StoX: The process ", processIndexTable$processName[atRequestedPriorProcess], " is not enabled.")
+        # (1) Error if empty string:
+        else if(nchar(functionInput) == 0) {
+            warning("StoX: Function input must be a non-empty character string (", functionInputDataType, ").")
         }
-        # (5) Error if the previous process has input error:
-        else if(processIndexTable$functionInputError[atRequestedPriorProcess]) {
-            warning("StoX: The process ", processIndexTable$processName[atRequestedPriorProcess], " has input error.")
+        # (2) Error if not the name of a previous process:
+        else if(! functionInput %in% processIndexTable$processName) {
+            warning("StoX: Function input ", functionInput, " is not the name of a previous process (", functionInputDataType, ").")
         }
         else {
-            functionInputError <- FALSE
+            atRequestedPriorProcess <- which(functionInput == processIndexTable$processName)
+            outputDataTypeOfRequestedPriorProcess <- getStoxFunctionMetaData(processIndexTable$functionName[atRequestedPriorProcess], "functionOutputDataType")
+            
+            # (3) Error if the previous process returns the wrong data type:
+            if(! functionInputDataType %in% outputDataTypeOfRequestedPriorProcess) {
+                warning("StoX: Function input of process ", processIndexTable$processName[atRequestedPriorProcess], " does not return the correct data type (", functionInputDataType, ").")
+            }
+            # (4) Error if the previous process is not enabled:
+            else if(!processIndexTable$enabled[atRequestedPriorProcess]) {
+                warning("StoX: The process ", processIndexTable$processName[atRequestedPriorProcess], " is not enabled.")
+            }
+            # (5) Error if the previous process has input error:
+            else if(processIndexTable$functionInputError[atRequestedPriorProcess]) {
+                warning("StoX: The process ", processIndexTable$processName[atRequestedPriorProcess], " has input error.")
+            }
+            else {
+                functionInputError <- FALSE
+            }
         }
     }
+    else {
+        functionInputError <- FALSE
+    }
+    
     return(functionInputError)
 }
 
@@ -2533,7 +2554,7 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName,
         # Modify the process name also in the proces index table:
         modifyProcessNameInProcessIndexTable(projectPath, modelName, processName, newProcessName)
         
-        # Change the process name in all relevant function inputs of consecutivev processes:
+        # Change the process name in all relevant function inputs of consecutive processes:
         modifyProcessNameInFunctionInputs(projectPath, modelName, processName, newProcessName)
         
         # Return a flag TRUE if the process name was changed: 
@@ -2834,7 +2855,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
         warning("StoX: The project ", projectPath, " is not open. Use openProject() to open the project.")
         return(NULL)
     }
-    
+
     # Get process ID from process name:
     processID <- getProcessIDFromProcessName(
         projectPath = projectPath, 
@@ -3274,81 +3295,15 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("text", "binary")) {
     
-    # Get the process:
-    process <- getProcess(
+    # Get the function argument and the process info:
+    functionArguments <- getFunctionArguments(
         projectPath = projectPath, 
         modelName = modelName, 
-        processID = processID
+        processID = processID, 
+        replaceArgs = replaceArgs
     )
-    process$processID <- processID
-    
-    # Check that the function name is given:
-    if(length(process$functionName) == 0 || nchar(process$functionName) == 0) {
-        stop("The process with process ID ", processID, " does not specify a function name.")
-    }
-    
-    # If not not enabled, return immediately:
-    if(!process$processParameters$enabled) {
-        return(NULL)
-    }
-    
-    # Build a list of the arguments to the function:
-    functionArguments <- list()
-    # Add the processData if a processData function:
-    if(isProcessDataFunction(process$functionName)) {
-        functionArguments$processData <- process$processData
-    }
-    # Add the processPath if a bootstrap function:
-    if(isBootstrapFunction(process$functionName)) {
-        functionArguments$projectPath <- projectPath
-    }
-    
-    
-    
-    # Get the function input as output from the previously run processes:
-    functionInputProcessNames <- unlist(process$functionInputs)
-    if(length(functionInputProcessNames)) {
-        # Get the function input process IDs:
-        functionInputsProcessIDs <- mapply(
-            getProcessIDFromProcessName, 
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processName = functionInputProcessNames
-        )
-        # Get the actual function inputs from the functionInputsProcessIDs:
-        functionInputs <- mapply(
-            getProcessOutput, 
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = functionInputsProcessIDs, 
-            SIMPLIFY = FALSE
-        )
-        names(functionInputs) <- names(functionInputProcessNames)
-    }
-    else {
-        functionInputs <- NULL
-    }
-    
-    # Add functionInputs and functionParameters:
-    functionArguments <- c(
-        functionArguments, 
-        functionInputs, 
-        process$functionParameters
-    )
-    
-    # Insert any arguments in replaceArgs:
-    replaceArgsToInsert <- intersect(names(replaceArgs), names(functionArguments))
-    if(length(replaceArgsToInsert)) {
-        functionArguments[replaceArgsToInsert] <- replaceArgs[replaceArgsToInsert]
-    }
-    
-    # Get absolute paths:
-    functionArguments <- getAbsolutePaths(
-        functionParameters = functionArguments, 
-        projectPath = projectPath, 
-        modelName = modelName,
-        processID = processID
-    )
+    process <- functionArguments$process
+    functionArguments <- functionArguments$functionArguments
     
     # Try running the function, and return FALSE if failing:
     failed <- FALSE
@@ -3437,6 +3392,93 @@ setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
     if(modified) {
         writeActiveProcessID(projectPath, modelName, propertyDirty = TRUE) 
     }
+}
+
+
+getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs = list()) {
+    
+    # Get the process:
+    process <- getProcess(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        only.valid = TRUE
+    )
+    
+    # Check that the function name is given:
+    if(length(process$functionName) == 0 || nchar(process$functionName) == 0) {
+        stop("The process with process ID ", processID, " does not specify a function name.")
+    }
+    
+    # If not not enabled, return immediately:
+    if(!process$processParameters$enabled) {
+        return(NULL)
+    }
+    
+    # Build a list of the arguments to the function:
+    functionArguments <- list()
+    # Add the processData if a processData function:
+    if(isProcessDataFunction(process$functionName)) {
+        functionArguments$processData <- process$processData
+    }
+    # Add the processPath if a bootstrap function:
+    if(isBootstrapFunction(process$functionName)) {
+        functionArguments$projectPath <- projectPath
+    }
+    
+    
+    # Get the function input as output from the previously run processes:
+    functionInputProcessNames <- unlist(process$functionInputs)
+    if(length(functionInputProcessNames)) {
+        # Get the function input process IDs:
+        functionInputsProcessIDs <- mapply(
+            getProcessIDFromProcessName, 
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processName = functionInputProcessNames
+        )
+        # Get the actual function inputs from the functionInputsProcessIDs:
+        functionInputs <- mapply(
+            getProcessOutput, 
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = functionInputsProcessIDs, 
+            SIMPLIFY = FALSE
+        )
+        names(functionInputs) <- names(functionInputProcessNames)
+    }
+    else {
+        functionInputs <- NULL
+    }
+    
+    # Add functionInputs and functionParameters:
+    functionArguments <- c(
+        functionArguments, 
+        functionInputs, 
+        process$functionParameters
+    )
+    
+    # Insert any arguments in replaceArgs:
+    replaceArgsToInsert <- intersect(names(replaceArgs), names(functionArguments))
+    if(length(replaceArgsToInsert)) {
+        functionArguments[replaceArgsToInsert] <- replaceArgs[replaceArgsToInsert]
+    }
+    
+    # Get absolute paths:
+    functionArguments <- getAbsolutePaths(
+        functionParameters = functionArguments, 
+        projectPath = projectPath, 
+        modelName = modelName,
+        processID = processID
+    )
+    
+    return(
+        list(
+            functionArguments = functionArguments, 
+            process = process
+        )
+    )
+    functionArguments
 }
 
 

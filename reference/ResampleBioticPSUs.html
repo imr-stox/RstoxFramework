@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Write project description to a file in json format — writeProjectDescriptionJSON • RstoxFramework</title>
+<title>Resamples biotic PSUs — ResampleBioticPSUs • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Write project description to a file in json format — writeProjectDescriptionJSON" />
-<meta property="og:description" content="This function writes project description to json file." />
+<meta property="og:title" content="Resamples biotic PSUs — ResampleBioticPSUs" />
+<meta property="og:description" content="This function resamples PSUs with replacement by altering the LengthDistributionWeight." />
 
 
 
@@ -108,27 +108,23 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Write project description to a file in json format</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
-    <div class="hidden name"><code>writeProjectDescriptionJSON.Rd</code></div>
+    <h1>Resamples biotic PSUs</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/resample.R'><code>R/resample.R</code></a></small>
+    <div class="hidden name"><code>ResampleBioticPSUs.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function writes project description to json file.</p>
+    <p>This function resamples PSUs with replacement by altering the LengthDistributionWeight.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>writeProjectDescriptionJSON</span>(<span class='kw'>projectDescription</span>, <span class='kw'>projectDescriptionFile</span>)</pre>
+    <pre class="usage"><span class='fu'>ResampleBioticPSUs</span>(<span class='kw'>MeanLengthDistributionData</span>, <span class='kw'>Seed</span>, ResampleBy = <span class='st'>"Stratum"</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>projectDescription</th>
-      <td><p>a list of lists with project description.</p></td>
-    </tr>
-    <tr>
-      <th>projectDescriptionFile</th>
-      <td><p>a file name.</p></td>
+      <th>LengthDistributionData</th>
+      <td><p>The <code><a href='https://rdrr.io/pkg/RstoxBase/man/LengthDistributionData.html'>LengthDistributionData</a></code> to resample Hauls in.</p></td>
     </tr>
     </table>
 

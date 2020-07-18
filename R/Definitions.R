@@ -113,6 +113,11 @@ initiateRstoxFramework <- function(){
     # Create a project.json validator:
     projectValidator <- jsonvalidate::json_validator(schema)
     
+    # Get the functions that cacn be resampled in bootstrapping:
+    resamplableDataTypes <- c(
+        "MeanNASC",
+        "MeanLengthDistribution"
+    )
    
     
     #### Data types: ####
@@ -391,7 +396,12 @@ initiateRstoxFramework <- function(){
     projectXMLFile <- file.path(stoxFolders["Process"], "project.xml")
     projectJSONFile <- file.path(stoxFolders["Process"], "project.json")
     projectSavedStatusFile <- file.path(statusFolder, "projectSavedStatus.txt")
-    projectIsRunningFile <- file.path(statusFolder, "projectIsRunning.txt")
+    #projectIsRunningFile <- file.path(statusFolder, "projectIsRunning.txt")
+    modelIsRunningFile <- list(
+        baseline = file.path(statusFolder, "baselineIsRunning.txt"), 
+        analysis = file.path(statusFolder, "analysisIsRunning.txt"), 
+        report = file.path(statusFolder, "reportIsRunning.txt")
+    )
     
     # Memory files:
     projectMemoryIndexFile <- file.path(memoryHistoryFolder, "projectMemoryIndex.txt")
@@ -434,7 +444,8 @@ initiateRstoxFramework <- function(){
             projectXMLFile = projectXMLFile, 
             projectJSONFile = projectJSONFile, 
             projectSavedStatusFile = projectSavedStatusFile, 
-            projectIsRunningFile = projectIsRunningFile, 
+            #projectIsRunningFile = projectIsRunningFile, 
+            modelIsRunningFile = modelIsRunningFile, 
             
             projectMemoryIndexFile = projectMemoryIndexFile, 
             processIndexTableFile = processIndexTableFile, 

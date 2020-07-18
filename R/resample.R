@@ -19,6 +19,9 @@ Bootstrap <- function(
     startProcess <- min(match(BootstrapMethodTable$ProcessName, processIndexTable$processName))
     lastProcessID <- utils::tail(processIndexTable$processID, 1)
     
+    # Run the baseline until the startProcess:
+    temp <- runProcesses(projectPath, modelName = "baseline", endProcess = startProcess - 1)
+    
     # Get the functions to use for resampling:
     BootstrapMethodList <- split(BootstrapMethodTable, by = "ProcessName")
     # Remove the ProcessName from the lists: 
@@ -43,6 +46,16 @@ Bootstrap <- function(
         ###    type = "output", 
         ###    subfolder = getBootstrapRunName(ind, NumberOfBootstraps, prefix = "Run")
         ###)
+        
+        # Add Bootstrap run ID:
+        #addBootstrapID(
+        #    lastProcessOutput, 
+        #    ind = ind
+        #)
+        for(dataType in names(lastProcessOutput)) {
+            lastProcessOutput[[dataType]][, BootstrapID := ..ind]
+        }
+        
         return(lastProcessOutput)
     }
     
@@ -71,65 +84,57 @@ Bootstrap <- function(
     return(BootstrapData)
 }
 
+addBootstrapID <- function(x, ind) {
+    if(is.list(x) && !data.table::is.data.table(x)){
+        lapply(x, addBootstrapIDOne, ind = ind)
+    }
+    else {
+        addBootstrapIDOne(x, ind = ind)
+    }
+}
+
+addBootstrapIDOne <- function(x, ind) {
+    x[, BootstrapID := ..ind]
+}
+
+
 rbindlistByName <- function(name, x) {
     data.table::rbindlist(lapply(x, "[[", name))
 }
 
-readBootstrap <- function(projectPath, processName) {
-    # Bootstrap lives in the model "analysis" only:
-    modelName = "analysis"
-    # Get the folder holding the output form the bootstrap:
-    processID <- getProcessIDFromProcessName(projectPath = projectPath, modelName = modelName, processName = processName)
-    folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID, type = "output")
-    
-    # Return NULL if the folder does not exist:
-    if(!file.exists(folderPath)) {
-        warning("StoX: The process ", folderPath, " does not have an output folder. Has the proccess been run?")
-        return(NULL)
-    }
-    
-    # Get a nested list of all output files from the bootstrap:
-    bootstrapOutputFiles <- getFilesRecursiveWithOrder(folderPath)
-    
-    # Read all files:
-    processOutput <- rapply(
-        bootstrapOutputFiles, 
-        readProcessOutputFile, 
-        how = "replace"
-    )
-    
-}
+#readBootstrap <- function(projectPath, processName) {
+#    # Bootstrap lives in the model "analysis" only:
+#    modelName = "analysis"
+#    # Get the folder holding the output form the bootstrap:
+#    processID <- getProcessIDFromProcessName(projectPath = projectPath, modelName = modelName, processName = processName)
+#    folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID, type = "output")
+#    
+#    # Return NULL if the folder does not exist:
+#    if(!file.exists(folderPath)) {
+#        warning("StoX: The process ", folderPath, " does not have an output folder. Has the proccess been run?")
+#        return(NULL)
+#    }
+#    
+#    # Get a nested list of all output files from the bootstrap:
+#    bootstrapOutputFiles <- getFilesRecursiveWithOrder(folderPath)
+#    
+#    # Read all files:
+#    processOutput <- rapply(
+#        bootstrapOutputFiles, 
+#        readProcessOutputFile, 
+#        how = "replace"
+#    )
+#    
+#}
 
 
-# Function to get the name of the bootsrap run, which will be used as the subfolder name hoding the output from the bootstrap:
-getBootstrapRunName <- function(ind, NumberOfBootstraps, prefix = "Run") {
-    paste0(
-        prefix, 
-        formatC(ind, width = NumberOfBootstraps, format = "d", flag = "0")
-    )
-}
-
-
-
-BootstrapMethodTable <- data.table::data.table(
-    ProcessName = c(
-        "LengthDistribution", 
-        "NASC"
-    ), 
-    ResampleFunction = c(
-        "ResampleHauls", 
-        "ResampleEDSUs"
-    ), 
-    ResampleBy = c(
-        "Stratum", 
-        "Stratum"
-    ), 
-    Seed = c(
-        1, 
-        2
-    )
-)
-
+# # Function to get the name of the bootsrap run, which will be used as the subfolder name hoding the output from the bootstrap:
+# getBootstrapRunName <- function(ind, NumberOfBootstraps, prefix = "Run") {
+#     paste0(
+#         prefix, 
+#         formatC(ind, width = NumberOfBootstraps, format = "d", flag = "0")
+#     )
+# }
 
 
 getReplaceData <- function(x, size) {
@@ -151,8 +156,6 @@ getReplaceData <- function(x, size) {
 
 
 
-
-
 #' Resamples biotic PSUs
 #' 
 #' This function resamples PSUs with replacement by altering the LengthDistributionWeight.
@@ -161,84 +164,102 @@ getReplaceData <- function(x, size) {
 #' 
 #' @export
 #' 
-ResampleBioticPSUs <- function(MeanLengthDistributionData, Seed, ResampleBy = "Stratum") {
+resampleDataBy <- function(data, seed, varToScale, varToResample, resampleBy) {
     
-    # Get the unique strata:
-    uniqueStrata <- unique(MeanLengthDistributionData$Stratum)
+    # Get the unique resampleBy:
+    uniqueResampleBy <- unique(data[[resampleBy]])
     
     # Build a table of Stratum and Seed and merge with the MeanLengthDistributionData:
-    SeedTable <- data.table::data.table(
-        Stratum = uniqueStrata, 
-        Seed = getSeedVector(Seed, size = length(uniqueStrata))
+    seedTable <- data.table::data.table(
+        resampleBy = uniqueResampleBy, 
+        seed = getSeedVector(seed, size = length(uniqueResampleBy))
     )
-    MeanLengthDistributionData <- merge(MeanLengthDistributionData, SeedTable, by = ResampleBy)
+    data.table::setnames(seedTable, c(resampleBy, "seed"))
+    data <- merge(data, seedTable, by = resampleBy)
     
     # Resample the Hauls:
-    MeanLengthDistributionData[, MeanLengthDistributionWeight := resampleOne(.SD, seed = Seed[1], var = "PSU"), by = ResampleBy]
-    return(MeanLengthDistributionData)
+    data[, eval(varToScale) := resampleOne(.SD, seed = seed[1], varToScale = varToScale, varToResample = varToResample), by = resampleBy]
+    
+    data[, seed := NULL]
+    #return(MeanLengthDistributionData)
 }
-
-#' Resamples EDSUs
-#' 
-#' This function resamples Hauls with replacement by altering the LengthDistributionWeight.
-#' 
-#' @param NASCData The \code{\link[RstoxBase]{NASCData}} to resample EDSUs in.
-#' 
-#' @export
-#' 
-ResampleEDSUs <- function(NASCData, Seed, ResampleBy = "Stratum") {
-    
-    # Get the unique strata:
-    uniqueStrata <- unique(NASCData$Stratum)
-    
-    # Build a table of Stratum and Seed and merge with the NASCData:
-    SeedTable <- data.table::data.table(
-        Stratum = uniqueStrata, 
-        Seed = getSeedVector(Seed, size = length(uniqueStrata))
-    )
-    NASCData <- merge(NASCData, SeedTable, by = ResampleBy)
-    
-    # Resample the Hauls:
-    NASCData[, NASCData := resampleOne(.SD, seed = Seed[1], var = "EDSU"), by = ResampleBy]
-    return(NASCData)
-}
-
-
-
-
-
 
 # Function to resample Hauls of one subset of the data:
-resampleOne <- function(subData, seed, var = c("Haul", "EDSU")) {
+resampleOne <- function(subData, seed, varToResample, varToScale) {
     
-    # Get the vavriable to resample:
-    var <- match.arg(var)
-    
-    #count <- data.table::data.table(
-    #    unique(subData[[var]])
-    #)
-    #setnames(count, var)
-    
-    # Get unique values:
-    resampled <- sampleSorted(unique(subData[[var]]), seed = seed, replace = TRUE)
-    # Tabulate the sampled Hauls:
+    # Resample the unique:
+    if(length(varToResample) != 1) {
+        stop("varToResample must be a single string naming the variable to resample")
+    }
+    resampled <- sampleSorted(unique(subData[[varToResample]]), seed = seed, replace = TRUE)
+    # Tabulate the resamples:
     resampleTable <- data.table::as.data.table(table(resampled))
-    setnames(resampleTable, c("resampled","N"), c(var, "resampledCountWithUniqueName"))
-
+    # Set an unmistakable name to the counts:
+    data.table::setnames(resampleTable, c("resampled","N"), c(varToResample, "resampledCountWithUniqueName"))
+    
     # Merge the resampled counts into the data:
-    count <- merge(subData, resampleTable, by = var, all = TRUE)
+    count <- merge(subData, resampleTable, by = varToResample, all = TRUE)
     
     # Insert the new count into WeightedCount (with NAs replaced by 0):
-    count <- subData[, ifelse(
+    count[, resampledCountWithUniqueName := ifelse(
         is.na(count$resampledCountWithUniqueName), 
         0, 
         count$resampledCountWithUniqueName
     )]
     
-    return(count)
+    #count[, eval(varToScale) := lapply(get(varToScale), "*", resampledCountWithUniqueName)]
+    
+    for(var in varToScale) {
+        count[, eval(var) := resampledCountWithUniqueName * get(var)]
+    }
+    
+    return(count[[varToScale]])
 }
 
 
+#' Resamples biotic PSUs
+#' 
+#' This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.
+#' 
+#' @param MeanLengthDistributionData The \code{\link[RstoxBase]{MeanLengthDistributionData}} data.
+#' @param Seed The seed, given as a sinigle initeger.
+#' 
+#' @export
+#' 
+ResampleBioticPSUs <- function(MeanLengthDistributionData, Seed) {
+    # Resample PSUs within Strata, modifying the weighting avriable of MeanLengthDistributionData:
+    MeanLengthDistributionData$Data <- resampleDataBy(
+        data = MeanLengthDistributionData$Data, 
+        seed = Seed, 
+        varToScale = RstoxBase::getRstoxBaseDefinitions("dataTypeDefinition")[["MeanLengthDistributionData"]]$weighting, 
+        varToResample = "PSU", 
+        resampleBy = "Stratum"
+    )
+    
+    return(MeanLengthDistributionData)
+}
+
+#' Resamples acoustic PSUs
+#' 
+#' This function resamples acoustic PSUs with replacement within each Stratum, changing the MeanNASC
+#' 
+#' @param MeanNASC The \code{\link[RstoxBase]{MeanNASC}} data.
+#' @param Seed The seed, given as a sinigle initeger.
+#' 
+#' @export
+#' 
+ResampleAcousticPSUs <- function(MeanNASC, Seed) {
+    # Resample PSUs within Strata, modifying the weighting avriable of MeanLengthDistributionData:
+    MeanNASC$Data <- resampleDataBy(
+        data = MeanNASC$Data, 
+        seed = Seed, 
+        varToScale = RstoxBase::getRstoxBaseDefinitions("dataTypeDefinition")[["MeanNASC"]]$weighting, 
+        varToResample = "PSU", 
+        resampleBy = "Stratum"
+    )
+    
+    return(MeanNASC)
+}
 
 
 

@@ -437,7 +437,6 @@ verifyPaths <- function(x) {
 }
 
 
-
 getMemoryFileFormat <- function(x) {
     
     if(length(x) == 0) {

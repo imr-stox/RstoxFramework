@@ -1479,6 +1479,13 @@ getParameterTableVariableTypes <- function(projectPath, modelName, processID, fo
 # Get the possible values of a parameter table:
 # Unfinished!!!!!!!!!!!!!!!
 getParameterTablePossibleValues <- function(projectPath, modelName, processID, format) {
+    #getParameterTableElement(
+    #    projectPath = projectPath, 
+    #    modelName = modelName, 
+    #    processID = processID, 
+    #    format = format, 
+    #    element = "possibleValues"
+    #)
     columnNames <- getParameterTableColumnNames(
         projectPath = projectPath, 
         modelName = modelName, 

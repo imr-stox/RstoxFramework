@@ -4,11 +4,13 @@
 \alias{ResampleBioticPSUs}
 \title{Resamples biotic PSUs}
 \usage{
-ResampleBioticPSUs(MeanLengthDistributionData, Seed, ResampleBy = "Stratum")
+ResampleBioticPSUs(MeanLengthDistributionData, Seed)
 }
 \arguments{
-\item{LengthDistributionData}{The \code{\link[RstoxBase]{LengthDistributionData}} to resample Hauls in.}
+\item{MeanLengthDistributionData}{The \code{\link[RstoxBase]{MeanLengthDistributionData}} data.}
+
+\item{Seed}{The seed, given as a sinigle initeger.}
 }
 \description{
-This function resamples PSUs with replacement by altering the LengthDistributionWeight.
+This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.
 }

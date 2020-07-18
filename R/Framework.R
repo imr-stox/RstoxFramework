@@ -947,25 +947,25 @@ initiateActiveProcessID <- function(projectPath) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-isRunning <- function(projectPath) {
-    projectIsRunningFile <- getProjectPaths(projectPath, "projectIsRunningFile")
-    file.exists(projectIsRunningFile)
+isRunning <- function(projectPath, modelName) {
+    modelIsRunningFile <- getProjectPaths(projectPath, "modelIsRunningFile")[[modelName]]
+    file.exists(modelIsRunningFile)
 }
 #' 
 #' @export
 #' @rdname ProjectUtils
 #' 
-setRunning <- function(projectPath) {
-    projectIsRunningFile <- getProjectPaths(projectPath, "projectIsRunningFile")
-    write("", projectIsRunningFile)
+setRunning <- function(projectPath, modelName) {
+    modelIsRunningFile <- getProjectPaths(projectPath, "modelIsRunningFile")[[modelName]]
+    write("", modelIsRunningFile)
 }
 #' 
 #' @export
 #' @rdname ProjectUtils
 #' 
-setNotRunning <- function(projectPath) {
-    projectIsRunningFile <- getProjectPaths(projectPath, "projectIsRunningFile")
-    unlink(projectIsRunningFile, force = TRUE)
+setNotRunning <- function(projectPath, modelName) {
+    modelIsRunningFile <- getProjectPaths(projectPath, "modelIsRunningFile")[[modelName]]
+    unlink(modelIsRunningFile, force = TRUE)
 }
 
 
@@ -3576,7 +3576,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
         }
     }
     
-    processOutput
+    return(processOutput)
 }
 
 
@@ -4067,16 +4067,16 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     }
     
     # Chech that none of the models of the project are running:
-    if(isRunning(projectPath) && !force.restart) {
+    if(isRunning(projectPath, modelName) && !force.restart) {
         warning("StoX: The project is running (", projectPath, "). Use force.restart = TRUE to force restart the project.")
         return(failedVector)
     }
     else {
-        setRunning(projectPath)
+        setRunning(projectPath, modelName)
     }
     
     on.exit({
-        setNotRunning(projectPath)
+        setNotRunning(projectPath, modelName)
     })
 
     
@@ -4204,7 +4204,8 @@ getModelData <- function(projectPath, modelName, startProcess = 1, endProcess = 
         getProcessOutput, 
         projectPath = projectPath, 
         modelName = modelName, 
-        processTable$processID
+        processTable$processID, 
+        SIMPLIFY = FALSE
     )
     names(processOutput) <- processTable$processName
     

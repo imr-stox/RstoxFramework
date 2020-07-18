@@ -27,14 +27,27 @@ processPropertyFormats <- list(
         columnNames = c(
             "ProcessName", 
             "ResampleFunction", 
-            "ResampleBy", 
+            #"ResampleBy", 
             "Seed"
         ), 
         variableTypes = c(
             "character",
             "character", 
-            "character",
+            #"character",
             "integer"
         )
     )
 )
+
+getResamplableProcesses <- function(projectPath) {
+    # Get the data types that can be resampled:
+    resamplableDataTypes <- getRstoxFrameworkDefinitions("resamplableDataTypes")
+    # Find the processes that can be resampled:
+    stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
+    sapply(stoxLibrary, "[[", "functionOutputDataType")  == "MeanNASCData"
+    
+    
+    
+    
+}
+

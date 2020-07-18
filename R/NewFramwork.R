@@ -48,13 +48,6 @@ listArgumentFiles <- function(projectPath, modelName, processID = NULL) {
 
 
 
-verifyPaths <- function(x) {
-    valid <- file.exists(x)
-    if(any(!valid)) {
-        warning("StoX: The following files do not exist: ", paste(x[!valid], collapse = ", "), ".")
-    }
-    return(x[valid])
-}
 
 getArgumentFilesDir <- function(projectPath, modelName, processID) {
     # Get the folder of files holding the memory file paths:

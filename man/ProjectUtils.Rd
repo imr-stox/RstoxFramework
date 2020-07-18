@@ -28,16 +28,18 @@ writeProjectDescription(projectPath, type = c("RData", "JSON"))
 
 initiateActiveProcessID(projectPath)
 
-isRunning(projectPath)
+isRunning(projectPath, modelName)
 
-setRunning(projectPath)
+setRunning(projectPath, modelName)
 
-setNotRunning(projectPath)
+setNotRunning(projectPath, modelName)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
 \item{type}{The type of file to read.}
+
+\item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
 }
 \description{
 Utilities for projects.

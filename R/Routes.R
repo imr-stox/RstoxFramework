@@ -634,7 +634,7 @@ formatJSONString <- function(parameter) {
 
 #isMultipleParameter <- function(functionName, parameterName) {
 #    multiple <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$multiple)
-#    format <- unlist(getFunctionParameterPropertyFormats(functionName)[parameterName])
+#    format <- unlist(getFunctionParameterFormats(functionName)[parameterName])
 #    isMultiple <- format %in% multiple
 #    return(isMultiple)
 #}
@@ -829,9 +829,9 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 # 3. description:
                 description = getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionParameterNames], 
                 # 4. type:
-                type = getStoxFunctionParameterPropertyTypes(functionName)[functionParameterNames],
+                type = getStoxFunctionParameterTypes(functionName)[functionParameterNames],
                 # 5. format:
-                format = getFunctionParameterPropertyFormats(functionName)[functionParameterNames],
+                format = getFunctionParameterFormats(functionName)[functionParameterNames],
                 # 6. possibleValues:
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
                 possibleValues = getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames],
@@ -1145,8 +1145,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
 # Convert to the type of the parameters:
 convertFunctionParameter <- function(functionParameterName, functionParameterValue, functionName) {
     # Get the primitive type and the format:
-    type <- getStoxFunctionParameterPropertyTypes(functionName)[functionParameterName]
-    format = getFunctionParameterPropertyFormats(functionName)[functionParameterName]
+    type <- getStoxFunctionParameterTypes(functionName)[functionParameterName]
+    format = getFunctionParameterFormats(functionName)[functionParameterName]
     
     # Apply the conversion function:
     #if(format %in% c("single", "vector")) {

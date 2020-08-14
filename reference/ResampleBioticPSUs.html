@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Resamples biotic PSUs — ResampleBioticPSUs" />
-<meta property="og:description" content="This function resamples PSUs with replacement by altering the LengthDistributionWeight." />
+<meta property="og:description" content="This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight." />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.15</span>
       </span>
     </div>
 
@@ -114,17 +114,21 @@
     </div>
 
     <div class="ref-description">
-    <p>This function resamples PSUs with replacement by altering the LengthDistributionWeight.</p>
+    <p>This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>ResampleBioticPSUs</span>(<span class='kw'>MeanLengthDistributionData</span>, <span class='kw'>Seed</span>, ResampleBy = <span class='st'>"Stratum"</span>)</pre>
+    <pre class="usage"><span class='fu'>ResampleBioticPSUs</span>(<span class='kw'>MeanLengthDistributionData</span>, <span class='kw'>Seed</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>LengthDistributionData</th>
-      <td><p>The <code><a href='https://rdrr.io/pkg/RstoxBase/man/LengthDistributionData.html'>LengthDistributionData</a></code> to resample Hauls in.</p></td>
+      <th>MeanLengthDistributionData</th>
+      <td><p>The <code><a href='https://rdrr.io/pkg/RstoxBase/man/MeanLengthDistributionData.html'>MeanLengthDistributionData</a></code> data.</p></td>
+    </tr>
+    <tr>
+      <th>Seed</th>
+      <td><p>The seed, given as a sinigle initeger.</p></td>
     </tr>
     </table>
 

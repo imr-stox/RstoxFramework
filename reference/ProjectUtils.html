@@ -76,7 +76,7 @@ Check or set if a project is running or not." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.15</span>
       </span>
     </div>
 
@@ -139,11 +139,11 @@ Check or set if a project is running or not." />
 
 <span class='fu'>initiateActiveProcessID</span>(<span class='kw'>projectPath</span>)
 
-<span class='fu'>isRunning</span>(<span class='kw'>projectPath</span>)
+<span class='fu'>isRunning</span>(<span class='kw'>projectPath</span>, <span class='kw'>modelName</span>)
 
-<span class='fu'>setRunning</span>(<span class='kw'>projectPath</span>)
+<span class='fu'>setRunning</span>(<span class='kw'>projectPath</span>, <span class='kw'>modelName</span>)
 
-<span class='fu'>setNotRunning</span>(<span class='kw'>projectPath</span>)</pre>
+<span class='fu'>setNotRunning</span>(<span class='kw'>projectPath</span>, <span class='kw'>modelName</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -155,6 +155,10 @@ Check or set if a project is running or not." />
     <tr>
       <th>type</th>
       <td><p>The type of file to read.</p></td>
+    </tr>
+    <tr>
+      <th>modelName</th>
+      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
     </tr>
     </table>
 

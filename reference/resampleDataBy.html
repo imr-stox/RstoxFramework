@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Stratum manipulation — Stratum • RstoxFramework</title>
+<title>Resamples biotic PSUs — resampleDataBy • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Stratum manipulation — Stratum" />
-<meta property="og:description" content="The functions addStations and removeStations adds or removes biotic stations from the BioticAssignment process data of the specified process." />
+<meta property="og:title" content="Resamples biotic PSUs — resampleDataBy" />
+<meta property="og:description" content="This function resamples PSUs with replacement by altering the LengthDistributionWeight." />
 
 
 
@@ -108,49 +108,26 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Stratum manipulation</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Interactive.R'><code>R/Interactive.R</code></a></small>
-    <div class="hidden name"><code>Stratum.Rd</code></div>
+    <h1>Resamples biotic PSUs</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/resample.R'><code>R/resample.R</code></a></small>
+    <div class="hidden name"><code>resampleDataBy.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>The functions <code>addStations</code> and <code>removeStations</code> adds or removes biotic stations from the BioticAssignment process data of the specified process.</p>
+    <p>This function resamples PSUs with replacement by altering the LengthDistributionWeight.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>addStratum</span>(<span class='kw'>stratum</span>, <span class='kw'>projectPath</span>, <span class='kw'>modelName</span>, <span class='kw'>processID</span>)
-
-<span class='fu'>removeStratum</span>(<span class='kw'>stratumName</span>, <span class='kw'>projectPath</span>, <span class='kw'>modelName</span>, <span class='kw'>processID</span>)
-
-<span class='fu'>modifyStratum</span>(<span class='kw'>stratum</span>, <span class='kw'>projectPath</span>, <span class='kw'>modelName</span>, <span class='kw'>processID</span>)</pre>
+    <pre class="usage"><span class='fu'>resampleDataBy</span>(<span class='kw'>data</span>, <span class='kw'>seed</span>, <span class='kw'>varToScale</span>, <span class='kw'>varToResample</span>, <span class='kw'>resampleBy</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>stratum</th>
-      <td><p>The SpatialPolygonsDataFrame object defining the stratum to add.</p></td>
-    </tr>
-    <tr>
-      <th>projectPath</th>
-      <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
-    </tr>
-    <tr>
-      <th>modelName</th>
-      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
-    </tr>
-    <tr>
-      <th>processID</th>
-      <td><p>The ID of the process.</p></td>
-    </tr>
-    <tr>
-      <th>stratumName</th>
-      <td><p>The name of the stratum.</p></td>
+      <th>LengthDistributionData</th>
+      <td><p>The <code><a href='https://rdrr.io/pkg/RstoxBase/man/LengthDistributionData.html'>LengthDistributionData</a></code> to resample Hauls in.</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>The assignment IDs are refreshed for every change, after sorting the assignemnts by the PSU column.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

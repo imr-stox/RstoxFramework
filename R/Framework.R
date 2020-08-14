@@ -1623,60 +1623,82 @@ isBootstrapFunction <- function(functionName) {
 # Function which gets the values defined for the parameters in the definition of a function:
 getStoxFunctionParameterPossibleValues <- function(functionName, fill.logical = TRUE) {
     
+    # Get all defaults:
+    output <- getStoxFunctionParameterDefaults(functionName)
+    
+    # Get the parameter (primitive) type to enable the treatments of logicals and numerics:
+    parameterType <- unlist(getStoxFunctionParameterTypes(functionName))
+    
+    # Insert c(FALSE, TRUE) for logicals:
+    if(fill.logical) {
+        #areLogicals <- sapply(output, is.logical)
+        areLogicals <- parameterType %in% "logical"
+        if(any(areLogicals)) {
+            output[areLogicals] <- lapply(output[areLogicals], expandLogical)
+        }
+    }
+    
+    # Remove possible values for numeric. Any restrictions of numerics should rather reside in the function definition, resulting in warnings or errors:
+    areNumeric <- parameterType %in% c("numeric", "integer", "double")
+    if(any(areNumeric)) {
+        output[areNumeric] <- vector("list", sum(areNumeric))
+    }
+    
+    
+    return(output)
+}
+
+
+
+# Function which gets the default values of a function:
+getStoxFunctionParameterDefaults <- function(functionName) {
     # Get the available functions:
     availableFunctions <- getRstoxFrameworkDefinitions("availableFunctions")
     
     functionName <- getFunctionNameFromPackageFunctionName(functionName)
     if(! functionName %in% availableFunctions) {
-        warning("StoX: The function ", functionName, "is not an official StoX function.")
+        warning("StoX: The function ", functionName, " is not an official StoX function.")
         return(list())
     }
     
     # Get all possible values:
-    output <- getRstoxFrameworkDefinitions("availableFunctionPossibleValues")[[functionName]]
-    
-    # Insert c(FALSE, TRUE) for logicals:
-    if(fill.logical) {
-        areLogicals <- sapply(output, is.logical)
-        if(sum(areLogicals)) {
-            output[areLogicals] <- lapply(output[areLogicals], expandLogical)
-        }
-    }
-    
-    return(output)
+    defaults <- getRstoxFrameworkDefinitions("availableFunctionPossibleValues")[[functionName]]
+    return(defaults)
 }
 
+
 # Function which gets the default values of a function:
-getStoxFunctionParameterDefaults <- function(functionName) {
+getStoxFunctionParameterDefault <- function(functionName) {
     # Get the possible values of the parameters of a function:
-    functionParameterPossibleValues <- getStoxFunctionParameterPossibleValues(functionName, fill.logical = FALSE)
+    defaults <- getStoxFunctionParameterDefaults(functionName)
     # The default is the first value:
-    defaults <- lapply(functionParameterPossibleValues, utils::head, 1)
-    defaults
+    default <- lapply(defaults, utils::head, 1)
+    return(default)
 }
 
 # Function which gets the primitive types of the parameters of a function:
 getStoxFunctionParameterPrimitiveTypes <- function(functionName) {
     # Get the possible values of the parameters of a function:
-    functionParameterDefaults <- getStoxFunctionParameterDefaults(functionName)
+    functionParameterDefault <- getStoxFunctionParameterDefault(functionName)
     # The default is the first value:
-    primitiveType <- lapply(functionParameterDefaults, firstClass)
-    primitiveType
+    primitiveType <- lapply(functionParameterDefault, firstClass)
+    return(primitiveType)
 }
 # Function which gets the primitive types of the parameters of a function:
-getStoxFunctionParameterPropertyTypes <- function(functionName) {
+getStoxFunctionParameterTypes <- function(functionName) {
     
     # Get the primitive types of the parameters of a function (as specified in the function definition):
     typeFromDefinition <- getStoxFunctionParameterPrimitiveTypes(functionName)
     
-    # Get the meta data functionParameterType (as specified in the 'stoxFunctionAttributes' of each package):
-    functionParameterType <- getStoxFunctionMetaData(functionName, "functionParameterType")
-    
-    # Replace the types by those from the meta data:
-    valid <- intersect(names(typeFromDefinition), names(functionParameterType))
-    if(length(valid)) {
-        typeFromDefinition[valid] <- functionParameterType[valid]
-    }
+    # Removed on 2020-08-13, since all parameters should have default value reflecting the primitive type (character() instead of NULL, etc.)
+    ### # Get the meta data functionParameterType (as specified in the 'stoxFunctionAttributes' of each package):
+    ### functionParameterType <- getStoxFunctionMetaData(functionName, "functionParameterType")
+    ### 
+    ### # Replace the types by those from the meta data:
+    ### valid <- intersect(names(typeFromDefinition), names(functionParameterType))
+    ### if(length(valid)) {
+    ###     typeFromDefinition[valid] <- functionParameterType[valid]
+    ### }
     
     # If not integer, double or logical, set to character (as all other types than these are wrapped to JSON strings by the GUI):
     processPropertyTypes <- getRstoxFrameworkDefinitions("processPropertyTypes")
@@ -1684,14 +1706,14 @@ getStoxFunctionParameterPropertyTypes <- function(functionName) {
     typeFromDefinition[setAsCharacter] <- processPropertyTypes$default
     
     # Return the types:
-    typeFromDefinition
+    return(typeFromDefinition)
 }
 
 # Function which applies the default format on formats not recognized :
-getFunctionParameterPropertyFormats <- function(functionName) {
+getFunctionParameterFormats <- function(functionName) {
     
     # Get the types, and interpret all types as format "none":
-    formats <- getStoxFunctionParameterPropertyTypes(functionName)
+    formats <- getStoxFunctionParameterTypes(functionName)
     formats[] <- "none"
     
     # Get the meta data functionParameterFormat (as specified in the 'stoxFunctionAttributes' of each package):
@@ -1704,7 +1726,7 @@ getFunctionParameterPropertyFormats <- function(functionName) {
     }
     
     # Return the formats:
-    formats
+    return(formats)
 }
 
 
@@ -2392,7 +2414,7 @@ setFunctionName <- function(process, newFunctionName, add.defaults = FALSE) {
         # Insert the function name:
         process$functionName <- newFunctionName
         # Get the parameters to display, and their defaults:
-        defaults <- getStoxFunctionParameterDefaults(process$functionName)
+        defaults <- getStoxFunctionParameterDefault(process$functionName)
         
         # Detect which parameters are data types, which identifies them as function inputs (outputs from other processes):
         areInputs <- isFunctionInput(names(defaults))
@@ -3328,6 +3350,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
             stop(err)
         }
     )
+    
     # Apply the replaceData, which can be a function with first parameter the processOutput and additional parameters gievn in ..., or an actual object to replaec the output by:
     #thisReplaceData <- replaceData[[process$processName]]
     thisReplaceData <- replaceData

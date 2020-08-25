@@ -647,7 +647,8 @@ isVectorParameter <- function(format) {
 
 isVectorParameterOne <- function(format, processPropertyFormats) {
     # 2020-06-24: Changed from == to identical (Jira, STOX-225):
-    identical(processPropertyFormats[[format]]$type, "vector")
+    #identical(processPropertyFormats[[format]]$type, "vector")
+    identical(processPropertyFormats[[format]]$class, "vector")
 }
 
 

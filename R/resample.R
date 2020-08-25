@@ -10,8 +10,8 @@ Bootstrap <- function(
     projectPath, 
     # Table with ProcessName, ResamplingFunction, ResampleWithin, Seed:
     BootstrapMethodTable = data.table::data.table(), 
-    NumberOfBootstraps = 1L, 
-    NumberOfCores = integer()
+    NumberOfBootstraps = 1L#, 
+    #NumberOfCores = integer()
 ) {
     
     # Identify the first process set for resampling by the BootstrapMethodTable:
@@ -20,56 +20,65 @@ Bootstrap <- function(
     lastProcessID <- utils::tail(processIndexTable$processID, 1)
     
     # Run the baseline until the startProcess:
-    temp <- runProcesses(projectPath, modelName = "baseline", endProcess = startProcess - 1)
-    
-    # Get the functions to use for resampling:
-    BootstrapMethodList <- split(BootstrapMethodTable, by = "ProcessName")
-    # Remove the ProcessName from the lists: 
-    BootstrapMethodList <- lapply(BootstrapMethodList, function(x) x[, ProcessName := NULL])
-    # Get the replaceData list, which is one element per bootstrap, where each element is a list named by the procecsses to resample the output from:
-    replaceData <- lapply(BootstrapMethodList, getReplaceData, size = NumberOfBootstraps)
-    
-    # Define a function to run processes and save the output of the last process to the output folder:
-    runOneBootstrapSaveLastOutput <- function(ind, replaceData, projectPath, startProcess, lastProcessID, NumberOfBootstraps) {
-        # Get the resample function for this bootstrap run:
-        thisReplaceData <- lapply(replaceData, "[[", ind)
-        # Re-run the baseline:
-        runProcesses(projectPath, modelName = "baseline", startProcess = startProcess, endProcess = Inf, save = FALSE, fileOutput = FALSE, setUseProcessDataToTRUE = FALSE, replaceData = thisReplaceData, msg = FALSE)
-        # Get the last process output:
-        lastProcessOutput <- getProcessOutput(projectPath, modelName = "baseline", processID = lastProcessID, drop.datatype = FALSE)
-        # Save the last process output:
-        ###writeProcessOutputMemoryFiles(
-        ###    processOutput = lastProcessOutput, 
-        ###    projectPath = projectPath, 
-        ###    modelName = "analysis", 
-        ###    processID = lastProcessID, 
-        ###    type = "output", 
-        ###    subfolder = getBootstrapRunName(ind, NumberOfBootstraps, prefix = "Run")
-        ###)
-        
-        # Add Bootstrap run ID:
-        #addBootstrapID(
-        #    lastProcessOutput, 
-        #    ind = ind
-        #)
-        for(dataType in names(lastProcessOutput)) {
-            lastProcessOutput[[dataType]][, BootstrapID := ..ind]
-        }
-        
-        return(lastProcessOutput)
+    activeProcessID <- getProcessIndexFromProcessID(
+        projectPath = projectPath, 
+        modelName = "baseline", 
+        processID = getActiveProcess(
+            projectPath = projectPath, 
+            modelName = "baseline"
+        )$processID
+    )
+    preRunTo <- startProcess - 1
+    if(activeProcessID < preRunTo) {
+        temp <- runProcesses(projectPath, modelName = "baseline", endProcess = preRunTo)
     }
+    
+    # Draw the seeds in a table, and then split into a list for each bootstrap run:
+    SeedTable <- data.table::as.data.table(lapply(BootstrapMethodTable$Seed, RstoxBase::getSeedVector, size = NumberOfBootstraps))
+    names(SeedTable) <- BootstrapMethodTable$ProcessName
+    SeedList <- split(SeedTable, seq_len(nrow(SeedTable)))
+    
+    
+    
+    
+    
+    createReplaceData <- function(Seed, BootstrapMethodTable) {
+        lapply(Seed, function(x) list(MoreArgs = list(Seed = x)))
+    }
+    addFunctionNameToReplaceData <- function(replaceData, BootstrapMethodTable) {
+        #browser()
+        out <- lapply(names(replaceData), function(name) 
+            c(
+                list(FunctionName = BootstrapMethodTable[ProcessName == name, ResampleFunction]), 
+                replaceData[[name]]
+            ))
+        names(out) <- names(replaceData)
+        return(out)
+    }
+    replaceData <- lapply(SeedList, createReplaceData, BootstrapMethodTable = BootstrapMethodTable)
+    replaceData <- lapply(replaceData, addFunctionNameToReplaceData, BootstrapMethodTable = BootstrapMethodTable)
     
     # Run the subset of the baseline model:
     bootstrapIndex <- seq_len(NumberOfBootstraps)
-    BootstrapData <- RstoxData::runOnCores(
-        bootstrapIndex, 
+    BootstrapData <- RstoxData::mapplyOnCores(
         FUN = runOneBootstrapSaveLastOutput, 
-        NumberOfCores = NumberOfCores, 
+        #NumberOfCores = NumberOfCores, 
+        NumberOfCores = 1, 
+        # Vector inputs:
+        ind = bootstrapIndex, 
+        Seed = SeedList, 
         replaceData = replaceData, 
-        projectPath = projectPath, 
-        startProcess = startProcess, 
-        lastProcessID = lastProcessID, 
-        NumberOfBootstraps = NumberOfBootstraps
+        # Other inputs:
+        MoreArgs = list(
+            projectPath = projectPath, 
+            startProcess = startProcess, 
+            lastProcessID = lastProcessID
+        )
+        #replaceData = replaceData, 
+        #projectPath = projectPath, 
+        #startProcess = startProcess, 
+        #lastProcessID = lastProcessID, 
+        #NumberOfBootstraps = NumberOfBootstraps
     )
     
     if(is.list(BootstrapData[[1]]) && !data.table::is.data.table(BootstrapData[[1]])){
@@ -80,9 +89,55 @@ Bootstrap <- function(
     else {
         BootstrapData <- structure(list(data.table::rbindlist(BootstrapData)), names = names(BootstrapData[[1]]))
     }
+    #stop(1231)
     
     return(BootstrapData)
 }
+
+
+# Define a function to run processes and save the output of the last process to the output folder:
+runOneBootstrapSaveLastOutput <- function(ind, Seed, replaceData, projectPath, startProcess, lastProcessID) {
+    
+    # Re-run the baseline:
+    runProcesses(projectPath, modelName = "baseline", startProcess = startProcess, endProcess = Inf, save = FALSE, fileOutput = FALSE, setUseProcessDataToTRUE = FALSE, replaceData = replaceData, msg = FALSE)
+    # ... and get the last process output:
+    lastProcessOutput <- getProcessOutput(projectPath, modelName = "baseline", processID = lastProcessID, drop.datatype = FALSE)
+    
+    # Add Bootstrap run ID:
+    for(dataType in names(lastProcessOutput)) {
+        lastProcessOutput[[dataType]][, BootstrapID := ..ind]
+    }
+    
+    return(lastProcessOutput)
+    
+    # Get the resample function for this bootstrap run:
+    ###  thisReplaceData <- lapply(replaceData, "[[", ind)
+    # Re-run the baseline:
+    ### runProcesses(projectPath, modelName = "baseline", startProcess = startProcess, endProcess = Inf, save = FALSE, fileOutput = FALSE, setUseProcessDataToTRUE = FALSE, replaceData = thisReplaceData, msg = FALSE)
+    # Get the last process output:
+    ###  lastProcessOutput <- getProcessOutput(projectPath, modelName = "baseline", processID = lastProcessID, drop.datatype = FALSE)
+    # Save the last process output:
+    ###writeProcessOutputMemoryFiles(
+    ###    processOutput = lastProcessOutput, 
+    ###    projectPath = projectPath, 
+    ###    modelName = "analysis", 
+    ###    processID = lastProcessID, 
+    ###    type = "output", 
+    ###    subfolder = getBootstrapRunName(ind, NumberOfBootstraps, prefix = "Run")
+    ###)
+    
+    # Add Bootstrap run ID:
+    #addBootstrapID(
+    #    lastProcessOutput, 
+    #    ind = ind
+    #)
+    ### for(dataType in names(lastProcessOutput)) {
+    ###     lastProcessOutput[[dataType]][, BootstrapID := ..ind]
+    ### }
+    ### 
+    ### return(lastProcessOutput)
+}
+
 
 addBootstrapID <- function(x, ind) {
     if(is.list(x) && !data.table::is.data.table(x)){
@@ -139,7 +194,7 @@ rbindlistByName <- function(name, x) {
 
 getReplaceData <- function(x, size) {
     # Get seeds:
-    seeds <- getSeedVector(x$Seed, size)
+    seeds <- RstoxBase::getSeedVector(x$Seed, size)
     x_expanded <- data.table::data.table(
         x[, !"Seed"], 
         Seed = seeds
@@ -172,7 +227,7 @@ resampleDataBy <- function(data, seed, varToScale, varToResample, resampleBy) {
     # Build a table of Stratum and Seed and merge with the MeanLengthDistributionData:
     seedTable <- data.table::data.table(
         resampleBy = uniqueResampleBy, 
-        seed = getSeedVector(seed, size = length(uniqueResampleBy))
+        seed = RstoxBase::getSeedVector(seed, size = length(uniqueResampleBy))
     )
     data.table::setnames(seedTable, c(resampleBy, "seed"))
     data <- merge(data, seedTable, by = resampleBy)
@@ -191,9 +246,13 @@ resampleOne <- function(subData, seed, varToResample, varToScale) {
     if(length(varToResample) != 1) {
         stop("varToResample must be a single string naming the variable to resample")
     }
-    resampled <- sampleSorted(unique(subData[[varToResample]]), seed = seed, replace = TRUE)
+    resampled <- RstoxBase::sampleSorted(unique(subData[[varToResample]]), seed = seed, replace = TRUE)
     # Tabulate the resamples:
-    resampleTable <- data.table::as.data.table(table(resampled))
+    #resampleTable <- table(resampled)
+    #if(!length(resampleTable)) {
+    #    
+    #}
+    resampleTable <- data.table::as.data.table(table(resampled, useNA = "ifany"))
     # Set an unmistakable name to the counts:
     data.table::setnames(resampleTable, c("resampled","N"), c(varToResample, "resampledCountWithUniqueName"))
     
@@ -226,18 +285,66 @@ resampleOne <- function(subData, seed, varToResample, varToScale) {
 #' 
 #' @export
 #' 
-ResampleBioticPSUs <- function(MeanLengthDistributionData, Seed) {
-    # Resample PSUs within Strata, modifying the weighting avriable of MeanLengthDistributionData:
+ResampleMeanLengthDistributionData <- function(MeanLengthDistributionData, Seed) {
+    # Resample PSUs within Strata, modifying the weighting variable of MeanLengthDistributionData:
     MeanLengthDistributionData$Data <- resampleDataBy(
         data = MeanLengthDistributionData$Data, 
         seed = Seed, 
-        varToScale = RstoxBase::getRstoxBaseDefinitions("dataTypeDefinition")[["MeanLengthDistributionData"]]$weighting, 
+        #varToScale = RstoxBase::getRstoxBaseDefinitions("dataTypeDefinition")[["MeanLengthDistributionData"]]$weighting, 
+        varToScale = "WeightedCount", 
         varToResample = "PSU", 
         resampleBy = "Stratum"
     )
     
     return(MeanLengthDistributionData)
 }
+
+### #' Resamples biotic PSUs
+### #' 
+### #' This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.
+### #' 
+### #' @param MeanLengthDistributionData The \code{\link[RstoxBase]{MeanLengthDistributionData}} data.
+### #' @param Seed The seed, given as a sinigle initeger.
+### #' 
+### #' @export
+### #' 
+### ResampleAssignmentLengthDistributionData <- function(AssignmentLengthDistributionData, Seed) {
+###     # Resample PSUs within Strata, modifying the weighting variable of AssignmentLengthDistributionData:
+###     AssignmentLengthDistributionData <- resampleDataBy(
+###         data = AssignmentLengthDistributionData, 
+###         seed = Seed, 
+###         #varToScale = RstoxBase::getRstoxBaseDefinitions("dataTypeDefinition")[["AssignmentLengthDistributionData"]]$weighting, 
+###         varToScale = "WeightedCount", 
+###         varToResample = "PSU", 
+###         resampleBy = "Stratum"
+###     )
+###     
+###     return(AssignmentLengthDistributionData)
+### }
+
+
+#' Resamples biotic PSUs
+#' 
+#' This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.
+#' 
+#' @param MeanLengthDistributionData The \code{\link[RstoxBase]{MeanLengthDistributionData}} data.
+#' @param Seed The seed, given as a sinigle initeger.
+#' 
+#' @export
+#' 
+ResampleBioticAssignment <- function(BioticAssignment, Seed) {
+    # Resample PSUs within Strata, modifying the weighting variable of BioticAssignment:
+    BioticAssignment <- resampleDataBy(
+        data = BioticAssignment, 
+        seed = Seed, 
+        varToScale = "WeightingFactor", 
+        varToResample = "Haul", 
+        resampleBy = "Stratum"
+    )
+    
+    return(BioticAssignment)
+}
+
 
 #' Resamples acoustic PSUs
 #' 
@@ -248,46 +355,16 @@ ResampleBioticPSUs <- function(MeanLengthDistributionData, Seed) {
 #' 
 #' @export
 #' 
-ResampleAcousticPSUs <- function(MeanNASC, Seed) {
-    # Resample PSUs within Strata, modifying the weighting avriable of MeanLengthDistributionData:
+ResampleMeanNASCData <- function(MeanNASC, Seed) {
+    # Resample PSUs within Strata, modifying the weighting variable of MeanLengthDistributionData:
     MeanNASC$Data <- resampleDataBy(
         data = MeanNASC$Data, 
         seed = Seed, 
-        varToScale = RstoxBase::getRstoxBaseDefinitions("dataTypeDefinition")[["MeanNASC"]]$weighting, 
+        #varToScale = RstoxBase::getRstoxBaseDefinitions("dataTypeDefinition")[["MeanNASC"]]$weighting, 
+        varToScale = "NASC", 
         varToResample = "PSU", 
         resampleBy = "Stratum"
     )
     
     return(MeanNASC)
 }
-
-
-
-#### Tools to perform resampling: ####
-
-# Function to sample after sorting:
-sampleSorted <- function(x, size, seed, replace = TRUE, sorted = TRUE){
-    # If not given, get the size of the sample as the length of the vector:
-    lx <- length(x)
-    if(missing(size)){
-        size <- lx
-    }
-    if(sorted){
-        x <- sort(x)
-    }
-    # Sample:
-    set.seed(seed)
-    sampled <- x[sample.int(lx, size = size, replace = replace)]
-    return(sampled)
-}
-
-getSeedVector <- function(seed, size = 1) {
-    set.seed(seed)
-    sample(getSequenceToSampleFrom(), size, replace = FALSE)
-}
-
-getSequenceToSampleFrom <- function(){
-    seedSequenceLength <- getRstoxFrameworkDefinitions("seedSequenceLength")
-    seq_len(seedSequenceLength)
-}
-

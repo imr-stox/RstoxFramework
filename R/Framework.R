@@ -3312,6 +3312,10 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 
 
 #### Functions to run models: ####
+#' Run one process
+#'
+#' @inheritParams general_arguments
+#' @param replaceData Either the data to replace the process output by, or a list of two elements \code{FunctionName} and \code{MoreArgs}, giving a function to apply to the output from the process with additional arguments stored in \code{MoreArgs}. The function in applied using \code{\link{do.call}}, with \code{args} being a list with the process output first, followed by the \code{MoreArgs}.
 #' 
 #' @export
 #' 
@@ -3331,7 +3335,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
     failed <- FALSE
     if(msg) {
         message(
-            "StoX: Running process ", 
+            "StoX: Running ", modelName, " process ", 
             getProcessIndexFromProcessID(projectPath, modelName, processID), 
             ": ", 
             getProcessName(projectPath, modelName, processID), 
@@ -3351,14 +3355,25 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         }
     )
     
-    # Apply the replaceData, which can be a function with first parameter the processOutput and additional parameters gievn in ..., or an actual object to replaec the output by:
+    # Apply the replaceData, which can be a function with first parameter the processOutput and additional parameters given in ..., or an actual object to replace the output by:
     #thisReplaceData <- replaceData[[process$processName]]
-    thisReplaceData <- replaceData
-    if(is.list(thisReplaceData) && is.character(thisReplaceData[[1]]) && exists(thisReplaceData[[1]])) {
-        processOutput <- do.call(thisReplaceData[[1]], c(list(processOutput), thisReplaceData[[2]]))
+    if(length(replaceData) && is.character(replaceData)) {
+        replaceData <- list(FunctionName = replaceData)
+    }
+    if(is.list(replaceData) && !data.table::is.data.table(replaceData) && is.character(replaceData$FunctionName)) {
+        if(!exists(replaceData$FunctionName)) {
+            stop("If replaceData is given as a list with a function name first, this must be an existing function (was ", replaceData$FunctionName, ").")
+        }
+        processOutput <- do.call(
+            what = replaceData$FunctionName, 
+            args = c(
+                list(processOutput), 
+                replaceData$MoreArgs
+            )
+        )
     }
     else if(length(replaceData)) {
-        processOutput <- thisReplaceData
+        processOutput <- replaceData
     }
     
     # Return the process output if not to be saved:
@@ -3831,6 +3846,10 @@ getProcessOutputFolder <- function(projectPath, modelName, processID, type = c("
 getProcessIndexFromProcessID <- function(projectPath, modelName, processID) {
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
     processIndex <- which(processIndexTable$processID == processID)
+    # Added 0 as output for processes that has not been run:
+    if(!length(processIndex)) {
+        processIndex <- 0
+    }
     processIndex
 }
 
@@ -4057,11 +4076,15 @@ purgeOutput <- function(projectPath, modelName) {
     dir.create(folderPath)
 }
 
+#' Run processes of a model.
+#' 
+#' @inheritParams general_arguments
+#' @param replaceDataList A list named by the processes to replace output data for. See \code{\link{runProcess}}.
 #' 
 #' @export
 #' 
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
-runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, msg = TRUE, save = TRUE, force.restart = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceData = list(), replaceArgs = list(), output.file.type = c("text", "binary"), ...) {
+runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, msg = TRUE, save = TRUE, force.restart = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceDataList = list(), replaceArgs = list(), output.file.type = c("text", "binary"), ...) {
 
     # Get the processIDs:
     processIndexTable <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)
@@ -4139,7 +4162,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
         runProcess, 
         processID = processIDs, 
         replaceArgs = replaceArgs[processNames], 
-        replaceData = replaceData[processNames], 
+        replaceData = replaceDataList[processNames], 
         MoreArgs = list(
             projectPath = projectPath, 
             modelName = modelName, 

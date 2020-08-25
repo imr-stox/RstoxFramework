@@ -116,7 +116,8 @@ initiateRstoxFramework <- function(){
     # Get the functions that cacn be resampled in bootstrapping:
     resamplableDataTypes <- c(
         "MeanNASC",
-        "MeanLengthDistribution"
+        "MeanLengthDistribution", 
+        "BioticAssignment"
     )
    
     

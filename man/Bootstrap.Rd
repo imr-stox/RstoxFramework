@@ -7,8 +7,7 @@
 Bootstrap(
   projectPath,
   BootstrapMethodTable = data.table::data.table(),
-  NumberOfBootstraps = 1L,
-  NumberOfCores = integer()
+  NumberOfBootstraps = 1L
 )
 }
 \arguments{

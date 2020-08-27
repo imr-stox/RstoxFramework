@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Read Stox project from project xml — readStox27Project • RstoxFramework</title>
+<title>Resamples biotic PSUs — ResampleBioticAssignment • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Read Stox project from project xml — readStox27Project" />
-<meta property="og:description" content="Read Stox project from project xml" />
+<meta property="og:title" content="Resamples biotic PSUs — ResampleBioticAssignment" />
+<meta property="og:description" content="This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight." />
 
 
 
@@ -108,33 +108,30 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Read Stox project from project xml</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/ProjectIO.R'><code>R/ProjectIO.R</code></a></small>
-    <div class="hidden name"><code>readStox27Project.Rd</code></div>
+    <h1>Resamples biotic PSUs</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/resample.R'><code>R/resample.R</code></a></small>
+    <div class="hidden name"><code>ResampleBioticAssignment.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Read Stox project from project xml</p>
+    <p>This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>readStox27Project</span>(<span class='kw'>projectxml</span>, strict = <span class='kw'>T</span>)</pre>
+    <pre class="usage"><span class='fu'>ResampleBioticAssignment</span>(<span class='kw'>BioticAssignment</span>, <span class='kw'>Seed</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>projectxml</th>
-      <td><p>xml filename of stox v2.7 project file</p></td>
+      <th>Seed</th>
+      <td><p>The seed, given as a sinigle initeger.</p></td>
     </tr>
     <tr>
-      <th>strict</th>
-      <td><p>logical, whether errors should be raised for unkown elements and attributes or missing required attributes, if False warnings will be issued.</p></td>
+      <th>MeanLengthDistributionData</th>
+      <td><p>The <code><a href='https://rdrr.io/pkg/RstoxBase/man/MeanLengthDistributionData.html'>MeanLengthDistributionData</a></code> data.</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>Nested list representation of project, formatted as: <code><a href='stox27project.html'>stox27project</a></code></p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

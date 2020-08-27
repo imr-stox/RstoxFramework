@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Read Stox project from project xml — readStox27Project • RstoxFramework</title>
+<title>Run processes of a model. — runProcesses • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Read Stox project from project xml — readStox27Project" />
-<meta property="og:description" content="Read Stox project from project xml" />
+<meta property="og:title" content="Run processes of a model. — runProcesses" />
+<meta property="og:description" content="Run processes of a model." />
 
 
 
@@ -108,33 +108,49 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Read Stox project from project xml</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/ProjectIO.R'><code>R/ProjectIO.R</code></a></small>
-    <div class="hidden name"><code>readStox27Project.Rd</code></div>
+    <h1>Run processes of a model.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
+    <div class="hidden name"><code>runProcesses.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Read Stox project from project xml</p>
+    <p>Run processes of a model.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>readStox27Project</span>(<span class='kw'>projectxml</span>, strict = <span class='kw'>T</span>)</pre>
+    <pre class="usage"><span class='fu'>runProcesses</span>(
+  <span class='kw'>projectPath</span>,
+  <span class='kw'>modelName</span>,
+  startProcess = <span class='fl'>1</span>,
+  endProcess = <span class='fl'>Inf</span>,
+  msg = <span class='fl'>TRUE</span>,
+  save = <span class='fl'>TRUE</span>,
+  force.restart = <span class='fl'>FALSE</span>,
+  fileOutput = <span class='kw'>NULL</span>,
+  setUseProcessDataToTRUE = <span class='fl'>TRUE</span>,
+  purge.processData = <span class='fl'>FALSE</span>,
+  replaceDataList = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  replaceArgs = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  output.file.type = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"text"</span>, <span class='st'>"binary"</span>),
+  <span class='kw'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>projectxml</th>
-      <td><p>xml filename of stox v2.7 project file</p></td>
+      <th>projectPath</th>
+      <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
     </tr>
     <tr>
-      <th>strict</th>
-      <td><p>logical, whether errors should be raised for unkown elements and attributes or missing required attributes, if False warnings will be issued.</p></td>
+      <th>modelName</th>
+      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
+    </tr>
+    <tr>
+      <th>replaceDataList</th>
+      <td><p>A list named by the processes to replace output data for. See <code><a href='runProcess.html'>runProcess</a></code>.</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>Nested list representation of project, formatted as: <code><a href='stox27project.html'>stox27project</a></code></p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

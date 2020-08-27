@@ -1371,7 +1371,7 @@ getFilterOptionsAll <- function(projectPath, modelName, processID, include.numer
     
 
 getOptionList <- function(option, digits = 6) {
-    lapply(option, function(x) list(name = format(x, digits = digits), value = x))
+    lapply(option, function(x) list(name = if(is.numeric(x)) format(x, digits = digits) else x, value = x))
 }
 
 

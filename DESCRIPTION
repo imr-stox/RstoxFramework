@@ -1,6 +1,6 @@
 Package: RstoxFramework
-Version: 1.2.16
-Date: 2020-08-25
+Version: 1.2.17
+Date: 2020-08-26
 Title: The Engine of StoX
 Authors@R: c(
   person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
@@ -26,8 +26,8 @@ Imports:
     jsonvalidate (>= 1.1.0),
     sp (>= 1.3.2),
     xml2 (>= 1.2.2),
-    RstoxData (>= 1.0.4),
-    RstoxBase (>= 1.2.22)
+    RstoxData (>= 1.0.5),
+    RstoxBase (>= 1.2.23)
 Suggests: 
     testthat
 Additional_repositories: 

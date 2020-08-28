@@ -15,7 +15,7 @@ runProcess(
   purge.processData = FALSE,
   replaceArgs = list(),
   replaceData = NULL,
-  output.file.type = c("text", "binary")
+  output.file.type = c("default", "text", "RData", "rds")
 )
 }
 \arguments{

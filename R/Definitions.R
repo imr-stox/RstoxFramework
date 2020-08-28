@@ -51,6 +51,12 @@ initiateRstoxFramework <- function(){
         )
     )
     
+    default.output.file.type <- list(
+        baseline = "text", 
+        analysis = "RData", 
+        report = "text"
+    )
+    
     # Define the requested (all) function attributes:
     requestedFunctionAttributeNames <- c(
         "packageName", 

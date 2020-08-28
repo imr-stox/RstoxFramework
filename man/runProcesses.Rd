@@ -17,7 +17,7 @@ runProcesses(
   purge.processData = FALSE,
   replaceDataList = list(),
   replaceArgs = list(),
-  output.file.type = c("text", "binary"),
+  output.file.type = c("default", "text", "RData", "rds"),
   ...
 )
 }

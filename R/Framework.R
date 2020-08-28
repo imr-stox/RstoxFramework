@@ -652,9 +652,14 @@ readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     
     # Run the appropriate reading function:
     functionName <- paste0("readProjectDescription", type)
-    do.call(functionName, list(
+    projectDescription <- do.call(functionName, list(
         projectDescriptionFile = projectDescriptionFile
-    ))    
+    ))
+    
+    # Introduce process IDs: 
+    projectDescription <- defineProcessIDs(projectDescription)
+    
+    return(projectDescription)
 }
 
 #readProjectXML <- function(projectXMLFile) {
@@ -689,8 +694,8 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
     
     projectDescription <- json$project$models
     
-    # Introduce process IDs: 
-    projectDescription <- defineProcessIDs(projectDescription)
+    ### # Introduce process IDs: 
+    ### projectDescription <- defineProcessIDs(projectDescription)
     
     # Convert geojson to spatial object:
     projectDescription <- convertGeojsonToProcessData(projectDescription)
@@ -785,6 +790,9 @@ writeProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     # Get the file to write it to:
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
     
+    # Unname the models (removing procecssIDs):
+    projectDescription <- lapply(projectDescription, unname)
+    
     # Run the appropriate saveing function:
     functionName <- paste0("writeProjectDescription", type)
     do.call(functionName, list(
@@ -817,8 +825,8 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     # Convert spatial to geojson string, and write to temporary files for modifying the project.json to have geojson instead of geojson string: 
     projectDescription <- convertProcessDataToGeojson(projectDescription)
     
-    # Unname the models (removing procecssIDs):
-    projectDescription <- lapply(projectDescription, unname)
+    ###  # Unname the models (removing procecssIDs):
+    ###  projectDescription <- lapply(projectDescription, unname)
     
     # Add attributes and wrap the models into an object:
     projectDescription <- list(
@@ -3319,7 +3327,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("text", "binary")) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds")) {
     
     # Get the function argument and the process info:
     functionArguments <- getFunctionArguments(
@@ -3862,9 +3870,14 @@ getProcessNameFromProcessID <- function(projectPath, modelName, processID) {
 
 
 # Function to write process output to a text file in the output folder:
-writeProcessOutput <- function(processOutput, projectPath, modelName, processID, processName, output.file.type = c("text", "binary")) {
+writeProcessOutput <- function(processOutput, projectPath, modelName, processID, processName, output.file.type = c("default", "text", "RData", "rds")) {
     
     output.file.type <- match.arg(output.file.type)
+    
+    # Apply the default output.file.type if specified:
+    if(output.file.type == "default") {
+        output.file.type <- getRstoxFrameworkDefinitions("default.output.file.type")[[modelName]]
+    }
     
     # Return NULL for empty process output:
     if(length(processOutput)) {
@@ -3877,21 +3890,32 @@ writeProcessOutput <- function(processOutput, projectPath, modelName, processID,
             name = modelName
         )
         
-        #processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, processID = processID)
-        #fileNamesSansExt <- paste(processIndex, processName, names(processOutput), sep = "_")
-        
-        # Added on 2020-06-16. Add the data type in the file name only if multiple outputs:
-        if(length(processOutput) > 1) {
-            fileNamesSansExt <- paste(processName, names(processOutput), sep = "_")
+        # Store the process output:
+        if(output.file.type == "RData") {
+            # Define a single file output named by the process name:
+            fileNamesSansExt <- processName
+            filePathSansExt <- file.path(folderPath, fileNamesSansExt)
+            # Add file extension:
+            filePath <- paste(filePathSansExt, "RData", sep = ".")
+            
+            # Rename the process output to the process name:
+            assign(processName, processOutput)
+            # Write to RData file:
+            save(list = processName, file = filePath)
         }
         else {
-            fileNamesSansExt <- processName
+            # Added on 2020-06-16. Add the data type in the file name only if multiple outputs. If RData file is requested (default for analysis processes) do not split into individual files, and also apply reportFunctionOutputOne directly on the output data:
+            if(length(processOutput) > 1) {
+                fileNamesSansExt <- paste(processName, names(processOutput), sep = "_")
+            }
+            else {
+                fileNamesSansExt <- processName
+            }
+            filePathsSansExt <- file.path(folderPath, fileNamesSansExt)
+            
+            mapply(reportFunctionOutputOne, processOutput, filePathsSansExt, output.file.type = output.file.type)
         }
-        filePathsSansExt <- file.path(folderPath, paste(fileNamesSansExt))
         
-        # Set the file name:
-        mapply(reportFunctionOutputOne, processOutput, filePathsSansExt, output.file.type = output.file.type)
-        # lapply(processOutput, reportFunctionOutputOne)
     }
     else {
         NULL
@@ -3931,7 +3955,7 @@ reportFunctionOutputOne <- function(processOutputOne, filePathSansExt, output.fi
             }
         }
     }
-    else if(output.file.type == "binary") {
+    else if(output.file.type == "rds") {
         if(length(processOutputOne)){
             # Add file extension:
             filePath <- paste(filePathSansExt, "rds", sep = ".")
@@ -3940,7 +3964,7 @@ reportFunctionOutputOne <- function(processOutputOne, filePathSansExt, output.fi
         }
     }
     else {
-        stop("output.file.type must be one of \"text\" and \"binary\"")
+        stop("output.file.type must be one of \"text\", \"RData\" and \"rds\"")
     }
     
     
@@ -4084,7 +4108,7 @@ purgeOutput <- function(projectPath, modelName) {
 #' @export
 #' 
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
-runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, msg = TRUE, save = TRUE, force.restart = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceDataList = list(), replaceArgs = list(), output.file.type = c("text", "binary"), ...) {
+runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, msg = TRUE, save = TRUE, force.restart = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceDataList = list(), replaceArgs = list(), output.file.type = c("default", "text", "RData", "rds"), ...) {
 
     # Get the processIDs:
     processIndexTable <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)

@@ -16,7 +16,12 @@ Bootstrap <- function(
     
     # Identify the first process set for resampling by the BootstrapMethodTable:
     processIndexTable <- readProcessIndexTable(projectPath, modelName = "baseline")
-    startProcess <- min(match(BootstrapMethodTable$ProcessName, processIndexTable$processName))
+    resampleProcesses <- match(BootstrapMethodTable$ProcessName, processIndexTable$processName)
+    # Are there misspelled process names in the BootstrapMethodTable?:
+    if(any(is.na(resampleProcesses))) {
+        stop("The following process names in the BootstrapMethodTable are not names of existing processes: ", paste(BootstrapMethodTable$ProcessName[is.na(resampleProcesses)], collapse = ", "))
+    }
+    startProcess <- min(resampleProcesses)
     lastProcessID <- utils::tail(processIndexTable$processID, 1)
     
     # Run the baseline until the startProcess:
@@ -30,6 +35,7 @@ Bootstrap <- function(
     )
     preRunTo <- startProcess - 1
     if(activeProcessID < preRunTo) {
+        message("Running baseline until the first process to bootstrap...")
         temp <- runProcesses(projectPath, modelName = "baseline", endProcess = preRunTo)
     }
     

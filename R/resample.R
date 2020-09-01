@@ -10,19 +10,22 @@ Bootstrap <- function(
     projectPath, 
     # Table with ProcessName, ResamplingFunction, ResampleWithin, Seed:
     BootstrapMethodTable = data.table::data.table(), 
-    NumberOfBootstraps = 1L#, 
+    NumberOfBootstraps = 1L, 
+    OutputProcesses = character()
     #NumberOfCores = integer()
 ) {
     
     # Identify the first process set for resampling by the BootstrapMethodTable:
-    processIndexTable <- readProcessIndexTable(projectPath, modelName = "baseline")
-    resampleProcesses <- match(BootstrapMethodTable$ProcessName, processIndexTable$processName)
-    # Are there misspelled process names in the BootstrapMethodTable?:
-    if(any(is.na(resampleProcesses))) {
-        stop("The following process names in the BootstrapMethodTable are not names of existing processes: ", paste(BootstrapMethodTable$ProcessName[is.na(resampleProcesses)], collapse = ", "))
+    processIndexTable <- readProcessIndexTable(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = OutputProcesses, return.processIndex = TRUE)
+    
+    # Check the output processes:
+    if(length(OutputProcesses) && !all(OutputProcesses %in% processIndexTable$processName)) {
+        warning("The following processes specified in OutputProcesses were not recognized.")
+        OutputProcesses <- intersect(OutputProcesses, processIndexTable$processName)
     }
-    startProcess <- min(resampleProcesses)
-    lastProcessID <- utils::tail(processIndexTable$processID, 1)
+    if(!length(OutputProcesses)) {
+        stop("At least one avlid process name must be gievn in OutputProcesses")
+    }
     
     # Run the baseline until the startProcess:
     activeProcessID <- getProcessIndexFromProcessID(
@@ -33,7 +36,7 @@ Bootstrap <- function(
             modelName = "baseline"
         )$processID
     )
-    preRunTo <- startProcess - 1
+    preRunTo <- min(processIndexTable$processIndex) - 1
     if(activeProcessID < preRunTo) {
         message("Running baseline until the first process to bootstrap...")
         temp <- runProcesses(projectPath, modelName = "baseline", endProcess = preRunTo)
@@ -44,30 +47,14 @@ Bootstrap <- function(
     names(SeedTable) <- BootstrapMethodTable$ProcessName
     SeedList <- split(SeedTable, seq_len(nrow(SeedTable)))
     
+    # Create the replaceData input to runProcesses, which defines the seed for each bootstrap run:
+    replaceData <- createReplaceData(Seed = SeedList, BootstrapMethodTable = BootstrapMethodTable)
     
-    
-    
-    
-    createReplaceData <- function(Seed, BootstrapMethodTable) {
-        lapply(Seed, function(x) list(MoreArgs = list(Seed = x)))
-    }
-    addFunctionNameToReplaceData <- function(replaceData, BootstrapMethodTable) {
-        #browser()
-        out <- lapply(names(replaceData), function(name) 
-            c(
-                list(FunctionName = BootstrapMethodTable[ProcessName == name, ResampleFunction]), 
-                replaceData[[name]]
-            ))
-        names(out) <- names(replaceData)
-        return(out)
-    }
-    replaceData <- lapply(SeedList, createReplaceData, BootstrapMethodTable = BootstrapMethodTable)
-    replaceData <- lapply(replaceData, addFunctionNameToReplaceData, BootstrapMethodTable = BootstrapMethodTable)
     
     # Run the subset of the baseline model:
     bootstrapIndex <- seq_len(NumberOfBootstraps)
     BootstrapData <- RstoxData::mapplyOnCores(
-        FUN = runOneBootstrapSaveLastOutput, 
+        FUN = runOneBootstrapSaveOutput, 
         #NumberOfCores = NumberOfCores, 
         NumberOfCores = 1, 
         # Vector inputs:
@@ -77,71 +64,96 @@ Bootstrap <- function(
         # Other inputs:
         MoreArgs = list(
             projectPath = projectPath, 
-            startProcess = startProcess, 
-            lastProcessID = lastProcessID
+            startProcess = min(processIndexTable$processIndex), 
+            endProcess = max(processIndexTable$processIndex), 
+            outputProcessesIDs = OutputProcesses
         )
-        #replaceData = replaceData, 
-        #projectPath = projectPath, 
-        #startProcess = startProcess, 
-        #lastProcessID = lastProcessID, 
-        #NumberOfBootstraps = NumberOfBootstraps
     )
     
-    if(is.list(BootstrapData[[1]]) && !data.table::is.data.table(BootstrapData[[1]])){
-        tableNames <- names(BootstrapData[[1]])
-        BootstrapData <- lapply(tableNames, rbindlistByName, x = BootstrapData)
-        names(BootstrapData) <- tableNames
-    }
-    else {
-        BootstrapData <- structure(list(data.table::rbindlist(BootstrapData)), names = names(BootstrapData[[1]]))
-    }
-    #stop(1231)
+    # Get the data types to return:
+    dataTypeNames <- names(BootstrapData[[1]])
+    BootstrapData <- lapply(dataTypeNames, rbindlistByName, x = BootstrapData)
+    names(BootstrapData) <- dataTypeNames
     
+    # Drop the list for data types with only one table:
+    for(dataType in names(BootstrapData)) {
+        if(isProcessOutputDataType(BootstrapData[[dataType]])) {
+            BootstrapData[[dataType]] <- BootstrapData[[dataType]][[1]]
+        }
+    }
+
     return(BootstrapData)
 }
 
 
+
+
+rbindlistByName <- function(name, x) {
+    subnames <- names(x[[1]][[name]])
+    out <- lapply(subnames, rbindSublistByName, name, x)
+    names(out) <- subnames
+    return(out)
+}
+rbindSublistByName <- function(subname, name, x) {
+    data.table::rbindlist(lapply(x, function(y) y[[name]][[subname]]))
+}
+
+
+# Function to create a list of the ReplaceData input to runProcesses(), 
+createReplaceDataSansFunctionName <- function(Seed, BootstrapMethodTable) {
+    lapply(Seed, function(x) list(MoreArgs = list(Seed = x)))
+}
+addFunctionNameToReplaceData <- function(replaceData, BootstrapMethodTable) {
+    out <- lapply(names(replaceData), function(name) 
+        c(
+            list(FunctionName = BootstrapMethodTable[ProcessName == name, ResampleFunction]), 
+            replaceData[[name]]
+        ))
+    names(out) <- names(replaceData)
+    return(out)
+}
+createReplaceData <- function(Seed, BootstrapMethodTable) {
+    replaceData <- lapply(Seed, createReplaceDataSansFunctionName, BootstrapMethodTable = BootstrapMethodTable)
+    replaceData <- lapply(replaceData, addFunctionNameToReplaceData, BootstrapMethodTable = BootstrapMethodTable)
+    return(replaceData)
+}
+
+
 # Define a function to run processes and save the output of the last process to the output folder:
-runOneBootstrapSaveLastOutput <- function(ind, Seed, replaceData, projectPath, startProcess, lastProcessID) {
+runOneBootstrapSaveOutput <- function(ind, Seed, replaceData, projectPath, startProcess, endProcess, outputProcessesIDs) {
     
     # Re-run the baseline:
-    runProcesses(projectPath, modelName = "baseline", startProcess = startProcess, endProcess = Inf, save = FALSE, fileOutput = FALSE, setUseProcessDataToTRUE = FALSE, replaceData = replaceData, msg = FALSE)
-    # ... and get the last process output:
-    lastProcessOutput <- getProcessOutput(projectPath, modelName = "baseline", processID = lastProcessID, drop.datatype = FALSE)
+    runProcesses(
+        projectPath, 
+        modelName = "baseline", 
+        startProcess = startProcess, 
+        endProcess = endProcess, 
+        save = FALSE, 
+        fileOutput = FALSE, 
+        setUseProcessDataToTRUE = FALSE, 
+        replaceData = replaceData, 
+        msg = FALSE
+    )
     
-    # Add Bootstrap run ID:
-    for(dataType in names(lastProcessOutput)) {
-        lastProcessOutput[[dataType]][, BootstrapID := ..ind]
+    # Get the requested outputs:
+    processOutput <- getModelData(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processes = outputProcessesIDs, 
+        drop.datatype = FALSE
+    )
+    
+    # Add bootstrap IDs to the processOutput:
+    for(dataType in names(processOutput)) {
+        for(table in names(processOutput[[dataType]])) {
+            # This did not work for some reason (https://stackoverflow.com/questions/51877642/adding-a-column-by-reference-to-every-data-table-in-a-list-does-not-stick):
+            # processOutput[[dataType]][[table]][, BootstrapID := ..ind]
+            # So we do it not by reference:
+            processOutput[[dataType]][[table]]$BootstrapID <- ind
+        }
     }
     
-    return(lastProcessOutput)
-    
-    # Get the resample function for this bootstrap run:
-    ###  thisReplaceData <- lapply(replaceData, "[[", ind)
-    # Re-run the baseline:
-    ### runProcesses(projectPath, modelName = "baseline", startProcess = startProcess, endProcess = Inf, save = FALSE, fileOutput = FALSE, setUseProcessDataToTRUE = FALSE, replaceData = thisReplaceData, msg = FALSE)
-    # Get the last process output:
-    ###  lastProcessOutput <- getProcessOutput(projectPath, modelName = "baseline", processID = lastProcessID, drop.datatype = FALSE)
-    # Save the last process output:
-    ###writeProcessOutputMemoryFiles(
-    ###    processOutput = lastProcessOutput, 
-    ###    projectPath = projectPath, 
-    ###    modelName = "analysis", 
-    ###    processID = lastProcessID, 
-    ###    type = "output", 
-    ###    subfolder = getBootstrapRunName(ind, NumberOfBootstraps, prefix = "Run")
-    ###)
-    
-    # Add Bootstrap run ID:
-    #addBootstrapID(
-    #    lastProcessOutput, 
-    #    ind = ind
-    #)
-    ### for(dataType in names(lastProcessOutput)) {
-    ###     lastProcessOutput[[dataType]][, BootstrapID := ..ind]
-    ### }
-    ### 
-    ### return(lastProcessOutput)
+    return(processOutput)
 }
 
 
@@ -159,9 +171,7 @@ addBootstrapIDOne <- function(x, ind) {
 }
 
 
-rbindlistByName <- function(name, x) {
-    data.table::rbindlist(lapply(x, "[[", name))
-}
+
 
 #readBootstrap <- function(projectPath, processName) {
 #    # Bootstrap lives in the model "analysis" only:

@@ -7,7 +7,8 @@
 Bootstrap(
   projectPath,
   BootstrapMethodTable = data.table::data.table(),
-  NumberOfBootstraps = 1L
+  NumberOfBootstraps = 1L,
+  OutputProcesses = character()
 )
 }
 \arguments{

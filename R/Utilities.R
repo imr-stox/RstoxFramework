@@ -539,3 +539,10 @@ do.call_robust <- function(what, args, quote = FALSE, envir = parent.frame()) {
 
 
 
+isProcessOutputDataType <- function(processOutput) {
+    is.list(processOutput) && 
+    length(processOutput) == 1 && 
+    names(processOutput) %in% getRstoxFrameworkDefinitions("stoxDataTypes")$functionOutputDataType
+}
+
+

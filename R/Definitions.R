@@ -72,7 +72,8 @@ initiateRstoxFramework <- function(){
     # Define parameters that are needed to run processData functions or bootstrap functions (or other kinds of special functions):
     systemParameters <- c(
         "processData", 
-        "projectPath"
+        "projectPath", 
+        "outputDataPath"
     )
     
     # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
@@ -603,7 +604,7 @@ readProcessDataSchema <- function(packageName) {
 }
 
 
-extractStoxFunctionParameterPossibleValues <- function(functionName, systemParameters, dropProcessData = TRUE) {
+extractStoxFunctionParameterPossibleValues <- function(functionName, systemParameters, dropSystemParameters = TRUE) {
     
     # Split the function name into function name and package name, and get the formals in the package environment:
     packageFunctionName <- strsplit(functionName, "::")[[1]]
@@ -620,7 +621,7 @@ extractStoxFunctionParameterPossibleValues <- function(functionName, systemParam
     areMissing <- sapply(f, class) == "name" & sapply(f, function(x) length(x) > 0 & sum(nchar(x)) == 0)
     f[areMissing] <- vector("list", sum(areMissing))
     
-    if(dropProcessData) {
+    if(dropSystemParameters) {
         parameterNamesToKeep <- setdiff(names(f), systemParameters)
         f <- f[parameterNamesToKeep]
     }

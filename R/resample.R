@@ -7,13 +7,25 @@
 #' @export
 #' 
 Bootstrap <- function(
+    outputDataPath, 
     projectPath, 
     # Table with ProcessName, ResamplingFunction, ResampleWithin, Seed:
     BootstrapMethodTable = data.table::data.table(), 
     NumberOfBootstraps = 1L, 
-    OutputProcesses = character()
+    OutputProcesses = character(), 
+    UseOutputData = FALSE
     #NumberOfCores = integer()
 ) {
+    
+    # Use preivously generated output data if specified:
+    if(UseOutputData) {
+        outputData <- get(load(outputDataPath))
+        return(outputData)
+    }
+    
+    
+    readOutputData <- function() {}
+    
     
     # Identify the first process set for resampling by the BootstrapMethodTable:
     processIndexTable <- readProcessIndexTable(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = OutputProcesses, return.processIndex = TRUE)
@@ -138,7 +150,7 @@ runOneBootstrapSaveOutput <- function(ind, Seed, replaceData, projectPath, start
     # Get the requested outputs:
     processOutput <- getModelData(
         projectPath = projectPath, 
-        modelName = modelName, 
+        modelName = "baseline", 
         processes = outputProcessesIDs, 
         drop.datatype = FALSE
     )

@@ -779,7 +779,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             # Get the process table, which is needed to get the output data types from the prior processes for use in the function inputs:
             # scanForModelError is enough...
             #processTable <- getProcessTable(projectPath = projectPath, modelName = modelName, beforeProcessID = processID)
-            processTable <- scanForModelError(projectPath = projectPath, modelName = modelName, beforeProcessID = processID)
+            #processTable <- scanForModelError(projectPath = projectPath, modelName = modelName, beforeProcessID = processID)
+            processTable <- scanForModelError(projectPath = projectPath, modelName = NULL, beforeProcessID = processID)
             
             #thisProcessIndex <- which(processTable$processID == processID)
             #processTable <- processTable[seq_len(thisProcessIndex), ]
@@ -1230,83 +1231,6 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
     html
 }
 
-
-#' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
-#' 
-#' @inheritParams general_arguments
-#' 
-#' @export
-#' 
-getFilterOptions <- function(projectPath, modelName, processID, tableName) {
-    
-    # Here we need to accept that the process has not been run, and return empty filter options!!!!!!!!!!!!
-    
-    ### # Get the process output:
-    ### processOutput <- getProcessOutput(
-    ###     projectPath = projectPath, 
-    ###     modelName = modelName, 
-    ###     processID = processID, 
-    ###     tableName = tableName, 
-    ###     drop = TRUE
-    ### )
-    
-    # Run the process without saving and without filter:
-    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
-    # If the process output is a list of lists, unlist the top level and add names separated by slash:
-    processOutput <- unlistProcessOutput(processOutput)
-    
-    # Get the requested table:
-    if(tableName %in% names(processOutput)) {
-        processOutput <- processOutput[[tableName]]
-    }
-    else {
-        stop("Table name should be one of the following:\n\t", paste(names(processOutput), collapse = "\n\t"))
-    }
-    
-    # Convert to a list of tables:
-    #processOutput <- unlistToDataType(processOutput)
-    
-    ## Get a vector of table names:
-    #tableNames <- names(processOutput)
-    ## Select the requested table:
-    #if(! tableName %in% tableNames) {
-    #    stop("Invalid table. Choose one of the following: ", paste(tableNames, collapse = ", "))
-    #}
-    
-    # Get the column names:
-    #name <- names(processOutput[[tableName]])
-    name <- names(processOutput)
-    
-    # Get the data types:
-    #type <- sapply(processOutput[[tableName]], firstClass)
-    type <- sapply(processOutput, firstClass)
-    
-    # Get the operators:
-    operators <- getRstoxFrameworkDefinitions("filterOperators")[type]
-    
-    # Get a list of unique values for each column of each table:
-    #options <- getPossibleValuesOneTable(processOutput[[tableName]])
-    options <- getPossibleValuesOneTable(processOutput)
-    options <- lapply(options, getOptionList)
-    
-     
-    output <- mapply(
-        list, 
-        name = name, 
-        type = type, 
-        operators = operators, 
-        options = options, 
-        SIMPLIFY = FALSE
-    )
-    # Add the fields level:
-    output <- list(
-        fields = output
-    )
-    
-    
-    # Return a list of the tableNames, columnNames and possibleValues:
-    return(output)
-}
 
 
 #' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.

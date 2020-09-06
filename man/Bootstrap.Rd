@@ -5,10 +5,12 @@
 \title{Bootstrap the baseline model}
 \usage{
 Bootstrap(
+  outputDataPath,
   projectPath,
   BootstrapMethodTable = data.table::data.table(),
   NumberOfBootstraps = 1L,
-  OutputProcesses = character()
+  OutputProcesses = character(),
+  UseOutputData = FALSE
 )
 }
 \arguments{

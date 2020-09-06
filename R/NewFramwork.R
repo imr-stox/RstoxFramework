@@ -119,7 +119,7 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
         )
     }
     else {
-        stop("modelName must be given if any of processID and argumentName are given, and processID must be given if argumentName is given. Also when rewuesting more than one modelName or processID, the following parameter must be empty.")
+        stop("modelName must be given if any of processID and argumentName are given, and processID must be given if argumentName is given. Also when requesting more than one modelName or processID, the following parameter must be empty.")
     }
     
     # Read the pointer files:
@@ -153,7 +153,7 @@ getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL
     # Read the memory files:
     output <- rapply(argumentFilePaths, readRDS, how = "replace")
     
-    # Drop the levels with only one elements if requested:
+    # Drop the levels with only one element if requested:
     if(drop1) {
         if(length(modelName) == 1) {
             output <- output[[modelName]]

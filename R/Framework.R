@@ -1473,7 +1473,7 @@ unReDoProject <- function(projectPath, shift = 0) {
     #    copy.date = TRUE
     #)
     
-    # Rewrite the text file holding processIndexTable, activeProcessIDTable and maxProcessIntegerIDTable:
+    # Rewrite the text file holding processIndexTable, activeProcessIDTable and maxProcessIntegerID:
     unwrapProjectMemoryFile(fileWithNewCurrentProjectMemory)
 }
 
@@ -1492,7 +1492,7 @@ unwrapProjectMemoryFile <- function(projectMemoryFile) {
     writeActiveProcessIDFromTable(projectPath, projectMemory$activeProcessIDTable)
     
     # Unwrap and overwrite the maximum process integer ID file:
-    writeMaxProcessIntegerIDTable(projectPath, projectMemory$maxProcessIntegerIDTable)
+    writeMaxProcessIntegerID(projectPath, projectMemory$maxProcessIntegerID)
     
     stop("Here we need to code replacing the memory files!!!!!!!!!!!!!")
 }
@@ -1595,7 +1595,7 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
                 names(hitsAnd) <- conditionNames
                 for(conditionName in conditionNames) {
                     # Added requirement that functionArguments[[conditionName]] has positie length:
-                    if(length(functionArguments[[conditionName]]) && functionArguments[[conditionName]] %in% functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]]) {
+                    if(length(functionArguments[[conditionName]]) && functionArguments[[conditionName]] %in% eval(functionArgumentHierarchy[[atArgumentName[ind]]][[conditionName]])) {
                         hitsAnd[conditionName] <- TRUE
                     }
                 }
@@ -2223,7 +2223,8 @@ scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, bef
     # Get the processes:
     processTable <- getProcessesSansProcessData(
         projectPath = projectPath, 
-        modelName = modelName, 
+        #modelName = modelName, 
+        modelName = NULL, 
         afterProcessID = afterProcessID, 
         beforeProcessID = beforeProcessID, 
         argumentFilePaths = argumentFilePaths, 
@@ -2238,7 +2239,8 @@ scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, bef
     processTable$functionOutputDataType <- mapply(
         getDataType, 
         projectPath = projectPath, 
-        modelName = modelName, 
+        #modelName = modelName, 
+        modelName = processTable$modelName, 
         processID = processTable$processID, 
         MoreArgs = list(argumentFilePaths = argumentFilePaths), 
         SIMPLIFY = TRUE
@@ -2256,6 +2258,12 @@ scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, bef
         }
         # Do any of the funciton inputs have error?
         processTable$functionInputError[processIndex] <- any(functionInputError)
+    }
+    
+    # Extract the requested model:
+    if(length(modelName)) {
+        toKeep <- processTable$modelName == modelName
+        processTable <- subset(processTable, toKeep)
     }
     
     return(processTable)
@@ -2287,7 +2295,8 @@ getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID =
     processParameters <- mapply(
         getProcessParameters, 
         projectPath = projectPath, 
-        modelName = modelName, 
+        #modelName = modelName, 
+        modelName = processTable$modelName, 
         processID = processTable$processID, 
         MoreArgs = list(argumentFilePaths = argumentFilePaths), 
         SIMPLIFY = FALSE
@@ -2299,11 +2308,31 @@ getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID =
     )
     
     ##### (2) Add function inputs: #####
-    functionInputs <- lapply(processTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = only.valid, argumentFilePaths = argumentFilePaths))
+    #functionInputs <- lapply(processTable$processID, function(processID) getFunctionInputs(projectPath, modelName, processID, only.valid = only.valid, argumentFilePaths = argumentFilePaths))
+    functionInputs <- mapply(
+        getFunctionInputs, 
+        projectPath = projectPath, 
+        modelName = processTable$modelName, 
+        processID = processTable$processID, 
+        MoreArgs = list(
+            only.valid = only.valid, 
+            argumentFilePaths = argumentFilePaths
+        )
+    )
     processTable[, functionInputs := ..functionInputs]
     
     ##### (3) Add function parameters: #####
-    functionParameters <- lapply(processTable$processID, function(processID) getFunctionParameters(projectPath, modelName, processID, only.valid = only.valid, argumentFilePaths = argumentFilePaths))
+    #functionParameters <- lapply(processTable$processID, function(processID) getFunctionParameters(projectPath, modelName, processID, only.valid = only.valid, argumentFilePaths = argumentFilePaths))
+    functionParameters <- mapply(
+        getFunctionParameters, 
+        projectPath = projectPath, 
+        modelName = processTable$modelName, 
+        processID = processTable$processID, 
+        MoreArgs = list(
+            only.valid = only.valid, 
+            argumentFilePaths = argumentFilePaths
+        )
+    )
     processTable[, functionParameters := ..functionParameters]
     
     return(processTable)
@@ -2358,7 +2387,8 @@ getProcessAndFunctionNames <- function(projectPath, modelName, afterProcessID = 
     functionName <- mapply(
         getFunctionName, 
         projectPath = projectPath, 
-        modelName = modelName, 
+        #modelName = modelName, 
+        modelName = processIndexTable$modelName, 
         processID = processIndexTable$processID, 
         MoreArgs = list(argumentFilePaths = argumentFilePaths)
     )
@@ -2416,7 +2446,7 @@ checkFunctionInput <- function(functionInput, functionInputDataType, processInde
 checkFunctionInputs <- function(processIndexTable) {
     # Get the function input name and value paris:
     functionInput <- processIndexTable$functionInputs[[nrow(processIndexTable)]]
-    functionInputDataType <- processIndexTable$functionOutputDataType[[nrow(processIndexTable)]]
+    functionInputDataType <- names(processIndexTable$functionInputs[[nrow(processIndexTable)]])
     functionInputError <- mapply(
         checkFunctionInput, 
         functionInput = functionInput, 
@@ -3088,54 +3118,44 @@ getMaxProcessIntegerID <- function(projectPath) {
     
     # If missing, create the file as an empty file:
     if(!file.exists(maxProcessIntegerIDFile)) {
-        stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
-        maxProcessIntegerIDTable <- data.table::data.table(array(0, dim = c(1, length(stoxModelNames))))
-        names(maxProcessIntegerIDTable) <- stoxModelNames
+        #stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
+        #maxProcessIntegerIDTable <- data.table::data.table(array(0, dim = c(1, length(stoxModelNames))))
+        #names(maxProcessIntegerIDTable) <- stoxModelNames
+        maxProcessIntegerID <- 0
     }
     else {
-        maxProcessIntegerIDTable <- data.table::fread(maxProcessIntegerIDFile, sep = "\t")
+        #maxProcessIntegerIDTable <- data.table::fread(maxProcessIntegerIDFile, sep = "\t")
+        maxProcessIntegerID <- as.numeric(readLines(maxProcessIntegerIDFile, 1))
     }
     
-    return(maxProcessIntegerIDTable)
+    return(maxProcessIntegerID)
 }
 
-writeMaxProcessIntegerIDTable <- function(projectPath, maxProcessIntegerIDTable) {
+writeMaxProcessIntegerID <- function(projectPath, maxProcessIntegerID) {
     # Get the file containing the maximum process integer ID:
     maxProcessIntegerIDFile <- getProjectPaths(projectPath, "maxProcessIntegerIDFile")
     # Write the new maximum process integer ID:
-    data.table::fwrite(maxProcessIntegerIDTable, maxProcessIntegerIDFile, sep = "\t")
+    #data.table::fwrite(maxProcessIntegerIDTable, maxProcessIntegerIDFile, sep = "\t")
+    writeLines(as.character(maxProcessIntegerID), maxProcessIntegerIDFile)
 }
 
 
 
 
-createNewProcessID <- function(projectPath, modelName, n = 1) {
-    ## Get the file containing the maximum process integer ID:
-    #maxProcessIntegerIDFile <- getProjectPaths(projectPath, "maxProcessIntegerIDFile")
-    #
-    ## If missing, create the file as an empty file:
-    #if(!file.exists(maxProcessIntegerIDFile)) {
-    #    stoxModelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
-    #    maxProcessIntegerIDTable <- data.table::data.table(array(0, dim = c(1, length(stoxModelNames))))
-    #    names(maxProcessIntegerIDTable) <- stoxModelNames
-    #}
-    #else {
-    #    maxProcessIntegerIDTable <- data.table::fread(maxProcessIntegerIDFile, sep = "\t")
-    #}
-    
-    
-    
-    maxProcessIntegerIDTable <- getMaxProcessIntegerID(projectPath)
+#createNewProcessID <- function(projectPath, modelName, n = 1) {
+createNewProcessID <- function(projectPath, n = 1) {
+        
+    # Get the maximum  process integer ID:
+    maxProcessIntegerID <- getMaxProcessIntegerID(projectPath)
     
     # Add 1 to the current process integer ID of the model
-    processIntegerID <- maxProcessIntegerIDTable[[modelName]] + seq_len(n)
-    maxProcessIntegerIDTable[[modelName]] <- max(processIntegerID)
+    processIntegerID <- maxProcessIntegerID + seq_len(n)
+    maxProcessIntegerID <- max(processIntegerID)
     
     # Write the new maximum process integer ID:
-    #data.table::fwrite(maxProcessIntegerIDTable, maxProcessIntegerIDFile, sep = "\t")
-    writeMaxProcessIntegerIDTable(
+    writeMaxProcessIntegerID(
         projectPath = projectPath, 
-        maxProcessIntegerIDTable = maxProcessIntegerIDTable
+        maxProcessIntegerID = maxProcessIntegerID
     )
     
     # Create the processID and return this:
@@ -3192,8 +3212,8 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive 
     
     # Get the process ID:
     processID <- createNewProcessID(
-        projectPath = projectPath, 
-        modelName = modelName
+        projectPath = projectPath#, 
+        #modelName = modelName
     )
     
     # Store the changes:

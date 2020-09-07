@@ -9,7 +9,7 @@
 \usage{
 getProcessTable(
   projectPath,
-  modelName,
+  modelName = NULL,
   afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL,
@@ -18,7 +18,7 @@ getProcessTable(
 
 scanForModelError(
   projectPath,
-  modelName,
+  modelName = NULL,
   afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL,
@@ -27,7 +27,7 @@ scanForModelError(
 
 getProcessesSansProcessData(
   projectPath,
-  modelName,
+  modelName = NULL,
   afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL,
@@ -36,7 +36,7 @@ getProcessesSansProcessData(
 
 getProcessAndFunctionNames(
   projectPath,
-  modelName,
+  modelName = NULL,
   afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL

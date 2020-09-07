@@ -1996,7 +1996,8 @@ addToProcessIndexTable <- function(projectPath, modelName, processID, processNam
     processIndexTable <- readProcessIndexTable(projectPath = projectPath)
     
     # Get the default 'afterIndex':
-    nrowProcessIndexTable <- nrow(processIndexTable)
+    atModel <- processIndexTable$modelName == modelName
+    nrowProcessIndexTable <- length(atModel)
     if(length(afterIndex) == 0) {
         afterIndex <- nrowProcessIndexTable
     }
@@ -2044,10 +2045,11 @@ removeFromProcessIndexTable <- function(projectPath, modelName, processID) {
 rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterProcessID) {
     
     # Get the process index file:
-    processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
+    #processIndexTable <- readProcessIndexTable(projectPath = projectPath, modelName = modelName)
+    processIndexTable <- readProcessIndexTable(projectPath = projectPath)
     processIndex <- seq_len(nrow(processIndexTable))
     
-    # Add the process ID and as the process after 'afterProcessID':
+    # Add the process ID as the process after 'afterProcessID':
     toRearrange <- match(paste(modelName, processID), paste(processIndexTable$modelName, processIndexTable$processID))
     notToRearrange <- setdiff(processIndex, toRearrange)
     rearranged <- processIndexTable[toRearrange, ]
@@ -2166,7 +2168,7 @@ modifyProcessNameInFunctionInputs <- function(projectPath, modelName, processNam
 #' 
 #' @export
 #' 
-getProcessTable <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE) {
+getProcessTable <- function(projectPath, modelName = NULL, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE) {
     
     # Maybe we should set only.valid to FALSE by default, just as is done in scanForModelError()???
     
@@ -2213,7 +2215,7 @@ getProcessTable <- function(projectPath, modelName, afterProcessID = NULL, befor
 #' @export
 #' @rdname getProcessTable
 #' 
-scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE) {
+scanForModelError <- function(projectPath, modelName = NULL, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE) {
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -2272,7 +2274,7 @@ scanForModelError <- function(projectPath, modelName, afterProcessID = NULL, bef
 #' @export
 #' @rdname getProcessTable
 #' 
-getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = FALSE) {
+getProcessesSansProcessData <- function(projectPath, modelName = NULL, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = FALSE) {
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -2341,7 +2343,7 @@ getProcessesSansProcessData <- function(projectPath, modelName, afterProcessID =
 #' @export
 #' @rdname getProcessTable
 #' 
-getProcessAndFunctionNames <- function(projectPath, modelName, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
+getProcessAndFunctionNames <- function(projectPath, modelName = NULL, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -3377,6 +3379,39 @@ removeProcess <- function(projectPath, modelName, processID) {
 }
 
 
+#' Duplicate a StoX process.
+#' 
+#' @inheritParams Projects
+#' @inheritParams getProcessOutput
+#' @param newProcessName The name of the new process. The default is the name of the process to copy added "_copy".
+#' 
+#' @export
+#' 
+duplicateProcess <- function(projectPath, modelName, processID, newProcessName = NULL) {
+    
+    # Get the process to copy:
+    processToCopy <- getProcess(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
+    # Set the name of the new process:
+    if(length(newProcessName)) {
+        processToCopy$processName <- newProcessName
+    }
+    else {
+        processToCopy$processName <- paste(processToCopy$processName, "copy", sep = "_")
+    }
+    
+    addProcess(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        values = processToCopy
+    )
+}
+
+
 #' 
 #' @export
 #' 
@@ -4287,10 +4322,21 @@ writeProcessOutputTables <- function(processOutput, folderPath, writeOrderFile =
 getOutputDepth <- function(x) {
     outputDepth <- 1
     validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
-    if(is.list(x[[1]]) && length(x[[1]]) && firstClass(x[[1]][[1]]) %in% validOutputDataClasses) {
+    #if(is.list(x[[1]]) && length(x[[1]]) && firstClass(x[[1]][[1]]) %in% validOutputDataClasses) {
+    #    outputDepth <- 2
+    #}
+    #else if(is.list(x[[1]][[1]]) && length(x[[1]][[1]]) && firstClass(x[[1]][[1]][[1]]) %in% validOutputDataClasses#) {
+    #    stop("Only data with 2 levels are possible in StoX.")
+    #}
+    
+    isValidOutputData <- function(x) {
+        is.list(x[[1]]) && !firstClass(x[[1]]) %in% validOutputDataClasses && firstClass(x[[1]][[1]]) %in% validOutputDataClasses
+    }
+    
+    if(isValidOutputData(x)) {
         outputDepth <- 2
     }
-    else if(is.list(x[[1]][[1]]) && length(x[[1]][[1]]) && firstClass(x[[1]][[1]][[1]]) %in% validOutputDataClasses) {
+    else if(length(x[[1]]) && isValidOutputData(x[[1]][[1]])) {
         stop("Only data with 2 levels are possible in StoX.")
     }
     outputDepth

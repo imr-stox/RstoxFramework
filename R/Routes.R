@@ -954,7 +954,7 @@ cellToJSONString <- function(DT, cols) {
 }
 cellToJSONStringOne <- function(x) {
     if(length(x) == 0) {
-        warning("StoX: Length 1 required for process properties except possibleValues.")
+        #warning("StoX: Length 1 required for process properties except possibleValues.")
         x <- ""
     }
     if(!is.character(x)) {

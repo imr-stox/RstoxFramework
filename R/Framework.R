@@ -2319,7 +2319,8 @@ getProcessesSansProcessData <- function(projectPath, modelName = NULL, afterProc
         MoreArgs = list(
             only.valid = only.valid, 
             argumentFilePaths = argumentFilePaths
-        )
+        ), 
+        SIMPLIFY = FALSE
     )
     processTable[, functionInputs := ..functionInputs]
     
@@ -2333,7 +2334,8 @@ getProcessesSansProcessData <- function(projectPath, modelName = NULL, afterProc
         MoreArgs = list(
             only.valid = only.valid, 
             argumentFilePaths = argumentFilePaths
-        )
+        ), 
+        SIMPLIFY = FALSE
     )
     processTable[, functionParameters := ..functionParameters]
     

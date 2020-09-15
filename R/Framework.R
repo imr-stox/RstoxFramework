@@ -2482,6 +2482,40 @@ createEmptyProcess <- function(modelName = "baseline", processName = NULL) {
 }
 
 
+createProcess <- function(modelName = "baseline", values) {
+    # Get the default process with empty fields for project and function name, process data, and function parameters and inputs:
+    process <- getRstoxFrameworkDefinitions("processDefault")[[modelName]]
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    
+    
+    
+    process
+}
+
+
 # Function to detect which of the process parameters to include/exclude:
 getPossibleProcessParameterNames <- function() {
     # Before this funciton was functionName specific, but all process parameters are included for all processes, and then irrelevant ones are hidden in process properies in StoX.

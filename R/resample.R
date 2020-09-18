@@ -32,7 +32,7 @@ Bootstrap <- function(
     
     # Check the output processes:
     if(length(OutputProcesses) && !all(OutputProcesses %in% processIndexTable$processName)) {
-        warning("The following processes specified in OutputProcesses were not recognized.")
+        warning("The following processes specified in OutputProcesses were not recognized: ", paste(setdiff(OutputProcesses, processIndexTable$processName), collapse = ", "))
         OutputProcesses <- intersect(OutputProcesses, processIndexTable$processName)
     }
     if(!length(OutputProcesses)) {

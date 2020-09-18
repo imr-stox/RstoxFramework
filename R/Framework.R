@@ -501,18 +501,30 @@ closeProject <- function(projectPath, save = NULL, msg =TRUE) {
 #' @export
 #' @rdname Projects
 #' 
-saveProject <- function(projectPath, type = c("RData", "JSON")) {
+saveProject <- function(projectPath, type = c("RData", "JSON"), force = FALSE) {
+    
+    if(isSaved(projectPath) && !force) {
+        output <- list(
+            projectPath = projectPath, 
+            projectName = basename(projectPath), 
+            saved = TRUE
+        )
+        return(output)
+    }
+    
     # Get the current project description and save it to the project.RData file:
     writeProjectDescription(projectPath, type = type)
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     
     # Return the project path project name and saved status:
-    list(
+    output <- output <- list(
         projectPath = projectPath, 
         projectName = basename(projectPath), 
         saved = isSaved(projectPath)
     )
+    
+    return(output)
 }
 #' 
 #' @export
@@ -2482,6 +2494,40 @@ createEmptyProcess <- function(modelName = "baseline", processName = NULL) {
 }
 
 
+createProcess <- function(modelName = "baseline", values) {
+    # Get the default process with empty fields for project and function name, process data, and function parameters and inputs:
+    process <- getRstoxFrameworkDefinitions("processDefault")[[modelName]]
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    # Add process name:
+    if(length(values$processName) && !is.na(values$processName) && nchar(values$processName) > 0) {
+        process$processName <- values$processName
+    }
+    
+    
+    
+    process
+}
+
+
 # Function to detect which of the process parameters to include/exclude:
 getPossibleProcessParameterNames <- function() {
     # Before this funciton was functionName specific, but all process parameters are included for all processes, and then irrelevant ones are hidden in process properies in StoX.
@@ -4379,6 +4425,11 @@ purgeOutput <- function(projectPath, modelName) {
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
 runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, msg = TRUE, save = TRUE, force.restart = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceDataList = list(), replaceArgs = list(), output.file.type = c("default", "text", "RData", "rds"), ...) {
 
+    # Save both before and after for safety:
+    if(save) {
+        saveProject(projectPath)
+    }
+    
     # Get the processIDs:
     processIndexTable <- readProcessIndexTable(projectPath, modelName, startProcess = startProcess, endProcess = endProcess)
     processIDs <- processIndexTable$processID

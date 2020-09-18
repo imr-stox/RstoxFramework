@@ -286,6 +286,11 @@ initiateRstoxFramework <- function(){
         description = stoxModelDescriptions
     )
     
+    # Backwards compatibility:
+    # Get the mapping between models iin 
+    modelNameMapping2.7To3 <- structure(c("baseline", "analysis", "report", "report"), names = c("baseline", "r", "baseline-report", "r-report"))
+    
+    
     # Define the folder structure of StoX:
     stoxFolderStructure <- list(
         stoxDataSourceFolders, 

@@ -564,8 +564,13 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
         RstoxBase::getStratumNames(StratumPolygon$StratumPolygon)
     )
     if(length(atModify)) {
-    #if(!any(is.na(atModify))) {
-            StratumPolygon$StratumPolygon@polygons[atModify] <- stratum@polygons
+        # Set ID of the new strata:
+        for(ind in seq_along(stratum@polygons)) {
+            stratum@polygons[[ind]]@ID <- StratumPolygon$StratumPolygon@polygons[[atModify[ind]]]@ID
+        }
+        
+        # Insert the new strata
+        StratumPolygon$StratumPolygon@polygons[atModify] <- stratum@polygons
     }
     
     # Set the StratumPolygon back to the process data of the process:

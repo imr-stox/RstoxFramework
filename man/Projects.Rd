@@ -28,7 +28,7 @@ openProject(
 
 closeProject(projectPath, save = NULL, msg = TRUE)
 
-saveProject(projectPath, type = c("RData", "JSON"))
+saveProject(projectPath, type = c("RData", "JSON"), force = FALSE)
 
 saveAsProject(projectPath, newProjectPath, ow = FALSE)
 

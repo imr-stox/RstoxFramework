@@ -361,3 +361,10 @@ backwardCompatibility <- list(
     # rename_DefineStratumPolygon_to_DefineStratum, 
     split_ReadBioticXML_to_ReadBiotic_and_StoxBiotic
 )
+
+
+
+
+
+
+

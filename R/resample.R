@@ -23,10 +23,6 @@ Bootstrap <- function(
         return(outputData)
     }
     
-    
-    readOutputData <- function() {}
-    
-    
     # Identify the first process set for resampling by the BootstrapMethodTable:
     processIndexTable <- readProcessIndexTable(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = OutputProcesses, return.processIndex = TRUE)
     
@@ -48,7 +44,8 @@ Bootstrap <- function(
             modelName = "baseline"
         )$processID
     )
-    preRunTo <- min(processIndexTable$processIndex) - 1
+    #preRunTo <- min(processIndexTable$processIndex) - 1
+    preRunTo <- min(processIndexTable$processIndex)
     if(activeProcessID < preRunTo) {
         message("Running baseline until the first process to bootstrap...")
         temp <- runProcesses(projectPath, modelName = "baseline", endProcess = preRunTo)
@@ -141,6 +138,7 @@ runOneBootstrapSaveOutput <- function(ind, Seed, replaceData, projectPath, start
         startProcess = startProcess, 
         endProcess = endProcess, 
         save = FALSE, 
+        saveProcessData = FALSE, 
         fileOutput = FALSE, 
         setUseProcessDataToTRUE = FALSE, 
         replaceData = replaceData, 
@@ -239,11 +237,9 @@ getReplaceData <- function(x, size) {
 
 
 
-#' Resamples biotic PSUs
+#' Resamples StoX data
 #' 
-#' This function resamples PSUs with replacement by altering the LengthDistributionWeight.
-#' 
-#' @param LengthDistributionData The \code{\link[RstoxBase]{LengthDistributionData}} to resample Hauls in.
+#' This function resamples PSUs with replacement by altering the input data
 #' 
 #' @export
 #' 
@@ -260,7 +256,7 @@ resampleDataBy <- function(data, seed, varToScale, varToResample, resampleBy) {
     data.table::setnames(seedTable, c(resampleBy, "seed"))
     data <- merge(data, seedTable, by = resampleBy)
     
-    # Resample the Hauls:
+    # Resample the data:
     data[, eval(varToScale) := resampleOne(.SD, seed = seed[1], varToScale = varToScale, varToResample = varToResample), by = resampleBy]
     
     data[, seed := NULL]
@@ -363,7 +359,7 @@ ResampleMeanLengthDistributionData <- function(MeanLengthDistributionData, Seed)
 ResampleBioticAssignment <- function(BioticAssignment, Seed) {
     # Resample PSUs within Strata, modifying the weighting variable of BioticAssignment:
     BioticAssignment <- resampleDataBy(
-        data = BioticAssignment, 
+        data = BioticAssignment$BioticAssignment, 
         seed = Seed, 
         varToScale = "WeightingFactor", 
         varToResample = "Haul", 

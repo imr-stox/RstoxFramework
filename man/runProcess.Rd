@@ -9,7 +9,7 @@ runProcess(
   modelName,
   processID,
   msg = TRUE,
-  save = TRUE,
+  saveProcessData = TRUE,
   fileOutput = NULL,
   setUseProcessDataToTRUE = TRUE,
   purge.processData = FALSE,

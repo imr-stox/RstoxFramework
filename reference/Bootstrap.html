@@ -72,19 +72,13 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.23</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.24</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
       </ul>
@@ -117,14 +111,14 @@
     <p>Run a subset of the baseline model a number of times after resampling e.g. Hauls in each Stratum, EDUSs in each Stratum.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>Bootstrap</span>(
-  <span class='kw'>outputDataPath</span>,
-  <span class='kw'>projectPath</span>,
-  BootstrapMethodTable = <span class='kw'>data.table</span>::<span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span>(),
-  NumberOfBootstraps = <span class='fl'>1L</span>,
-  OutputProcesses = <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span>(),
-  UseOutputData = <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>Bootstrap</span><span class='op'>(</span>
+  <span class='va'>outputDataPath</span>,
+  <span class='va'>projectPath</span>,
+  BootstrapMethodTable <span class='op'>=</span> <span class='fu'>data.table</span><span class='fu'>::</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span><span class='op'>)</span>,
+  NumberOfBootstraps <span class='op'>=</span> <span class='fl'>1L</span>,
+  OutputProcesses <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
+  UseOutputData <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

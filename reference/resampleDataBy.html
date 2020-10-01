@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Resamples biotic PSUs — resampleDataBy • RstoxFramework</title>
+<title>Resamples StoX data — resampleDataBy • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Resamples biotic PSUs — resampleDataBy" />
-<meta property="og:description" content="This function resamples PSUs with replacement by altering the LengthDistributionWeight." />
+<meta property="og:title" content="Resamples StoX data — resampleDataBy" />
+<meta property="og:description" content="This function resamples PSUs with replacement by altering the input data" />
 
 
 
@@ -72,19 +72,13 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.23</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.24</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
       </ul>
@@ -108,25 +102,17 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Resamples biotic PSUs</h1>
+    <h1>Resamples StoX data</h1>
     <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/resample.R'><code>R/resample.R</code></a></small>
     <div class="hidden name"><code>resampleDataBy.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function resamples PSUs with replacement by altering the LengthDistributionWeight.</p>
+    <p>This function resamples PSUs with replacement by altering the input data</p>
     </div>
 
-    <pre class="usage"><span class='fu'>resampleDataBy</span>(<span class='kw'>data</span>, <span class='kw'>seed</span>, <span class='kw'>varToScale</span>, <span class='kw'>varToResample</span>, <span class='kw'>resampleBy</span>)</pre>
+    <pre class="usage"><span class='fu'>resampleDataBy</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>seed</span>, <span class='va'>varToScale</span>, <span class='va'>varToResample</span>, <span class='va'>resampleBy</span><span class='op'>)</span></pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>LengthDistributionData</th>
-      <td><p>The <code><a href='https://rdrr.io/pkg/RstoxBase/man/LengthDistributionData.html'>LengthDistributionData</a></code> to resample Hauls in.</p></td>
-    </tr>
-    </table>
 
 
   </div>

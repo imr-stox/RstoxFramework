@@ -72,19 +72,13 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.23</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.24</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
       </ul>
@@ -117,29 +111,29 @@
     <p>Create a StoX project using <code>createProject</code>, possibly specifying a template; open an existing (un-opened) project using <code>openProject</code>, which involves creating files holding the memory of the project; close a project using  <code>closeProject</code>, which removes the memory files; save the project using <code>saveProject</code>, which saves the memory file to the project description file or make a copy using <code>saveProject</code> or <code>saveProject</code>, where the former closes the given project unsaved and opens the copy.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>createProject</span>(
-  <span class='kw'>projectPath</span>,
-  template = <span class='st'>"EmptyTemplate"</span>,
-  ow = <span class='fl'>FALSE</span>,
-  showWarnings = <span class='fl'>FALSE</span>,
-  open = <span class='fl'>TRUE</span>
-)
+    <pre class="usage"><span class='fu'>createProject</span><span class='op'>(</span>
+  <span class='va'>projectPath</span>,
+  template <span class='op'>=</span> <span class='st'>"EmptyTemplate"</span>,
+  ow <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  showWarnings <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  open <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span>
 
-<span class='fu'>openProject</span>(
-  <span class='kw'>projectPath</span>,
-  showWarnings = <span class='fl'>FALSE</span>,
-  force = <span class='fl'>FALSE</span>,
-  reset = <span class='fl'>FALSE</span>,
-  type = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"JSON"</span>)
-)
+<span class='fu'>openProject</span><span class='op'>(</span>
+  <span class='va'>projectPath</span>,
+  showWarnings <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  force <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  reset <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"RData"</span>, <span class='st'>"JSON"</span><span class='op'>)</span>
+<span class='op'>)</span>
 
-<span class='fu'>closeProject</span>(<span class='kw'>projectPath</span>, save = <span class='kw'>NULL</span>, msg = <span class='fl'>TRUE</span>)
+<span class='fu'>closeProject</span><span class='op'>(</span><span class='va'>projectPath</span>, save <span class='op'>=</span> <span class='cn'>NULL</span>, msg <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 
-<span class='fu'>saveProject</span>(<span class='kw'>projectPath</span>, type = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"RData"</span>, <span class='st'>"JSON"</span>), force = <span class='fl'>FALSE</span>)
+<span class='fu'>saveProject</span><span class='op'>(</span><span class='va'>projectPath</span>, type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"RData"</span>, <span class='st'>"JSON"</span><span class='op'>)</span>, force <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
 
-<span class='fu'>saveAsProject</span>(<span class='kw'>projectPath</span>, <span class='kw'>newProjectPath</span>, ow = <span class='fl'>FALSE</span>)
+<span class='fu'>saveAsProject</span><span class='op'>(</span><span class='va'>projectPath</span>, <span class='va'>newProjectPath</span>, ow <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
 
-<span class='fu'>copyProject</span>(<span class='kw'>projectPath</span>, <span class='kw'>newProjectPath</span>, ow = <span class='fl'>FALSE</span>)</pre>
+<span class='fu'>copyProject</span><span class='op'>(</span><span class='va'>projectPath</span>, <span class='va'>newProjectPath</span>, ow <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

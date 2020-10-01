@@ -10,6 +10,7 @@ runProcess(
   processID,
   msg = TRUE,
   saveProcessData = TRUE,
+  returnProcessOutput = FALSE,
   fileOutput = NULL,
   setUseProcessDataToTRUE = TRUE,
   purge.processData = FALSE,

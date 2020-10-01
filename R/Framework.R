@@ -3497,7 +3497,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProcessData = TRUE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds")) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProcessData = TRUE, returnProcessOutput = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds")) {
     
     # Get the function argument and the process info:
     functionArguments <- getFunctionArguments(
@@ -3506,6 +3506,12 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         processID = processID, 
         replaceArgs = replaceArgs
     )
+    
+    # Jump out if nothing is returned, indicative of disabled process:
+    if(!length(functionArguments)) {
+        return(FALSE)
+    }
+    
     process <- functionArguments$process
     functionArguments <- functionArguments$functionArguments
     
@@ -3554,10 +3560,10 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         processOutput <- replaceData
     }
     
-    # Return the process output if not to be saved to memory files:
-    #if(!save.memory) {
-    #    return(processOutput)
-    #}
+    # Return the process output:
+    if(returnProcessOutput) {
+        return(processOutput)
+    }
     
     if(failed){
         return(FALSE)

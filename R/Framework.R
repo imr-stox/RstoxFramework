@@ -476,7 +476,7 @@ closeProject <- function(projectPath, save = NULL, msg =TRUE) {
             saveProject(projectPath, type = save)
         }
         else if(!isFALSE(save)) {
-            answer <- readline(paste("The project", projectPath, "has not been saved. Do you with to save before closing (y/n)?"))
+            answer <- readline(paste("The project", projectPath, "has not been saved.\nDo you with to save before closing (y/n)?"))
             if(identical(tolower(answer), "y")) {
                 saveProject(projectPath)
             }
@@ -808,7 +808,7 @@ writeProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     # Unname the models (removing procecssIDs):
     projectDescription <- lapply(projectDescription, unname)
     
-    # Run the appropriate saveing function:
+    # Run the appropriate saving function:
     functionName <- paste0("writeProjectDescription", type)
     do.call(functionName, list(
         projectDescription = projectDescription, 
@@ -1980,7 +1980,7 @@ matchProcesses <- function(processes, processIndexTable) {
         processesNumeric[unassigned] <- match(processes[unassigned], processIndexTable$processID)
         # Strip of the processes that were not regocnised:
         if(any(is.na(processesNumeric))) {
-            warning("The following processed were not recognized as process names or process IDs in the model ", modelName, ": ", paste(processes[is.na(processesNumeric)], collapse = ", "), ".")
+            warning("The following processes were not recognized as process names or process IDs in the model ", modelName, ": ", paste(processes[is.na(processesNumeric)], collapse = ", "), ".")
             processesNumeric <- processesNumeric[!is.na(processesNumeric)]
         }
     }
@@ -3497,7 +3497,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRUE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds")) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProcessData = TRUE, returnProcessOutput = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds")) {
     
     # Get the function argument and the process info:
     functionArguments <- getFunctionArguments(
@@ -3506,6 +3506,12 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         processID = processID, 
         replaceArgs = replaceArgs
     )
+    
+    # Jump out if nothing is returned, indicative of disabled process:
+    if(!length(functionArguments)) {
+        return(FALSE)
+    }
+    
     process <- functionArguments$process
     functionArguments <- functionArguments$functionArguments
     
@@ -3554,8 +3560,8 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         processOutput <- replaceData
     }
     
-    # Return the process output if not to be saved:
-    if(!save) {
+    # Return the process output:
+    if(returnProcessOutput) {
         return(processOutput)
     }
     
@@ -3573,7 +3579,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, save = TRU
         }
         
         # Store the processData (this must be a named list of only one data table):
-        if(isProcessDataFunction(process$functionName)) {
+        if(saveProcessData && isProcessDataFunction(process$functionName)) {
             modifyProcessData(projectPath, modelName, processID, processOutput, purge.processData = purge.processData)
             
             # Set the function parameters UseProcessData to TRUE:
@@ -4321,7 +4327,8 @@ writeProcessOutputMemoryFiles <- function(processOutput, projectPath, modelName,
         writeProcessOutputTables(
             processOutput, 
             folderPath = folderPath, 
-            writeOrderFile = TRUE)
+            writeOrderFile = TRUE
+        )
     }
     else {
         NULL
@@ -4368,26 +4375,21 @@ writeProcessOutputTables <- function(processOutput, folderPath, writeOrderFile =
 
 # Function to get the depth of the data, 1 for a list of valid output data objects, and 2 for a list of such lists:
 getOutputDepth <- function(x) {
-    outputDepth <- 1
-    validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
-    #if(is.list(x[[1]]) && length(x[[1]]) && firstClass(x[[1]][[1]]) %in% validOutputDataClasses) {
-    #    outputDepth <- 2
-    #}
-    #else if(is.list(x[[1]][[1]]) && length(x[[1]][[1]]) && firstClass(x[[1]][[1]][[1]]) %in% validOutputDataClasses#) {
-    #    stop("Only data with 2 levels are possible in StoX.")
-    #}
-    
-    isValidOutputData <- function(x) {
-        is.list(x[[1]]) && !firstClass(x[[1]]) %in% validOutputDataClasses && firstClass(x[[1]][[1]]) %in% validOutputDataClasses
+    # If the process output is a list of valid output data classes, set outputDepth to 1:
+    if(length(x) && isValidOutputData(x)) {
+        outputDepth <- 1
     }
-    
-    if(isValidOutputData(x)) {
+    else if(length(x[[1]]) && isValidOutputData(x[[1]])) {
         outputDepth <- 2
     }
-    else if(length(x[[1]]) && isValidOutputData(x[[1]][[1]])) {
-        stop("Only data with 2 levels are possible in StoX.")
+    else if(length(x[[1]][[1]]) && isValidOutputData(x[[1]][[1]])) {
+        stop("Process output must be a list of objects defined by getRstoxFrameworkDefinitions(\"validOutputDataClasses\"), or a list of such lists (not a list of lists of such lists).")
     }
-    outputDepth
+    else {
+        stop("...............")
+    }
+    
+    return(outputDepth)
 }
 # Function to get the folder of the memory files, 1 for all files in one folder, and 2 for a subfolders:
 getFolderDepth <- function(folderPath) {
@@ -4399,6 +4401,13 @@ getFolderDepth <- function(folderPath) {
     }
     folderDepth
 }
+
+
+isValidOutputData <- function(x) {
+    validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
+    is.list(x) && !firstClass(x) %in% validOutputDataClasses && firstClass(x[[1]]) %in% validOutputDataClasses
+}
+
 
 
 #' Delete the contents of the output folder of a model.
@@ -4423,7 +4432,7 @@ purgeOutput <- function(projectPath, modelName) {
 #' @export
 #' 
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
-runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, msg = TRUE, save = TRUE, force.restart = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceDataList = list(), replaceArgs = list(), output.file.type = c("default", "text", "RData", "rds"), ...) {
+runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, msg = TRUE, save = TRUE, saveProcessData = TRUE, force.restart = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceDataList = list(), replaceArgs = list(), output.file.type = c("default", "text", "RData", "rds"), ...) {
 
     # Save both before and after for safety:
     if(save) {
@@ -4510,13 +4519,15 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
         MoreArgs = list(
             projectPath = projectPath, 
             modelName = modelName, 
+            msg = msg, 
+            saveProcessData = saveProcessData, 
             fileOutput = fileOutput, 
             setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
             purge.processData = purge.processData, 
-            msg = msg, 
             output.file.type = output.file.type
         )
     )
+    
     
    #     }#, 
         #error = function(e) {

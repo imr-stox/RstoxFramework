@@ -1,6 +1,6 @@
 Package: RstoxFramework
-Version: 1.2.23
-Date: 2020-09-18
+Version: 1.2.24
+Date: 2020-10-01
 Title: The Engine of StoX
 Authors@R: c(
   person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
@@ -26,7 +26,7 @@ Imports:
     jsonvalidate (>= 1.1.0),
     sp (>= 1.3.2),
     xml2 (>= 1.2.2),
-    RstoxData (>= 1.0.10),
+    RstoxData (>= 1.0.12),
     RstoxBase (>= 1.2.31)
 Suggests: 
     testthat

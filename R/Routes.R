@@ -1243,7 +1243,7 @@ getFilterOptionsAll <- function(projectPath, modelName, processID, include.numer
 
     # Run the process without saving and without filter:
     # Add a stop if the previous process has not been run!!!!!!!!!!!!!
-    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, save = FALSE, replaceArgs = list(FilterExpression = list()))
+    processOutput <- runProcess(projectPath, modelName, processID, msg = FALSE, returnProcessOutput = TRUE, replaceArgs = list(FilterExpression = list()))
     # If the process output is a list of lists, unlist the top level and add names separated by slash:
     processOutput <- unlistProcessOutput(processOutput)
     
@@ -1304,6 +1304,7 @@ getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE, incl
     if(length(table) == 0) {
         return(list(a = 1)[0])
     }
+    
     # Get the indices of the variables to get possible values from:
     validInd <- seq_len(ncol(table))
     if(!include.numeric) {
@@ -1333,7 +1334,16 @@ getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE, incl
 # Simple function to sort the unique values:
 sortUnique <- function(y) {
     # 2020-06-18 Added na.last = FALSE to include NAs in the filter options:
-    sort(unique(y), na.last = FALSE)
+    #sort(unique(y), na.last = FALSE)
+    
+    # Get first the unique values, then check that the length of these are not identical to the length of the vector, and then sort:
+    uniquey <- unique(y)
+    if(length(uniquey) < length(y)) {
+        sort(uniquey, na.last = FALSE)
+    }
+    else {
+        NULL
+    }
 }
 
 

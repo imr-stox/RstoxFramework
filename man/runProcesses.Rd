@@ -11,6 +11,7 @@ runProcesses(
   endProcess = Inf,
   msg = TRUE,
   save = TRUE,
+  saveProcessData = TRUE,
   force.restart = FALSE,
   fileOutput = NULL,
   setUseProcessDataToTRUE = TRUE,

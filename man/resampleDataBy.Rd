@@ -2,13 +2,10 @@
 % Please edit documentation in R/resample.R
 \name{resampleDataBy}
 \alias{resampleDataBy}
-\title{Resamples biotic PSUs}
+\title{Resamples StoX data}
 \usage{
 resampleDataBy(data, seed, varToScale, varToResample, resampleBy)
 }
-\arguments{
-\item{LengthDistributionData}{The \code{\link[RstoxBase]{LengthDistributionData}} to resample Hauls in.}
-}
 \description{
-This function resamples PSUs with replacement by altering the LengthDistributionWeight.
+This function resamples PSUs with replacement by altering the input data
 }

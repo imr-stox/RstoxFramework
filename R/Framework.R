@@ -398,6 +398,18 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' 
 
 openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE, type = c("RData", "JSON")) {
+    
+    # Resolve the projectPath:
+    projectPath <- resolveProjectPath(projectPath)
+    if(!length(projectPath)) {
+        return(list(
+            projectPath = NA, 
+            projectName = NA, 
+            saved = NA
+        ))
+    }
+    
+    # If already open, repoen if force:
     if(!force && isOpenProject(projectPath)) {
         warning("StoX: Project ", projectPath, " is already open.")
         
@@ -423,7 +435,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     #}
     
     
-    projectPath <- resolveProjectPath(projectPath)
+   
     if(length(projectPath) == 0) {
         warning("StoX: The selected projectPath is not a StoX project or a folder/file inside a StoX project.")
         return(NULL)
@@ -1009,6 +1021,7 @@ resolveProjectPath <- function(filePath) {
     while(!isProject(projectPath)) {
         up <- dirname(projectPath)
         if(up == projectPath) {
+            warning("StoX: The file path ", filePath, " is not a StoX project or a file inside a StoX project.")
             return(NULL)
         }
         else {
@@ -3762,6 +3775,9 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
         modelName = modelName, 
         processID = processID
     )
+    if(!length(processOutputFiles)) {
+        return(NULL)
+    }
     
     # Get the directory holding the output files:
     folderPath <- getProcessOutputFolder(projectPath = projectPath, modelName = modelName, processID = processID, type = "memory")
@@ -3972,7 +3988,9 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     # If the folder does not exist, it is a sign that the process does not exist:
     if(length(folderPath) == 0 || !file.exists(folderPath)) {
         #processName <- getProcessName(projectPath, modelName, processID)
-        stop("Has the previous processes been run? The folder ", folderPath, " does not exist.")
+        #stop("Has the previous processes been run? The folder ", folderPath, " does not exist.")
+        warning("StoX: Process ", getProcessNameFromProcessID(projectPath, modelName, processID), " has not been run.")
+        return(NULL)
     }
     
     # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
@@ -4043,7 +4061,7 @@ listMemoryFiles <- function(folderPath) {
 getProcessOutputTableNames <- function(projectPath, modelName, processID) {
     # Get the output file names, and add the process name:
     tableNames <- getProcessOutputFiles(projectPath, modelName, processID, onlyTableNames = TRUE)
-    processName <- getProcessName(projectPath, modelName, processID)
+    ### processName <- getProcessName(projectPath, modelName, processID)
     #tableNames <- paste(processName, tableNames, sep ="_")
     
     # Ensure that this is a vector in JSON after auto_unbox = TRUE, by using as.list():
@@ -4697,7 +4715,11 @@ checkVersion <- function(projectDescription, resourceVersion = NULL, RstoxFramew
 
 # Check that a process has been run:
 hasBeenRun <- function(projectPath, modelName, processID) {
-    processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, getActiveProcess(projectPath = projectPath, modelName = modelName)$processID)
+    processIndex <- getProcessIndexFromProcessID(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
     activeProcessIndex <- getProcessIndexFromProcessID(
         projectPath = projectPath, 
         modelName = "baseline", 

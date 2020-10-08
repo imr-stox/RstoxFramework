@@ -752,7 +752,6 @@ formatJSONString <- function(parameter) {
 
 
 getFormatClass <- function(format) {
-    browser()
     # Get the format definitions:
     processPropertyFormats <- getRstoxFrameworkDefinitions("processPropertyFormats")
     # Extract the classes:

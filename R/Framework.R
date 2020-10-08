@@ -1845,6 +1845,7 @@ getProcessData <- function(projectPath, modelName, processID, argumentFilePaths 
 }
 
 getProcess <- function(projectPath, modelName, processID, argumentFilePaths = NULL, only.valid = FALSE) {
+    # Read the memory of the process:
     process <- getProjectMemoryData(
         projectPath, 
         modelName = modelName, 
@@ -1857,7 +1858,7 @@ getProcess <- function(projectPath, modelName, processID, argumentFilePaths = NU
     process$processID <- processID
     
     # Add the output data file path(s):
-    
+    warning("StoX: Add the output data file path(s)__________________________")
     
     if(only.valid) {
         argumentsToShow <- getArgumentsToShow(projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
@@ -1980,7 +1981,7 @@ matchProcesses <- function(processes, processIndexTable) {
         processesNumeric[unassigned] <- match(processes[unassigned], processIndexTable$processID)
         # Strip of the processes that were not regocnised:
         if(any(is.na(processesNumeric))) {
-            warning("The following processes were not recognized as process names or process IDs in the model ", modelName, ": ", paste(processes[is.na(processesNumeric)], collapse = ", "), ".")
+            warning("The following processes were not recognized as process names or process IDs: ", paste(processes[is.na(processesNumeric)], collapse = ", "), ".")
             processesNumeric <- processesNumeric[!is.na(processesNumeric)]
         }
     }
@@ -3493,7 +3494,7 @@ rearrangeProcesses <- function(projectPath, modelName, processID, afterProcessID
 #' Run one process
 #'
 #' @inheritParams general_arguments
-#' @param replaceData Either the data to replace the process output by, or a list of two elements \code{FunctionName} and \code{MoreArgs}, giving a function to apply to the output from the process with additional arguments stored in \code{MoreArgs}. The function in applied using \code{\link{do.call}}, with \code{args} being a list with the process output first, followed by the \code{MoreArgs}.
+#' @param replaceData Either the data to replace the process output by, or a list of two elements \code{FunctionName} and \code{MoreArgs}, giving a function to apply to the output from the process with additional arguments stored in \code{MoreArgs}. The function is applied using \code{\link{do.call}}, with \code{args} being a list with the process output first, followed by the \code{MoreArgs}.
 #' 
 #' @export
 #' 
@@ -3512,6 +3513,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         return(FALSE)
     }
     
+    # Extract the process and the function arguments:
     process <- functionArguments$process
     functionArguments <- functionArguments$functionArguments
     
@@ -3639,9 +3641,13 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
     
     # Build a list of the arguments to the function:
     functionArguments <- list()
-    # Add the processData if a processData function:
+    
+    # Add the processData if a processData function. This must be added after dropping one level if a list of one list:
     if(isProcessDataFunction(process$functionName)) {
         functionArguments$processData <- process$processData
+        if(is.listOfOneList(functionArguments$processData)) {
+            functionArguments$processData <- functionArguments$processData[[1]]
+        }
     }
     # Add the projectPath and outputData path if a bootstrap function:
     if(isBootstrapFunction(process$functionName)) {
@@ -3805,7 +3811,8 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     
     # Unlist if only one element:
     if(drop) {
-        while(is.list(processOutput) && !data.table::is.data.table(processOutput) && length(processOutput) == 1) {
+        #while(is.list(processOutput) && !data.table::is.data.table(processOutput) && length(processOutput) == 1) {
+        while(is.listOfOneList(processOutput)) {
             processOutput <- processOutput[[1]]
         }
     }
@@ -3813,6 +3820,11 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     return(processOutput)
 }
 
+
+is.listOfOneList <- function(x) {
+    is.list(x)      && !data.table::is.data.table(x) && length(x) == 1 && 
+    is.list(x[[1]]) && !data.table::is.data.table(x[[1]])
+}
 
 unlistProcessOutput <- function(processOutput) {
     if(is.list(processOutput[[1]]) && !data.table::is.data.table(processOutput[[1]])) {

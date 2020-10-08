@@ -51,6 +51,64 @@ getCanShowInMap <- function(functionName, dataType = NULL) {
     }
 }
 
+# Function to set show in map to TRUE, and to FALSE for all other relevant processes:
+setShowInMap <- function(projectPath, modelName, processID) {
+    
+    # Get processes with the same datatype (where processes with FilterStoxBiotic is considered different from those with StoxBiotic)
+    processTable <- scanForModelError(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    
+    # Get the index of the current process:
+    processIDs <- processTable$processID
+    atCurrentProcessID <- which(processIDs == processID)
+    
+    # Get the data types and function names.
+    dataTypes <- processTable$functionOutputDataType
+    
+    # Return if show in map is not relevant:
+    if(!getCanShowInMap(dataType = dataType[atCurrentProcessID])) {
+        return(FALSE)
+    }
+    
+    functionNames <- getFunctionNameFromPackageFunctionName(processTable$functionName)
+    # Find all processes with the same data type:
+    sameDataType <- dataTypes == dataTypes[atCurrentProcessID]
+    sameDataType[atCurrentProcessID] <- FALSE
+    # If the current function name starts with "Filter", subset to the processes with the same suffix:
+    if(startsWith(functionNames[[processID]], "Filter")) {
+        sameDataType <- sameDataType & startsWith(functionNames, "Filter")
+    }
+    
+    # Set the current process to show in map:
+    modifyProcessParameters(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        newProcessParameters = list(
+            showInMap = TRUE
+        )
+    )
+    
+    ## Set all other processes with the same data type to not show in map:
+    #if(sum(sameDataType)) {
+    #    for(ind in which(sameDataType)) {
+    #        modifyProcessParameters(
+    #            projectPath = projectPath, 
+    #            modelName = modelName, 
+    #            processID = processIDs[ind], 
+    #            newProcessParameters = list(
+    #                showInMap = FALSE
+    #            )
+    #        )
+    #    }
+    #}
+    
+    return(TRUE)
+}
+
 ##########
 
 
@@ -67,6 +125,15 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID
+    )
+    
+    # Get the function name:
+    functionName <- getFunctionNameFromPackageFunctionName(
+        getFunctionName(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
     )
     
     # Get also the process parameters to detect whether showInMap is FALSE, in which case interactiveMode should be "none":
@@ -91,9 +158,13 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("bioticAssignmentDataType")) {
         "bioticAssignment"
     }
+    #else if(functionName == "StoxBiotic" && dataType %in% getRstoxFrameworkDefinitions("stationDataType") && showInMap) {
     else if(dataType %in% getRstoxFrameworkDefinitions("stationDataType") && showInMap) {
         "station"
     }
+    #else if(functionName == "FilterStoxBiotic" && dataType %in% getRstoxFrameworkDefinitions("stationDataType") && showInMap) {
+    #    "filterStation"
+    #}
     else if(dataType %in% getRstoxFrameworkDefinitions("EDSUDataType") && showInMap) {
         "EDSU"
     }
@@ -177,6 +248,7 @@ getMapData  <- function(projectPath, modelName, processID) {
             processID = processID
         )
     }
+    #else if(interactiveMode %in% c("station", "filterStation")) {
     else if(interactiveMode == "station") {
         getStationData(
             projectPath = projectPath, 
@@ -580,6 +652,33 @@ extrapolateLongitudeLatitude <- function(Log) {
 
 
 
+# Define color scale for EDSU map data:
+#' 
+#' @export
+#' 
+getEDSUColours <- function(n = 5, as.rgb = FALSE) {
+    col <- colorRampPalette(c("pink", "red4", "darkorange2"))(n)
+    if(as.rgb) {
+        col <- col2rgb(col)
+    }
+    return(col)
+}
+
+# Define color scale for Station map data:
+#' 
+#' @export
+#' 
+getStationColours <- function(n = 5, as.rgb = FALSE) {
+    col <- colorRampPalette(c("steelblue2", "darkblue", "mediumvioletred"))(n)
+    if(as.rgb) {
+        col <- col2rgb(col)
+    }
+    return(col)
+}
+
+
+
+
 
 ##########
 
@@ -638,19 +737,37 @@ formatJSONString <- function(parameter) {
 #    isMultiple <- format %in% multiple
 #    return(isMultiple)
 #}
+### isVectorParameter <- function(format) {
+###     # Find those formats that are vector:
+###     processPropertyFormats <- getRstoxFrameworkDefinitions("processPropertyFormats")
+###     isVector <- sapply(format, isVectorParameterOne, processPropertyFormats)
+###     return(isVector)
+### }
+### 
+### isVectorParameterOne <- function(format, processPropertyFormats) {
+###     # 2020-06-24: Changed from == to identical (Jira, STOX-225):
+###     #identical(processPropertyFormats[[format]]$type, "vector")
+###     identical(processPropertyFormats[[format]]$class, "vector")
+### }
+
+
+getFormatClass <- function(format) {
+    # Get the format definitions:
+    processPropertyFormats <- getRstoxFrameworkDefinitions("processPropertyFormats")
+    # Extract the classes:
+    formatClass <- lapply(format, function(thisFormat) processPropertyFormats[[thisFormat]]$class)
+    # Replace unknown by "single":
+    formatClass[lengths(formatClass) == 0] <- "single"
+    # Unlist to a vector:
+    formatClass <- unlist(formatClass)
+    
+    return(formatClass)
+}
+
 isVectorParameter <- function(format) {
     # Find those formats that are vector:
-    processPropertyFormats <- getRstoxFrameworkDefinitions("processPropertyFormats")
-    isVector <- sapply(format, isVectorParameterOne, processPropertyFormats)
-    return(isVector)
+    getFormatClass(format) == "vector"
 }
-
-isVectorParameterOne <- function(format, processPropertyFormats) {
-    # 2020-06-24: Changed from == to identical (Jira, STOX-225):
-    #identical(processPropertyFormats[[format]]$type, "vector")
-    identical(processPropertyFormats[[format]]$class, "vector")
-}
-
 
 
 #' 
@@ -729,9 +846,11 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             "character", 
             sapply(processParameters, firstClass)
         )), 
-        # 5. format:
+        # 5a. format:
         # The number 2 is functionName and processName:
         format = as.list(rep("none", 2 + length(processParameters))), 
+        # 5b. formatClass:
+        formatClass = as.list(rep("single", 2 + length(processParameters))), 
         # 6. possibleValues:
         possibleValues = c(
             list(NULL), 
@@ -796,8 +915,10 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 description = getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionInputNames], 
                 # 4. type:
                 type = as.list(rep("character", length(functionInputNames))),
-                # 5. format:
+                # 5a. format:
                 format = as.list(rep("none", length(functionInputNames))),
+                # 5b. formatClass:
+                formatClass = as.list(rep("single", length(functionInputNames))),
                 # 6. possibleValues:
                 #possibleValues = lapply(functionInputNames, getProcessNamesByDataType, processTable = processTable),
                 # Set each element (using as.list()) as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
@@ -822,6 +943,8 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
             # Get the names of the function parameters:
             functionParameterNames <- names(functionParameters)
             
+            format <- getFunctionParameterFormats(functionName)[functionParameterNames]
+            
             # Define the function parameters:
             functionParametersToReturn <- data.table::data.table(
                 # 1. name:
@@ -832,8 +955,10 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 description = getStoxFunctionMetaData(functionName, "functionArgumentDescription")[functionParameterNames], 
                 # 4. type:
                 type = getStoxFunctionParameterTypes(functionName)[functionParameterNames],
-                # 5. format:
-                format = getFunctionParameterFormats(functionName)[functionParameterNames],
+                # 5a. format:
+                format = format,
+                # 5b. formatClass:
+                formatClass = getFormatClass(format),
                 # 6. possibleValues:
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
                 possibleValues = getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames],
@@ -1078,12 +1203,23 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         else {
             # All process parameters are logical:
             value <- as.logical(value)
-            modifyProcessParameters(
-                projectPath = projectPath, 
-                modelName = modelName, 
-                processID = processID, 
-                newProcessParameters = stats::setNames(list(value), name)
-            )
+            
+            # Special case if setting show in map to TRUE, which requires setting other processes to FALSE:
+            #if(name == "showInMap" && isTRUE(value)) {
+            #    setShowInMap(
+            #        projectPath = projectPath, 
+            #        modelName = modelName, 
+            #        processID = processID, 
+            #    )
+            #}
+            #else {
+                modifyProcessParameters(
+                    projectPath = projectPath, 
+                    modelName = modelName, 
+                    processID = processID, 
+                    newProcessParameters = stats::setNames(list(value), name)
+                )
+            #}
         }
     }
     # If the process property 'functionInputs' is given, modify the function inputs:
@@ -1095,7 +1231,7 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
             newFunctionInputs = stats::setNames(list(value), name)
         )
     }
-    # If the process property 'functionInputs' is given, modify the function parameters:
+    # If the process property 'functionParameters' is given, modify the function parameters:
     if(groupName == "functionParameters") {
         ### This is unnecessary, since jsonlite::fromJSON takes care of the types in parseParmeter() ###
         # Convert to R object based on the type:
@@ -1348,17 +1484,13 @@ sortUnique <- function(y) {
 
 
 
-
-
-
-##### Handle parameter tables: #####
-
-getParameterTableElement <- function(projectPath, modelName, processID, format, element) {
+##### Handle parameter formats: #####
+getParameterFormatElement <- function(projectPath, modelName, processID, format, element) {
     # Get the parameterTableInfo
-    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
+    processPropertyFormats <- getRstoxFrameworkDefinitions("processPropertyFormats")
     
-    # If given as a function, apply that function to the function arguments:
-    if(is.function(parameterTableInfo[[format]][[element]])) {
+    # If given as a function, apply that function to the function arguments. This is used when e.g. the title of a parameter table is a function of some other parameter of the function, see conversionTable of RstoxData::processPropertyFormats:
+    if(is.function(processPropertyFormats[[format]][[element]])) {
         # Get the function arguments:
         functionArguments <- getFunctionArguments(
             projectPath = projectPath, 
@@ -1367,20 +1499,21 @@ getParameterTableElement <- function(projectPath, modelName, processID, format, 
         )$functionArguments
         # Apply the function:
         output <- do.call_robust(
-            parameterTableInfo[[format]][[element]], 
+            processPropertyFormats[[format]][[element]], 
             functionArguments
         )
     }
     else {
-        output <- parameterTableInfo[[format]][[element]]
+        output <- processPropertyFormats[[format]][[element]]
     }
     
     return(output)
 }
 
+# 1. Handle parameter table:
 # Get the title of a parameter table:
 getParameterTableTitle <- function(projectPath, modelName, processID, format) {
-    getParameterTableElement(
+    getParameterFormatElement(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
@@ -1391,7 +1524,7 @@ getParameterTableTitle <- function(projectPath, modelName, processID, format) {
 
 # Get the column names of a parameter table:
 getParameterTableColumnNames <- function(projectPath, modelName, processID, format) {
-    getParameterTableElement(
+    getParameterFormatElement(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
@@ -1402,7 +1535,7 @@ getParameterTableColumnNames <- function(projectPath, modelName, processID, form
 
 # Get the variable types of a parameter table:
 getParameterTableVariableTypes <- function(projectPath, modelName, processID, format) {
-    getParameterTableElement(
+    getParameterFormatElement(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
@@ -1467,6 +1600,59 @@ getParameterTableInfo <- function(projectPath, modelName, processID, format) {
 }
 
 
+
+# 2. Handle parameter vector:
+# Get the title of a parameter table:
+getParameterVectorTitle <- function(projectPath, modelName, processID, format) {
+    getParameterFormatElement(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        format = format, 
+        element = "title"
+    )
+}
+
+# Get the possible values of a parameter table:
+# Unfinished!!!!!!!!!!!!!!!
+getParameterVectorPossibleValues <- function(projectPath, modelName, processID, format) {
+    possibleValues <- getParameterFormatElement(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        format = format, 
+        element = "possibleValues"
+    )
+    if(!length(possibleValues)) {
+        possibleValues <- list()
+    }
+    
+    return(possibleValues)
+}
+
+#' GUI function: Function to get the info required for populating a parameter table builder in the GUI
+#' 
+#' @inheritParams general_arguments
+#' @param format A character string naming the format to get info for.
+#' 
+#' @export
+#' 
+getParameterVectorInfo <- function(projectPath, modelName, processID, format) {
+    list(
+        parameterVectorTitle = getParameterVectorTitle(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            format = format
+        ), 
+        parameterVectorPossibleValues = getParameterVectorPossibleValues(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            format = format
+        )
+    )
+}
 
 
 

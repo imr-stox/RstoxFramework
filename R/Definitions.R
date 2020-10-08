@@ -234,8 +234,9 @@ initiateRstoxFramework <- function(){
     #names(processPropertyFormats) <- allFormatClasses
     
     # Get the parameterTableInfo from all packages, and combine into a list:
-    parameterTableInfo <- processPropertyFormats[sapply(processPropertyFormats, "[[", "class") == "table"]
-
+    parameterTableInfo  <- processPropertyFormats[sapply(processPropertyFormats, "[[", "class") == "table"]
+    parameterVectorInfo <- processPropertyFormats[sapply(processPropertyFormats, "[[", "class") == "vector"]
+    
     
     # Define filter operators for the different data types:
     filterOperators <- list(
@@ -307,7 +308,7 @@ initiateRstoxFramework <- function(){
     dataTypesToShowInMap <- c(
         StoxBioticData = "StoxBioticData", 
         StoxAcousticData = "StoxAcousticData", 
-        StratumPolygon = "StratumPolygon"#, 
+        StratumPolygon = "StratumPolygon"
     )
     
     # Define the data types for the interactive modes:

@@ -752,6 +752,7 @@ formatJSONString <- function(parameter) {
 
 
 getFormatClass <- function(format) {
+    browser()
     # Get the format definitions:
     processPropertyFormats <- getRstoxFrameworkDefinitions("processPropertyFormats")
     # Extract the classes:
@@ -1249,11 +1250,20 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     }
     
     # Reset the active process ID to the process before the modified process:
+    print(hasBeenRun(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    ))
     resetModel(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
-        processDirty = TRUE
+        processDirty = hasBeenRun(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
     )
     
     # Return the modified process properties:

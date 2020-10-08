@@ -2068,7 +2068,11 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     rearranged <- processIndexTable[toRearrange, ]
     rest <- processIndexTable[notToRearrange, ]
     
-    afterProcessIndexInRest <- max(0, which(rest$modelName %in% modelName & rest$processID %in% afterProcessID))
+    #afterProcessIndexInRest <- max(0, which(rest$modelName %in% modelName & rest$processID %in% afterProcessID))
+    afterProcessIndexInRest <- which(rest$modelName %in% modelName & rest$processID %in% afterProcessID)
+    if(!length(afterProcessIndexInRest)) {
+        return(NULL)
+    }
     
     before <- rest[seq_len(afterProcessIndexInRest), ]
     if(afterProcessIndexInRest < nrow(rest)) {
@@ -4689,3 +4693,19 @@ checkVersion <- function(projectDescription, resourceVersion = NULL, RstoxFramew
 }
 
 
+
+
+# Check that a process has been run:
+hasBeenRun <- function(projectPath, modelName, processID) {
+    processIndex <- getProcessIndexFromProcessID(projectPath = projectPath, modelName = modelName, getActiveProcess(projectPath = projectPath, modelName = modelName)$processID)
+    activeProcessIndex <- getProcessIndexFromProcessID(
+        projectPath = projectPath, 
+        modelName = "baseline", 
+        processID = getActiveProcess(
+            projectPath = projectPath, 
+            modelName = "baseline"
+        )$processID
+    )
+    # TRUE if the process is not later than the active process:
+    processIndex <= activeProcessIndex
+}

@@ -452,6 +452,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     
     
     # Set the project memory:
+    browser()
     temp <- addProcesses(
         projectPath = projectPath, 
         #modelName = names(projectMemory), 
@@ -724,8 +725,11 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
     ### # Introduce process IDs: 
     ### projectDescription <- defineProcessIDs(projectDescription)
     
-    # Convert geojson to spatial object:
-    projectDescription <- convertGeojsonToProcessData(projectDescription)
+    # Convert geojson to spatial object and list to data.table:
+    projectDescription <- convertProjectDescription(projectDescription)
+    
+    # Convert primitive type:
+    projectDescription <- convertPrimitiveType(projectDescription)
     
     return(projectDescription)
 }
@@ -735,23 +739,223 @@ removeNamedElement <- function(list, name) {
 }
 
 
-convertGeojsonToProcessData <- function(projectDescription) {
+convertProjectDescription <- function(projectDescription) {
     # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
     for(modelName in names(projectDescription)) {
         for(processIndex in seq_along(projectDescription [[modelName]])) {
+            
+            # Convert process data:
             for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
-                this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
+                #this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
                 #if(is.character(this) && grepl("FeatureCollection", substring(this, 1, 100))) {
                     #projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(this)
-                if(is.list(this) && "features" %in% tolower(names(this))) {
-                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(jsonlite::toJSON(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]], pretty = TRUE, auto_unbox = TRUE))
-                }
+                
+                #if(is.list(this) && "features" %in% tolower(names(this))) {
+                #    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(jsonlite::toJSON(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]], pretty = TRUE, auto_unbox = TRUE))
+                #}
+                # Convert to sp:
+                #projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- list2sp(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]])
+                # Convert to data.table:
+                #projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- list2data.table(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]])
+                
+                projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- convertListInProjectDescription(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]])
+                
+            }
+            
+            # Convert function parameters:
+            for(functionParameterIndex in names(projectDescription [[modelName]] [[processIndex]]$functionParameters)) {
+                projectDescription [[modelName]] [[processIndex]]$functionParameters[[functionParameterIndex]] <- convertListInProjectDescription(projectDescription [[modelName]] [[processIndex]]$functionParameters[[functionParameterIndex]], continue = FALSE, minLength = 2)
+                
+                
             }
         }
     }
     
     return(projectDescription)
 }
+
+
+convertPrimitiveType <- function(projectDescription) {
+    # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
+    for(modelName in names(projectDescription)) {
+        print(modelName)
+        print(modelName)
+        print(modelName)
+        for(processIndex in seq_along(projectDescription [[modelName]])) {
+            projectDescription [[modelName]] [[processIndex]] <- convertPrimitiveTypeOneProcess(projectDescription [[modelName]] [[processIndex]])
+        }
+    }
+    
+    return(projectDescription)
+}
+
+
+
+convertPrimitiveTypeOneProcess <- function(process) {
+    
+    # Get primitive types from the function definition:
+    parameterDefaults <- getStoxFunctionParameterDefault(process$functionName)
+    
+    ### # Get present and invalid function parameters:
+    ### presentFunctionParameters <- intersect(
+    ###     names(process$functionParameters), 
+    ###     names(parameterDefaults)
+    ### )
+    ### invalidFunctionParameters <- setdiff(
+    ###     names(process$functionParameters), 
+    ###     names(parameterDefaults)
+    ### )
+    ### # Warning if there are parameters not specified in the function definition:
+    ### if(length(invalidFunctionParameters)) {
+    ###     warning("The following function parameters are present in the project.JSON file but not specified in the definition of func### tion ", process$functionName, ": ", paste(invalidFunctionParameters, collapse = ", "))
+    ### }
+    ### # Change class to the defined class:
+    ### else {
+    ###     for(functionParameterName in presentFunctionParameters) {
+    ###         if(!is.null(parameterDefaults[[functionParameterName]]) && firstClass(process$functionParameters[[functionParameterName]]) !### = firstClass(parameterDefaults[[functionParameterName]])) {
+    ###             class(process$functionParameters[[functionParameterName]]) <- firstClass(parameterDefaults[[functionParameterName]])
+    ###         }
+    ###     }
+    ### }
+    
+    process <- convertProcessProperty(
+        process = process, 
+        parameterDefaults = parameterDefaults, 
+        propertyName = "functionParameters"
+    )
+    
+    process <- convertProcessProperty(
+        process = process, 
+        parameterDefaults = parameterDefaults, 
+        propertyName = "functionInputs"
+    )
+    
+    process <- convertProcessProperty(
+        process = process, 
+        parameterDefaults = parameterDefaults, 
+        propertyName = "functionName"
+    )
+    
+    return(process)
+}
+
+
+convertProcessProperty <- function(process, parameterDefaults, propertyName = c("functionParameters", "functionInputs", "functionName")) {
+    
+    propertyName <- match.arg(propertyName)
+    
+    if(is.list(process[[propertyName]])) {
+        # Get present and invalid function parameters:
+        present <- intersect(
+            names(process[[propertyName]]), 
+            names(parameterDefaults)
+        )
+        invalid <- setdiff(
+            names(process[[propertyName]]), 
+            names(parameterDefaults)
+        )
+        # Warning if there are parameters not specified in the function definition:
+        if(length(invalid)) {
+            warning("The following ", propertyName, " are present in the project.JSON file but not specified in the definition of function ", process$functionName, ": ", paste(invalid, collapse = ", "))
+        }
+        # Change class to the defined class:
+        else {
+            for(this in present) {
+                # If the defined class is not NULL, or if it is NULL and the property has length 0, apply the defined class:
+                classIsDefined <- !is.null(parameterDefaults[[this]])
+                NULLDefinedAndEmptyProperty <- 
+                    is.null(parameterDefaults[[this]]) && 
+                    length(process[[propertyName]][[this]]) == 0
+                emptyTable <- 
+                    identical(firstClass(parameterDefaults[[this]]), "data.table") && 
+                    length(process[[propertyName]][[this]]) == 0
+                differingClass <- firstClass(process[[propertyName]][[this]]) != firstClass(parameterDefaults[[this]])
+                
+                # Special case dfore NULL:
+                if(NULLDefinedAndEmptyProperty) {
+                    process[[propertyName]][this] <- list(NULL)
+                }
+                # ... and for empty data.table:
+                else if(emptyTable) {
+                    process[[propertyName]][[this]] <- data.table::data.table()
+                }
+                # Set class to the defined class:
+                else if(classIsDefined && differingClass) {
+                    class(process[[propertyName]][[this]]) <- firstClass(parameterDefaults[[this]])
+                }
+            }
+        }
+    }
+    # This is only relevant for functionName, which is character:
+    else {
+        # If the defined class is not NULL, or if it is NULL and the property has length 0, apply the defined class:
+        if(length(process[[propertyName]]) == 0) {
+            class(process[[propertyName]]) <- "character"
+        }
+    }
+    
+    return(process)
+}
+#list2sp <- function(x) {
+#    if(is.list(x) && "features" %in% tolower(names(x))) {
+#        geojsonio::geojson_sp(jsonlite::toJSON(x, pretty = TRUE, auto_unbox = TRUE))
+#    }
+#    else {
+#        x
+#    }
+#}
+#
+#
+#list2data.table <- function(x) {
+#    if(is.list(x) && length(x)) {
+#        if(is.convertableToTable(x)) {
+#            data.table::rbindlist(x)
+#        }
+#        else {
+#            lapply(x, list2data.table)
+#        }
+#    }
+#    else {
+#        x
+#    }
+#}
+
+
+
+
+
+convertListInProjectDescription <- function(x, continue = TRUE, minLength = 1) {
+    #browser()
+    if(!is.list(x)) {
+        return(x)
+    }
+    else {
+        # Convert to sp:
+        if("features" %in% tolower(names(x))) {
+            geojsonio::geojson_sp(jsonlite::toJSON(x, pretty = TRUE, auto_unbox = TRUE))
+        }
+        # Otherwise try to convert to data.table:
+        else if(length(x) && is.convertableToTable(x, minLength = minLength)) {
+            convertListToDataTable(x)
+        }
+        else if(continue){
+            lapply(x, convertListToDataTable)
+        }
+        else {
+            x
+        }
+    }
+}
+
+convertListToDataTable <- function(x) {
+    if(length(x) && is.convertableToTable(x)) {
+        data.table::rbindlist(x)
+    }
+    else {
+        x
+    }
+}
+
 
 
 
@@ -867,7 +1071,12 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     )
     
     # Convert project description to json structure: 
-    json <- jsonlite::toJSON(projectDescription)
+    json <- jsonlite::toJSON(
+        projectDescription, 
+        digits = NA, 
+        #null = "null", 
+        auto_unbox = TRUE
+    )
     # Read any geojson objects stored in temporary file by convertProcessDataToGeojson():
     json <- replaceSpatialFileReference(json)
     
@@ -875,7 +1084,10 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     write(json, projectDescriptionFile)
     json <- jsonlite::toJSON(
         jsonlite::read_json(projectDescriptionFile), 
+        digits = NA, 
         pretty = TRUE, 
+        #pretty = 4, 
+        #null = "null", 
         auto_unbox = TRUE
     )
     
@@ -2967,7 +3179,7 @@ convertToRelativePaths <- function(functionParameters, projectPath, modelName, p
     }
     
     getRelativePaths <- function(filePaths, projectPath) {
-        sapply(filePaths, getRelativePath, projectPath)
+        unname(sapply(filePaths, getRelativePath, projectPath))
     }
     
     # Detect the file paths:
@@ -3140,18 +3352,26 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
 #' @export
 #' 
 # Convert JSON input to list:
-parseParameter <- function(parameter, simplifyVector = TRUE) {
+#parseParameter <- function(parameter, simplifyVector = TRUE) {
+parseParameter <- function(parameter) {
     # If empty string, convert to NULL for non-character type:
     if(is.character(parameter) && nchar(parameter) == 0) {
         return(NULL)
     }
     
     # Parse the JSON:
-    out <- jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
+    #out <- jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
+    out <- jsonlite::fromJSON(parameter, simplifyVector = FALSE)
     # If data.frame, convert to data.table:
-    if(is.data.frame(out)) {
-        out <- data.table::as.data.table(out)
+    #if(is.data.frame(out)) {
+    #    out <- data.table::as.data.table(out)
+    #}
+    
+    # Convert to table:
+    if(is.convertableToTable(out)) {
+        out <- data.table::rbindlist(out)
     }
+    
     return(out)
 }
 #parseParameter <- function(parameter, simplifyVector = TRUE) {
@@ -3167,7 +3387,17 @@ parseParameter <- function(parameter, simplifyVector = TRUE) {
 #    parameter
 #}
 
-
+is.convertableToTable <- function(x, minLength = 1) {
+    # If all elements of the list x are lists with equal length, x is convertable to data.table:
+    #is.list(x) && all(sapply(x, is.list)) && RstoxBase:::allEqual(lengths(x))
+    
+    length(x) && 
+    is.list(x) && # The input must be a list
+    all(sapply(x, is.list)) && # ... and a list of lists
+    RstoxBase:::allEqual(lengths(x)) && # ... and all must be of equal length
+    all(lengths(x) >= minLength) && # ... and longer than 1
+    !is.list(x[[1]][[1]]) # ... and finally, each list must not contain lists. We only check the first element here
+}
 
 
 
@@ -3597,7 +3827,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
             names(processOutput) <- getStoxFunctionMetaData(process$functionName, "functionOutputDataType")
         }
         
-        # Store the processData (this must be a named list of only one data table):
+        # Store the processData:
         if(saveProcessData && isProcessDataFunction(process$functionName)) {
             modifyProcessData(projectPath, modelName, processID, processOutput, purge.processData = purge.processData)
             

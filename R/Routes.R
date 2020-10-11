@@ -1238,7 +1238,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         value <- convertFunctionParameter(
             functionParameterName = name, 
             functionParameterValue = value, 
-            functionName = getFunctionName(projectPath, modelName, processID))
+            functionName = getFunctionName(projectPath, modelName, processID)
+        )
         # Modify the process parameter:
         modifyFunctionParameters(
             projectPath = projectPath, 

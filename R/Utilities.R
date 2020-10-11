@@ -39,7 +39,11 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
 
 # Function to get the first element of class(x):
 firstClass <- function(x) {
-    class(x)[1]
+    out <- class(x)[1]
+    if(out == "numeric") {
+        out <- "double"
+    }
+    return(out)
 }
 
 # Function to select valid elements by name
@@ -171,7 +175,8 @@ getNewDefaultName <- function(names, prefix) {
 #' @export
 #' 
 json2expression <- function(json) {
-    l <- parseParameter(json, simplifyVector = FALSE)
+    #l <- parseParameter(json, simplifyVector = FALSE)
+    l <- parseParameter(json)
     #l <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     list2expression(l)
 }

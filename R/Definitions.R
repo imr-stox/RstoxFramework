@@ -114,8 +114,10 @@ initiateRstoxFramework <- function(){
             processDataSchema, 
             processDataSchemas
         ), 
-        pretty = TRUE, 
-        auto_unbox = TRUE
+        digits = NA, 
+        auto_unbox = TRUE, 
+        na = "null", 
+        pretty = TRUE
     )
     # Create a project.json validator:
     projectValidator <- jsonvalidate::json_validator(schema)

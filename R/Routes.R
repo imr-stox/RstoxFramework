@@ -721,13 +721,13 @@ parameter2JSONString <- function(parameter) {
         return(parameter)
     }
     else {
-        return(as.character(jsonlite::toJSON(parameter, auto_unbox = TRUE)))
+        return(as.character(toJSON_Rstox(parameter)))
     }
 }
 
 
 formatJSONString <- function(parameter) {
-    as.character(jsonlite::toJSON(parameter, auto_unbox = TRUE))
+    as.character(toJSON_Rstox(parameter))
 }
 
 
@@ -1083,7 +1083,7 @@ cellToJSONStringOne <- function(x) {
         x <- ""
     }
     if(!is.character(x)) {
-        x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+        x <- as.character(toJSON_Rstox(x))
     }
     return(x)
 }
@@ -1115,7 +1115,7 @@ vectorToJSONStringOne <- function(x, stringifyVector = TRUE) {
     # Convert to JSON string for each element if not already character:
     else if(!data.table::is.data.table(x)) {
         if(!is.character(x)) {
-            x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
+            x <- sapply(x, function(y) as.character(toJSON_Rstox(y)))
         }
         if(length(x) == 1) {
             # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):
@@ -1124,7 +1124,7 @@ vectorToJSONStringOne <- function(x, stringifyVector = TRUE) {
     }
     
     if(stringifyVector) {
-        x <- as.character(jsonlite::toJSON(x, auto_unbox = TRUE))
+        x <- as.character(toJSON_Rstox(x))
     }
     return(x)
 }
@@ -1139,7 +1139,7 @@ possibleValuesToJSONStringOne <- function(x, nrow) {
     # Convert to JSON string for each element if not already character:
     else {
         if(!is.character(x)) {
-            x <- sapply(x, function(y) as.character(jsonlite::toJSON(y, auto_unbox = TRUE)))
+            x <- sapply(x, function(y) as.character(toJSON_Rstox(y)))
         }
         if(length(x) == 1) {
             # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):

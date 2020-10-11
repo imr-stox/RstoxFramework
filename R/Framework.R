@@ -452,7 +452,6 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     
     
     # Set the project memory:
-    browser()
     temp <- addProcesses(
         projectPath = projectPath, 
         #modelName = names(projectMemory), 
@@ -932,7 +931,7 @@ convertListInProjectDescription <- function(x, continue = TRUE, minLength = 1) {
     else {
         # Convert to sp:
         if("features" %in% tolower(names(x))) {
-            geojsonio::geojson_sp(jsonlite::toJSON(x, pretty = TRUE, auto_unbox = TRUE))
+            geojsonio::geojson_sp(toJSON_Rstox(x, pretty = TRUE))
         }
         # Otherwise try to convert to data.table:
         else if(length(x) && is.convertableToTable(x, minLength = minLength)) {
@@ -1071,25 +1070,15 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     )
     
     # Convert project description to json structure: 
-    json <- jsonlite::toJSON(
-        projectDescription, 
-        digits = NA, 
-        #null = "null", 
-        auto_unbox = TRUE
-    )
+    browser()
+    json <- toJSON_Rstox(projectDescription)
+    
     # Read any geojson objects stored in temporary file by convertProcessDataToGeojson():
     json <- replaceSpatialFileReference(json)
     
     # Fix pretty formatting by reading in and writing back the file:
     write(json, projectDescriptionFile)
-    json <- jsonlite::toJSON(
-        jsonlite::read_json(projectDescriptionFile), 
-        digits = NA, 
-        pretty = TRUE, 
-        #pretty = 4, 
-        #null = "null", 
-        auto_unbox = TRUE
-    )
+    json <- toJSON_Rstox(jsonlite::read_json(projectDescriptionFile), pretty = TRUE)
     
     # Validate the json structure with json schema
     projectValidator <- getRstoxFrameworkDefinitions("projectValidator")

@@ -707,22 +707,8 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
     }
     
     # Read project.json file to R list:
-    json <- jsonlite::read_json(projectDescriptionFile)
-    
-    # Get the model names:
-    #modelNames <- sapply(json, "[[", "modelName")
-    # Remove the model names from each model:
-    #projectDescription <- lapply(json, removeNamedElement, name = "modelName")
-    # Add the modelNames as names to the list of models:
-    #names(projectDescription) <- modelNames
-    
-    # Move the processes one level up in each model:
-    #projectDescription <- lapply(projectDescription, unlist, recursive = FALSE)
-    
-    projectDescription <- json$project$models
-    
-    ### # Introduce process IDs: 
-    ### projectDescription <- defineProcessIDs(projectDescription)
+    projectDescription <- jsonlite::read_json(projectDescriptionFile)
+    projectDescription <- projectDescription$project$models
     
     # Convert geojson to spatial object and list to data.table:
     projectDescription <- convertProjectDescription(projectDescription)
@@ -743,29 +729,20 @@ convertProjectDescription <- function(projectDescription) {
     for(modelName in names(projectDescription)) {
         for(processIndex in seq_along(projectDescription [[modelName]])) {
             
+            # 2020-10-12: In the following, avoide deleting an element by the behaivor that <- NULL deletes a list element, by the if(length) condition:
+            
             # Convert process data:
             for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
-                #this <- projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]
-                #if(is.character(this) && grepl("FeatureCollection", substring(this, 1, 100))) {
-                    #projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(this)
-                
-                #if(is.list(this) && "features" %in% tolower(names(this))) {
-                #    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- geojsonio::geojson_sp(jsonlite::toJSON(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]], pretty = TRUE, auto_unbox = TRUE))
-                #}
-                # Convert to sp:
-                #projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- list2sp(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]])
-                # Convert to data.table:
-                #projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- list2data.table(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]])
-                
-                projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- convertListInProjectDescription(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]])
-                
+                if(length(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]])) {
+                    projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- convertListInProjectDescription(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]])
+                }
             }
             
             # Convert function parameters:
             for(functionParameterIndex in names(projectDescription [[modelName]] [[processIndex]]$functionParameters)) {
-                projectDescription [[modelName]] [[processIndex]]$functionParameters[[functionParameterIndex]] <- convertListInProjectDescription(projectDescription [[modelName]] [[processIndex]]$functionParameters[[functionParameterIndex]], continue = FALSE, minLength = 2)
-                
-                
+                if(length(projectDescription [[modelName]] [[processIndex]]$functionParameters[[functionParameterIndex]])) {
+                    projectDescription [[modelName]] [[processIndex]]$functionParameters[[functionParameterIndex]] <- convertListInProjectDescription(projectDescription [[modelName]] [[processIndex]]$functionParameters[[functionParameterIndex]], continue = FALSE, minLength = 2)
+                }
             }
         }
     }
@@ -795,40 +772,21 @@ convertPrimitiveTypeOneProcess <- function(process) {
     # Get primitive types from the function definition:
     parameterDefaults <- getStoxFunctionParameterDefault(process$functionName)
     
-    ### # Get present and invalid function parameters:
-    ### presentFunctionParameters <- intersect(
-    ###     names(process$functionParameters), 
-    ###     names(parameterDefaults)
-    ### )
-    ### invalidFunctionParameters <- setdiff(
-    ###     names(process$functionParameters), 
-    ###     names(parameterDefaults)
-    ### )
-    ### # Warning if there are parameters not specified in the function definition:
-    ### if(length(invalidFunctionParameters)) {
-    ###     warning("The following function parameters are present in the project.JSON file but not specified in the definition of func### tion ", process$functionName, ": ", paste(invalidFunctionParameters, collapse = ", "))
-    ### }
-    ### # Change class to the defined class:
-    ### else {
-    ###     for(functionParameterName in presentFunctionParameters) {
-    ###         if(!is.null(parameterDefaults[[functionParameterName]]) && firstClass(process$functionParameters[[functionParameterName]]) !### = firstClass(parameterDefaults[[functionParameterName]])) {
-    ###             class(process$functionParameters[[functionParameterName]]) <- firstClass(parameterDefaults[[functionParameterName]])
-    ###         }
-    ###     }
-    ### }
-    
+    # Convert functionParameters:
     process <- convertProcessProperty(
         process = process, 
         parameterDefaults = parameterDefaults, 
         propertyName = "functionParameters"
     )
     
+    # Convert functionInputs:
     process <- convertProcessProperty(
         process = process, 
         parameterDefaults = parameterDefaults, 
         propertyName = "functionInputs"
     )
     
+    # Convert functionName:
     process <- convertProcessProperty(
         process = process, 
         parameterDefaults = parameterDefaults, 
@@ -895,65 +853,94 @@ convertProcessProperty <- function(process, parameterDefaults, propertyName = c(
     
     return(process)
 }
-#list2sp <- function(x) {
-#    if(is.list(x) && "features" %in% tolower(names(x))) {
-#        geojsonio::geojson_sp(jsonlite::toJSON(x, pretty = TRUE, auto_unbox = TRUE))
-#    }
-#    else {
-#        x
-#    }
-#}
-#
-#
-#list2data.table <- function(x) {
-#    if(is.list(x) && length(x)) {
-#        if(is.convertableToTable(x)) {
-#            data.table::rbindlist(x)
-#        }
-#        else {
-#            lapply(x, list2data.table)
-#        }
-#    }
-#    else {
-#        x
-#    }
-#}
-
-
 
 
 
 convertListInProjectDescription <- function(x, continue = TRUE, minLength = 1) {
-    #browser()
-    if(!is.list(x)) {
-        return(x)
-    }
-    else {
+    if(is.list(x)) {
         # Convert to sp:
         if("features" %in% tolower(names(x))) {
-            geojsonio::geojson_sp(toJSON_Rstox(x, pretty = TRUE))
+            x <- geojsonio::geojson_sp(toJSON_Rstox(x, pretty = TRUE))
+            row.names(x) <- as.character(x@data$polygonName)
+            x <- addCoordsNames(x)
+            
+            sp::proj4string(x) <- as.character(NA)
+            
+            
+            #sp::CRS(x) <- as.character(NA)
         }
         # Otherwise try to convert to data.table:
         else if(length(x) && is.convertableToTable(x, minLength = minLength)) {
-            convertListToDataTable(x)
+            x <- convertListToDataTable(x)
+        }
+        else if(length(x) && is.convertableToVector(x)) {
+            print(x)
+            x <- convertListToVector(x)
         }
         else if(continue){
-            lapply(x, convertListToDataTable)
-        }
-        else {
-            x
+            x <- lapply(x, convertListInProjectDescription)
         }
     }
+    
+    return(x)
 }
 
 convertListToDataTable <- function(x) {
     if(length(x) && is.convertableToTable(x)) {
-        data.table::rbindlist(x)
+        # Rbind to a data.table, and convert columns to POSIX:
+        x <- data.table::rbindlist(x)
+        
+        convertableToPOSIX <- unlist(x[, lapply(.SD, is.ConvertableToPOSIX)])
+        if(any(convertableToPOSIX)) {
+            DateTimeColumns <- names(x)[convertableToPOSIX]
+            x[, (DateTimeColumns) := lapply(.SD, convertToPOSIX), .SDcols = DateTimeColumns]
+        }
+    }
+    
+    return(x)
+}
+
+convertListToVector <- function(x) {
+    if(length(x) && is.convertableToVector(x)) {
+        # Unlist and try to convert to numeric and POSIX:
+        x <- unlist(x)
+        
+        if(!is.na(suppressWarnings(as.numeric(x)))) {
+            x <- as.numeric(x)
+        }
+        else if(is.ConvertableToPOSIX(x)){
+            x <- convertToPOSIX(x)
+        }
+    }
+    
+    return(x)
+}
+
+
+is.ConvertableToPOSIX <- function(x) {
+    if(is.character(x)) {
+        # Convert to POSIX:
+        POSIX <- convertToPOSIX(x)
+        any(!is.na(POSIX))
     }
     else {
-        x
+        FALSE
     }
 }
+
+
+convertToPOSIX <- function(x) {
+    # Get the DateTime format used by StoX:
+    StoxDateTimeFormat <- RstoxData::getRstoxDataDefinitions("StoxDateTimeFormat")
+    StoxTimeZone <- RstoxData::getRstoxDataDefinitions("StoxTimeZone")
+    
+    # Convert to POSIX:
+    POSIX <- as.POSIXct(x, format = StoxDateTimeFormat, tz = StoxTimeZone)
+    
+    return(POSIX)    
+}
+
+
 
 
 
@@ -1070,7 +1057,6 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     )
     
     # Convert project description to json structure: 
-    browser()
     json <- toJSON_Rstox(projectDescription)
     
     # Read any geojson objects stored in temporary file by convertProcessDataToGeojson():
@@ -1113,6 +1099,8 @@ convertProcessDataToGeojson <- function(projectDescription) {
 
 
 replaceSpatialFileReference <- function(x) {
+    
+    # Get the start and end position of geojson file paths:
     spatialFileReferenceCodeStart <- getRstoxFrameworkDefinitions("spatialFileReferenceCodeStart")
     spatialFileReferenceCodeEnd <- getRstoxFrameworkDefinitions("spatialFileReferenceCodeEnd")
     start <- unlist(gregexpr(spatialFileReferenceCodeStart, x))
@@ -1123,15 +1111,15 @@ replaceSpatialFileReference <- function(x) {
     }
     
     end <- unlist(gregexpr(spatialFileReferenceCodeEnd, x))
-    spatialFile <- mapply(substr, x, start + nchar(spatialFileReferenceCodeStart), end - 1)
+    spatialFile <- mapply(substr, x, start + nchar(spatialFileReferenceCodeStart), end - 1, USE.NAMES = FALSE)
     spatialString <- sapply(spatialFile, readCharAll)
     
-    # Replace in reverse order to avoid messing up the start and end indices:
+    # Replace in reverse order to avoid messing up the start and end indices (DO NOT USE substring() here, as it will truncate the input, use substr instead):
     for(ind in rev(seq_along(spatialString))) {
         x <- paste0(
             substr(x, 1, start[ind] - 2), 
             spatialString[ind], 
-            substring(x, end[ind] + nchar(spatialFileReferenceCodeEnd) + 1)
+            substr(x, end[ind] + nchar(spatialFileReferenceCodeEnd) + 1, nchar(x))
         )
     }
     
@@ -1516,7 +1504,9 @@ getNewProjectMemoryFileSansExt <- function(projectPath) {
 
 addTimeToFileName <- function(fileName, dir) {
     # Define a string with time in ISO 8601 format:
-    timeString <- format(Sys.time(), tz = "UTC", format = "%Y%m%dT%H%M%OS3Z")
+    StoxTimeZone <- RstoxData::getRstoxDataDefinitions("StoxTimeZone")
+    
+    timeString <- format(Sys.time(), tz = StoxTimeZone, format = "%Y%m%dT%H%M%OS3Z")
     # Define the file name including the time string, and build the path to the file:
     fileName <- paste0(fileName, "_", timeString)
     filePath <- file.path(dir, fileName)
@@ -2072,7 +2062,7 @@ getProcess <- function(projectPath, modelName, processID, argumentFilePaths = NU
     process$processID <- processID
     
     # Add the output data file path(s):
-    warning("StoX: Add the output data file path(s)__________________________")
+    #warning("StoX: Add the output data file path(s)__________________________")
     
     if(only.valid) {
         argumentsToShow <- getArgumentsToShow(projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
@@ -3378,14 +3368,20 @@ parseParameter <- function(parameter) {
 
 is.convertableToTable <- function(x, minLength = 1) {
     # If all elements of the list x are lists with equal length, x is convertable to data.table:
-    #is.list(x) && all(sapply(x, is.list)) && RstoxBase:::allEqual(lengths(x))
-    
     length(x) && 
     is.list(x) && # The input must be a list
     all(sapply(x, is.list)) && # ... and a list of lists
     RstoxBase:::allEqual(lengths(x)) && # ... and all must be of equal length
     all(lengths(x) >= minLength) && # ... and longer than 1
     !is.list(x[[1]][[1]]) # ... and finally, each list must not contain lists. We only check the first element here
+}
+
+is.convertableToVector <- function(x, minLength = 1) {
+    length(x) && 
+    is.list(x) && # The input must be a list
+    !any(sapply(x, is.list)) && # ... and cannot be a list of lists
+    all(lengths(x) == 1) # ... and all must have length 1
+    !length(names(x)) # Convert to vector only if not named
 }
 
 

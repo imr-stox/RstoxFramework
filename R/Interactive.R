@@ -132,7 +132,9 @@ assignment_addHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     )
     
     # Order the BioticAssignment:
-    setorderv(BioticAssignment, cols = c("PSU", "Layer", "Haul"), na.last = TRUE)
+    #setorderv(BioticAssignment, cols = c("PSU", "Layer", "Haul"), na.last = TRUE)
+    # Format the output:
+    RstoxBase::formatOutput(BioticAssignment, dataType = "BioticAssignment", keep.all = FALSE)
     
     return(BioticAssignment)
 }
@@ -150,6 +152,9 @@ assignment_removeHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     
     # Remove the hauls:
     BioticAssignment <- BioticAssignment[-at[atHauls], ]
+    
+    # Format the output:
+    RstoxBase::formatOutput(BioticAssignment, dataType = "BioticAssignment", keep.all = FALSE)
     
     return(BioticAssignment)
 }
@@ -206,6 +211,9 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         toAdd
     )
     
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
+    
     # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
@@ -245,6 +253,9 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     #AcousticPSU$EDSU_PSU <- AcousticPSU$EDSU_PSU[EDSUsToKeep, ]
     AcousticPSU$EDSU_PSU[PSUsToSetToNAInEDSU_PSU, PSU := NA]
     
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
+    
     # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
@@ -282,6 +293,9 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
     AcousticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
     AcousticPSU$EDSU_PSU$PSU[EDSUsToRename] <- newPSUName
     
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
+    
     # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
@@ -317,6 +331,9 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     atEDSUs <- AcousticPSU$EDSU_PSU$EDSU %in% EDSU
     AcousticPSU$EDSU_PSU[atEDSUs, PSU := ..PSU]
     
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
+    
     # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
@@ -350,6 +367,9 @@ removeEDSU <- function(EDSU, projectPath, modelName, processID) {
     # Set the PSU column to empty string for the given EDSUs:
     atEDSUs <- AcousticPSU$EDSU_PSU$EDSU %in% EDSU
     AcousticPSU$EDSU_PSU[atEDSUs, PSU := ""]
+    
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
     
     ## Add the acsoutic PSU:
     #EDSUsToKeep <- !AcousticPSU$PSU_EDSU$EDSU %in% EDSU

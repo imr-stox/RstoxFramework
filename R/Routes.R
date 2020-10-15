@@ -1522,58 +1522,61 @@ getParameterFormatElement <- function(projectPath, modelName, processID, format,
     return(output)
 }
 
-# 1. Handle parameter table:
-# Get the title of a parameter table:
-getParameterTableTitle <- function(projectPath, modelName, processID, format) {
-    getParameterFormatElement(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        format = format, 
-        element = "title"
-    )
-}
-
-# Get the column names of a parameter table:
-getParameterTableColumnNames <- function(projectPath, modelName, processID, format) {
-    getParameterFormatElement(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        format = format, 
-        element = "columnNames"
-    )
-}
-
 # Get the variable types of a parameter table:
-getParameterTableVariableTypes <- function(projectPath, modelName, processID, format) {
-    getParameterFormatElement(
+getParameterVariableTypes <- function(projectPath, modelName, processID, format) {
+    variableTypes <- getParameterFormatElement(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
         format = format, 
         element = "variableTypes"
     )
+    variableTypes <- replace(variableTypes, variableTypes %in% c("double"), "numeric")
+    
+    return(variableTypes)
 }
     
 # Get the possible values of a parameter table:
-# Unfinished!!!!!!!!!!!!!!!
 getParameterTablePossibleValues <- function(projectPath, modelName, processID, format) {
-    #getParameterTableElement(
-    #    projectPath = projectPath, 
-    #    modelName = modelName, 
-    #    processID = processID, 
-    #    format = format, 
-    #    element = "possibleValues"
-    #)
-    columnNames <- getParameterTableColumnNames(
+    possibleValues <- getParameterFormatElement(
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
-        format = format
+        format = format, 
+        element = "possibleValues"
     )
-    rep(list(list()), length(columnNames))
+    
+    if(!length(possibleValues)) {
+        columnNames <- getParameterFormatElement(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            format = format, 
+            element = "columnNames"
+        )
+        possibleValues <- rep(list(list()), length(columnNames))
+    }
+    
+    return(possibleValues)
 }
+
+# Get the possible values of a parameter table:
+getParameterVectorPossibleValues <- function(projectPath, modelName, processID, format) {
+    possibleValues <- getParameterFormatElement(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        format = format, 
+        element = "possibleValues"
+    )
+    if(!length(possibleValues)) {
+        possibleValues <- list()
+    }
+    
+    return(possibleValues)
+}
+
+
 
 #' GUI function: Function to get the info required for populating a parameter table builder in the GUI
 #' 
@@ -1584,19 +1587,21 @@ getParameterTablePossibleValues <- function(projectPath, modelName, processID, f
 #' 
 getParameterTableInfo <- function(projectPath, modelName, processID, format) {
     list(
-        parameterTableTitle = getParameterTableTitle(
+        parameterTableTitle = getParameterFormatElement(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            format = format
+            format = format, 
+            element = "title"
         ), 
-        parameterTableColumnNames = getParameterTableColumnNames(
+        parameterTableColumnNames = getParameterFormatElement(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
-            format = format
+            format = format, 
+            element = "columnNames"
         ), 
-        parameterTableVariableTypes = getParameterTableVariableTypes(
+        parameterTableVariableTypes = getParameterVariableTypes(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -1613,34 +1618,6 @@ getParameterTableInfo <- function(projectPath, modelName, processID, format) {
 
 
 
-# 2. Handle parameter vector:
-# Get the title of a parameter table:
-getParameterVectorTitle <- function(projectPath, modelName, processID, format) {
-    getParameterFormatElement(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        format = format, 
-        element = "title"
-    )
-}
-
-# Get the possible values of a parameter table:
-# Unfinished!!!!!!!!!!!!!!!
-getParameterVectorPossibleValues <- function(projectPath, modelName, processID, format) {
-    possibleValues <- getParameterFormatElement(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        format = format, 
-        element = "possibleValues"
-    )
-    if(!length(possibleValues)) {
-        possibleValues <- list()
-    }
-    
-    return(possibleValues)
-}
 
 #' GUI function: Function to get the info required for populating a parameter table builder in the GUI
 #' 
@@ -1651,7 +1628,14 @@ getParameterVectorPossibleValues <- function(projectPath, modelName, processID, 
 #' 
 getParameterVectorInfo <- function(projectPath, modelName, processID, format) {
     list(
-        parameterVectorTitle = getParameterVectorTitle(
+        parameterVectorTitle = getParameterFormatElement(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID, 
+            format = format, 
+            element = "title"
+        ), 
+        parameterVectorVariableTypes = getParameterVariableTypes(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -1665,20 +1649,6 @@ getParameterVectorInfo <- function(projectPath, modelName, processID, format) {
         )
     )
 }
-
-
-
-
-##' GUI function: Get a table of all parameter table info, holding tha name and type of all columns defined in parameter tables in all #Rstox packages
-##' 
-##' @export
-##' 
-#getAllParameterTableInfo <- function() {
-#    parameterTableInfo <- getRstoxFrameworkDefinitions("parameterTableInfo")
-#    info <- lapply(parameterTableInfo, function(x) x$info)
-#    info <- unique(data.table::rbindlist(info))
-#    return(info)
-#}
 ######
 
 

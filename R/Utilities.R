@@ -40,8 +40,8 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
 # Function to get the first element of class(x):
 firstClass <- function(x) {
     out <- class(x)[1]
-    if(out == "numeric") {
-        out <- "double"
+    if(out == "double") {
+        out <- "numeric"
     }
     return(out)
 }

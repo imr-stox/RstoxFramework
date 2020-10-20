@@ -176,7 +176,8 @@ getNewDefaultName <- function(names, prefix) {
 #' 
 json2expression <- function(json) {
     #l <- parseParameter(json, simplifyVector = FALSE)
-    l <- parseParameter(json)
+    #l <- parseParameter(json)
+    l <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     #l <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     list2expression(l)
 }
@@ -576,9 +577,15 @@ toJSON_Rstox <- function(x, ...) {
         lll$null <- null
     }
     
-    lll$x <- x
+    #lll$x <- x
+    lll <- c(list(x = x), lll
+             )
     
     do.call(jsonlite::toJSON, lll)
 }
 
+
+emptyNamedList <- function() {
+    list(a = 1)[0]
+}
 

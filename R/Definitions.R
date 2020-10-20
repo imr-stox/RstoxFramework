@@ -57,6 +57,15 @@ initiateRstoxFramework <- function(){
         report = "text"
     )
     
+    processProperties <- c(
+        "functionName", 
+        "processName", 
+        "processParameters", 
+        "functionInputs", 
+        "functionParameters", 
+        "processData"
+    )
+    
     # Define the requested (all) function attributes:
     requestedFunctionAttributeNames <- c(
         "packageName", 

@@ -1,6 +1,6 @@
 Package: RstoxFramework
 Version: 1.2.25
-Date: 2020-10-15
+Date: 2020-10-20
 Title: The Engine of StoX
 Authors@R: c(
   person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 

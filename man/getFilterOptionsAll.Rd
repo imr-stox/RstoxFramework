@@ -4,7 +4,13 @@
 \alias{getFilterOptionsAll}
 \title{GUI function: Get possible tables, operators and unique values for use in the filter expression builder.}
 \usage{
-getFilterOptionsAll(projectPath, modelName, processID, include.numeric = TRUE)
+getFilterOptionsAll(
+  projectPath,
+  modelName,
+  processID,
+  include.numeric = TRUE,
+  stopIfEmptyPossibleValues = FALSE
+)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}

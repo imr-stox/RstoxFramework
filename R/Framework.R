@@ -1372,9 +1372,9 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
                 modelName = modelName, 
                 processIndexTable$processID
             )
-            processIDsToDelete <- processIndexTable$processID[allProcessIndex > processIndex]
+            IDsOfProcessesToDelete <- processIndexTable$processID[allProcessIndex > processIndex]
             foldersToDelete <- sapply(
-                processIDsToDelete, 
+                IDsOfProcessesToDelete, 
                 function(thisProcessID) getProcessOutputFolder(
                     projectPath = projectPath, 
                     modelName = modelName, 
@@ -1385,16 +1385,28 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
             unlink(foldersToDelete, recursive = TRUE, force = TRUE)
             
             ##### (3) Delete process output text files: #####
-            # Get the list of output text files:
-            folderPath <- getProjectPaths(projectPath = projectPath, name = modelName)
-            outputTextFiles <- list.files(folderPath, full.names = TRUE)
             
-            # Identify the output file with prefix later than the index of the process to reset to:
-            prefix <- as.numeric(sub("\\_.*", "", basename(outputTextFiles)))
-            filesToDelete <- outputTextFiles[prefix > processIndex]
-            
-            # Delete the files:
-            unlink(filesToDelete, recursive = TRUE, force = TRUE)
+            #### Get the list of output text files:
+            ###folderPath <- getProjectPaths(projectPath = projectPath, name = modelName)
+            ###outputTextFiles <- list.files(folderPath, full.names = TRUE)
+            ###
+            #### Identify the output file with prefix later than the index of the process to reset to:
+            ###prefix <- as.numeric(sub("\\_.*", "", basename(outputTextFiles)))
+            ###filesToDelete <- outputTextFiles[prefix > processIndex]
+            ###
+            #### Delete the files:
+            ###unlink(filesToDelete, recursive = TRUE, force = TRUE)
+            namesOfProcessesToDelete <- processIndexTable$processName[allProcessIndex > processIndex]
+            foldersToDelete <- sapply(
+                IDsOfProcessesToDelete, 
+                function(thisProcessID) getProcessOutputFolder(
+                    projectPath = projectPath, 
+                    modelName = modelName, 
+                    processID = thisProcessID, 
+                    type = "text"
+                )
+            )
+            unlink(foldersToDelete, recursive = TRUE, force = TRUE)
         }
     }
     
@@ -2122,6 +2134,7 @@ checkDataType <- function(dataType, projectPath, modelName, processID) {
 
 ##### Functions for manipulating the process index table, which defines the order of the processes. These functions are used by the frontend to delete, add, and reorder processes: #####
 readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NULL, startProcess = 1, endProcess = Inf, return.processIndex = FALSE) {
+    
     # Get the path to the process index file:
     processIndexTableFile <- getProjectPaths(projectPath, "processIndexTableFile")
     
@@ -4070,7 +4083,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         # Write to text files:
         # Use fileOutput if given and process$processParameters$fileOutput otherwise to determine whether to write the output to the output.file.type:
         if(if(length(fileOutput)) fileOutput else process$processParameters$fileOutput) {
-            writeProcessOutput(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processName = process$processName, output.file.type = output.file.type)
+            writeProcessOutputTextFile(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, output.file.type = output.file.type)
         }
         
         #invisible(processOutput)
@@ -4122,10 +4135,10 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
     # Add the projectPath and outputData path if a bootstrap function:
     if(isBootstrapFunction(process$functionName)) {
         functionArguments$projectPath <- projectPath
-        functionArguments$outputDataPath <- getProcessOutputDataFilePath(
+        functionArguments$outputDataPath <- getProcessOutputTextFilePath(
             projectPath = projectPath, 
             modelName = modelName, 
-            processName = process$processName, 
+            processID = process$processID, 
             processOutput = NULL, 
             output.file.type = "RData"
         )
@@ -4532,7 +4545,7 @@ deleteProcessOutput <- function(projectPath, modelName, processID, type = c("mem
 
 
 
-getProcessOutputFolder <- function(projectPath, modelName, processID, type = c("memory", "output"), subfolder = NULL) {
+getProcessOutputFolder <- function(projectPath, modelName, processID, type = c("memory", "output", "text"), subfolder = NULL) {
     type <- match.arg(type)
     if(type == "memory") {
         folderPath <- file.path(getProjectPaths(projectPath, "dataModelsFolder"), modelName, processID)
@@ -4540,11 +4553,29 @@ getProcessOutputFolder <- function(projectPath, modelName, processID, type = c("
     else if(type == "output") {
         # Get the processName and build the folderPath:
         processName <- getProcessNameFromProcessID(projectPath, modelName, processID)
-        folderPath <- file.path(getProjectPaths(projectPath, "Output"), modelName, processName)
+        folderPath <- file.path(
+            getProjectPaths(
+                projectPath, 
+                "Output"
+            ), 
+            modelName, 
+            processName
+        )
         # Add subfolder:
         if(length(subfolder)) {
             folderPath <- file.path(folderPath, subfolder)
         }
+    }
+    else if(type == "text") {
+        # Get the processName and build the folderPath:
+        processName <- getProcessNameFromProcessID(projectPath, modelName, processID)
+        folderPath <- file.path(
+            getProjectPaths(
+                projectPath = projectPath, 
+                name = modelName
+            ), 
+            processName
+        )
     }
     else {
         stop("typetype must be one of \"memory\" and \"output\"")
@@ -4604,14 +4635,18 @@ getProcessID <- function(projectPath, modelName, startProcess = 1, endProcess = 
 
 
 
-getProcessOutputDataFilePath <- function(
+getProcessOutputTextFilePath <- function(
     projectPath, 
     modelName, 
-    processName, 
+    processID, 
     processOutput = NULL, 
     output.file.type = "default"
     )
 {
+    
+    # Get the process name
+    processName <- getProcessNameFromProcessID(projectPath, modelName, processID)
+    
     ### # Get the output file type:
     ### output.file.type <- match.arg(output.file.type)
     # Apply the default output.file.type if specified:
@@ -4619,11 +4654,19 @@ getProcessOutputDataFilePath <- function(
         output.file.type <- getRstoxFrameworkDefinitions("default.output.file.type")[[modelName]]
     }
     
-    # Get the folder to place the output files in:
-    folderPath <- getProjectPaths(
+    # Get the folder to place the output files in (added subfolder named by the process on 2020-10-21):
+    folderPath <- getProcessOutputFolder(
         projectPath = projectPath, 
-        name = modelName
+        modelName = modelName, 
+        processID = processID, 
+        type = "text", 
+        subfolder = NULL
     )
+    
+    # Create the folder:
+    if(!file.exists(folderPath)) {
+        dir.create(folderPath)
+    }
     
     # Store the process output:
     if(output.file.type == "RData") {
@@ -4684,10 +4727,13 @@ getProcessOutputDataFilePath <- function(
     
     
 # Function to write process output to a text file in the output folder:
-writeProcessOutput <- function(processOutput, projectPath, modelName, processName, output.file.type = c("default", "text", "RData", "rds")) {
+writeProcessOutputTextFile <- function(processOutput, projectPath, modelName, processID, output.file.type = c("default", "text", "RData", "rds")) {
     
+    # Get the process name
+    processName <- getProcessNameFromProcessID(projectPath, modelName, processID)
+    
+    # Get the output.file.type:
     output.file.type <- match.arg(output.file.type)
-    
     # Apply the default output.file.type if specified:
     if(output.file.type == "default") {
         output.file.type <- getRstoxFrameworkDefinitions("default.output.file.type")[[modelName]]
@@ -4698,14 +4744,14 @@ writeProcessOutput <- function(processOutput, projectPath, modelName, processNam
         # Unlist introduces dots, and we replace by underscore:
         processOutput <- unlistToDataType(processOutput)
         
-        filePath <- getProcessOutputDataFilePath(
+        filePath <- getProcessOutputTextFilePath(
             projectPath = projectPath, 
             modelName = modelName, 
-            processName = processName, 
+            processID = processID, 
             processOutput = processOutput, 
             output.file.type = output.file.type
         )
-        
+
         # Store the process output:
         if(output.file.type == "RData") {
             # Rename the process output to the process name:

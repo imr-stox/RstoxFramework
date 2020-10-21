@@ -27,9 +27,7 @@ initiateRstoxFramework <- function(){
     officialStoxLibraryPackages <- c(
         "RstoxBase", 
         "RstoxData"
-        #"RstoxFDA", 
-        #"RstoxAnalysis", 
-        #"RstoxReport"
+        #"RstoxFDA"
     )
     officialStoxLibraryPackagesAll <- c("RstoxFramework", officialStoxLibraryPackages)
     

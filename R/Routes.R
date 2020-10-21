@@ -1581,6 +1581,7 @@ getParameterTablePossibleValues <- function(projectPath, modelName, processID, f
             format = format, 
             element = "columnNames"
         )
+        # This results in the JSON string "[[],[],[]]" as is expected by the GUI:
         possibleValues <- rep(list(list()), length(columnNames))
     }
     

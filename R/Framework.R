@@ -4945,6 +4945,12 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
         warning("StoX: The StoX project ", projectPath, " does not exist")
         return(failedVector)
     }
+    # Check that the model exists
+    else if(!modelName %in% getRstoxFrameworkDefinitions("stoxModelNames")){
+        warning("StoX: The modelName must be one of ", paste(getRstoxFrameworkDefinitions("stoxModelNames"), collapse = ", "), " (was ", modelName, ")")
+        return(failedVector)
+    }
+    
     
     # Check that the project is open:
     if(!isOpenProject(projectPath)) {

@@ -36,11 +36,10 @@ NULL
 #' @export
 #' @rdname BioticAssignment
 #' 
-addHaulToAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID) {
+addHaulToAssignment <- function(Stratum, PSU, Haul, projectPath, modelName, processID) {
     modifyAssignment(
         Stratum = Stratum, 
         PSU = PSU, 
-        Layer = Layer, 
         Haul = Haul, 
         projectPath = projectPath, 
         modelName = modelName, 
@@ -52,11 +51,10 @@ addHaulToAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelNam
 #' @export
 #' @rdname BioticAssignment
 #' 
-removeHaulFromAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID) {
+removeHaulFromAssignment <- function(Stratum, PSU, Haul, projectPath, modelName, processID) {
     modifyAssignment(
         Stratum = Stratum, 
         PSU = PSU, 
-        Layer = Layer, 
         Haul = Haul, 
         projectPath = projectPath, 
         modelName = modelName, 
@@ -66,7 +64,7 @@ removeHaulFromAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, mod
 }
 
 # Generic function to add or remove a haul:
-modifyAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
+modifyAssignment <- function(Stratum, PSU, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
     
     # Check that the process returns BioticAssigment process data:
     checkDataType("BioticAssignment", projectPath, modelName, processID)
@@ -86,7 +84,6 @@ modifyAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, 
         list(
             Stratum = Stratum, 
             PSU = PSU, 
-            Layer = Layer, 
             Haul = Haul, 
             BioticAssignment = BioticAssignment
         )
@@ -122,7 +119,9 @@ assignment_addHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     toAdd <- data.table::data.table(
         Stratum = Stratum, 
         PSU = PSU, 
-        Layer = Layer, 
+        # Changed to add NA as Layer. The Layers are added later in RstoxBase::DefineBioticAssignment():
+        #Layer = Layer, 
+        Layer = NA, 
         Haul = Haul, 
         WeightingFactor = 1
     )
@@ -140,12 +139,14 @@ assignment_addHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
 }
 
 # Function that removes a haul from the assignment data:
-assignment_removeHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
+assignment_removeHaul <- function(Stratum, PSU, Haul, BioticAssignment) {
     
     # Get the row indixces of the PSU and Layer:
-    atPSU <- BioticAssignment$PSU %in% PSU
-    atLayer <- BioticAssignment$Layer  %in% Layer
-    at <- which(atPSU & atLayer)
+    # Changed to only consider PSUs, and not Layers. Assigning to different specific Layers will be implemented with separate functions in the future:
+    #atPSU <- BioticAssignment$PSU %in% PSU
+    #atLayer <- BioticAssignment$Layer  %in% Layer
+    #at <- which(atPSU & atLayer)
+    at <- BioticAssignment$PSU %in% PSU
     
     # Get the indices in 'at' to remove:
     atHauls <- BioticAssignment[at, ]$Haul %in% Haul

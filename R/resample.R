@@ -7,7 +7,7 @@
 #' @export
 #' 
 Bootstrap <- function(
-    outputDataPath, 
+    outputData, 
     projectPath, 
     # Table with ProcessName, ResamplingFunction, ResampleWithin, Seed:
     BootstrapMethodTable = data.table::data.table(), 
@@ -19,11 +19,12 @@ Bootstrap <- function(
     
     # Use preivously generated output data if specified:
     if(UseOutputData) {
-        outputData <- get(load(outputDataPath))
+        # This was moved to getFunctionArguments() on 2020-10-22:
+        #outputData <- get(load(outputDataPath))
         return(outputData)
     }
     
-    # Identify the first process set for resampling by the BootstrapMethodTable:
+    # Identify the first process set for resampling by the BootstrapMethodTable (here BootstrapMethodTable$ProcessName can be a vector, in which case the table is returned from the first process of these and onwards):
     processIndexTable <- readProcessIndexTable(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = OutputProcesses, return.processIndex = TRUE)
     
     # Check the output processes:
@@ -77,6 +78,14 @@ Bootstrap <- function(
             endProcess = max(processIndexTable$processIndex), 
             outputProcessesIDs = OutputProcesses
         )
+    )
+    
+    # Reset the model to the last process before the bootstrapped processes:
+    resetModel(
+        projectPath = projectPath, 
+        modelName = "baseline", 
+        processID = processIndexTable$processID[1], 
+        processDirty = FALSE
     )
     
     # Get the data types to return:

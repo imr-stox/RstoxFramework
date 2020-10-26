@@ -80,7 +80,9 @@ initiateRstoxFramework <- function(){
     systemParameters <- c(
         "processData", 
         "projectPath", 
-        "outputDataPath"
+        # Changed on 2020-10-22 to use the actual data and not the file:
+        #"outputDataPath"
+        "outputData"
     )
     
     # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():

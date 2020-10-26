@@ -4012,6 +4012,10 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
             )
     }
     
+    # Reset the model to the process just before the process to be run:
+    resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1)
+    
+    # Run the process:
     processOutput <- tryCatch(
         do.call(
             getFunctionNameFromPackageFunctionName(process$functionName), 
@@ -4053,7 +4057,8 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     if(failed){
         return(FALSE)
     }
-    else{
+    else if(length(processOutput)){
+        
         # Update the active process ID:
         writeActiveProcessID(projectPath, modelName, processID, processDirty = FALSE)
         
@@ -4134,17 +4139,29 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
     }
     # Add the projectPath and outputData path if a bootstrap function:
     if(isBootstrapFunction(process$functionName)) {
+        
         functionArguments$projectPath <- projectPath
-        functionArguments$outputDataPath <- getProcessOutputTextFilePath(
+        # Get and read any bootstrap file from before:
+        outputDataPath <- getProcessOutputTextFilePath(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = process$processID, 
             processOutput = NULL, 
             output.file.type = "RData"
         )
+        # Read the outputData (from a former run of the proecss). Use functionArguments["outputData"] to add the data, since using functionArguments$outputData will delete this element if trying to giev it the value NULL:
+        if(file.exists(outputDataPath)) {
+            functionArguments["outputData"] <- tryCatch(
+                list(get(load(outputDataPath))), 
+                error = function(err) list(NULL)
+            )
+        }
+        else {
+            functionArguments["outputData"] <- list(NULL)
+        }
+        #functionArguments$outputData <- readOutputRDataFile(outputDataPath)
     }
-    
-    
+     
     # Get the function input as output from the previously run processes:
     functionInputProcessNames <- unlist(process$functionInputs)
     if(length(functionInputProcessNames)) {
@@ -4204,6 +4221,19 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
     functionArguments
 }
 
+readOutputRDataFile <- function(outputDataPath) {
+    if(file.exists(outputDataPath)) {
+        outputData <- tryCatch(
+            get(load(functionArguments$outputDataPath)), 
+            error = function(err) NULL
+        )
+    }
+    else {
+        outputData <- NULL
+    }
+    
+    return(outputData)
+}
 
 
 ##################################################
@@ -4455,6 +4485,7 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
     if(length(folderPath) == 0 || !file.exists(folderPath)) {
         #processName <- getProcessName(projectPath, modelName, processID)
         #stop("Has the previous processes been run? The folder ", folderPath, " does not exist.")
+        
         warning("StoX: Process ", getProcessNameFromProcessID(projectPath, modelName, processID), " has not been run.")
         return(NULL)
     }
@@ -4967,6 +4998,11 @@ purgeOutput <- function(projectPath, modelName) {
 #runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, save = TRUE, force = FALSE) {
 runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, msg = TRUE, save = TRUE, saveProcessData = TRUE, force.restart = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceDataList = list(), replaceArgs = list(), output.file.type = c("default", "text", "RData", "rds"), ...) {
 
+    # Open the project if not open:
+    if(!isOpenProject(projectPath)) {
+        openProject(projectPath)
+    }
+    
     # Save both before and after for safety:
     if(save) {
         saveProject(projectPath)
@@ -5025,7 +5061,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     #err <- NULL
     
     # Reset the model to the process just before the removed process:
-    resetModel(projectPath = projectPath, modelName = modelName, processID = processIDs[1], shift = -1)
+    #resetModel(projectPath = projectPath, modelName = modelName, processID = processIDs[1], shift = -1)
     
     # Try running the processes, and retun the failedVector if craching:
     #tryCatch(

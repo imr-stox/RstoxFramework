@@ -5,7 +5,7 @@
 \title{Bootstrap the baseline model}
 \usage{
 Bootstrap(
-  outputDataPath,
+  outputData,
   projectPath,
   BootstrapMethodTable = data.table::data.table(),
   NumberOfBootstraps = 1L,

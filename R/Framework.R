@@ -4023,7 +4023,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     
     # Run the process:
     processOutput <- tryCatch(
-        do.call_robust(
+        do.call(
             getFunctionNameFromPackageFunctionName(process$functionName), 
             functionArguments, 
             envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))

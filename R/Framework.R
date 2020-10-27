@@ -2307,8 +2307,14 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     rearranged <- processIndexTable[toRearrange, ]
     rest <- processIndexTable[notToRearrange, ]
     
+    if(!length(afterProcessID) || is.na(afterProcessID) || !nchar(afterProcessID)) {
+        afterProcessIndexInRest <- 0
+    }
+    else {
+        afterProcessIndexInRest <- which(rest$modelName %in% modelName & rest$processID %in% afterProcessID)
+    }
+    
     #afterProcessIndexInRest <- max(0, which(rest$modelName %in% modelName & rest$processID %in% afterProcessID))
-    afterProcessIndexInRest <- which(rest$modelName %in% modelName & rest$processID %in% afterProcessID)
     if(!length(afterProcessIndexInRest)) {
         return(NULL)
     }
@@ -4017,7 +4023,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     
     # Run the process:
     processOutput <- tryCatch(
-        do.call(
+        do.call_robust(
             getFunctionNameFromPackageFunctionName(process$functionName), 
             functionArguments, 
             envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))
@@ -4037,10 +4043,11 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         if(!exists(replaceData$FunctionName)) {
             stop("If replaceData is given as a list with a function name first, this must be an existing function (was ", replaceData$FunctionName, ").")
         }
-        processOutput <- do.call(
+        processOutput <- do.call_robust(
             what = replaceData$FunctionName, 
             args = c(
                 list(processOutput), 
+                functionArguments, 
                 replaceData$MoreArgs
             )
         )

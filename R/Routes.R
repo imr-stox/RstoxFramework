@@ -1317,7 +1317,7 @@ convertFunctionParameter <- function(functionParameterName, functionParameterVal
             functionParameterValue <- NULL
         }
         fun <- paste0("as.", type)
-        functionParameterValue <- do.call(fun, list(functionParameterValue))
+        functionParameterValue <- do.call_robust(fun, list(functionParameterValue))
     }
     
     return(functionParameterValue)

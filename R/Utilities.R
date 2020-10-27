@@ -112,7 +112,7 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
     out <- out[, lapply(.SD, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))]
     
     # Collapse to lines:
-    out <- out[, do.call(paste, c(.SD, sep = columnSeparator)), .SDcols = names(x)]
+    out <- out[, do.call_robust(paste, c(.SD, sep = columnSeparator)), .SDcols = names(x)]
     
     # Collapse the lines if requested:
     if(length(lineSeparator)) {
@@ -540,7 +540,7 @@ do.call_robust <- function(what, args, quote = FALSE, envir = parent.frame()) {
         args <- args[intersect(names(args), names(f))]
     }
     # Run the function:
-    do.call(what, args, quote = quote, envir = envir)
+    do.call_robust(what, args, quote = quote, envir = envir)
 }
 
 

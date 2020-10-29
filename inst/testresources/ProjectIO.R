@@ -761,15 +761,15 @@ isStox27project <- function(stox27project){
   return(T)
 }
 
-#' Read Stox project from project xml
-#' @param projectxml xml filename of stox v2.7 project file
-#' @param strict logical, whether errors should be raised for unkown elements and attributes or missing required attributes, if False warnings will be issued.
-#' @return Nested list representation of project, formatted as: \code{\link[RstoxFramework]{stox27project}}
-#' @export
-readStox27Project <- function(projectxml, strict=T){
-  tree <- xml2::read_xml(projectxml)
-  
-  root <- xml2::xml_root(tree)
-  
-  return(processStox27Xml(root, strict))
-}
+### #' Read Stox project from project xml
+### #' @param projectxml xml filename of stox v2.7 project file
+### #' @param strict logical, whether errors should be raised for unkown elements and attributes or missing required attributes, ### if False warnings will be issued.
+### #' @return Nested list representation of project, formatted as: \code{\link[RstoxFramework]{stox27project}}
+### #' @export
+### readStox27Project <- function(projectxml, strict=T){
+###   tree <- xml2::read_xml(projectxml)
+###   
+###   root <- xml2::xml_root(tree)
+###   
+###   return(processStox27Xml(root, strict))
+### }

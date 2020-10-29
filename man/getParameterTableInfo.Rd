@@ -4,7 +4,13 @@
 \alias{getParameterTableInfo}
 \title{GUI function: Function to get the info required for populating a parameter table builder in the GUI}
 \usage{
-getParameterTableInfo(projectPath, modelName, processID, format)
+getParameterTableInfo(
+  projectPath,
+  modelName,
+  processID,
+  format,
+  stopIfEmptyPossibleValues = FALSE
+)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}

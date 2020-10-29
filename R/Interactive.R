@@ -36,11 +36,10 @@ NULL
 #' @export
 #' @rdname BioticAssignment
 #' 
-addHaulToAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID) {
+addHaulToAssignment <- function(Stratum, PSU, Haul, projectPath, modelName, processID) {
     modifyAssignment(
         Stratum = Stratum, 
         PSU = PSU, 
-        Layer = Layer, 
         Haul = Haul, 
         projectPath = projectPath, 
         modelName = modelName, 
@@ -52,11 +51,10 @@ addHaulToAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelNam
 #' @export
 #' @rdname BioticAssignment
 #' 
-removeHaulFromAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID) {
+removeHaulFromAssignment <- function(Stratum, PSU, Haul, projectPath, modelName, processID) {
     modifyAssignment(
         Stratum = Stratum, 
         PSU = PSU, 
-        Layer = Layer, 
         Haul = Haul, 
         projectPath = projectPath, 
         modelName = modelName, 
@@ -66,7 +64,7 @@ removeHaulFromAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, mod
 }
 
 # Generic function to add or remove a haul:
-modifyAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
+modifyAssignment <- function(Stratum, PSU, Haul, projectPath, modelName, processID, action = c("add", "remove")) {
     
     # Check that the process returns BioticAssigment process data:
     checkDataType("BioticAssignment", projectPath, modelName, processID)
@@ -86,7 +84,6 @@ modifyAssignment <- function(Stratum, PSU, Layer, Haul, projectPath, modelName, 
         list(
             Stratum = Stratum, 
             PSU = PSU, 
-            Layer = Layer, 
             Haul = Haul, 
             BioticAssignment = BioticAssignment
         )
@@ -122,7 +119,9 @@ assignment_addHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     toAdd <- data.table::data.table(
         Stratum = Stratum, 
         PSU = PSU, 
-        Layer = Layer, 
+        # Changed to add NA as Layer. The Layers are added later in RstoxBase::DefineBioticAssignment():
+        #Layer = Layer, 
+        Layer = NA, 
         Haul = Haul, 
         WeightingFactor = 1
     )
@@ -132,24 +131,31 @@ assignment_addHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     )
     
     # Order the BioticAssignment:
-    setorderv(BioticAssignment, cols = c("PSU", "Layer", "Haul"), na.last = TRUE)
+    #setorderv(BioticAssignment, cols = c("PSU", "Layer", "Haul"), na.last = TRUE)
+    # Format the output:
+    RstoxBase::formatOutput(BioticAssignment, dataType = "BioticAssignment", keep.all = FALSE)
     
     return(BioticAssignment)
 }
 
 # Function that removes a haul from the assignment data:
-assignment_removeHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
+assignment_removeHaul <- function(Stratum, PSU, Haul, BioticAssignment) {
     
     # Get the row indixces of the PSU and Layer:
-    atPSU <- BioticAssignment$PSU %in% PSU
-    atLayer <- BioticAssignment$Layer  %in% Layer
-    at <- which(atPSU & atLayer)
+    # Changed to only consider PSUs, and not Layers. Assigning to different specific Layers will be implemented with separate functions in the future:
+    #atPSU <- BioticAssignment$PSU %in% PSU
+    #atLayer <- BioticAssignment$Layer  %in% Layer
+    #at <- which(atPSU & atLayer)
+    at <- BioticAssignment$PSU %in% PSU
     
     # Get the indices in 'at' to remove:
     atHauls <- BioticAssignment[at, ]$Haul %in% Haul
     
     # Remove the hauls:
     BioticAssignment <- BioticAssignment[-at[atHauls], ]
+    
+    # Format the output:
+    RstoxBase::formatOutput(BioticAssignment, dataType = "BioticAssignment", keep.all = FALSE)
     
     return(BioticAssignment)
 }
@@ -206,6 +212,9 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
         toAdd
     )
     
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
+    
     # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
@@ -245,6 +254,9 @@ removeAcousticPSU <- function(PSU, projectPath, modelName, processID) {
     #AcousticPSU$EDSU_PSU <- AcousticPSU$EDSU_PSU[EDSUsToKeep, ]
     AcousticPSU$EDSU_PSU[PSUsToSetToNAInEDSU_PSU, PSU := NA]
     
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
+    
     # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
@@ -282,6 +294,9 @@ renameAcousticPSU <- function(PSU, newPSUName, projectPath, modelName, processID
     AcousticPSU$Stratum_PSU$PSU[PSUsToRename] <- newPSUName
     AcousticPSU$EDSU_PSU$PSU[EDSUsToRename] <- newPSUName
     
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
+    
     # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
@@ -317,6 +332,9 @@ addEDSU <- function(PSU, EDSU, projectPath, modelName, processID) {
     atEDSUs <- AcousticPSU$EDSU_PSU$EDSU %in% EDSU
     AcousticPSU$EDSU_PSU[atEDSUs, PSU := ..PSU]
     
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
+    
     # Set the AcousticPSU back to the process data of the process:
     setProcessMemory(
         projectPath = projectPath, 
@@ -350,6 +368,9 @@ removeEDSU <- function(EDSU, projectPath, modelName, processID) {
     # Set the PSU column to empty string for the given EDSUs:
     atEDSUs <- AcousticPSU$EDSU_PSU$EDSU %in% EDSU
     AcousticPSU$EDSU_PSU[atEDSUs, PSU := ""]
+    
+    # Format the output:
+    RstoxBase::formatOutput(AcousticPSU, dataType = "AcousticPSU", keep.all = FALSE)
     
     ## Add the acsoutic PSU:
     #EDSUsToKeep <- !AcousticPSU$PSU_EDSU$EDSU %in% EDSU
@@ -637,4 +658,6 @@ setEmptyID <- function(stratum) {
     
     return(stratum)
 }
+
+
 

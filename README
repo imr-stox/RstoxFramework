@@ -1,4 +1,4 @@
-# RstoxFramework version: 1.2.24 (latest alpha, 2020-10-01)
+# RstoxFramework version: 1.2.25 (latest alpha, 2020-10-29)
 # R version: 3.6
 
 # The framwork of StoX >= 3.0.
@@ -10,11 +10,11 @@
 # Install the latest binary:
 install.packages(RstoxFramework, repo = c("https://stoxproject.github.io/repo", "https://cloud.r-project.org"))
 # ... or install the latest version from GitHub:
-# devtools::install_github("https://github.com/StoXProject/RstoxFramework", ref = "RstoxFramework-v1.2.24")
+# devtools::install_github("https://github.com/StoXProject/RstoxFramework", ref = "RstoxFramework-v1.2.25")
 # ... or install the develop version from GitHub:
 # devtools::install_github("https://github.com/StoXProject/RstoxFramework", ref = "develop")
 
-# Release notes for RstoxFramework_1.2.24:
+# Release notes for RstoxFramework_1.2.25:
 # . 
 
 # For historical release notes see https://github.com/StoXProject/RstoxFramework/blob/master/NEWS

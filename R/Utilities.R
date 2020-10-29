@@ -39,7 +39,11 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
 
 # Function to get the first element of class(x):
 firstClass <- function(x) {
-    class(x)[1]
+    out <- class(x)[1]
+    if(out == "double") {
+        out <- "numeric"
+    }
+    return(out)
 }
 
 # Function to select valid elements by name
@@ -108,7 +112,8 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
     out <- out[, lapply(.SD, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))]
     
     # Collapse to lines:
-    out <- out[, do.call(paste, c(.SD, sep = columnSeparator)), .SDcols = names(x)]
+    out <- out[, do.call
+               (paste, c(.SD, sep = columnSeparator)), .SDcols = names(x)]
     
     # Collapse the lines if requested:
     if(length(lineSeparator)) {
@@ -171,7 +176,9 @@ getNewDefaultName <- function(names, prefix) {
 #' @export
 #' 
 json2expression <- function(json) {
-    l <- parseParameter(json, simplifyVector = FALSE)
+    #l <- parseParameter(json, simplifyVector = FALSE)
+    #l <- parseParameter(json)
+    l <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     #l <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     list2expression(l)
 }
@@ -490,13 +497,29 @@ writeMemoryFile <- function(x, filePathSansExt, ext = NULL) {
     return(filePath)
 }
 
+
+
 writeMemoryFiles <- function(objects, filePathsSansExt, writeOrderFile = TRUE) {
+    
     # Write the files:
     filePaths <- mapply(writeMemoryFile, objects, filePathsSansExt)
+    
     # Write the orderfile:
     if(writeOrderFile) {
         orderFileName <- file.path(dirname(filePathsSansExt[1]), "tableOrder.txt")
         write(filePaths, orderFileName)
+        #orderFileName <- file.path(dirname(filePathsSansExt[1]), "tableOrder.rds")
+        #saveRDS(filePaths, orderFileName)
+        
+        ## Write also the table names to file:
+        #tableNames <- lapply(objects, function(x) 
+        #    if(data.table::is.data.table(x)) 
+        #        names(x) 
+        #    else 
+        #        RstoxBase::getStratumNames(x)
+        #)
+        #namesFileName <- file.path(dirname(filePathsSansExt[1]), "tableNames.rds")
+        #saveRDS(tableNames, namesFileName)
     }
 }
 
@@ -545,4 +568,41 @@ isProcessOutputDataType <- function(processOutput) {
     names(processOutput) %in% getRstoxFrameworkDefinitions("stoxDataTypes")$functionOutputDataType
 }
 
+
+
+
+toJSON_Rstox <- function(x, ...) {
+    # Define defaults:
+    digits <- NA
+    auto_unbox <- TRUE
+    na <- "null"
+    null <- "null"
+    
+    # Override by ...:
+    lll <- list(...)
+    
+    if(!"digits" %in% names(lll)) {
+        lll$digits <- digits
+    }
+    if(!"auto_unbox" %in% names(lll)) {
+        lll$auto_unbox <- auto_unbox
+    }
+    if(!"na" %in% names(lll)) {
+        lll$na <- na
+    }
+    if(!"null" %in% names(lll)) {
+        lll$null <- null
+    }
+    
+    #lll$x <- x
+    lll <- c(list(x = x), lll
+             )
+    
+    do.call(jsonlite::toJSON, lll)
+}
+
+
+emptyNamedList <- function() {
+    list(a = 1)[0]
+}
 

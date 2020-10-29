@@ -27,9 +27,7 @@ initiateRstoxFramework <- function(){
     officialStoxLibraryPackages <- c(
         "RstoxBase", 
         "RstoxData"
-        #"RstoxFDA", 
-        #"RstoxAnalysis", 
-        #"RstoxReport"
+        #"RstoxFDA"
     )
     officialStoxLibraryPackagesAll <- c("RstoxFramework", officialStoxLibraryPackages)
     
@@ -57,6 +55,15 @@ initiateRstoxFramework <- function(){
         report = "text"
     )
     
+    processProperties <- c(
+        "functionName", 
+        "processName", 
+        "processParameters", 
+        "functionInputs", 
+        "functionParameters", 
+        "processData"
+    )
+    
     # Define the requested (all) function attributes:
     requestedFunctionAttributeNames <- c(
         "packageName", 
@@ -73,7 +80,9 @@ initiateRstoxFramework <- function(){
     systemParameters <- c(
         "processData", 
         "projectPath", 
-        "outputDataPath"
+        # Changed on 2020-10-22 to use the actual data and not the file:
+        #"outputDataPath"
+        "outputData"
     )
     
     # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
@@ -114,8 +123,10 @@ initiateRstoxFramework <- function(){
             processDataSchema, 
             processDataSchemas
         ), 
-        pretty = TRUE, 
-        auto_unbox = TRUE
+        digits = NA, 
+        auto_unbox = TRUE, 
+        na = "null", 
+        pretty = TRUE
     )
     # Create a project.json validator:
     projectValidator <- jsonvalidate::json_validator(schema)
@@ -234,8 +245,9 @@ initiateRstoxFramework <- function(){
     #names(processPropertyFormats) <- allFormatClasses
     
     # Get the parameterTableInfo from all packages, and combine into a list:
-    parameterTableInfo <- processPropertyFormats[sapply(processPropertyFormats, "[[", "class") == "table"]
-
+    parameterTableInfo  <- processPropertyFormats[sapply(processPropertyFormats, "[[", "class") == "table"]
+    parameterVectorInfo <- processPropertyFormats[sapply(processPropertyFormats, "[[", "class") == "vector"]
+    
     
     # Define filter operators for the different data types:
     filterOperators <- list(
@@ -307,7 +319,7 @@ initiateRstoxFramework <- function(){
     dataTypesToShowInMap <- c(
         StoxBioticData = "StoxBioticData", 
         StoxAcousticData = "StoxAcousticData", 
-        StratumPolygon = "StratumPolygon"#, 
+        StratumPolygon = "StratumPolygon"
     )
     
     # Define the data types for the interactive modes:

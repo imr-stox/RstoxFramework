@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get output of a StoX process. — getProcessOutput • RstoxFramework</title>
+<title>GUI function: Function to get the info required for populating a parameter table builder in the GUI — getParameterVectorInfo • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Get output of a StoX process. — getProcessOutput" />
-<meta property="og:description" content="Gets the output of a process that has been run." />
+<meta property="og:title" content="GUI function: Function to get the info required for populating a parameter table builder in the GUI — getParameterVectorInfo" />
+<meta property="og:description" content="GUI function: Function to get the info required for populating a parameter table builder in the GUI" />
 
 
 
@@ -102,31 +102,21 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get output of a StoX process.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
-    <div class="hidden name"><code>getProcessOutput.Rd</code></div>
+    <h1>GUI function: Function to get the info required for populating a parameter table builder in the GUI</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Routes.R'><code>R/Routes.R</code></a></small>
+    <div class="hidden name"><code>getParameterVectorInfo.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Gets the output of a process that has been run.</p>
+    <p>GUI function: Function to get the info required for populating a parameter table builder in the GUI</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getProcessOutput</span><span class='op'>(</span>
+    <pre class="usage"><span class='fu'>getParameterVectorInfo</span><span class='op'>(</span>
   <span class='va'>projectPath</span>,
   <span class='va'>modelName</span>,
   <span class='va'>processID</span>,
-  tableName <span class='op'>=</span> <span class='cn'>NULL</span>,
-  subFolder <span class='op'>=</span> <span class='cn'>NULL</span>,
-  flatten <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  pretty <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  pageindex <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>integer</a></span><span class='op'>(</span><span class='fl'>0</span><span class='op'>)</span>,
-  linesPerPage <span class='op'>=</span> <span class='fl'>1000L</span>,
-  columnSeparator <span class='op'>=</span> <span class='st'>" "</span>,
-  lineSeparator <span class='op'>=</span> <span class='cn'>NULL</span>,
-  na <span class='op'>=</span> <span class='st'>"-"</span>,
-  list.pretty <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  drop <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  drop.datatype <span class='op'>=</span> <span class='cn'>TRUE</span>
+  <span class='va'>format</span>,
+  stopIfEmptyPossibleValues <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -145,52 +135,8 @@
       <td><p>The ID of the process.</p></td>
     </tr>
     <tr>
-      <th>tableName</th>
-      <td><p>The name of the table to extract from the process.</p></td>
-    </tr>
-    <tr>
-      <th>subFolder</th>
-      <td><p>If the process returns subfolders (ReadBiotic and ReadAcoustic, where the subfolders represent files), specify the name of the folder with this parameter.</p></td>
-    </tr>
-    <tr>
-      <th>flatten</th>
-      <td><p>Logical: Should the output tables that contain cells of length &gt; 1 be expanded to that the other columns are repeated, resulting in a regular table.</p></td>
-    </tr>
-    <tr>
-      <th>pretty</th>
-      <td><p>Logical: If TRUE pad with space in each cell to the maximum number of characters of the column including header.</p></td>
-    </tr>
-    <tr>
-      <th>pageindex</th>
-      <td><p>A vevctor of the pages to return with <code>linesPerPage</code> number of lines (rows). Default is to not split into pages.</p></td>
-    </tr>
-    <tr>
-      <th>linesPerPage</th>
-      <td><p>The number of lines per page if <code>pageindex</code> is given.</p></td>
-    </tr>
-    <tr>
-      <th>columnSeparator</th>
-      <td><p>The string to separate columns by, defaulted to a single space.</p></td>
-    </tr>
-    <tr>
-      <th>lineSeparator</th>
-      <td><p>The string to separate lines by, defaulted to a NULL, which keeps the output as a vector of strings.</p></td>
-    </tr>
-    <tr>
-      <th>na</th>
-      <td><p>The string to replace NAs by, defaulted to "-".</p></td>
-    </tr>
-    <tr>
-      <th>list.pretty</th>
-      <td><p>Logical: If TRUE wrap the output in a list in the case that <code>pretty</code> is TRUE.</p></td>
-    </tr>
-    <tr>
-      <th>drop</th>
-      <td><p>Logical: If TRUE drop the list if only one element.</p></td>
-    </tr>
-    <tr>
-      <th>drop.datatype</th>
-      <td><p>Logical: If TRUE drop the top level of the output if in a list, which is the level named by the data type.</p></td>
+      <th>format</th>
+      <td><p>A character string naming the format to get info for.</p></td>
     </tr>
     </table>
 

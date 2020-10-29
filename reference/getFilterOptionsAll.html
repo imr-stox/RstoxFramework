@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.24</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.25</span>
       </span>
     </div>
 
@@ -111,7 +111,13 @@
     <p>GUI function: Get possible tables, operators and unique values for use in the filter expression builder.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getFilterOptionsAll</span><span class='op'>(</span><span class='va'>projectPath</span>, <span class='va'>modelName</span>, <span class='va'>processID</span>, include.numeric <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getFilterOptionsAll</span><span class='op'>(</span>
+  <span class='va'>projectPath</span>,
+  <span class='va'>modelName</span>,
+  <span class='va'>processID</span>,
+  include.numeric <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  stopIfEmptyPossibleValues <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

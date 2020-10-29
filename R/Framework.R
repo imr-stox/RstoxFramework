@@ -498,7 +498,7 @@ closeProject <- function(projectPath, save = NULL, msg =TRUE) {
         unlink(projectSessionFolderStructure, recursive = TRUE, force = TRUE)
     }
     else if(msg){
-        message("Project ", projectPath, " is not open")
+        message("StoX: Project ", projectPath, " is not open")
     }
 }
 ##' 
@@ -4496,7 +4496,7 @@ getProcessOutputFiles <- function(projectPath, modelName, processID, onlyTableNa
         #processName <- getProcessName(projectPath, modelName, processID)
         #stop("Has the previous processes been run? The folder ", folderPath, " does not exist.")
         
-        warning("StoX: Process ", getProcessNameFromProcessID(projectPath, modelName, processID), " has not been run.")
+        warning("StoX: Process ", getProcessNameFromProcessID(projectPath, modelName, processID), " of the model ", modelName, " has not been run.")
         return(NULL)
     }
     

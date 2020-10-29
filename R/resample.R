@@ -48,7 +48,7 @@ Bootstrap <- function(
     #preRunTo <- min(processIndexTable$processIndex) - 1
     preRunTo <- min(processIndexTable$processIndex)
     if(activeProcessID < preRunTo) {
-        message("Running baseline until the first process to bootstrap...")
+        message("StoX: Running baseline until the first process to bootstrap...")
         temp <- runProcesses(projectPath, modelName = "baseline", endProcess = preRunTo)
     }
     

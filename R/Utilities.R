@@ -497,13 +497,29 @@ writeMemoryFile <- function(x, filePathSansExt, ext = NULL) {
     return(filePath)
 }
 
+
+
 writeMemoryFiles <- function(objects, filePathsSansExt, writeOrderFile = TRUE) {
+    
     # Write the files:
     filePaths <- mapply(writeMemoryFile, objects, filePathsSansExt)
+    
     # Write the orderfile:
     if(writeOrderFile) {
         orderFileName <- file.path(dirname(filePathsSansExt[1]), "tableOrder.txt")
         write(filePaths, orderFileName)
+        #orderFileName <- file.path(dirname(filePathsSansExt[1]), "tableOrder.rds")
+        #saveRDS(filePaths, orderFileName)
+        
+        ## Write also the table names to file:
+        #tableNames <- lapply(objects, function(x) 
+        #    if(data.table::is.data.table(x)) 
+        #        names(x) 
+        #    else 
+        #        RstoxBase::getStratumNames(x)
+        #)
+        #namesFileName <- file.path(dirname(filePathsSansExt[1]), "tableNames.rds")
+        #saveRDS(tableNames, namesFileName)
     }
 }
 

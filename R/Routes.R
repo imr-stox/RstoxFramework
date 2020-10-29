@@ -757,7 +757,7 @@ getFormatClass <- function(format) {
     # Extract the classes:
     formatClass <- lapply(format, function(thisFormat) processPropertyFormats[[thisFormat]]$class)
     # Replace unknown by "single":
-    formatClass[lengths(formatClass) == 0] <- "single"
+    formatClass[lengths(formatClass) == 0] <- "none"
     # Unlist to a vector:
     formatClass <- unlist(formatClass)
     
@@ -767,6 +767,10 @@ getFormatClass <- function(format) {
 isVectorParameter <- function(format) {
     # Find those formats that are vector:
     getFormatClass(format) == "vector"
+}
+isSingleParameter <- function(format) {
+    # Find those formats that are vector:
+    getFormatClass(format) == "single"
 }
 
 
@@ -961,7 +965,24 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
                 formatClass = getFormatClass(format),
                 # 6. possibleValues:
                 # Set this as list to ensure that we keep the square brackets "[]" in the JSON string even with auto_unbox = TRUE.
-                possibleValues = getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames],
+                #possibleValues = ifelse(
+                #    isSingleParameter(format), 
+                #    # Format class "single" used for data dependent possigle values:
+                #    mapply(
+                #        getParameterVectorPossibleValues,
+                #        projectPath = projectPath, 
+                #        modelName = modelName, 
+                #        processID = processID, 
+                #        format = format, 
+                #        stopIfEmptyPossibleValues = FALSE, 
+                #        SIMPLIFY = FALSE, 
+                #        USE.NAMES = FALSE
+                #    ),
+                #    # Use the default values of the parameter:
+                #    getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames]
+                #),
+                
+                possibleValues = getStoxFunctionParameterPossibleValues(functionName)[functionParameterNames], 
                 # 7. value:
                 value = functionParameters
             )

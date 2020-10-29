@@ -389,10 +389,10 @@ ResampleBioticAssignment <- function(BioticAssignment, Seed) {
 #' 
 #' @export
 #' 
-ResampleMeanNASCData <- function(MeanNASC, Seed) {
+ResampleMeanNASCData <- function(MeanNASCData, Seed) {
     # Resample PSUs within Strata, modifying the weighting variable of MeanLengthDistributionData:
-    MeanNASC$Data <- resampleDataBy(
-        data = MeanNASC$Data, 
+    MeanNASCData$Data <- resampleDataBy(
+        data = MeanNASCData$Data, 
         seed = Seed, 
         #varToScale = RstoxBase::getRstoxBaseDefinitions("dataTypeDefinition")[["MeanNASC"]]$weighting, 
         varToScale = "NASC", 
@@ -400,5 +400,5 @@ ResampleMeanNASCData <- function(MeanNASC, Seed) {
         resampleBy = "Stratum"
     )
     
-    return(MeanNASC)
+    return(MeanNASCData)
 }

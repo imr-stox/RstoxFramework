@@ -566,7 +566,7 @@ copyProject <- function(projectPath, newProjectPath, ow = FALSE) {
     if(ow) {
         unlink(newProjectPath, force = TRUE, recursive = TRUE)
     }
-    dir.create(newProjectPath)
+    dir.create(newProjectPath, recursive = TRUE)
     lapply(list.dirs(projectPath, recursive = FALSE), file.copy, newProjectPath, recursive = TRUE)
     #file.copy(projectPath, newProjectPath, recursive=TRUE)
 }
@@ -4046,7 +4046,10 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         processOutput <- do.call_robust(
             what = replaceData$FunctionName, 
             args = c(
-                list(processOutput), 
+                structure(
+                    list(processOutput), 
+                    names = getStoxFunctionMetaData(process$functionName, "functionOutputDataType")
+                ), 
                 functionArguments, 
                 replaceData$MoreArgs
             )
@@ -4549,14 +4552,18 @@ listMemoryFiles <- function(folderPath) {
     
     # Read the order file if present:
     orderFile <- file.path(folderPath, "tableOrder.txt")
+    ##orderFile <- file.path(folderPath, "tableOrder.rds")
     if(file.exists(orderFile)) {
         tableOrder <- readLines(orderFile)
+        #tableOrder <- readRDS(orderFile)
         tableOrder <- basename(tools::file_path_sans_ext(unlist(tableOrder)))
         out <- out[tableOrder]
     }
     
     out
 }
+
+
 
 #' 
 #' @inheritParams Projects

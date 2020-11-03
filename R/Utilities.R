@@ -390,7 +390,7 @@ expression2list <- function(expr, generateRuleset = TRUE) {
         )
         splittedCode <- strsplit(code, safeSeparator)[[1]]
         if(length(splittedCode) != 3) {
-            stop(paste("Syntax error in expression: ", expr))
+            stop("Syntax error in expression: ", expr)
         }
         s <- c(
             splittedCode[1], 
@@ -462,7 +462,7 @@ getMemoryFileFormat <- function(x) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_List")
     }
     else {
-        stop("Wrong memory file class ", class(x)[1])
+        stop("StoX: Wrong memory file class ", class(x)[1])
     }
     return(memoryFileFormat)
 }
@@ -491,7 +491,7 @@ writeMemoryFile <- function(x, filePathSansExt, ext = NULL) {
         saveRDS(x, file = filePath)
     }
     else {
-        stop("Wrong memoryFileFormat")
+        stop("StoX: Wrong memoryFileFormat")
     }
     
     return(filePath)
@@ -536,7 +536,7 @@ readMemoryFile <- function(filePath) {
         output <- readRDS(file = filePath)
     }
     else {
-        stop("Unsupported file format")
+        stop("StoX: Unsupported file format")
     }
     
     return(output)

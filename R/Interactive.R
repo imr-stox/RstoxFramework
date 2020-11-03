@@ -199,7 +199,7 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
     }
     # Check whether the acoustic PSU already exists:
     if(any(AcousticPSU$Stratum_PSU$PSU == PSU)) {
-        stop("The name of the Acoustic PSU (", PSU, ") already exists.")
+        stop("StoX: The name of the Acoustic PSU (", PSU, ") already exists.")
     }
     
     # Add the acsoutic PSU:
@@ -446,10 +446,10 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
         RstoxBase::getStratumNames(StratumPolygon$StratumPolygon)
     )
     if(length(usedStratumNames)) {
-        stop("The stratum name ", usedStratumNames, " already exist. Choose a different name")
+        stop("StoX: The stratum name ", usedStratumNames, " already exist. Choose a different name")
     }
     if(length(RstoxBase::getStratumNames(stratum)) == 0) {
-        stop("The new stratum must have a name")
+        stop("StoX: The new stratum must have a name")
     }
     
     #toAdd <- list(Polygons(list(Polygon(coordinates)), ID = stratumName))

@@ -145,7 +145,7 @@ getDependenciesWithVersion <- function(packageName, dependencies = c("Depends", 
 checkResourceVersion1.92 <- function(projectDescription) {
     resourceVersion <- attr(projectDescription, "resourceversion")
     if(!length(resourceVersion) || (length(resourceVersion) && resourceVersion != "1.92")) {
-        stop("Backwards compatibility only supported for StoX 2.7 projects")
+        stop("StoX: Backwards compatibility only supported for StoX 2.7 projects")
     }
 }
 

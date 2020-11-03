@@ -29,11 +29,12 @@ Bootstrap <- function(
     
     # Check the output processes:
     if(length(OutputProcesses) && !all(OutputProcesses %in% processIndexTable$processName)) {
-        warning("The following processes specified in OutputProcesses were not recognized: ", paste(setdiff(OutputProcesses, processIndexTable$processName), collapse = ", "))
+        warning("StoX: The following processes specified in OutputProcesses were not recognized: ", paste(setdiff(OutputProcesses, processIndexTable$processName), collapse = ", "))
         OutputProcesses <- intersect(OutputProcesses, processIndexTable$processName)
     }
     if(!length(OutputProcesses)) {
-        stop("At least one avlid process name must be gievn in OutputProcesses")
+        stop("StoX: 
+             At least one avlid process name must be gievn in OutputProcesses")
     }
     
     # Run the baseline until the startProcess:
@@ -80,13 +81,17 @@ Bootstrap <- function(
         )
     )
     
-    # Reset the model to the last process before the bootstrapped processes:
-    resetModel(
-        projectPath = projectPath, 
-        modelName = "baseline", 
-        processID = processIndexTable$processID[1], 
-        processDirty = FALSE
-    )
+    # Changed on 2020-11-02 to run the baseline out after bootstrapping (with no modification, so a clean baseline run):
+    ### # Reset the model to the last process before the bootstrapped processes:
+    ### resetModel(
+    ###     projectPath = projectPath, 
+    ###     modelName = "baseline", 
+    ###     processID = processIndexTable$processID[1], 
+    ###     processDirty = FALSE, 
+    ###     shift = -1
+    ### )
+    # Rerun the baseline to the end:
+    temp <- runProcesses(projectPath, modelName = "baseline", startProcess = processIndexTable$processIndex[1])
     
     # Get the data types to return:
     dataTypeNames <- names(BootstrapData[[1]])
@@ -277,7 +282,7 @@ resampleOne <- function(subData, seed, varToResample, varToScale) {
     
     # Resample the unique:
     if(length(varToResample) != 1) {
-        stop("varToResample must be a single string naming the variable to resample")
+        stop("StoX: varToResample must be a single string naming the variable to resample")
     }
     resampled <- RstoxBase::sampleSorted(unique(subData[[varToResample]]), seed = seed, replace = TRUE)
     # Tabulate the resamples:
@@ -290,7 +295,8 @@ resampleOne <- function(subData, seed, varToResample, varToScale) {
     data.table::setnames(resampleTable, c("resampled","N"), c(varToResample, "resampledCountWithUniqueName"))
     
     # Merge the resampled counts into the data:
-    count <- merge(subData, resampleTable, by = varToResample, all = TRUE)
+    # The sort = FALSE is vvery important, as it retains the order of the data. This should probably be replaced by a more robust solution, e.g. by merging in resampleDataBy():
+    count <- merge(subData, resampleTable, by = varToResample, all.x = TRUE, sort = FALSE)
     
     # Insert the new count into WeightedCount (with NAs replaced by 0):
     count[, resampledCountWithUniqueName := ifelse(

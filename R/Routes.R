@@ -227,7 +227,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
         )
     }
     else {
-        stop("Invalid interactiveMode")
+        stop("StoX: Invalid interactiveMode")
     }
 }
 
@@ -586,7 +586,7 @@ getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle"
     )
     # Fill in the present data:
     if(!all(Log$LogOrigin[1] == Log$LogOrigin && Log$LogOrigin2[1] == Log$LogOrigin2)) {
-        stop("LogOrigin or LogOrigin2 is not constant")
+        stop("StoX: LogOrigin or LogOrigin2 is not constant")
     }
     
     presentNames <- c(outer(Log[1, c(LogOrigin, LogOrigin2)], c("Longitude", "Latitude"), paste0))

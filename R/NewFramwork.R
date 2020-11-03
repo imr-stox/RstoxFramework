@@ -119,7 +119,7 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
         )
     }
     else {
-        stop("modelName must be given if any of processID and argumentName are given, and processID must be given if argumentName is given. Also when requesting more than one modelName or processID, the following parameter must be empty.")
+        stop("StoX: modelName must be given if any of processID and argumentName are given, and processID must be given if argumentName is given. Also when requesting more than one modelName or processID, the following parameter must be empty.")
     }
     
     # Read the pointer files:

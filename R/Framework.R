@@ -204,7 +204,7 @@ validateFunction <- function(functionName) {
     #    stop("The function \"", functionName, "\" does not appear to be a string of the form PACKAGENAME::FUNCTIONNAME, where PACK#AGENAME is the package exporting the function with name FUNCTIONNAME.")
     #}
     if(length(functionName) == 0) {
-        stop("The function \"", functionName, "\" does not appear to be a string of the form PACKAGENAME::FUNCTIONNAME, where PACKAGENAME is the package exporting the function with name FUNCTIONNAME.")
+        stop("StoX: The function \"", functionName, "\" does not appear to be a string of the form PACKAGENAME::FUNCTIONNAME, where PACKAGENAME is the package exporting the function with name FUNCTIONNAME.")
     }
     
     # Extract the packageName:
@@ -215,7 +215,7 @@ validateFunction <- function(functionName) {
         functionName
     }
     else {
-        stop("Invalid function ", functionName)
+        stop("StoX: Invalid function ", functionName)
     }
 }
 
@@ -302,7 +302,7 @@ createProjectSkeleton <- function(projectPath, ow = FALSE) {
     # Check whether the project exists:
     if(dir.exists(projectPath)) {
         if(!ow) {
-            stop("The project '", projectPath, "' exists. Choose a different project path.")
+            stop("StoX: The project '", projectPath, "' exists. Choose a different project path.")
         }
         else {
             unlink(projectPath, recursive = TRUE, force = TRUE)
@@ -651,7 +651,7 @@ readProjectDescriptionRDataOld <- function(projectPath) {
     load(projectRDataFile) # Creates/replaces the object 'projectDescription'
     
     if(length(projectDescription) == 0) {
-        stop("The project description ", projectRDataFile, " is empty.")
+        stop("StoX: The project description ", projectRDataFile, " is empty.")
     }
     
     # Define the process IDs and return the project description:
@@ -674,7 +674,7 @@ readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
     
     if(!file.exists(projectDescriptionFile)) {
-        stop("The project description file ", projectDescriptionFile, " does not exist.")
+        stop("StoX: The project description file ", projectDescriptionFile, " does not exist.")
     }    
     
     # Run the appropriate reading function:
@@ -703,7 +703,7 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
     if(!isTRUE(valid)) {
         cat("Output from project.json validator:\n")
         print(projectValidator(projectDescriptionFile, verbose = TRUE))
-        stop("The file ", projectDescriptionFile, " is not a valid project.json file.")
+        stop("StoX: The file ", projectDescriptionFile, " is not a valid project.json file.")
     }
     
     # Read project.json file to R list:
@@ -1021,7 +1021,7 @@ writeProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     
     projectSessionFolder <- getProjectPaths(projectPath, "projectSessionFolder")
     if(!file.exists(projectSessionFolder)) {
-        stop("The project memory folder ", projectSessionFolder, " does not exist. Project ", projectPath, " cannot be saved.")
+        stop("StoX: The project memory folder ", projectSessionFolder, " does not exist. Project ", projectPath, " cannot be saved.")
     }
     
     # Get full project description:
@@ -1094,7 +1094,7 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     if(!isTRUE(valid)) {
         cat("Output from project.json validator:\n")
         print(projectValidator(json, verbose = TRUE))
-        stop("Cannot write the project.json file. It is not a valid project.json file.")
+        stop("StoX: Cannot write the project.json file. It is not a valid project.json file.")
     }
     #jsonvalidate::json_validate(json)
     
@@ -1331,7 +1331,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
         processIndex <- which(processIndexTable$processID == processID) + shift
         # Error if the process does not exist
         if(length(processIndex) == 0) {
-            stop("processID not regocnized")
+            stop("StoX: processID not regocnized")
         }
     }
     
@@ -1744,7 +1744,7 @@ unwrapProjectMemoryFile <- function(projectMemoryFile) {
     # Unwrap and overwrite the maximum process integer ID file:
     writeMaxProcessIntegerID(projectPath, projectMemory$maxProcessIntegerID)
     
-    stop("Here we need to code replacing the memory files!!!!!!!!!!!!!")
+    stop("StoX: Here we need to code replacing the memory files!!!!!!!!!!!!!")
 }
 
 
@@ -2127,7 +2127,7 @@ getDataType <- function(projectPath, modelName, processID, argumentFilePaths = N
 checkDataType <- function(dataType, projectPath, modelName, processID) {
     #dataType %in% getDataType(projectPath, modelName, processID)
     if(!dataType %in% getDataType(projectPath, modelName, processID)) {
-        stop("The process ", getProcessName(projectPath, modelName, processID), " does not return ", dataType, " data.")
+        stop("StoX: The process ", getProcessName(projectPath, modelName, processID), " does not return ", dataType, " data.")
     }
 }
     
@@ -2176,14 +2176,14 @@ readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NUL
         startProcessNumeric <- matchProcesses(startProcess, processIndexTable)
         endProcessNumeric <- matchProcesses(endProcess, processIndexTable)
         if(!length(startProcessNumeric) && !length(endProcessNumeric)) {
-            stop("At least one of startProcess and endProcess must specify valid processes")
+            stop("StoX: At least one of startProcess and endProcess must specify valid processes")
         }
         else if(!length(startProcessNumeric)) {
-            warning("The startProcess was not found, and was set to the last valid endProcess")
+            warning("StoX: The startProcess was not found, and was set to the last valid endProcess")
             startProcessNumeric <- endProcessNumeric
         }
         else if(!length(endProcessNumeric)) {
-            warning("The endProcess was not found, and was set to the first valid startProcess")
+            warning("StoX: The endProcess was not found, and was set to the first valid startProcess")
             endProcessNumeric <- startProcessNumeric
         }
         
@@ -2220,12 +2220,12 @@ matchProcesses <- function(processes, processIndexTable) {
         processesNumeric[unassigned] <- match(processes[unassigned], processIndexTable$processID)
         # Strip of the processes that were not regocnised:
         if(any(is.na(processesNumeric))) {
-            warning("The following processes were not recognized as process names or process IDs: ", paste(processes[is.na(processesNumeric)], collapse = ", "), ".")
+            stop("StoX: The following processes were not recognized as process names or process IDs: ", paste(processes[is.na(processesNumeric)], collapse = ", "), ".")
             processesNumeric <- processesNumeric[!is.na(processesNumeric)]
         }
     }
     else {
-        stop("Processes must be specified as a vector of process indices, names or IDs (possibly a mixture of the lattter two.)")
+        stop("StoX: Processes must be specified as a vector of process indices, names or IDs (possibly a mixture of the lattter two.)")
     }
     
     return(processesNumeric)
@@ -2308,7 +2308,10 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     rest <- processIndexTable[notToRearrange, ]
     
     if(!length(afterProcessID) || is.na(afterProcessID) || !nchar(afterProcessID)) {
-        afterProcessIndexInRest <- 0
+        #afterProcessIndexInRest <- 0
+        # Find the first process of the given model:
+        firstProcessIndexOfTheModel <- min(processIndex[processIndexTable$modelName == modelName])
+        afterProcessIndexInRest <- firstProcessIndexOfTheModel - 1
     }
     else {
         afterProcessIndexInRest <- which(rest$modelName %in% modelName & rest$processID %in% afterProcessID)
@@ -2341,8 +2344,12 @@ rearrangeProcessIndexTable <- function(projectPath, modelName, processID, afterP
     if(any(changed)) {
         writeProcessIndexTable(projectPath = projectPath, processIndexTable = newProcessIndexTable)
         
-        # Set the activev process index as the first changed process minus 1:
+        # Set the active process index as the first changed process minus 1 within the model:
         activeProcessIndex <- min(changed) - 1
+        # This is hard tu grasp, but we re-define the activeProcessIndex here to be 0 if not in the given model (if the process har been moved to be the first process of the model, but still possibly with processes from other models before it):
+        if(! activeProcessIndex %in% processIndex[processIndexTable$modelName == modelName]) {
+            activeProcessIndex <- 0
+        }
         
         # If reset to the start, return NA:
         if(activeProcessIndex == 0) {
@@ -4847,7 +4854,7 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
         saveRDS(processOutputOne, file = filePath)
     }
     else {
-        stop("Inavlid file extension: ", ext)
+        stop("StoX: Inavlid file extension: ", ext)
     }
     
     
@@ -4961,7 +4968,7 @@ getOutputDepth <- function(x) {
         outputDepth <- 2
     }
     else if(length(x[[1]][[1]]) && isValidOutputData(x[[1]][[1]])) {
-        stop("Process output must be a list of objects defined by getRstoxFrameworkDefinitions(\"validOutputDataClasses\"), or a list of such lists (not a list of lists of such lists).")
+        stop("StoX: Process output must be a list of objects defined by getRstoxFrameworkDefinitions(\"validOutputDataClasses\"), or a list of such lists (not a list of lists of such lists).")
     }
     else {
         stop("...............")
@@ -5251,7 +5258,7 @@ checkVersion <- function(projectDescription, resourceVersion = NULL, RstoxFramew
     
     # Issue an error if the project.xml is before the backwards compatibility time limit:
     if(savedResourceVersion < "1.92") {
-        stop("Backward compatibility not supported for versions of StoX prior to 2.7 (resourceversion 1.92)")
+        stop("StoX: Backward compatibility not supported for versions of StoX prior to 2.7 (resourceversion 1.92)")
     }
     
     if(length(resourceVersion) && savedResourceVersion == resourceVersion) {

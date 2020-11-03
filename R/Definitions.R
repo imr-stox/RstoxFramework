@@ -91,9 +91,10 @@ initiateRstoxFramework <- function(){
     # Get the stoxLibrary as the list of function attributes from all official packages:
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackagesAll, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     availableFunctions <- names(stoxLibrary)
+    availablePackageFunctionNames <- unname(sapply(stoxLibrary, "[[", "functionName"))
     
-    # Get the possible values of the functions:
-    availableFunctionPossibleValues <- lapply(availableFunctions, extractStoxFunctionParameterPossibleValues, systemParameters = systemParameters)
+    # Get the possible values of the functions. Here we use the full name of the functions in case the parameter defaults are defined using functions in the specific packages, such as ReportBootstrap(). In extractStoxFunctionParameterPossibleValues() the packageName RstoxFramework is discarded, as that package has not been loaded yet (this function is run onload):
+    availableFunctionPossibleValues <- lapply(availablePackageFunctionNames, extractStoxFunctionParameterPossibleValues, systemParameters = systemParameters)
     names(availableFunctionPossibleValues) <- availableFunctions
     
     # Get the json schema for RstoxFramework:
@@ -625,7 +626,21 @@ extractStoxFunctionParameterPossibleValues <- function(functionName, systemParam
     
     # Split the function name into function name and package name, and get the formals in the package environment:
     packageFunctionName <- strsplit(functionName, "::")[[1]]
-    if(length(packageFunctionName) == 1) {
+    
+    # Discard RstoxFramework as a packageName, as we have not yet loaded this package:
+    if(packageFunctionName[1] == "RstoxFramework") {
+        functionName <- packageFunctionName[2]
+        useOnlyFunctionName = TRUE
+    }
+    else if(length(packageFunctionName) == 1) {
+        useOnlyFunctionName = TRUE
+    }
+    else {
+        useOnlyFunctionName = FALSE
+    }
+    
+    # Use the package enironment if needed:
+    if(useOnlyFunctionName) {
         f <- formals(functionName)
     }
     else {
@@ -645,8 +660,32 @@ extractStoxFunctionParameterPossibleValues <- function(functionName, systemParam
     
     # Evaluate and return:
     output <- f
-    for(i in seq_along(f)) {
-        assign(names(f[i]), if(!is.null(f[[i]])) output[[i]] <- eval(f[[i]]) else eval(f[[i]]))
+    
+    # Use the package enironment if needed, and evaluate the formals:
+    if(useOnlyFunctionName) {
+        for(i in seq_along(f)) {
+            assign(names(f[i]), if(!is.null(f[[i]])) output[[i]] <- eval(f[[i]]) else eval(f[[i]]))
+        }
+    }
+    else {
+        packageName <- packageFunctionName[1]
+        for(i in seq_along(f)) {
+            assign(names(f[i]), 
+                if(!is.null(f[[i]])) 
+                    output[[i]] <- eval(f[[i]], envir = 
+                                            list(
+                                                environment(), 
+                                                as.environment(paste("package", packageName, sep = ":"))
+                                            )
+                    ) 
+                else 
+                    eval(f[[i]], envir = list(
+                        environment(), 
+                        as.environment(paste("package", packageName, sep = ":"))
+                    )
+                )
+            )
+        }
     }
     
     return(output)

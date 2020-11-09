@@ -85,6 +85,12 @@ initiateRstoxFramework <- function(){
         "outputData"
     )
     
+    resampleFunctions <- c(
+        "ResampleMeanLengthDistributionData",
+        "ResampleBioticAssignment", 
+        "ResampleMeanNASCData"
+    )
+    
     # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
     lapply(officialStoxLibraryPackages, library, character.only = TRUE)
     
@@ -490,45 +496,6 @@ initiateRstoxFramework <- function(){
     definitions$stoxTemplates <- stoxTemplates
     
     #### Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv: ####
-    #utils::globalVariables("RstoxFrameworkEnv")
-    utils::globalVariables(c(
-        "RstoxFrameworkEnv", 
-        ":=", ".", 
-        "..PSU", 
-        "..activeProcessID", 
-        "..clickPointNames", 
-        "..coordinateNames", 
-        "..functionInputs", 
-        "..functionName", 
-        "..functionParameters", 
-        "..infoToKeep", 
-        "..processDirty", 
-        "..newProcessName", 
-        "CruiseKey", 
-        "Latitude", 
-        "Latitude2", 
-        "LogOrigin", 
-        "LogOrigin2", 
-        "Longitude", 
-        "Longitude2", 
-        "PSU", 
-        "atRemove", 
-        "canShowInMap", 
-        "filePahts", 
-        "functionName", 
-        "functionOutputDataType", 
-        "hasBeenRun", 
-        "hasProcessData", 
-        "modelName", 
-        "processDirty", 
-        "name", 
-        "possibleValues", 
-        "processID", 
-        "projectPath", 
-        "value"
-    ))
-    
-    
     assign("RstoxFrameworkEnv", new.env(), parent.env(environment()))
     
     assign("definitions", definitions, envir=get("RstoxFrameworkEnv"))
@@ -602,6 +569,8 @@ getProcessPropertyFormats <- function(packageName) {
             error = function(err) NULL
         )
     }
+    
+    
     return(processPropertyFormats)
 }
 
@@ -673,10 +642,10 @@ extractStoxFunctionParameterPossibleValues <- function(functionName, systemParam
             assign(names(f[i]), 
                 if(!is.null(f[[i]])) 
                     output[[i]] <- eval(f[[i]], envir = 
-                                            list(
-                                                environment(), 
-                                                as.environment(paste("package", packageName, sep = ":"))
-                                            )
+                        list(
+                            environment(), 
+                            as.environment(paste("package", packageName, sep = ":"))
+                        )
                     ) 
                 else 
                     eval(f[[i]], envir = list(

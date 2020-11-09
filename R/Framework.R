@@ -18,7 +18,7 @@
 NULL
 
 
-#' This function gets the paths defined by \code{\link{initiateRstoxFramework}}.
+#' This function gets the paths defined by RstoxFramework.
 #' 
 #' @inheritParams general_arguments
 #' @param name A string naming the path element to get. Set this to NULL to get all paths.
@@ -3237,14 +3237,14 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
         # Check first whether the file exists as a relative path:
         absolutePath <- file.path(projectPath, filePath)
         if(all(file.exists(absolutePath))) {
-            absolutePath
+            return(absolutePath)
         }
         else if(all(file.exists(filePath))) {
-            filePath
+            return(filePath)
         }
         else {
             warning("StoX: The file ", filePath, " does not exist.")
-            filePath
+            return(filePath)
         }
     }
     
@@ -4832,13 +4832,25 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
     
     # Write the file differently depending on the file type:
     if(ext == "geojson") {
+        ## # Write the file:
+        ## jsonObject <- geojsonio::geojson_json(processOutputOne)
+        ## 
+        ## # Hack to rermove all IDs from the geojson:
+        ## jsonObject <- removeIDsFromGeojson(jsonObject)
+        ## 
+        ## jsonlite::write_json(jsonObject, path = filePath)
+        
+        #geojsonio::geojson_write(processOutputOne, file = filePath)
+        
         # Write the file:
         jsonObject <- geojsonio::geojson_json(processOutputOne)
         
         # Hack to rermove all IDs from the geojson:
         jsonObject <- removeIDsFromGeojson(jsonObject)
         
-        jsonlite::write_json(jsonObject, path = filePath)
+        #geojsonObject <- geojsonio::geojson_json(processOutputOne)
+        
+        geojsonio::geojson_write(jsonObject, file = filePath)
     }
     else if(ext == "txt") {
         # Write the file:
@@ -4854,7 +4866,7 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
         saveRDS(processOutputOne, file = filePath)
     }
     else {
-        stop("StoX: Inavlid file extension: ", ext)
+        stop("StoX: Invalid file extension: ", ext)
     }
     
     

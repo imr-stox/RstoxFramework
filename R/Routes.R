@@ -57,8 +57,7 @@ setShowInMap <- function(projectPath, modelName, processID) {
     # Get processes with the same datatype (where processes with FilterStoxBiotic is considered different from those with StoxBiotic)
     processTable <- scanForModelError(
         projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID
+        modelName = modelName
     )
     
     # Get the index of the current process:

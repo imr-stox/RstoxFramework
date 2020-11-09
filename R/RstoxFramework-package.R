@@ -12,6 +12,20 @@
 #'
 "_PACKAGE"
 
+# Global variables
+utils::globalVariables(c(
+	 ":=", ".", "..activeProcessID", "..clickPointNames", "..coordinateNames", "..EDSUInfoToKeep",
+	 "..functionInputs", "..functionName", "..functionParameters", "..haulInfoToKeep", "..ind",
+	 "..infoToKeep", "..newProcessName", "..processDirty", "..propertyDirty", "..PSU",
+	 "..stationInfoToKeep", "..validInd", "atRemove", "BootstrapID", "canShowInMap", "col2rgb",
+	 "colorRampPalette", "CruiseKey", "dataTable2SpatialPolygonsDataFrame", "dataType", "filePahts",
+	 "functionArguments", "functionName", "functionOutputDataType", "hasBeenRun", "hasProcessData",
+	 "JavaJEXL2R", "Latitude", "Latitude2", "LogOrigin", "LogOrigin2", "Longitude", "Longitude2",
+	 "modelName", "name", "packageVersion", "possibleValues", "processDirty", "processID",
+	 "processIndex", "processName", "ProcessName", "projectPath", "PSU",
+	 "readProjectDescriptionXML", "resampledCountWithUniqueName", "ResampleFunction",
+	 "RstoxFrameworkEnv", "Stratum", "value", "writeProjectXML"))
+
 .onLoad <- function(libname, pkgname) {
 	# Initiate the RstoxFramework environment:
 	initiateRstoxFramework()

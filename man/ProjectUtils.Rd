@@ -5,7 +5,6 @@
 \alias{isProject}
 \alias{isSaved}
 \alias{isOpenProject}
-\alias{readProjectDescriptionOld}
 \alias{readProjectDescription}
 \alias{writeProjectDescription}
 \alias{initiateActiveProcessID}
@@ -19,8 +18,6 @@ isProject(projectPath)
 isSaved(projectPath)
 
 isOpenProject(projectPath)
-
-readProjectDescriptionOld(projectPath, type = c("RData", "JSON"))
 
 readProjectDescription(projectPath, type = c("RData", "JSON"))
 

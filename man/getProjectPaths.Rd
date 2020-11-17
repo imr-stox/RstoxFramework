@@ -2,7 +2,7 @@
 % Please edit documentation in R/Framework.R
 \name{getProjectPaths}
 \alias{getProjectPaths}
-\title{This function gets the paths defined by RstoxFramework.}
+\title{This function gets the paths defined by \code{\link{initiateRstoxFramework}}.}
 \usage{
 getProjectPaths(projectPath, name = NULL)
 }
@@ -12,5 +12,5 @@ getProjectPaths(projectPath, name = NULL)
 \item{name}{A string naming the path element to get. Set this to NULL to get all paths.}
 }
 \description{
-This function gets the paths defined by RstoxFramework.
+This function gets the paths defined by \code{\link{initiateRstoxFramework}}.
 }

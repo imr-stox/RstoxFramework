@@ -1,3 +1,33 @@
+# Backwards compatibility:
+
+# 1. Re-organize models
+# 	Baseline report and Report into report, R renamed to analysis
+
+# 2. Distribute process data into processes
+# 2.0. Convert process data to appropriate tables and sp objects
+# 2.1. Copy stratumpolygon to all functions DefineStrata
+# 2.2. Copy edsupsu and psustratum to all functions DefineAcousticPSU
+# 2.3. Copy bioticassignment, suassignment and assignmentresolution to all functions BioStationAssignment and BioStationWeighting
+# 2.4. Copy temporal to DefineTemporal, gearfactor to DefineGearFactor, spatial to DefineSpatial, platformfactor to DefinePlatform, ageerror to DefineAgeErrorMatrix and stratumneighbour to DefineStratumNeighbour, and treat covparam somehow, since this is a table that is appended by each of DefineTemporal, DefineGearFactor, DefineSpatial and DefinePlatform.
+
+
+#
+#Generate process data processes. DefineAccoustic
+#
+#
+#- Removed function
+#- Added function
+#- Renamed function
+#- Split function
+#
+#- Renamed parameter
+#- Removed parameter
+#- Added parameter
+#
+#
+#
+
+
 # 1. Remove processes:
 # 1.1. Remove ReadProcessData
 # 2.2. Remove WriteProcessData
@@ -18,7 +48,7 @@
 # 
 # - Convert FilterBiotic to RstoxData::AddToStoxBiotic with all variables detected in the FilterBiotic and RstoxData::FilterStoxBiotic # with a filter expression built based on the Java JEXL expression of FilterBiotic
 # - Convert FilterAcoustic to RstoxData::AddToAcoustic with all variables detected in the FilterAcoustic and RstoxData::FilterStoxAcou# stic with a filter expression built based on the Java JEXL expression of FilterAcoustic
-# - Convert FilterBiotic to RstoxData::FilterStoxLanding with a filter expression built based on the Java JEXL expression of FilterLan# ding
+# - Convert FilterLanding to RstoxData::FilterStoxLanding with a filter expression built based on the Java JEXL expression of FilterLan# ding
 # 
 # - Read biostationassignment global process data and map to BioticAssignment process data
 # 

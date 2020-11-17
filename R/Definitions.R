@@ -29,6 +29,12 @@ initiateRstoxFramework <- function(){
         "RstoxData"
         #"RstoxFDA"
     )
+    # Remove non-installed packages (typically packcages that are suggests):
+    officialStoxLibraryPackages <- intersect(
+        installed.packages()[, "Package"], 
+        officialStoxLibraryPackages
+    )
+    # Add RstoxFramework:
     officialStoxLibraryPackagesAll <- c("RstoxFramework", officialStoxLibraryPackages)
     
     # Define formats for files saved by Rstox:
@@ -83,12 +89,6 @@ initiateRstoxFramework <- function(){
         # Changed on 2020-10-22 to use the actual data and not the file:
         #"outputDataPath"
         "outputData"
-    )
-    
-    resampleFunctions <- c(
-        "ResampleMeanLengthDistributionData",
-        "ResampleBioticAssignment", 
-        "ResampleMeanNASCData"
     )
     
     # Load the required packages to enable searching for formals and documentation, e.g. for getStoxFunctionParameterPossibleValues():
@@ -176,7 +176,7 @@ initiateRstoxFramework <- function(){
     # Check that there are no functions with the same name as a datatype:
     commonFunctionAndDataTypeName <- intersect(stoxDataTypes$functionOutputDataType, stoxDataTypes$functionName)
     if(length(commonFunctionAndDataTypeName)) {
-        warning("StoX: The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes[functionName == commonFunctionAndDataTypeName, "packageName"], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and RstoxAPI::runModel(). Please notify the packcage maintainer.")
+        warning("StoX: The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes$packageName[stoxDataTypes$functionName == commonFunctionAndDataTypeName], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and RstoxAPI::runModel(). Please notify the packcage maintainer.")
     }
     
     
@@ -496,6 +496,45 @@ initiateRstoxFramework <- function(){
     definitions$stoxTemplates <- stoxTemplates
     
     #### Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv: ####
+    #utils::globalVariables("RstoxFrameworkEnv")
+    utils::globalVariables(c(
+        "RstoxFrameworkEnv", 
+        ":=", ".", 
+        "..PSU", 
+        "..activeProcessID", 
+        "..clickPointNames", 
+        "..coordinateNames", 
+        "..functionInputs", 
+        "..functionName", 
+        "..functionParameters", 
+        "..infoToKeep", 
+        "..processDirty", 
+        "..newProcessName", 
+        "CruiseKey", 
+        "Latitude", 
+        "Latitude2", 
+        "LogOrigin", 
+        "LogOrigin2", 
+        "Longitude", 
+        "Longitude2", 
+        "PSU", 
+        "atRemove", 
+        "canShowInMap", 
+        "filePahts", 
+        "functionName", 
+        "functionOutputDataType", 
+        "hasBeenRun", 
+        "hasProcessData", 
+        "modelName", 
+        "processDirty", 
+        "name", 
+        "possibleValues", 
+        "processID", 
+        "projectPath", 
+        "value"
+    ))
+    
+    
     assign("RstoxFrameworkEnv", new.env(), parent.env(environment()))
     
     assign("definitions", definitions, envir=get("RstoxFrameworkEnv"))
@@ -569,8 +608,6 @@ getProcessPropertyFormats <- function(packageName) {
             error = function(err) NULL
         )
     }
-    
-    
     return(processPropertyFormats)
 }
 
@@ -642,10 +679,10 @@ extractStoxFunctionParameterPossibleValues <- function(functionName, systemParam
             assign(names(f[i]), 
                 if(!is.null(f[[i]])) 
                     output[[i]] <- eval(f[[i]], envir = 
-                        list(
-                            environment(), 
-                            as.environment(paste("package", packageName, sep = ":"))
-                        )
+                                            list(
+                                                environment(), 
+                                                as.environment(paste("package", packageName, sep = ":"))
+                                            )
                     ) 
                 else 
                     eval(f[[i]], envir = list(

@@ -340,6 +340,7 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' @param force             Logical: If TRUE reopen (close and then open) the project if already open.
 #' @param reset             Logical: If TRUE reset each model to the start of the model.
 #' @param save              Logical: If TRUE save the project before closing. Default (NULL) is to ask the user whether to save the project before closing.
+#' @param saveIfAlreadyOpen Logical: If TRUE save the project before closing if already open and force is TRUE.
 #' @param newProjectPath    The path to the copied StoX project.
 #' @param type              The type of file to save the project to.
 #' 
@@ -398,8 +399,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' @export
 #' @rdname Projects
 #' 
-
-openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE, type = c("RData", "JSON")) {
+openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE, type = c("RData", "JSON"), saveIfAlreadyOpen = FALSE) {
     
     # Resolve the projectPath:
     projectPath <- resolveProjectPath(projectPath)
@@ -433,7 +433,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
         return(out)
     }
     #else if(force) {
-        closeProject(projectPath, save = FALSE, msg = FALSE)
+        closeProject(projectPath, save = saveIfAlreadyOpen, msg = FALSE)
     #}
     
     
@@ -489,7 +489,7 @@ closeProject <- function(projectPath, save = NULL, msg =TRUE) {
         else if(is.character(save)) {
             saveProject(projectPath, type = save, msg = FALSE)
         }
-        else if(!isFALSE(save)) {
+        else if(!isFALSE(save) && !isSaved(projectPath)) {
             answer <- readline(paste("The project", projectPath, "has not been saved.\nDo you with to save before closing (y/n)?"))
             if(identical(tolower(answer), "y")) {
                 saveProject(projectPath, msg = FALSE)
@@ -1061,9 +1061,9 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     # Add attributes and wrap the models into an object:
     projectDescription <- list(
         project = list(
-            Template = "", 
+            #Template = "", 
             #RstoxFrameworkVersion = as.character(utils::packageVersion("RstoxFramework")),
-            TimeSaved = strftime(as.POSIXlt(Sys.time(), "UTC", "%Y-%m-%dT%H:%M:%S") , "%Y-%m-%dT%H:%M:%S%z"), 
+            TimeSaved = strftime(as.POSIXlt(Sys.time(), "UTC", "%Y-%m-%dT%H:%M:%S") , "%Y-%m-%dT%H:%M:%OS3Z"), 
             RVersion = R.version.string, 
             #RstoxPackageVersion = RstoxPackageVersion, 
             RstoxPackageVersion = RstoxPackageVersion, 
@@ -1952,12 +1952,19 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
 }
 
 # Function to extract the actual the arguments to show from the arguments:
-extractArgumentsToShow <- function(arguments, projectPath, modelName, processID, argumentFilePaths = NULL) {
+extractArgumentsToShow <- function(arguments, projectPath, modelName, processID, argumentFilePaths = NULL, keepSystemParameters = TRUE) {
     # Get the names of the arguments to show:
     argumentsToShow <- getArgumentsToShow(projectPath = projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
     # extract only the variables to show:
-    arguments$functionInputs <- arguments$functionInputs[intersect(names(arguments$functionInputs), argumentsToShow)]
-    arguments$functionParameters <- arguments$functionParameters[intersect(names(arguments$functionParameters), argumentsToShow)]
+    #arguments$functionInputs <- arguments$functionInputs[intersect(names(arguments$functionInputs), argumentsToShow)]
+    #arguments$functionParameters <- arguments$functionParameters[intersect(names(arguments$functionParameters), argumentsToShow)]
+    systemParameters <- getRstoxFrameworkDefinitions("systemParameters")
+    if(keepSystemParameters) {
+        argumentsToShow <- c(systemParameters, argumentsToShow) 
+    }
+    argumentsToShow <- intersect(names(arguments), argumentsToShow)
+    
+    arguments <- arguments[argumentsToShow]
     
     return(arguments)
 }
@@ -4271,10 +4278,13 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
     
     
     # Keep only arguments to show:
-    functionArguments <- extractArgumentsToShow(arguments = functionArguments, projectPath = projectPath, modelName = modelName, processID = processID, argumentFilePaths = NULL) # Using NULL here as argumentFilePaths has not been read. Should it?
+    functionArguments <- extractArgumentsToShow(arguments = functionArguments, projectPath = projectPath, modelName = modelName, processID = processID, argumentFilePaths = NULL) # Using NULL here, as argumentFilePaths has not been read. Should it?
     
     # Get the function input as output from the previously run processes:
     functionInputNames <- intersect(names(functionArguments), names(process$functionInputs))
+    # Also, remove empty function inputs (added on 2020-11-19):
+    functionInputNames <- functionInputNames[lengths(functionArguments[functionInputNames]) > 0L]
+    
     functionInputProcessNames <- unlist(functionArguments[functionInputNames])
     if(length(functionInputProcessNames)) {
         # Get the function input process IDs (returned as a data.table due to the rbindlist()):
@@ -4287,6 +4297,11 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
             ), 
             SIMPLIFY = FALSE
         ))
+        
+        if(nrow(functionInputsProcessIDs) != length(functionInputProcessNames)) {
+            stop("Some function inputs are not specified: ", paste(setdiff(functionInputProcessNames, names(functionInputsProcessIDs)), collapse = ", "))
+            
+        }
         
         # Get the actual function inputs from the functionInputsProcessIDs:
         functionArguments[functionInputNames] <- mapply(

@@ -19,22 +19,6 @@ runModel(
   purge.processData = FALSE,
   ...
 )
-
-runModel(
-  projectPath,
-  modelName,
-  startProcess = 1,
-  endProcess = Inf,
-  run = TRUE,
-  save = TRUE,
-  force.restart = FALSE,
-  replaceDataList = list(),
-  replaceArgs = list(),
-  fileOutput = NULL,
-  setUseProcessDataToTRUE = TRUE,
-  purge.processData = FALSE,
-  ...
-)
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
@@ -53,11 +37,7 @@ runModel(
 }
 \value{
 A list of model output.
-
-A list of model output.
 }
 \description{
-This function runs and returns output from a model of a StoX project.
-
 This function runs and returns output from a model of a StoX project.
 }

@@ -155,22 +155,40 @@ getRstoxFrameworkVersion <- function() {
 }
 
 
+### ##################################################
+### ##################################################
+### #' Get a list of Rstox pakcage versions
+### #' 
+### #' This function declares the RstoxFramework environment and writes vital definitions to it.
+### #' 
+### #' @return
+### #' A list of definitions.
+### #' 
+### #' @noRd
+### #' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
+### #' 
+### #' 
+### #' @export
+### #'
+### getRstoxPackageVersions <- function() {
+###     getOfficialRstoxPackageVersion()$InstalledRstoxPackageVersion
+### }
+### 
+
 ##################################################
 ##################################################
-#' Get a list of Rstox pakcage versions
+#' Export StoX JSON schema
 #' 
-#' This function declares the RstoxFramework environment and writes vital definitions to it.
-#' 
-#' @return
-#' A list of definitions.
-#' 
-#' @noRd
-#' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
-#' 
+#' @param con A connection to which to write the schema. Returned as JSON if missing.
 #' 
 #' @export
-#'
-getRstoxPackageVersions <- function() {
-    getOfficialRstoxPackageVersion()$InstalledRstoxPackageVersion
+#' 
+writeStoxJsonSchema <- function(con) {
+    schema <- getRstoxFrameworkDefinitions("schema")
+    if(missing(con)) {
+        return(schema)
+    }
+    else {
+        writeLines(as.character(schema), con)
+    }
 }
-

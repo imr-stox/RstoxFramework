@@ -23,7 +23,8 @@ openProject(
   showWarnings = FALSE,
   force = FALSE,
   reset = FALSE,
-  type = c("RData", "JSON")
+  type = c("RData", "JSON"),
+  saveIfAlreadyOpen = FALSE
 )
 
 closeProject(projectPath, save = NULL, msg = TRUE)
@@ -50,6 +51,8 @@ copyProject(projectPath, newProjectPath, ow = FALSE)
 \item{reset}{Logical: If TRUE reset each model to the start of the model.}
 
 \item{type}{The type of file to save the project to.}
+
+\item{saveIfAlreadyOpen}{Logical: If TRUE save the project before closing if already open and force is TRUE.}
 
 \item{save}{Logical: If TRUE save the project before closing. Default (NULL) is to ask the user whether to save the project before closing.}
 

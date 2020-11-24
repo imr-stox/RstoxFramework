@@ -131,33 +131,9 @@ runFunction.JSON <- function(cmd){
 
 
 
-##################################################
-##################################################
-#' Get RstoxFramework version
-#' 
-#' This function declares the RstoxFramework environment and writes vital definitions to it.
-#' 
-#' @return
-#' A list of definitions.
-#' 
-#' @noRd
-#' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
-#' 
-#' 
-#' @export
-#'
-getRstoxFrameworkVersion <- function() {
-    list(
-        packageName = "RstoxFramework", 
-        version = getPackageVersion("RstoxFramework", only.version = TRUE),
-        official = all(getOfficialRstoxPackageVersion()$AreOfficialRstoxPackageVersion)
-    )
-}
-
-
 ### ##################################################
 ### ##################################################
-### #' Get a list of Rstox pakcage versions
+### #' Get RstoxFramework version
 ### #' 
 ### #' This function declares the RstoxFramework environment and writes vital definitions to it.
 ### #' 
@@ -170,10 +146,34 @@ getRstoxFrameworkVersion <- function() {
 ### #' 
 ### #' @export
 ### #'
-### getRstoxPackageVersions <- function() {
-###     getOfficialRstoxPackageVersion()$InstalledRstoxPackageVersion
+### getRstoxFrameworkVersion <- function() {
+###     list(
+###         packageName = "RstoxFramework", 
+###         version = getPackageVersion("RstoxFramework", only.version = TRUE),
+###         official = all(getOfficialRstoxPackageVersion()$AreOfficialRstoxPackageVersion)
+###     )
 ### }
-### 
+
+
+##################################################
+##################################################
+#' Get a list of Rstox pakcage versions
+#' 
+#' This function declares the RstoxFramework environment and writes vital definitions to it.
+#' 
+#' @return
+#' A list of definitions.
+#' 
+#' @noRd
+#' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
+#' 
+#' 
+#' @export
+#'
+getRstoxPackageVersions <- function() {
+    getOfficialRstoxPackageVersion()$InstalledRstoxPackageVersion
+}
+
 
 ##################################################
 ##################################################

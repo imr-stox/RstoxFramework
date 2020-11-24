@@ -4533,13 +4533,20 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
     else {
         # Add numberOfLines = 1 and numberOfPages = 1 to conform to the output used for tables in the GUI:
         if(pretty) {
-            data <- list(
-                data = list(data), 
-                numberOfLines = 1, 
-                numberOfPages = 1
-            )
-        }
-        else {
+            if(length(data)) {
+                data <- list(
+                    data = list(data), 
+                    numberOfLines = 1, 
+                    numberOfPages = 1
+                )
+            }
+            else {
+                data <- list(
+                    data = list(), 
+                    numberOfLines = 0, 
+                    numberOfPages = 0
+                )
+            }
             
         }
     }
@@ -5149,7 +5156,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     # Chech that none of the models of the project are running:
     if(isRunning(projectPath, modelName) && !force.restart) {
-        warning("StoX: The project is running (", projectPath, "). Use force.restart = TRUE to force restart the project.")
+        warning("StoX: The project is running (", projectPath, "). Use force.restart = TRUE in runModel() to force restart the project, or close and open the project.")
         return(failedVector)
     }
     else {

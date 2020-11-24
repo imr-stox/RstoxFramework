@@ -463,9 +463,15 @@ getStationData <- function(projectPath, modelName, processID) {
 getEDSUData <- function(projectPath, modelName, processID) {
     
     # Get the Log data:
-    Cruise <- getProcessOutput(projectPath, modelName, processID, tableName = "Cruise")$Cruise
-    Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
-    CruiseLog <- merge(Cruise, Log, by = intersect(names(Cruise), names(Log)))
+    tableNames <- c(
+        "Cruise", 
+        "Log", 
+        "Beam"
+    )
+    EDSUData <- sapply(tableNames, function(tableName) getProcessOutput(projectPath, modelName, processID, tableName = tableName)[[tableName]], simplify = FALSE)
+    CruiseLog <- RstoxData::mergeDataTables(EDSUData, tableNames = tableNames, output.only.last = TRUE)
+    # Order by Beam:
+    setorderv(CruiseLog, c("Beam", "EDSU"))
     
     # Extrapolate:  
     CruiseLog <- extrapolateEDSU(CruiseLog)

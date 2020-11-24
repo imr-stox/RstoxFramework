@@ -195,7 +195,7 @@ addAcousticPSU <- function(Stratum, PSU = NULL, projectPath, modelName, processI
     
     # If the PSU is not given, use the default PSU name:
     if(length(PSU) == 0) {
-        PSU <- getNewDefaultName(AcousticPSU$Stratum_PSU$PSU, prefix = RstoxBase::getRstoxBaseDefinitions("AcousticPSUPrefix"))
+        PSU <- getNewDefaultName(AcousticPSU$Stratum_PSU$PSU, prefix = RstoxBase::getRstoxBaseDefinitions("getPSUPrefix")("Acoustic"))
     }
     # Check whether the acoustic PSU already exists:
     if(any(AcousticPSU$Stratum_PSU$PSU == PSU)) {

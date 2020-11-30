@@ -19,9 +19,12 @@ isSaved(projectPath)
 
 isOpenProject(projectPath)
 
-readProjectDescription(projectPath, type = c("RData", "JSON"))
+readProjectDescription(
+  projectPath,
+  type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats")
+)
 
-writeProjectDescription(projectPath, type = c("RData", "JSON"))
+writeProjectDescription(projectPath, type = c("JSON", "RData"))
 
 initiateActiveProcessID(projectPath)
 

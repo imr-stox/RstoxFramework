@@ -23,13 +23,18 @@ openProject(
   showWarnings = FALSE,
   force = FALSE,
   reset = FALSE,
-  type = c("RData", "JSON"),
+  type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"),
   saveIfAlreadyOpen = FALSE
 )
 
 closeProject(projectPath, save = NULL, msg = TRUE)
 
-saveProject(projectPath, type = c("RData", "JSON"), force = FALSE, msg = TRUE)
+saveProject(
+  projectPath,
+  type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"),
+  force = FALSE,
+  msg = TRUE
+)
 
 saveAsProject(projectPath, newProjectPath, ow = FALSE)
 

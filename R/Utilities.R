@@ -452,6 +452,9 @@ getMemoryFileFormat <- function(x) {
     else if(data.table::is.data.table(x)) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Table")
     }
+    else if(is.matrix(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Matrix")
+    }
     else if("SpatialPolygonsDataFrame" %in% class(x)) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Spatial")
     }

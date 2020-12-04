@@ -88,7 +88,7 @@
 
 
 readProjectXMLToList <- function(projectPath) {
-    projectXMLFile <- RstoxFramework::getProjectPaths(projectPath)$projectXMLFile
+    projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
     # Read the project.xml file into a list:
     doc = XML::xmlParse(projectXMLFile)
     projectList <- XML::xmlToList(doc)
@@ -111,8 +111,8 @@ readProjectXMLToProjectDescription2.7 <- function(projectPath) {
         FileVersion = "", 
         RVersion = attrs[["rversion"]], 
         RstoxFrameworkVersion = "",
-        RstoxFrameworkDependencies = data.table::data.table(), 
-        Template = attrs[["template"]]
+        RstoxFrameworkDependencies = data.table::data.table()
+        #Template = attrs[["template"]]
     )
     
     # Get the model names and group baseline
@@ -395,6 +395,62 @@ backwardCompatibility <- list(
 
 
 
+
+
+stratumpolygon2.7ToTable <- function(stratumpolygon) {
+    # Get polygon keys:
+    polygonkey <- sapply(stratumpolygon, function(x) x$.attrs["polygonkey"])
+    
+    # Convert to a list with one list per polygon:
+    stratumpolygonList <- split(stratumpolygon, polygonkey)
+    # ... and extract the includeintotal and polygon:
+    stratumpolygonList <- lapply(stratumpolygonList, function(x) lapply(x, function(y) y$text))
+    
+    # Rbind to a data.table and add names:
+    stratumpolygonTable <- data.table::rbindlist(stratumpolygonList)
+    stratumpolygonTable <- cbind(names(stratumpolygonList), stratumpolygonTable)
+    names(stratumpolygonTable) <- c("polygonkey", "includeintotal", "polygon")
+    
+    return(stratumpolygonTable)
+}
+
+
+saveStoXMultipolygonWKT <- function(stratumpolygonTable, projectPath, stratumPolygonFileName = "stratumPolygon.txt") {
+    stratumpolygonFilePath <- file.path(
+        getProjectPaths(projectPath, "Input"), 
+        stratumPolygonFileName
+    )
+    
+    data.table::fwrite(
+        stratumpolygonTable[, c("polygonkey", "polygon")], 
+        stratumpolygonFilePath, 
+        col.names = FALSE
+    )
+    
+    return(stratumpolygonFilePath)
+}
+
+
+copyStoXMultipolygonWKTFrom2.7 <- function(projectPath, stratumPolygonFileName = "stratumPolygon.txt") {
+    
+    # Read the project.xml file into a list:
+    projectList <- readProjectXMLToList(projectPath)
+    
+    # Convert the stratumpolygon to a table:
+    stratumpolygonTable <- stratumpolygon2.7ToTable(projectList$processdata$stratumpolygon)
+    # ... and write to file:
+    stratumpolygonFilePath <- file.path(
+        getProjectPaths(projectPath, "Input"), 
+        stratumPolygonFileName
+    )
+    data.table::fwrite(
+        stratumpolygonTable[, c("polygonkey", "polygon")], 
+        stratumpolygonFilePath, 
+        col.names = FALSE
+    )
+    
+    return(stratumpolygonFilePath)
+}
 
 
 

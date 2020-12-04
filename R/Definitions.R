@@ -233,9 +233,6 @@ initiateRstoxFramework <- function(){
         JSON = 6
     )
     
-    # Define the length of the sequence to draw seeds from:
-    seedSequenceLength = 1e7
-    
     # Define the permitted classes for individual outputs from StoX functions:
     validOutputDataClasses <- c(
         "data.table", 

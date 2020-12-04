@@ -22,13 +22,13 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     # Run the model if required:
     modelData <- NULL
     if(run) {
-        if(RstoxFramework::isProject(projectPath)) {
+        if(isProject(projectPath)) {
             # Open the project if not open:
-            if(!RstoxFramework::isOpenProject(projectPath)) {
-                RstoxFramework::openProject(projectPath)
+            if(!isOpenProject(projectPath)) {
+                openProject(projectPath)
             }
             # Run the model:
-            RstoxFramework::runProcesses(
+            runProcesses(
                 projectPath = projectPath, 
                 modelName = modelName, 
                 startProcess = startProcess, 
@@ -43,7 +43,7 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
                 ...
             )
             # Get the model data:
-            modelData <- RstoxFramework::getModelData(
+            modelData <- getModelData(
                 projectPath = projectPath, 
                 modelName = modelName, 
                 startProcess = startProcess, 
@@ -62,7 +62,7 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
 runFunction <- function(what, args, package = "RstoxFramework", removeCall = TRUE, onlyStoxMessages = TRUE) {
     
     # Parse the args if given as a JSON string:
-    args <- RstoxFramework::parseParameter(args)
+    args <- parseParameter(args)
     
     # Reset the warnings:
     assign("last.warning", NULL, envir = baseenv())

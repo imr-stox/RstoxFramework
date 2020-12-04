@@ -3641,8 +3641,12 @@ formatProcessData <-  function(processData) {
 
 
 formatProcessDataOne <-  function(processDataOne) {
+    
+    if(!length(processDataOne)) {
+        processDataOne <- data.table::data.table()
+    }
     # Convert to sp:
-    if("features" %in% tolower(names(processDataOne))) {
+    else if("features" %in% tolower(names(processDataOne))) {
         processDataOne <- geojsonio::geojson_sp(toJSON_Rstox(processDataOne, pretty = TRUE))
         row.names(processDataOne) <- as.character(processDataOne@data$polygonName)
         processDataOne <- addCoordsNames(processDataOne)
@@ -4117,11 +4121,12 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1)
     
     # Run the process:
+    packageName <- getPackageNameFromPackageFunctionName(process$functionName)
     processOutput <- tryCatch(
         do.call(
             getFunctionNameFromPackageFunctionName(process$functionName), 
             functionArguments, 
-            envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))
+            envir = if(packageName == "RstoxFramework") environment() else as.environment(paste("package", packageName, sep = ":"))
         ), 
         error = function(err) {
             failed <<- TRUE

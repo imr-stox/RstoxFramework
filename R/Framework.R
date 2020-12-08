@@ -113,15 +113,34 @@ applyBackwardCompatibility <- function(projectDescription) {
     
     # Get the backwardCompatibility specifications:
     backwardCompatibility <- getRstoxFrameworkDefinitions("backwardCompatibility")
+    # Set saved status to FALSE if any bacckwards compatibility actions are taken:
+    saved <- TRUE
     
     # Remove parameters:
     for(packageName in names(backwardCompatibility)) {
         for(removeParameterAction in backwardCompatibility[[packageName]]$removeParameter) {
-            projectDescription <- applyRemoveParameter(removeParameterAction, projectDescription, packageName)
+            run <- checkBackwardCompatibilityVersion(
+                backwardCompatibilityAction = removeParameterAction, 
+                projectDescription = projectDescription, 
+                packageName = packageName
+            )
+            if(run) {
+                projectDescription <- applyRemoveParameter(
+                    removeParameterAction = removeParameterAction, 
+                    projectDescription = projectDescription, 
+                    packageName = packageName
+                )
+                saved <- FALSE
+            }
         }
     }
     
-    return(projectDescription)
+    return(
+        list(
+            projectDescription = projectDescription, 
+            saved = saved
+        )
+    )
 }
 
 
@@ -129,11 +148,12 @@ interpretVersionString <- function(versionString) {
     sub('.* ', '', versionString)
 }
 
-applyRemoveParameter <- function(removeParameterAction, projectDescription, packageName) {
+
+checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, projectDescription, packageName) {
     
-    # Skip if not a valid removeParameterAction:
-    if(!checkRemoveParameter(removeParameterAction)) {
-        return(projectDescription)
+    # Skip if not a valid backwardCompatibilityAction:
+    if(!checkRemoveParameter(backwardCompatibilityAction)) {
+        return(FALSE)
     }
     
     # Do only if the old version is lower than or equal to the fromVersion, and that the current version is higher than or equal to the toVersion:
@@ -145,36 +165,39 @@ applyRemoveParameter <- function(removeParameterAction, projectDescription, pack
         # ... of the relevant package:
         lastSavedVersion <- lastSavedVersion[startsWith(lastSavedVersion, packageName)]
         lastSavedVersion <- interpretVersionString(lastSavedVersion)
-        convert <- lastSavedVersion < removeParameterAction$changeVersion
+        convert <- lastSavedVersion < backwardCompatibilityAction$changeVersion
     }
     else {
         convert <- TRUE
     }
     
+    return(convert)
+}
+
+
+applyRemoveParameter <- function(removeParameterAction, projectDescription, packageName) {
     
-    # If before or equal to the removeParameterAction$fromVersion, apply the change.
-    if(convert) {
-        # Get the function names (packageName::functionName) of the processes of the model on which the removeParameterAction works:
-        functionNames <- sapply(projectDescription[[removeParameterAction$modelName]], "[[", "functionName")
+    
+    # Get the function names (packageName::functionName) of the processes of the model on which the removeParameterAction works:
+    functionNames <- sapply(projectDescription[[removeParameterAction$modelName]], "[[", "functionName")
+    
+    # Match with the function in the removeParameterAction:
+    removeParameterAction_functionName <- paste(packageName, removeParameterAction$functionName, sep = "::")
+    atFunctionName <- which(removeParameterAction_functionName == functionNames)
+    
+    for(ind in atFunctionName) {
         
-        # Match with the function in the removeParameterAction:
-        removeParameterAction_functionName <- paste(packageName, removeParameterAction$functionName, sep = "::")
-        atFunctionName <- which(removeParameterAction_functionName == functionNames)
+        # Remove any relevant function input: 
+        projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs <- removeInOneProcess(
+            projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs, 
+            removeParameterAction
+        )
         
-        for(ind in atFunctionName) {
-            
-            # Remove any relevant function input: 
-            projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs <- removeInOneProcess(
-                projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs, 
-                removeParameterAction
-            )
-            
-            # Remove any relevant function parameter: 
-            projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters <- removeInOneProcess(
-                projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters, 
-                removeParameterAction
-            )
-        }
+        # Remove any relevant function parameter: 
+        projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters <- removeInOneProcess(
+            projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters, 
+            removeParameterAction
+        )
     }
     
     
@@ -561,7 +584,10 @@ openProject <- function(
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
     # Read the project description file:
-    projectMemory <- readProjectDescription(projectPath, type = type)
+    saved <- TRUE
+    temp <- readProjectDescription(projectPath, type = type)
+    projectDescription <- temp$projectDescription
+    saved <- saved && temp$saved
     
     # Set the active process ID to 0 for all models:
     initiateActiveProcessID(projectPath)
@@ -571,7 +597,7 @@ openProject <- function(
     temp <- addProcesses(
         projectPath = projectPath, 
         #modelName = names(projectMemory), 
-        projectMemory = projectMemory, 
+        projectMemory = projectDescription, 
         returnProcessTable = FALSE, 
         archive = FALSE, 
         add.defaults = FALSE
@@ -581,7 +607,7 @@ openProject <- function(
     
     
     # Set the status of the projcet as saved:
-    setSavedStatus(projectPath, status = TRUE)
+    setSavedStatus(projectPath, status = saved)
     
     # Return the project path project name and saved status:
     list(
@@ -766,13 +792,14 @@ isOpenProject <- function(projectPath) {
 readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats")) {
     # Read the project.RData or json file depending on the 'type':
     type <- match.arg(type)
+    saved <- TRUE
     
     # Get the projectDescriptionFile path:
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
     
     # If it does not exist, searhc for other project files:
     if(!file.exists(projectDescriptionFile)) {
-        # Get all possible file types, and select those different from that speciified in 'type':
+        # Get all possible file types, and select those different from that specified in 'type':
         allTypes <- getRstoxFrameworkDefinitions("projectDescriptionFileFormats")
         otherTypes <- setdiff(allTypes, type)
         
@@ -788,6 +815,8 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
             message("StoX: The file ", projectDescriptionFile, " does not exist. Opening ", otherProjectDescriptionFiles[atExisting[1]], " instead.")
             type <- otherTypes[atExisting[1]]
             projectDescriptionFile <- otherProjectDescriptionFiles[atExisting[1]]
+            # Set the status to not saved, since we are reading the non-expected project desccription file format:
+            saved <- FALSE
         }
     }
     
@@ -802,12 +831,19 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
     ))
     
     # Apply backward compatibility:
-    projectDescription <- applyBackwardCompatibility(projectDescription)
-    
+    temp <- applyBackwardCompatibility(projectDescription)
+    projectDescription <- temp$projectDescription
+    saved <- saved && temp$saved
+        
     # Introduce process IDs: 
     projectDescription <- defineProcessIDs(projectDescription)
     
-    return(projectDescription)
+    return(
+        list(
+            projectDescription = projectDescription, 
+            saved = saved
+        )
+    )
 }
 
 
@@ -831,12 +867,14 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
         stop("StoX: The file ", projectDescriptionFile, " is not a valid project.json file.")
     }
     
-    # Read project.json file to R list:
-    projectDescriptionList <- jsonlite::read_json(projectDescriptionFile, simplifyVector = FALSE)
+    # Read project.json file to R list. Use simplifyVector = FALSE to presere names:
+    projectDescriptionList <- jsonlite::read_json(projectDescriptionFile, simplifyVector = FALSE, auto_unbox = TRUE)
     
     # Add the headers as attributes:
     projectDescription <- projectDescriptionList$project$models
-    attrs <- projectDescriptionList$project[names(projectDescriptionList$project) %in% "models"]
+    attrs <- projectDescriptionList$project[! names(projectDescriptionList$project) %in% "models"]
+    # Unlist all attributes, as these are vectors only and simplifyVector = FALSE was used when reading:
+    attrs <- lapply(attrs, unlist)
     for(attrsName in names(attrs)) {
         attr(projectDescription, attrsName) <- attrs[[attrsName]]
     }
@@ -1005,6 +1043,7 @@ writeProjectDescription <- function(projectPath, type = c("JSON", "RData")) {
         projectDescriptionFile = projectDescriptionFile
     ))
 }
+
 writeProjectDescriptionRData <- function(projectDescription, projectDescriptionFile) {
     # Get the path to the project description file, and save the current project description:
     save(projectDescription, file = projectDescriptionFile)
@@ -1069,13 +1108,21 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
 }
 
 orderEachProcess <- function(projectDescription) {
-    lapply(
+    # Store the attributes:
+    att <- attributes(projectDescription)
+    
+    # Order the arguments:
+    projectDescription <- lapply(
         projectDescription, 
         function(model) lapply(
             model, 
             getRstoxFrameworkDefinitions("orderProcessArguments")
         )
     )
+    
+    attributes(projectDescription) <- att
+    
+    return(projectDescription)
 }
 
 

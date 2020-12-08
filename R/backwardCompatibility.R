@@ -446,7 +446,8 @@ copyStoXMultipolygonWKTFrom2.7 <- function(projectPath, stratumPolygonFileName =
     data.table::fwrite(
         stratumpolygonTable[, c("polygonkey", "polygon")], 
         stratumpolygonFilePath, 
-        col.names = FALSE
+        col.names = FALSE, 
+        sep = "\t"
     )
     
     return(stratumpolygonFilePath)

@@ -2327,6 +2327,9 @@ readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NUL
     }
     
     # Extract the model:
+    if(! modelName %in% processIndexTable$modelName) {
+        stop("The modelName \"", modelName, "\" is not the name of an existing model (a model with one or more processes). Possible values are ", paste(names(sort(unique(processIndexTable$modelName)))))
+    }
     validRows <- processIndexTable$modelName %in% modelName
     processIndexTable <- subset(processIndexTable, validRows)
     
@@ -2611,7 +2614,7 @@ getProcessTable <- function(projectPath, modelName = NULL, afterProcessID = NULL
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
-        argumentFilePaths <- getArgumentFilePaths(projectPath)
+        argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName)
     }
     
     # Get a table of all the processes including function inputs, parameters and input errors:
@@ -5244,7 +5247,6 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     on.exit({
         setNotRunning(projectPath, modelName)
     })
-
     
     # Loop through the processes:
     mapply(

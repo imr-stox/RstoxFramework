@@ -66,7 +66,8 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     # The default is to get all models:
     if(length(modelName) == 0 && length(processID) == 0 && length(argumentName) == 0) {
         #modelName <- list.dirs(memoryCurrentModelsFolder, recursive = FALSE, full.names = FALSE)
-        modelName <- getRstoxFrameworkDefinitions("stoxModelNames")
+        #modelName <- getRstoxFrameworkDefinitions("stoxModelNames")
+        modelName <- getNonEmptyModels(projectPath)
     }
     
     # If no models were detected, return an empty list:
@@ -130,7 +131,13 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
 }
 
 
-
+getNonEmptyModels <- function(projectPath) {
+    # Read the process index table which lists all the processes of each model:
+    processIndexTable <- readProcessIndexTable(projectPath)
+    presentModelNames <- unique(processIndexTable$modelName)
+    
+    return(presentModelNames)
+}
 
 
 

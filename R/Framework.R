@@ -5020,7 +5020,7 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
             cat("", file = filePath)
         }
         else {
-            data.table::fwrite(processOutputOne, filePath, col.names = FALSE)
+            data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE)
         }
     }
     else if(ext == "rds") {

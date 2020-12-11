@@ -83,7 +83,7 @@ flattenDataTable <- function(x, replace = NA) {
     # Replace all empty with NA
     x <- replaceEmptyInDataTable(x, replace = replace)
 
-    x <- RstoxBase::expandDT(x)
+    x <- expandDT(x)
 }
 
 #' Function to convert data.table to fixed width:
@@ -452,6 +452,9 @@ getMemoryFileFormat <- function(x) {
     else if(data.table::is.data.table(x)) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Table")
     }
+    else if(is.matrix(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Matrix")
+    }
     else if("SpatialPolygonsDataFrame" %in% class(x)) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Spatial")
     }
@@ -604,5 +607,39 @@ toJSON_Rstox <- function(x, ...) {
 
 emptyNamedList <- function() {
     list(a = 1)[0]
+}
+
+
+#' Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps
+#' 
+#' @param DT A data.table.
+#' @param toExpand A vector of names of the tables to expand.
+#' 
+#' @export
+#' 
+expandDT <- function(DT, toExpand = NULL) {
+    # Set the columns to expand:
+    if(length(toExpand) == 0) {
+        lens <- lapply(DT, lengths)
+        lensLargerThan1 <- sapply(lens, function(l) any(l > 1))
+        toExpand <- names(DT)[lensLargerThan1]
+    }
+    
+    if(length(toExpand)) {
+        expanded <- lapply(toExpand, function(x) DT[, unlist(get(x))])
+        names(expanded) <- toExpand
+        DT <- do.call(
+            cbind, 
+            c(
+                list(
+                    DT[rep(1:.N, lengths(get(toExpand[1]))), !toExpand, with = FALSE]
+                ), 
+                #lapply(toExpand, function(x) DT[, unlist(get(x))])
+                expanded
+            )
+        )
+    }
+    
+    DT
 }
 

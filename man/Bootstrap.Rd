@@ -14,7 +14,17 @@ Bootstrap(
 )
 }
 \arguments{
-\item{LengthDistributionData}{The \code{\link[RstoxBase]{LengthDistributionData}} to resample Hauls in.}
+\item{outputData}{The output of the function from an earlier run.}
+
+\item{projectPath}{The path to the project to containing the baseline to bootstrap.}
+
+\item{BootstrapMethodTable}{A table of the columns ProcessName, ResampleFunction and Seed, where each row defines the resampel function to apply to the output of the given process (and the seed to use in the resampling).}
+
+\item{NumberOfBootstraps}{Integer: The number of bootstrap replicates.}
+
+\item{OutputProcesses}{A vector of the processes to save from each bootstrap replicate.}
+
+\item{UseOutputData}{Logical: If TRUE use the existing output file from the function.}
 }
 \description{
 Run a subset of the baseline model a number of times after resampling e.g. Hauls in each Stratum, EDUSs in each Stratum.

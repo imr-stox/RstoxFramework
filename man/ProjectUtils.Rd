@@ -5,7 +5,6 @@
 \alias{isProject}
 \alias{isSaved}
 \alias{isOpenProject}
-\alias{readProjectDescriptionOld}
 \alias{readProjectDescription}
 \alias{writeProjectDescription}
 \alias{initiateActiveProcessID}
@@ -20,11 +19,12 @@ isSaved(projectPath)
 
 isOpenProject(projectPath)
 
-readProjectDescriptionOld(projectPath, type = c("RData", "JSON"))
+readProjectDescription(
+  projectPath,
+  type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats")
+)
 
-readProjectDescription(projectPath, type = c("RData", "JSON"))
-
-writeProjectDescription(projectPath, type = c("RData", "JSON"))
+writeProjectDescription(projectPath, type = c("JSON", "RData"))
 
 initiateActiveProcessID(projectPath)
 

@@ -57,8 +57,7 @@ setShowInMap <- function(projectPath, modelName, processID) {
     # Get processes with the same datatype (where processes with FilterStoxBiotic is considered different from those with StoxBiotic)
     processTable <- scanForModelError(
         projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID
+        modelName = modelName
     )
     
     # Get the index of the current process:
@@ -464,9 +463,19 @@ getStationData <- function(projectPath, modelName, processID) {
 getEDSUData <- function(projectPath, modelName, processID) {
     
     # Get the Log data:
-    Cruise <- getProcessOutput(projectPath, modelName, processID, tableName = "Cruise")$Cruise
-    Log <- getProcessOutput(projectPath, modelName, processID, tableName = "Log")$Log
-    CruiseLog <- merge(Cruise, Log, by = intersect(names(Cruise), names(Log)))
+    tableNames <- c(
+        "Cruise", 
+        "Log", 
+        "Beam"
+    )
+    EDSUData <- sapply(tableNames, function(tableName) getProcessOutput(projectPath, modelName, processID, tableName = tableName)[[tableName]], simplify = FALSE)
+    CruiseLog <- RstoxData::mergeDataTables(EDSUData, tableNames = tableNames, output.only.last = TRUE)
+    # Uniquify in case e.g. there are data from different instruments:
+    EDSUInfoToKeep <- c("EDSU", "Platform", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
+    CruiseLog <- unique(CruiseLog, by = EDSUInfoToKeep)
+    
+    # Order by Beam:
+    setorderv(CruiseLog, c("Beam", "EDSU"))
     
     # Extrapolate:  
     CruiseLog <- extrapolateEDSU(CruiseLog)
@@ -482,7 +491,6 @@ getEDSUData <- function(projectPath, modelName, processID) {
     
     # ...and define the properties:
     #infoToKeep <- c("CruiseKey", "Platform", "LogKey", "Log", "EDSU", "DateTime", "Longitude", "Latitude", "LogOrigin", "Longitude2", "Latitude2", "LogOrigin2", "LogDuration", "LogDistance", "EffectiveLogDistance", "BottomDepth")
-    EDSUInfoToKeep <- c("EDSU", "Platform", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
     EDSUInfo <- CruiseLog[, ..EDSUInfoToKeep]
     properties <- EDSUInfo[, "EDSU"]
     

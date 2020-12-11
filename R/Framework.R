@@ -101,16 +101,140 @@ addMissingAttributes <- function(stoxFunctionAttributes, requestedFunctionAttrib
 }
 
 
-# Function for reading the backwardCompatibility object of a package.
-getBackwardCompatibility <- function(packageName) {
+
+
+applyBackwardCompatibility <- function(projectDescription) {
     
-    backwardCompatibility <- tryCatch(
-        getExportedValue(packageName, "backwardCompatibility"), 
-        error = function(err) NULL
+    # Save the original projectDescription:
+    originalProjectDescription <- projectDescription
+    temp <- tempfile()
+    message(paste("Original file saved to", temp))
+    save(projectDescription, file = temp)
+    
+    # Get the backwardCompatibility specifications:
+    backwardCompatibility <- getRstoxFrameworkDefinitions("backwardCompatibility")
+    # Set saved status to FALSE if any bacckwards compatibility actions are taken:
+    saved <- TRUE
+    
+    # Remove parameters:
+    for(packageName in names(backwardCompatibility)) {
+        for(removeParameterAction in backwardCompatibility[[packageName]]$removeParameter) {
+            run <- checkBackwardCompatibilityVersion(
+                backwardCompatibilityAction = removeParameterAction, 
+                projectDescription = projectDescription, 
+                packageName = packageName
+            )
+            if(run) {
+                projectDescription <- applyRemoveParameter(
+                    removeParameterAction = removeParameterAction, 
+                    projectDescription = projectDescription, 
+                    packageName = packageName
+                )
+                saved <- FALSE
+            }
+        }
+    }
+    
+    return(
+        list(
+            projectDescription = projectDescription, 
+            saved = saved
+        )
+    )
+}
+
+
+interpretVersionString <- function(versionString) {
+    sub('.* ', '', versionString)
+}
+
+
+checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, projectDescription, packageName) {
+    
+    # Skip if not a valid backwardCompatibilityAction:
+    if(!checkRemoveParameter(backwardCompatibilityAction)) {
+        return(FALSE)
+    }
+    
+    # Do only if the old version is lower than or equal to the fromVersion, and that the current version is higher than or equal to the toVersion:
+    # Get last saved version:
+    lastSavedVersion <- attr(projectDescription, "RstoxPackageVersion")
+    
+    # If the projectDescription does not have attrtibutes, always apply the conversion:
+    if(length(lastSavedVersion)) {
+        # ... of the relevant package:
+        lastSavedVersion <- lastSavedVersion[startsWith(lastSavedVersion, packageName)]
+        lastSavedVersion <- interpretVersionString(lastSavedVersion)
+        convert <- lastSavedVersion < backwardCompatibilityAction$changeVersion
+    }
+    else {
+        convert <- TRUE
+    }
+    
+    return(convert)
+}
+
+
+applyRemoveParameter <- function(removeParameterAction, projectDescription, packageName) {
+    
+    
+    # Get the function names (packageName::functionName) of the processes of the model on which the removeParameterAction works:
+    functionNames <- sapply(projectDescription[[removeParameterAction$modelName]], "[[", "functionName")
+    
+    # Match with the function in the removeParameterAction:
+    removeParameterAction_functionName <- paste(packageName, removeParameterAction$functionName, sep = "::")
+    atFunctionName <- which(removeParameterAction_functionName == functionNames)
+    
+    for(ind in atFunctionName) {
+        
+        # Remove any relevant function input: 
+        projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs <- removeInOneProcess(
+            projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs, 
+            removeParameterAction
+        )
+        
+        # Remove any relevant function parameter: 
+        projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters <- removeInOneProcess(
+            projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters, 
+            removeParameterAction
+        )
+    }
+    
+    
+    return(projectDescription)
+}
+
+removeInOneProcess <- function(list, removeParameterAction) {
+    # Find the objects to remove:
+    toRemove <- names(list) == removeParameterAction$parameterName
+    # Remove if any to remove:
+    if(any(toRemove)) {
+        list <- list[!toRemove]
+    }
+    return(list)
+}
+
+
+
+checkRemoveParameter <- function(removeParameterAction) {
+    required <- c(
+        "changeVersion",
+        "functionName",
+        "modelName",
+        "parameterName"
     )
     
-    backwardCompatibility
+    # Check whether all required elements are present:
+    allPresent <- all(required %in% names(removeParameterAction))
+    
+    if(!allPresent) {
+        warning("The following removeParameterAction of package ", removeParameterAction$packageName, "does not contain all required elements (", paste(required, collapse = ", "), "): \n", paste("\t", names(removeParameterAction), removeParameterAction, sep = ": ", collapse = "\n"))
+    }
+    
+    return(allPresent)
 }
+
+
 
 # Function for validating a StoX function library package.
 validateStoxLibraryPackage <- function(packageName) {
@@ -141,11 +265,13 @@ validateStoxLibraryPackage <- function(packageName) {
     processDataSchema <- readProcessDataSchema(packageName)
     processDataSchemaNames <- names(processDataSchema)
     exportedProcessDataFunctions <- names(stoxFunctionAttributes)[sapply(stoxFunctionAttributes, "[[", "functionType") == "processData"]
-    exportedProcessDataFunctionsSansDefine <- sub("Define", "", exportedProcessDataFunctions)
+    exportedProcessData <- sapply(stoxFunctionAttributes[exportedProcessDataFunctions], "[[", "functionOutputDataType")
+    #exportedProcessDataFunctionsSansDefine <- sub("Define", "", exportedProcessDataFunctions)
     
-    if(!all(exportedProcessDataFunctionsSansDefine %in% processDataSchemaNames)) {
-        missingJSONs <- setdiff(exportedProcessDataFunctionsSansDefine, processDataSchemaNames)
-        warning("StoX: The package ", packageName, " exports processData functions specified in the 'stoxFunctionAttributes' object that are not documented with a JSON schema in the processDataSchema.json file:\n", paste(missingJSONs, collapse = ", "))
+    #if(!all(exportedProcessDataFunctionsSansDefine %in% processDataSchemaNames)) {
+    if(!all(exportedProcessData %in% processDataSchemaNames)) {
+        missingJSONs <- setdiff(exportedProcessData, processDataSchemaNames)
+        warning("StoX: The package ", packageName, " exports processData functions specified in the 'stoxFunctionAttributes' object for which the processData is not documented with a JSON schema in the processDataSchema.json file:\n", paste(missingJSONs, collapse = ", "))
         #return(FALSE)
     }
     
@@ -338,6 +464,7 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' @param force             Logical: If TRUE reopen (close and then open) the project if already open.
 #' @param reset             Logical: If TRUE reset each model to the start of the model.
 #' @param save              Logical: If TRUE save the project before closing. Default (NULL) is to ask the user whether to save the project before closing.
+#' @param saveIfAlreadyOpen Logical: If TRUE save the project before closing if already open and force is TRUE.
 #' @param newProjectPath    The path to the copied StoX project.
 #' @param type              The type of file to save the project to.
 #' 
@@ -348,7 +475,13 @@ NULL
 #' @export
 #' @rdname Projects
 #' 
-createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, showWarnings = FALSE, open = TRUE) {
+createProject <- function(
+    projectPath, 
+    template = "EmptyTemplate", 
+    ow = FALSE, 
+    showWarnings = FALSE, 
+    open = TRUE
+) {
     
     # Get the template:
     thisTemplate <- getTemplate(template)
@@ -380,7 +513,7 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
     archiveProject(projectPath)
     
     # Save the project, close it, and open:
-    saveProject(projectPath)
+    saveProject(projectPath, msg = FALSE)
     if(!open) {
         closeProject(projectPath, save = TRUE)
     }
@@ -396,8 +529,14 @@ createProject <- function(projectPath, template = "EmptyTemplate", ow = FALSE, s
 #' @export
 #' @rdname Projects
 #' 
-
-openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset = FALSE, type = c("RData", "JSON")) {
+openProject <- function(
+    projectPath, 
+    showWarnings = FALSE, 
+    force = FALSE, 
+    reset = FALSE, 
+    type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), 
+    saveIfAlreadyOpen = FALSE
+) {
     
     # Resolve the projectPath:
     projectPath <- resolveProjectPath(projectPath)
@@ -431,7 +570,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
         return(out)
     }
     #else if(force) {
-        closeProject(projectPath, save = FALSE, msg = FALSE)
+        closeProject(projectPath, save = saveIfAlreadyOpen, msg = FALSE)
     #}
     
     
@@ -445,7 +584,10 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
     # Read the project description file:
-    projectMemory <- readProjectDescription(projectPath, type = type)
+    saved <- TRUE
+    temp <- readProjectDescription(projectPath, type = type)
+    projectDescription <- temp$projectDescription
+    saved <- saved && temp$saved
     
     # Set the active process ID to 0 for all models:
     initiateActiveProcessID(projectPath)
@@ -455,7 +597,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     temp <- addProcesses(
         projectPath = projectPath, 
         #modelName = names(projectMemory), 
-        projectMemory = projectMemory, 
+        projectMemory = projectDescription, 
         returnProcessTable = FALSE, 
         archive = FALSE, 
         add.defaults = FALSE
@@ -465,7 +607,7 @@ openProject <- function(projectPath, showWarnings = FALSE, force = FALSE, reset 
     
     
     # Set the status of the projcet as saved:
-    setSavedStatus(projectPath, status = TRUE)
+    setSavedStatus(projectPath, status = saved)
     
     # Return the project path project name and saved status:
     list(
@@ -482,15 +624,15 @@ closeProject <- function(projectPath, save = NULL, msg =TRUE) {
     # Check that the project has been saved:
     if(isOpenProject(projectPath)) {
         if(isTRUE(save)) {
-            saveProject(projectPath)
+            saveProject(projectPath, msg = FALSE)
         }
         else if(is.character(save)) {
-            saveProject(projectPath, type = save)
+            saveProject(projectPath, type = save, msg = FALSE)
         }
-        else if(!isFALSE(save)) {
+        else if(!isFALSE(save) && !isSaved(projectPath)) {
             answer <- readline(paste("The project", projectPath, "has not been saved.\nDo you with to save before closing (y/n)?"))
             if(identical(tolower(answer), "y")) {
-                saveProject(projectPath)
+                saveProject(projectPath, msg = FALSE)
             }
         }
         # Delete the project session folder structure:
@@ -513,7 +655,12 @@ closeProject <- function(projectPath, save = NULL, msg =TRUE) {
 #' @export
 #' @rdname Projects
 #' 
-saveProject <- function(projectPath, type = c("RData", "JSON"), force = FALSE) {
+saveProject <- function(
+    projectPath, 
+    type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), 
+    force = FALSE, 
+    msg = TRUE
+) {
     
     if(isSaved(projectPath) && !force) {
         output <- list(
@@ -521,6 +668,11 @@ saveProject <- function(projectPath, type = c("RData", "JSON"), force = FALSE) {
             projectName = basename(projectPath), 
             saved = TRUE
         )
+        
+        # Give a message by default:
+        if(msg) {
+            message("The project ", projectPath, " has already been saved. Use force = TRUE to save anyhow.")
+        }
         return(output)
     }
     
@@ -546,7 +698,7 @@ saveAsProject <- function(projectPath, newProjectPath, ow = FALSE) {
     
     # Copy the current project and save it:
     copyProject(projectPath, newProjectPath, ow = ow)
-    saveProject(newProjectPath)
+    saveProject(newProjectPath, msg = FALSE)
     
     # Close the current project without saving
     closeProject(projectPath, save = FALSE)
@@ -631,47 +783,42 @@ isOpenProject <- function(projectPath) {
     }
 }
 
-#' 
-#' @export
-#' @rdname ProjectUtils
-#' 
-readProjectDescriptionOld <- function(projectPath, type = c("RData", "JSON")) {
-    # Read the project.RData or project.xml file depending on the 'type':
-    type <- match.arg(type)
-    switch(
-        type,
-        RData = readProjectDescriptionRData(projectPath),
-        XML = readProjectDescriptionXML(projectPath)
-    )
-}
-readProjectDescriptionRDataOld <- function(projectPath) {
-    # Get the path to the project description file:
-    projectRDataFile <- getProjectPaths(projectPath, "projectRDataFile")
-    projectDescription <- NULL
-    load(projectRDataFile) # Creates/replaces the object 'projectDescription'
-    
-    if(length(projectDescription) == 0) {
-        stop("StoX: The project description ", projectRDataFile, " is empty.")
-    }
-    
-    # Define the process IDs and return the project description:
-    defineProcessIDs(projectDescription)
-}
-
-
-
-
 
 #' Read the project description.
 #' 
 #' @export
 #' @rdname ProjectUtils
 #' 
-readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
+readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats")) {
     # Read the project.RData or json file depending on the 'type':
     type <- match.arg(type)
+    saved <- TRUE
     
+    # Get the projectDescriptionFile path:
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
+    
+    # If it does not exist, searhc for other project files:
+    if(!file.exists(projectDescriptionFile)) {
+        # Get all possible file types, and select those different from that specified in 'type':
+        allTypes <- getRstoxFrameworkDefinitions("projectDescriptionFileFormats")
+        otherTypes <- setdiff(allTypes, type)
+        
+        # Try to find other files:
+        otherProjectDescriptionFiles <- sapply(
+            otherTypes, 
+            function(x) getProjectPaths(projectPath, paste0("project", x, "File"))
+        )
+        atExisting <- which(file.exists(otherProjectDescriptionFiles))
+        
+        # If there are other file formats saved in the process folder, try the first of those:
+        if(length(atExisting)) {
+            message("StoX: The file ", projectDescriptionFile, " does not exist. Opening ", otherProjectDescriptionFiles[atExisting[1]], " instead.")
+            type <- otherTypes[atExisting[1]]
+            projectDescriptionFile <- otherProjectDescriptionFiles[atExisting[1]]
+            # Set the status to not saved, since we are reading the non-expected project desccription file format:
+            saved <- FALSE
+        }
+    }
     
     if(!file.exists(projectDescriptionFile)) {
         stop("StoX: The project description file ", projectDescriptionFile, " does not exist.")
@@ -683,17 +830,31 @@ readProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
         projectDescriptionFile = projectDescriptionFile
     ))
     
+    # Apply backward compatibility:
+    temp <- applyBackwardCompatibility(projectDescription)
+    projectDescription <- temp$projectDescription
+    saved <- saved && temp$saved
+        
     # Introduce process IDs: 
     projectDescription <- defineProcessIDs(projectDescription)
+    
+    return(
+        list(
+            projectDescription = projectDescription, 
+            saved = saved
+        )
+    )
+}
+
+
+readProjectDescriptionRData <- function(projectDescriptionFile) {
+    # Creates/replaces the object 'projectDescription':
+    projectDescription <- NULL
+    load(projectDescriptionFile)
     
     return(projectDescription)
 }
 
-#readProjectXML <- function(projectXMLFile) {
-#    # This is Edvins work, which will be completed later. Process data needs to be converted from JSON using JSON2processData():
-#    readProject(projectXMLFile)
-#}
-#
 
 readProjectDescriptionJSON <- function(projectDescriptionFile) {
     
@@ -706,9 +867,17 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
         stop("StoX: The file ", projectDescriptionFile, " is not a valid project.json file.")
     }
     
-    # Read project.json file to R list:
-    projectDescription <- jsonlite::read_json(projectDescriptionFile, simplifyVector = FALSE)
-    projectDescription <- projectDescription$project$models
+    # Read project.json file to R list. Use simplifyVector = FALSE to presere names:
+    projectDescriptionList <- jsonlite::read_json(projectDescriptionFile, simplifyVector = FALSE, auto_unbox = TRUE)
+    
+    # Add the headers as attributes:
+    projectDescription <- projectDescriptionList$project$models
+    attrs <- projectDescriptionList$project[! names(projectDescriptionList$project) %in% "models"]
+    # Unlist all attributes, as these are vectors only and simplifyVector = FALSE was used when reading:
+    attrs <- lapply(attrs, unlist)
+    for(attrsName in names(attrs)) {
+        attr(projectDescription, attrsName) <- attrs[[attrsName]]
+    }
     
     
     for(modelName in names(projectDescription)) {
@@ -732,163 +901,6 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
 removeNamedElement <- function(list, name) {
     list[!names(list) %in% name]
 }
-
-
-### convertProjectDescription <- function(projectDescription) {
-###     # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
-###     for(modelName in names(projectDescription)) {
-###         for(processIndex in seq_along(projectDescription [[modelName]])) {
-###             
-###             # 2020-10-12: In the following, avoide deleting an element by the behaivor that <- NULL deletes a ### list element, by the if(length) condition:
-###             
-###             # Convert process data:
-###             for(processDataIndex in names(projectDescription [[modelName]] [[processIndex]]$processData)) {
-###                 if(length(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]])) {
-###                     projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]] <- ### convertListInProjectDescription(projectDescription [[modelName]] [[processIndex]]$processData[[processDataIndex]]### )
-###                 }
-###             }
-###             
-###             # Convert function parameters:
-###             for(functionParameterIndex in names(projectDescription [[modelName]] [[processIndex]]$functionParamet### ers)) {
-###                 if(length(projectDescription [[modelName]] [[processIndex]]$functionParameters[[functionParameter### Index]])) {
-###                     projectDescription [[modelName]] [[processIndex]]$functionParameters[[functionParameterIndex]### ] <- convertListInProjectDescription(projectDescription [[modelName]] [[processIndex]]$functionParameters[[functi### onParameterIndex]], continue = FALSE, minLength = 2)
-###                 }
-###             }
-###         }
-###     }
-###     
-###     return(projectDescription)
-### }
-
-
-### convertListInProjectDescription <- function(x, continue = TRUE, minLength = 1) {
-###     if(is.list(x)) {
-###         # Convert to sp:
-###         if("features" %in% tolower(names(x))) {
-###             x <- geojsonio::geojson_sp(toJSON_Rstox(x, pretty = TRUE))
-###             row.names(x) <- as.character(x@data$polygonName)
-###             x <- addCoordsNames(x)
-###             
-###             sp::proj4string(x) <- as.character(NA)
-###             
-###             
-###             #sp::CRS(x) <- as.character(NA)
-###         }
-###         # Otherwise try to convert to data.table:
-###         else if(length(x) && is.convertableToTable(x, minLength = minLength)) {
-###             x <- convertListToDataTable(x)
-###         }
-###         else if(length(x) && is.convertableToVector(x)) {
-###             x <- convertListToVector(x)
-###         }
-###         else if(continue){
-###             x <- lapply(x, convertListInProjectDescription)
-###         }
-###     }
-###     
-###     return(x)
-### }
-
-
-
-### # Function to convert primitive types of a projectDescription list:
-### convertPrimitiveType <- function(projectDescription) {
-###     # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
-###     for(modelName in names(projectDescription)) {
-###         for(processIndex in seq_along(projectDescription [[modelName]])) {
-###             projectDescription [[modelName]] [[processIndex]] <- convertPrimitiveTypeOneProcess(projectDescriptio### n [[modelName]] [[processIndex]])
-###         }
-###     }
-###     
-###     return(projectDescription)
-### }
-### # Helper function to convert one process in a projectDescription list:
-### convertPrimitiveTypeOneProcess <- function(process) {
-###     
-###     # Get primitive types from the function definition:
-###     parameterDefaults <- getStoxFunctionParameterDefault(process$functionName)
-###     
-###     # Convert functionParameters:
-###     process <- convertProcessProperty(
-###         process = process, 
-###         parameterDefaults = parameterDefaults, 
-###         propertyName = "functionParameters"
-###     )
-###     
-###     # Convert functionInputs:
-###     process <- convertProcessProperty(
-###         process = process, 
-###         parameterDefaults = parameterDefaults, 
-###         propertyName = "functionInputs"
-###     )
-###     
-###     # Convert functionName:
-###     process <- convertProcessProperty(
-###         process = process, 
-###         parameterDefaults = parameterDefaults, 
-###         propertyName = "functionName"
-###     )
-###     
-###     return(process)
-### }
-### # The function that performs the actual conversion of a process property (in convertPrimitiveTypeOneProcess()):
-### convertProcessProperty <- function(process, parameterDefaults, propertyName = c("functionParameters", "functionIn### puts", "functionName")) {
-###     
-###     propertyName <- match.arg(propertyName)
-###     
-###     if(is.list(process[[propertyName]])) {
-###         # Get present and invalid function parameters:
-###         present <- intersect(
-###             names(process[[propertyName]]), 
-###             names(parameterDefaults)
-###         )
-###         invalid <- setdiff(
-###             names(process[[propertyName]]), 
-###             names(parameterDefaults)
-###         )
-###         # Warning if there are parameters not specified in the function definition:
-###         if(length(invalid)) {
-###             warning("The following ", propertyName, " are present in the project.JSON file but not specified in ### the definition of function ", process$functionName, ": ", paste(invalid, collapse = ", "))
-###         }
-###         # Change class to the defined class:
-###         else {
-###             for(this in present) {
-###                 # If the defined class is not NULL, or if it is NULL and the property has length 0, apply the ### defined class:
-###                 classIsDefined <- !is.null(parameterDefaults[[this]])
-###                 NULLDefinedAndEmptyProperty <- 
-###                     is.null(parameterDefaults[[this]]) && 
-###                     length(process[[propertyName]][[this]]) == 0
-###                 emptyTable <- 
-###                     identical(firstClass(parameterDefaults[[this]]), "data.table") && 
-###                     length(process[[propertyName]][[this]]) == 0
-###                 differingClass <- firstClass(process[[propertyName]][[this]]) != firstClass(parameterDefaults[[th### is]])
-###                 
-###                 # Special case fore NULL:
-###                 if(NULLDefinedAndEmptyProperty) {
-###                     process[[propertyName]][this] <- list(NULL)
-###                 }
-###                 # ... and for empty data.table:
-###                 else if(emptyTable) {
-###                     process[[propertyName]][[this]] <- data.table::data.table()
-###                 }
-###                 # Set class to the defined class:
-###                 else if(classIsDefined && differingClass) {
-###                     class(process[[propertyName]][[this]]) <- firstClass(parameterDefaults[[this]])
-###                 }
-###             }
-###         }
-###     }
-###     # This is only relevant for functionName, which is character:
-###     else {
-###         # If the defined class is not NULL, or if it is NULL and the property has length 0, apply the defined ### class:
-###         if(length(process[[propertyName]]) == 0) {
-###             class(process[[propertyName]]) <- "character"
-###         }
-###     }
-###     
-###     return(process)
-### }
-### 
 
 
 
@@ -966,17 +978,6 @@ convertToPOSIX <- function(x) {
 
 
 
-
-readProjectDescriptionRData <- function(projectDescriptionFile) {
-    # Creates/replaces the object 'projectDescription':
-    projectDescription <- NULL
-    load(projectDescriptionFile)
-    
-    return(projectDescription)
-}
-
-
-
 # Convert a process data object to JSON string.
 processData2JSON <- function(processData, digits = getRstoxFrameworkDefinitions("digits")$JSON) {
     if("StratumPolygon" %in% names(processData)) {
@@ -1015,7 +1016,7 @@ JSON2processData <- function(JSON) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-writeProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
+writeProjectDescription <- function(projectPath, type = c("JSON", "RData")) {
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     
@@ -1029,8 +1030,11 @@ writeProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
     # Get the file to write it to:
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
     
-    # Unname the models (removing procecssIDs):
+    # Unname the models (removing processIDs):
     projectDescription <- lapply(projectDescription, unname)
+    
+    # Add the attirbutes:
+    projectDescription <- addProjectDescriptionAttributes(projectDescription)
     
     # Run the appropriate saving function:
     functionName <- paste0("writeProjectDescription", type)
@@ -1039,13 +1043,12 @@ writeProjectDescription <- function(projectPath, type = c("RData", "JSON")) {
         projectDescriptionFile = projectDescriptionFile
     ))
 }
+
 writeProjectDescriptionRData <- function(projectDescription, projectDescriptionFile) {
     # Get the path to the project description file, and save the current project description:
     save(projectDescription, file = projectDescriptionFile)
 }
-writeProjectDescriptionXML <- function(projectDescription, projectDescriptionFile) {
-    writeProjectXML(projectDescription, projectDescriptionFile)
-}
+
 
 ##################################################
 ##################################################
@@ -1061,25 +1064,27 @@ writeProjectDescriptionXML <- function(projectDescription, projectDescriptionFil
 #'
 writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile) {
     
+    # Order the argument of each process:
+    projectDescription <- orderEachProcess(projectDescription)
+    
     # Convert spatial to geojson string, and write to temporary files for modifying the project.json to have geojson instead of geojson string: 
     projectDescription <- convertProcessDataToGeojson(projectDescription)
     
-    ###  # Unname the models (removing procecssIDs):
-    ###  projectDescription <- lapply(projectDescription, unname)
-    
     # Add attributes and wrap the models into an object:
-    projectDescription <- list(
+    projectDescriptionList <- list(
         project = list(
-            Template = "", 
-            RstoxFrameworkVersion = as.character(utils::packageVersion("RstoxFramework")),
-            TimeSaved = strftime(as.POSIXlt(Sys.time(), "UTC", "%Y-%m-%dT%H:%M:%S") , "%Y-%m-%dT%H:%M:%S%z"), 
-            RVersion = R.version.string, 
-            models = projectDescription
+            TimeSaved = attr(projectDescription, "TimeSaved"), 
+            RVersion = attr(projectDescription, "RVersion"),  
+            RstoxPackageVersion = attr(projectDescription, "RstoxPackageVersion"), 
+            OfficalRstoxPackageVersion = attr(projectDescription, "OfficalRstoxPackageVersion"), 
+            AllOfficialRstoxPackageVersion = attr(projectDescription, "AllOfficialRstoxPackageVersion"), 
+            DependentPackageVersion = attr(projectDescription, "DependentPackageVersion"), 
+            models = projectDescription # Do we need to remove the attributes???
         )
     )
     
     # Convert project description to json structure: 
-    json <- toJSON_Rstox(projectDescription)
+    json <- toJSON_Rstox(projectDescriptionList)
     
     # Read any geojson objects stored in temporary file by convertProcessDataToGeojson():
     json <- replaceSpatialFileReference(json)
@@ -1101,6 +1106,149 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     # 5. Write the validated json to file: 
     write(json, projectDescriptionFile) 
 }
+
+orderEachProcess <- function(projectDescription) {
+    # Store the attributes:
+    att <- attributes(projectDescription)
+    
+    # Order the arguments:
+    projectDescription <- lapply(
+        projectDescription, 
+        function(model) lapply(
+            model, 
+            getRstoxFrameworkDefinitions("orderProcessArguments")
+        )
+    )
+    
+    attributes(projectDescription) <- att
+    
+    return(projectDescription)
+}
+
+
+addProjectDescriptionAttributes <- function(projectDescription) {
+    # Get packcage versions as strings "PACKAGENAME vPACKAGEVERSION":
+    DependentPackageVersion <- getDependentPackageVersion()
+    
+    # Get the installed and official Rstox package versions, and test for equality:
+    versions <- getOfficialRstoxPackageVersion()
+    # Paste the package name and version_
+    pastePackcageNameAndVersion <- function(x) {
+        paste(x$packageName, x$version, collapse = " v")
+    }
+    RstoxPackageVersion = sapply(versions$InstalledRstoxPackageVersion, pastePackcageNameAndVersion)
+    OfficalRstoxPackageVersion = sapply(versions$OfficalRstoxPackageVersion, pastePackcageNameAndVersion)
+    # Get the all official tag:
+    AllOfficialRstoxPackageVersion = all(versions$AreOfficialRstoxPackageVersion)
+    
+    # Gather and add the attributes:
+    attrs <- list(
+        TimeSaved = strftime(as.POSIXlt(Sys.time(), "UTC", "%Y-%m-%dT%H:%M:%S") , "%Y-%m-%dT%H:%M:%OS3Z"), 
+        RVersion = R.version.string, 
+        RstoxPackageVersion = RstoxPackageVersion, 
+        OfficalRstoxPackageVersion = OfficalRstoxPackageVersion, 
+        AllOfficialRstoxPackageVersion = AllOfficialRstoxPackageVersion, 
+        DependentPackageVersion = DependentPackageVersion
+    )
+    for(attrsName in names(attrs)) {
+        attr(projectDescription, attrsName) <- attrs[[attrsName]]
+    }
+    
+    projectDescription
+}
+
+
+
+# Function to get the package version of several packages as strings:
+getPackageVersion <- function(packageNames, only.version = FALSE) {
+    version <- sapply(packageNames, function(x) as.character(packageVersion(x)))
+    if(only.version) {
+        version
+    }
+    else {
+        paste0(packageNames, " v", version)
+    }
+}
+
+# Get the versions of the dependent packages recursively:
+getDependentPackageVersion <- function() {
+    # Get the Rstox packcages and the dependencies:
+    officialStoxLibraryPackages <- getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
+    RstoxPackages <- c(
+        "RstoxFramework", 
+        officialStoxLibraryPackages
+    )
+    dependencies <- gtools:: getDependencies("RstoxFramework", available = FALSE)
+    # Remove the Rstox packcages:
+    dependencies <- setdiff(
+        dependencies, 
+        RstoxPackages
+    )
+    # Get packcage versions as strings "PACKAGENAME vPACKAGEVERSION":
+    #RstoxPackageVersion <- getPackageVersion(RstoxPackages)
+    DependentPackageVersion <- getPackageVersion(dependencies)
+    
+    return(DependentPackageVersion)
+}
+
+
+#' Logical verctor giving 
+#' 
+#' @export
+#' 
+# Test whether all RstoxPackcages have official versions:
+getOfficialRstoxPackageVersion <- function() {
+    
+    # Get the Rstox packages:
+    officialStoxLibraryPackages <- getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
+    RstoxPackages <- c(
+        "RstoxFramework", 
+        officialStoxLibraryPackages
+    )
+    # Get installed package versions:
+    InstalledRstoxPackageVersion <- unlist(getRstoxFrameworkDefinitions("InstalledRstoxPackageVersion"))
+    
+    # Get the minimum versions defined in the DESCRIPTION file:
+    PackageVersionsFromDESCRIPTION <- strsplit(packageDescription("RstoxFramework", fields = "Imports"), "\n")[[1]]
+    PackageNamesFromDESCRIPTION <- sub("\\ \\(.*", "", PackageVersionsFromDESCRIPTION)
+    PackageVersionsFromDESCRIPTION <- sub('.+>= (.+)).*', '\\1', PackageVersionsFromDESCRIPTION)
+    names(PackageVersionsFromDESCRIPTION) <- PackageNamesFromDESCRIPTION
+    
+    OfficalRstoxPackageVersion <- c(
+        # Change the RstoxFramework version to a minor version and not a patch:
+        RstoxFramework = paste0(
+            substr(InstalledRstoxPackageVersion[1], 1, nchar(InstalledRstoxPackageVersion[1]) - 1), 
+            "0"
+        ), 
+        #paste0(
+            #officialStoxLibraryPackages, 
+            #" v", 
+            PackageVersionsFromDESCRIPTION[
+                match(
+                    officialStoxLibraryPackages, 
+                    PackageNamesFromDESCRIPTION
+                )
+            ]
+        #)
+    )
+    
+    # Test for installed equal official:
+    AreOfficialRstoxPackageVersion <- InstalledRstoxPackageVersion == OfficalRstoxPackageVersion
+    
+    # Convert to unnamed list of name-value-official pairs:
+    InstalledRstoxPackageVersion <- mapply(list, packageName = names(InstalledRstoxPackageVersion), version = InstalledRstoxPackageVersion, official = OfficalRstoxPackageVersion, SIMPLIFY = FALSE, USE.NAMES = FALSE)
+    OfficalRstoxPackageVersion <- mapply(list, packageName = names(OfficalRstoxPackageVersion), version = OfficalRstoxPackageVersion, SIMPLIFY = FALSE, USE.NAMES = FALSE)
+    
+    return(
+        list(
+            AreOfficialRstoxPackageVersion = AreOfficialRstoxPackageVersion, 
+            InstalledRstoxPackageVersion = InstalledRstoxPackageVersion, 
+            OfficalRstoxPackageVersion = OfficalRstoxPackageVersion
+        )
+    )
+}
+
+
 
 convertProcessDataToGeojson <- function(projectDescription) {
     # Run through the processes and convert SpatialPolygonsDataFrame to geojson string:
@@ -1338,7 +1486,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
     # Read the active proces ID and reset if that is not NA:
     currentActiveProcessID <- getActiveProcess(projectPath = projectPath, modelName = modelName)$processID
     
-    # If activevProcecssID is NA, do nothing, as this indicates that the model has not been run:
+    # If activevprocessID is NA, do nothing, as this indicates that the model has not been run:
     if(!is.na(currentActiveProcessID)) {
         
         ##### (1) Set active process: #####
@@ -1863,6 +2011,24 @@ getArgumentsToShow <- function(projectPath, modelName, processID, argumentFilePa
     return(names(toShow)[toShow])
 }
 
+# Function to extract the actual the arguments to show from the arguments:
+extractArgumentsToShow <- function(arguments, projectPath, modelName, processID, argumentFilePaths = NULL, keepSystemParameters = TRUE) {
+    # Get the names of the arguments to show:
+    argumentsToShow <- getArgumentsToShow(projectPath = projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
+    # extract only the variables to show:
+    #arguments$functionInputs <- arguments$functionInputs[intersect(names(arguments$functionInputs), argumentsToShow)]
+    #arguments$functionParameters <- arguments$functionParameters[intersect(names(arguments$functionParameters), argumentsToShow)]
+    systemParameters <- getRstoxFrameworkDefinitions("systemParameters")
+    if(keepSystemParameters) {
+        argumentsToShow <- c(systemParameters, argumentsToShow) 
+    }
+    argumentsToShow <- intersect(names(arguments), argumentsToShow)
+    
+    arguments <- arguments[argumentsToShow]
+    
+    return(arguments)
+}
+
 # Is the function a process data function?
 isProcessDataFunction <- function(functionName) {
     # Get the function output data type and match against the defined process data types:
@@ -2085,7 +2251,7 @@ getProcessData <- function(projectPath, modelName, processID, argumentFilePaths 
 getProcess <- function(projectPath, modelName, processID, argumentFilePaths = NULL, only.valid = FALSE) {
     # Read the memory of the process:
     process <- getProjectMemoryData(
-        projectPath, 
+        projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
         drop1 = TRUE, 
@@ -2099,13 +2265,15 @@ getProcess <- function(projectPath, modelName, processID, argumentFilePaths = NU
     #warning("StoX: Add the output data file path(s)__________________________")
     
     if(only.valid) {
-        argumentsToShow <- getArgumentsToShow(projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
-        process$functionInputs <- process$functionInputs[intersect(names(process$functionInputs), argumentsToShow)]
-        process$functionParameters <- process$functionParameters[intersect(names(process$functionParameters), argumentsToShow)]
+        #argumentsToShow <- getArgumentsToShow(projectPath = projectPath, modelName = modelName, processID = processID, argument#FilePaths = argumentFilePaths)
+        #process$functionInputs <- process$functionInputs[intersect(names(process$functionInputs), argumentsToShow)]
+        #process$functionParameters <- process$functionParameters[intersect(names(process$functionParameters), argumentsToShow)]
+        process <- extractArgumentsToShow(arguments = process, projectPath = projectPath, modelName = modelName, processID = processID, argumentFilePaths = argumentFilePaths)
     }
     
     return(process)
 }
+
 
 getDataType <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     # Get the function name:
@@ -2159,6 +2327,9 @@ readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NUL
     }
     
     # Extract the model:
+    if(! modelName %in% processIndexTable$modelName) {
+        stop("The modelName \"", modelName, "\" is not the name of an existing model (a model with one or more processes). Possible values are ", paste(names(sort(unique(processIndexTable$modelName)))))
+    }
     validRows <- processIndexTable$modelName %in% modelName
     processIndexTable <- subset(processIndexTable, validRows)
     
@@ -2443,7 +2614,7 @@ getProcessTable <- function(projectPath, modelName = NULL, afterProcessID = NULL
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
-        argumentFilePaths <- getArgumentFilePaths(projectPath)
+        argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName)
     }
     
     # Get a table of all the processes including function inputs, parameters and input errors:
@@ -3371,44 +3542,11 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
     return(modified)
 }
 
-#' 
-#' 
-#' @param parameter 
-#' @param simplifyVector 
-#' 
-#' @export
-#' 
-# Convert JSON input to list:
-#parseParameter <- function(parameter, simplifyVector = TRUE) {
-parseParameterOld <- function(parameter, simplifyVector = FALSE) {
-    # If empty string, convert to NULL for non-character type:
-    if(is.character(parameter) && nchar(parameter) == 0) {
-        return(NULL)
-    }
-    
-    # Parse the JSON:
-    #out <- jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
-    out <- jsonlite::fromJSON(parameter, simplifyVector = simplifyVector)
-    # If data.frame, convert to data.table:
-    #if(is.data.frame(out)) {
-    #    out <- data.table::as.data.table(out)
-    #}
-    
-    # Convert to table:
-    if(is.convertableToTable(out)) {
-        #out <- data.table::rbindlist(out)
-        out <- convertListToDataTable(out)
-    }
-    
-    return(out)
-}
 
-#' 
+#' Function to format a process as read from the project.json
 #' 
 #' @param parameter 
 #' @param simplifyVector 
-#' 
-#' @export
 #' 
 # Convert JSON input to list:
 formatProcess <- function(process) {
@@ -3553,8 +3691,12 @@ formatProcessData <-  function(processData) {
 
 
 formatProcessDataOne <-  function(processDataOne) {
+    
+    if(!length(processDataOne)) {
+        processDataOne <- data.table::data.table()
+    }
     # Convert to sp:
-    if("features" %in% tolower(names(processDataOne))) {
+    else if("features" %in% tolower(names(processDataOne))) {
         processDataOne <- geojsonio::geojson_sp(toJSON_Rstox(processDataOne, pretty = TRUE))
         row.names(processDataOne) <- as.character(processDataOne@data$polygonName)
         processDataOne <- addCoordsNames(processDataOne)
@@ -4029,11 +4171,12 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1)
     
     # Run the process:
+    packageName <- getPackageNameFromPackageFunctionName(process$functionName)
     processOutput <- tryCatch(
         do.call(
             getFunctionNameFromPackageFunctionName(process$functionName), 
             functionArguments, 
-            envir = as.environment(paste("package", getPackageNameFromPackageFunctionName(process$functionName), sep = ":"))
+            envir = if(packageName == "RstoxFramework") environment() else as.environment(paste("package", packageName, sep = ":"))
         ), 
         error = function(err) {
             failed <<- TRUE
@@ -4131,7 +4274,8 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
-        only.valid = TRUE
+        #only.valid = TRUE
+        only.valid = FALSE
     )
     
     # Check that the function name is given:
@@ -4179,39 +4323,10 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
         #functionArguments$outputData <- readOutputRDataFile(outputDataPath)
     }
      
-    # Get the function input as output from the previously run processes:
-    functionInputProcessNames <- unlist(process$functionInputs)
-    if(length(functionInputProcessNames)) {
-        # Get the function input process IDs (returned as a data.table due to the rbindlist()):
-        functionInputsProcessIDs <- data.table::rbindlist(mapply(
-            getProcessIDFromProcessName, 
-            projectPath = projectPath, 
-            #modelName = modelName, 
-            processName = functionInputProcessNames, 
-            MoreArgs = list(
-                modelName = NULL
-            ), 
-            SIMPLIFY = FALSE
-        ))
-        # Get the actual function inputs from the functionInputsProcessIDs:
-        functionInputs <- mapply(
-            getProcessOutput, 
-            projectPath = projectPath, 
-            #modelName = modelName, 
-            modelName = functionInputsProcessIDs$modelName, 
-            processID = functionInputsProcessIDs$processID, 
-            SIMPLIFY = FALSE
-        )
-        names(functionInputs) <- names(functionInputProcessNames)
-    }
-    else {
-        functionInputs <- NULL
-    }
-    
     # Add functionInputs and functionParameters:
     functionArguments <- c(
         functionArguments, 
-        functionInputs, 
+        process$functionInputs, 
         process$functionParameters
     )
     
@@ -4228,6 +4343,45 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
         modelName = modelName,
         processID = processID
     )
+    
+    
+    # Keep only arguments to show:
+    functionArguments <- extractArgumentsToShow(arguments = functionArguments, projectPath = projectPath, modelName = modelName, processID = processID, argumentFilePaths = NULL) # Using NULL here, as argumentFilePaths has not been read. Should it?
+    
+    # Get the function input as output from the previously run processes:
+    functionInputNames <- intersect(names(functionArguments), names(process$functionInputs))
+    # Also, remove empty function inputs (added on 2020-11-19):
+    functionInputNames <- functionInputNames[lengths(functionArguments[functionInputNames]) > 0L]
+    
+    functionInputProcessNames <- unlist(functionArguments[functionInputNames])
+    if(length(functionInputProcessNames)) {
+        # Get the function input process IDs (returned as a data.table due to the rbindlist()):
+        functionInputsProcessIDs <- data.table::rbindlist(mapply(
+            getProcessIDFromProcessName, 
+            projectPath = projectPath, 
+            processName = functionInputProcessNames, 
+            MoreArgs = list(
+                modelName = NULL
+            ), 
+            SIMPLIFY = FALSE
+        ))
+        
+        if(nrow(functionInputsProcessIDs) != length(functionInputProcessNames)) {
+            stop("Some function inputs are not specified: ", paste(setdiff(functionInputProcessNames, names(functionInputsProcessIDs)), collapse = ", "))
+            
+        }
+        
+        # Get the actual function inputs from the functionInputsProcessIDs:
+        functionArguments[functionInputNames] <- mapply(
+            getProcessOutput, 
+            projectPath = projectPath, 
+            modelName = functionInputsProcessIDs$modelName, 
+            processID = functionInputsProcessIDs$processID, 
+            SIMPLIFY = FALSE
+        )
+        
+        #names(functionArguments) <- names(functionInputProcessNames)
+    }
     
     return(
         list(
@@ -4447,13 +4601,20 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
     else {
         # Add numberOfLines = 1 and numberOfPages = 1 to conform to the output used for tables in the GUI:
         if(pretty) {
-            data <- list(
-                data = list(data), 
-                numberOfLines = 1, 
-                numberOfPages = 1
-            )
-        }
-        else {
+            if(length(data)) {
+                data <- list(
+                    data = list(data), 
+                    numberOfLines = 1, 
+                    numberOfPages = 1
+                )
+            }
+            else {
+                data <- list(
+                    data = list(), 
+                    numberOfLines = 0, 
+                    numberOfPages = 0
+                )
+            }
             
         }
     }
@@ -4749,6 +4910,10 @@ getProcessOutputTextFilePath <- function(
                     # Set file extension:
                     ext <- "txt"
                 }
+                else if("matrix" %in% class(processOutput[[1]])) {
+                    # Set file extension:
+                    ext <- "csv"
+                }
                 else {
                     stop("Unknown process output: ", class(processOutput[[1]]))
                 }
@@ -4847,6 +5012,15 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
         }
         else {
             data.table::fwrite(processOutputOne, filePath, sep = "\t")
+        }
+    }
+    else if(ext == "csv") {
+        # Write the file:
+        if(length(processOutputOne) == 0) {
+            cat("", file = filePath)
+        }
+        else {
+            data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE)
         }
     }
     else if(ext == "rds") {
@@ -5026,7 +5200,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     # Save both before and after for safety:
     if(save) {
-        saveProject(projectPath)
+        saveProject(projectPath, msg = FALSE)
     }
     
     # Get the processIDs:
@@ -5063,7 +5237,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     # Chech that none of the models of the project are running:
     if(isRunning(projectPath, modelName) && !force.restart) {
-        warning("StoX: The project is running (", projectPath, "). Use force.restart = TRUE to force restart the project.")
+        warning("StoX: The project is running (", projectPath, "). Use force.restart = TRUE in runModel() to force restart the project, or close and open the project.")
         return(failedVector)
     }
     else {
@@ -5073,40 +5247,8 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     on.exit({
         setNotRunning(projectPath, modelName)
     })
-
     
     # Loop through the processes:
-    #status <- logical(length(processIDs))
-    #names(status) <- processIDs
-    
-    #err <- NULL
-    
-    # Reset the model to the process just before the removed process:
-    #resetModel(projectPath = projectPath, modelName = modelName, processID = processIDs[1], shift = -1)
-    
-    # Try running the processes, and retun the failedVector if craching:
-    #tryCatch(
-    
-    #if(length(fileOutput)) {
-    #    replaceArgs <- list(fileOutput = fileOutput)
-    #}
-    #else {
-    #    replaceArgs = list()
-    #}
-    #    {
-    
-    
-    
-    # Empty the folder:
-    #folderPath <- getProjectPaths(projectPath = projectPath, name = modelName)
-    #unlink(folderPath, recursive = TRUE, force = TRUE)
-    #dir.create(folderPath)
-    
-    #for(processID in processIDs) {
-    #    #status[processID] <- runProcess(projectPath = projectPath, modelName = modelName, processID = processID)
-    #    runProcess(projectPath = projectPath, modelName = modelName, processID = processID, replaceArgs = replaceArgs[[]], fileOutput = fileOutput, setUseProcessDataToTRUE = setUseProcessDataToTRUE, purge.processData = purge.processData)
-    #}
-    
     mapply(
         runProcess, 
         processID = processIDs, 
@@ -5145,7 +5287,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
     
     # Save the project after each run:
     if(save) {
-        saveProject(projectPath)
+        saveProject(projectPath, msg = FALSE)
     }
     
     #status
@@ -5158,23 +5300,7 @@ runProcesses <- function(projectPath, modelName, startProcess = 1, endProcess = 
 }
 
 
-#getReplaceArgs <- function(replaceArgs = list(), ..., processNames = NULL){
-#    
-#    # Get the specifications given as '...':
-#    dotlist <- list(...)
-#    
-#    # Merge and unique the inputs:
-#    replaceArgs <- c(replaceArgs, dotlist)
-#    # parlist <- unique(parlist) THIS REMOVED THE NAMES AND SHOULD NOT BE USED
-#    replaceArgs <- replaceArgs[!duplicated(replaceArgs)]
-#    
-#    # Keep only the elements named by a process:
-#    if(length(processNames)) {
-#        replaceArgs <- replaceArgs[names(replaceArgs) %in% processNames]
-#    }
-#    
-#    return(replaceArgs)
-#}
+# Function to merge the replaceArgs list and the ... input:
 getReplaceArgs <- function(replaceArgs = list(), ...){
     
     # Get the specifications given as '...':

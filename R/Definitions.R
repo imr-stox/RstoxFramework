@@ -29,13 +29,26 @@ initiateRstoxFramework <- function(){
         "RstoxData"
         #"RstoxFDA"
     )
+    # Remove non-installed packages (typically packcages that are suggests):
+    officialStoxLibraryPackages <- intersect(
+        installed.packages()[, "Package"], 
+        officialStoxLibraryPackages
+    )
+    # Add RstoxFramework:
     officialStoxLibraryPackagesAll <- c("RstoxFramework", officialStoxLibraryPackages)
+    
+    # Get installed versions:
+    InstalledRstoxPackageVersion <- as.list(getPackageVersion(officialStoxLibraryPackagesAll, only.version = TRUE))
+    
+    # Define the possible projectDescription file formats:
+    projectDescriptionFileFormats <- c("JSON", "RData")
     
     # Define formats for files saved by Rstox:
     memoryFileFormat_Empty <- "rds"
     # 2020-06-08: The fst::write_fst() does not retain the encoding, and has been discarded until these problems are fixed:s
     #memoryFileFormat_Table <- "fst"
     memoryFileFormat_Table <- "rds"
+    memoryFileFormat_Matrix <- "rds"
     memoryFileFormat_Spatial <- "rds"
     memoryFileFormat_List <- "rds"
     memoryFileFormat_Other <- "rds"
@@ -43,6 +56,7 @@ initiateRstoxFramework <- function(){
         c(
             memoryFileFormat_Empty, 
             memoryFileFormat_Table, 
+            memoryFileFormat_Matrix, 
             memoryFileFormat_Spatial, 
             memoryFileFormat_List, 
             memoryFileFormat_Other
@@ -56,13 +70,17 @@ initiateRstoxFramework <- function(){
     )
     
     processProperties <- c(
-        "functionName", 
         "processName", 
-        "processParameters", 
+        "functionName", 
         "functionInputs", 
         "functionParameters", 
+        "processParameters", 
         "processData"
     )
+    
+    orderProcessArguments <- function(process) {
+        process[processProperties]
+    }
     
     # Define the requested (all) function attributes:
     requestedFunctionAttributeNames <- c(
@@ -92,6 +110,23 @@ initiateRstoxFramework <- function(){
     stoxLibrary <- getStoxLibrary(officialStoxLibraryPackagesAll, requestedFunctionAttributeNames = requestedFunctionAttributeNames)
     availableFunctions <- names(stoxLibrary)
     availablePackageFunctionNames <- unname(sapply(stoxLibrary, "[[", "functionName"))
+    
+    # Get the backward compatibility:
+    backwardCompatibility <- lapply(officialStoxLibraryPackagesAll, getBackwardCompatibility)
+    names(backwardCompatibility) <- officialStoxLibraryPackagesAll
+    
+    # Add pakcageName to all elements:
+    for(pakcageName in names(backwardCompatibility)) {
+        for(actionType in names(backwardCompatibility[[pakcageName]])) {
+            if(length(backwardCompatibility[[pakcageName]][[actionType]])) {
+                backwardCompatibility[[pakcageName]][[actionType]] <- lapply(backwardCompatibility[[pakcageName]][[actionType]], append, list(pakcageName = pakcageName))
+            }
+        }
+    }
+    
+    # Order by changeVersion:
+    backwardCompatibility <- lapply(backwardCompatibility, orderBackwardCompatibility)
+    
     
     # Get the possible values of the functions. Here we use the full name of the functions in case the parameter defaults are defined using functions in the specific packages, such as ReportBootstrap(). In extractStoxFunctionParameterPossibleValues() the packageName RstoxFramework is discarded, as that package has not been loaded yet (this function is run onload):
     availableFunctionPossibleValues <- lapply(availablePackageFunctionNames, extractStoxFunctionParameterPossibleValues, systemParameters = systemParameters)
@@ -170,7 +205,7 @@ initiateRstoxFramework <- function(){
     # Check that there are no functions with the same name as a datatype:
     commonFunctionAndDataTypeName <- intersect(stoxDataTypes$functionOutputDataType, stoxDataTypes$functionName)
     if(length(commonFunctionAndDataTypeName)) {
-        warning("StoX: The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes[functionName == commonFunctionAndDataTypeName, "packageName"], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and RstoxAPI::runModel(). Please notify the packcage maintainer.")
+        warning("StoX: The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes$packageName[stoxDataTypes$functionName == commonFunctionAndDataTypeName], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and RstoxAPI::runModel(). Please notify the packcage maintainer.")
     }
     
     
@@ -198,12 +233,10 @@ initiateRstoxFramework <- function(){
         JSON = 6
     )
     
-    # Define the length of the sequence to draw seeds from:
-    seedSequenceLength = 1e7
-    
     # Define the permitted classes for individual outputs from StoX functions:
     validOutputDataClasses <- c(
         "data.table", 
+        "matrix", 
         "SpatialPolygonsDataFrame"
     )
     
@@ -538,6 +571,15 @@ initiateRstoxFramework <- function(){
     definitions
 }
 
+orderBackwardCompatibility <- function(x) {
+    lapply(x, orderBackwardCompatibilityOne)
+}
+
+orderBackwardCompatibilityOne <- function(x) {
+    changeVersion <- sapply(x, "[[", "changeVersion")
+    x[order(changeVersion)]
+}
+
 
 # This function gets the stoxFunctionAttributes of the specified packages.
 getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
@@ -730,3 +772,13 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
 }
 
 
+# Function for reading the backwardCompatibility object of a package.
+getBackwardCompatibility <- function(packageName) {
+    
+    backwardCompatibility <- tryCatch(
+        getExportedValue(packageName, "backwardCompatibility"), 
+        error = function(err) NULL
+    )
+    
+    backwardCompatibility
+}

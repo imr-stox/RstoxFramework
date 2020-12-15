@@ -2614,7 +2614,9 @@ getProcessTable <- function(projectPath, modelName = NULL, afterProcessID = NULL
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
-        argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName)
+        #argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName)
+        # Revert to getting info of all processes, since function outputs can be requested accross models:
+        argumentFilePaths <- getArgumentFilePaths(projectPath)
     }
     
     # Get a table of all the processes including function inputs, parameters and input errors:
@@ -2656,6 +2658,7 @@ getProcessTable <- function(projectPath, modelName = NULL, afterProcessID = NULL
 #' @rdname getProcessTable
 #' 
 scanForModelError <- function(projectPath, modelName = NULL, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE) {
+    
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -2861,11 +2864,13 @@ checkFunctionInput <- function(functionInput, functionInputDataType, processInde
         }
         else {
             atRequestedPriorProcess <- which(functionInput == processIndexTable$processName)
+            
+            
             outputDataTypeOfRequestedPriorProcess <- getStoxFunctionMetaData(processIndexTable$functionName[atRequestedPriorProcess], "functionOutputDataType")
             
             # (3) Error if the previous process returns the wrong data type:
             if(! functionInputDataType %in% outputDataTypeOfRequestedPriorProcess) {
-                warning("StoX: Function input of process ", processIndexTable$processName[atRequestedPriorProcess], " does not return the correct data type (", functionInputDataType, ").")
+                warning("StoX: Function input from process ", processIndexTable$processName[atRequestedPriorProcess], " does not return the correct data type (", functionInputDataType, ").")
             }
             # (4) Error if the previous process is not enabled:
             else if(!processIndexTable$enabled[atRequestedPriorProcess]) {

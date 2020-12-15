@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo: — unReDoProject • RstoxFramework</title>
+<title>Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps — expandDT • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo: — unReDoProject" />
-<meta property="og:description" content="Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:" />
+<meta property="og:title" content="Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps — expandDT" />
+<meta property="og:description" content="Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps" />
 
 
 
@@ -102,27 +102,27 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
-    <div class="hidden name"><code>unReDoProject.Rd</code></div>
+    <h1>Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Utilities.R'><code>R/Utilities.R</code></a></small>
+    <div class="hidden name"><code>expandDT.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:</p>
+    <p>Function to expand a data table so that the cells that are vectors are transposed and the rest repeated to fill the gaps</p>
     </div>
 
-    <pre class="usage"><span class='fu'>unReDoProject</span><span class='op'>(</span><span class='va'>projectPath</span>, shift <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>expandDT</span><span class='op'>(</span><span class='va'>DT</span>, toExpand <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>projectPath</th>
-      <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
+      <th>DT</th>
+      <td><p>A data.table.</p></td>
     </tr>
     <tr>
-      <th>shift</th>
-      <td><p>The position relative to the current memory status to un/redo to.</p></td>
+      <th>toExpand</th>
+      <td><p>A vector of names of the tables to expand.</p></td>
     </tr>
     </table>
 

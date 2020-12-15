@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.26</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.27</span>
       </span>
     </div>
 
@@ -85,7 +85,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/StoXProject/RstoxFramework/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -124,12 +124,18 @@
   showWarnings <span class='op'>=</span> <span class='cn'>FALSE</span>,
   force <span class='op'>=</span> <span class='cn'>FALSE</span>,
   reset <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"RData"</span>, <span class='st'>"JSON"</span><span class='op'>)</span>
+  type <span class='op'>=</span> <span class='fu'><a href='getRstoxFrameworkDefinitions.html'>getRstoxFrameworkDefinitions</a></span><span class='op'>(</span><span class='st'>"projectDescriptionFileFormats"</span><span class='op'>)</span>,
+  saveIfAlreadyOpen <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span>
 
 <span class='fu'>closeProject</span><span class='op'>(</span><span class='va'>projectPath</span>, save <span class='op'>=</span> <span class='cn'>NULL</span>, msg <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 
-<span class='fu'>saveProject</span><span class='op'>(</span><span class='va'>projectPath</span>, type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"RData"</span>, <span class='st'>"JSON"</span><span class='op'>)</span>, force <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+<span class='fu'>saveProject</span><span class='op'>(</span>
+  <span class='va'>projectPath</span>,
+  type <span class='op'>=</span> <span class='fu'><a href='getRstoxFrameworkDefinitions.html'>getRstoxFrameworkDefinitions</a></span><span class='op'>(</span><span class='st'>"projectDescriptionFileFormats"</span><span class='op'>)</span>,
+  force <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  msg <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span>
 
 <span class='fu'>saveAsProject</span><span class='op'>(</span><span class='va'>projectPath</span>, <span class='va'>newProjectPath</span>, ow <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
 
@@ -171,6 +177,10 @@
       <td><p>The type of file to save the project to.</p></td>
     </tr>
     <tr>
+      <th>saveIfAlreadyOpen</th>
+      <td><p>Logical: If TRUE save the project before closing if already open and force is TRUE.</p></td>
+    </tr>
+    <tr>
       <th>save</th>
       <td><p>Logical: If TRUE save the project before closing. Default (NULL) is to ask the user whether to save the project before closing.</p></td>
     </tr>
@@ -192,7 +202,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by Arne Johannes Holmin, Ibrahim Umar, Edvin Fuglebakk, Aasmund Skaalevik, Sindre Vatnehol, Esmael Musema Hassen, Espen Johnsen, Atle Totland, Mikko Juhani Vihtakari.</p>
+  <p>Developed by Arne Johannes Holmin, Ibrahim Umar, Edvin Fuglebakk, Aasmund Skaalevik, Esmael Musema Hassen, Sindre Vatnehol, Espen Johnsen, Atle Totland, Mikko Juhani Vihtakari, Norwegian Institute of Marine Research.</p>
 </div>
 
 <div class="pkgdown">

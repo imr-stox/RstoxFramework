@@ -77,6 +77,10 @@ jobs:
           do
             eval sudo $cmd
           done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "16.04"))')
+          # libjq is not available in Ubuntu 16.04
+          sudo add-apt-repository -y ppa:cran/jq
+          sudo apt update
+          sudo apt install libjq-dev
 
       - name: Install dependencies
         run: |

@@ -51,7 +51,6 @@ Imports:
     RstoxBase (>= 1.2.34)
 Suggests: 
     testthat
-SystemRequirements: libjq: jq-devel (rpm) or libjq-dev (deb)
 Additional_repositories: 
 	https://stoxproject.github.io/repo
 RoxygenNote: 7.1.1

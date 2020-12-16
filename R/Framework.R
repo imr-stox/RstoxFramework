@@ -106,10 +106,10 @@ addMissingAttributes <- function(stoxFunctionAttributes, requestedFunctionAttrib
 applyBackwardCompatibility <- function(projectDescription) {
     
     # Save the original projectDescription:
-    originalProjectDescription <- projectDescription
-    temp <- tempfile()
-    message(paste("Original file saved to", temp))
-    save(projectDescription, file = temp)
+    #originalProjectDescription <- projectDescription
+    #temp <- tempfile()
+    #message(paste("Original file saved to", temp))
+    #save(projectDescription, file = temp)
     
     # Get the backwardCompatibility specifications:
     backwardCompatibility <- getRstoxFrameworkDefinitions("backwardCompatibility")

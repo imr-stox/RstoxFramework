@@ -25,6 +25,7 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
         if(isProject(projectPath)) {
             # Open the project if not open:
             if(!isOpenProject(projectPath)) {
+                # No need for GUI here as this function should not be used by any GUI, but is merely a converience function replacing a GUI:
                 openProject(projectPath)
             }
             # Run the model:

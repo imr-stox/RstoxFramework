@@ -13,6 +13,25 @@ stoxFunctionAttributes <- list(
         functionParameterFormat = list(
             BootstrapMethodTable = "bootstrapMethodTable"
         )
+    ), 
+    
+    ReportBootstrap = list(
+        functionType = "modelData", 
+        functionCategory = "report", 
+        functionOutputDataType = "ReportBootstrapData", 
+        # This is an example of using an expression to determine when to show a parameter:
+        functionParameterFormat = list(
+            #TargetVariable = "targetVariable_ReportBootstrap", 
+            GroupingVariables = "groupingVariables_ReportBootstrap"
+        ), 
+        functionArgumentHierarchy = list(
+            AggregationWeightingVariable = list(
+                ReportFunction = expression(RstoxBase::getWeightingFunctions())
+            ), 
+            BootstrapReportWeightingVariable = list(
+                ReportFunction = expression(RstoxBase::getWeightingFunctions())
+            )
+        )
     )
 )
 
@@ -59,6 +78,22 @@ processPropertyFormats <- list(
         #    getResampleFunctions(),
         #    NULL
         #)
+    ), 
+    
+    targetVariable_ReportBootstrap = list(
+        class = "single", 
+        possibleValues = function(BootstrapData, BaselineProcess) {
+            sort(setdiff(names(BootstrapData[[BaselineProcess]]), "BootstrapID"))
+        }
+    ), 
+    
+    groupingVariables_ReportBootstrap = list(
+        class = "vector", 
+        title = "One or more variables to group super-individuals by when reporting BootstrapData", 
+        possibleValues = function(BootstrapData, BaselineProcess) {
+            sort(setdiff(names(BootstrapData[[BaselineProcess]]), "BootstrapID"))
+        }, 
+        variableTypes <- "character"
     )
 )
 

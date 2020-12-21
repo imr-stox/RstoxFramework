@@ -112,7 +112,8 @@ installNonRstoxDependencies <- function(
     )
     
     # For a clean install remove the packages first:
-    lapply(rev(binaryLocalFiles), remove.packages)
+    packageName <- getOnlyPackageName(basename(binaryLocalFiles))
+    lapply(packageName, remove.packages)
     
     # Then install:
     lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
@@ -156,7 +157,8 @@ installOfficialRstoxPackages <- function(
     system.time(mapply(download.file, binaries, destfile = binaryLocalFiles, ...))
     
     # For a clean install remove the packages first:
-    lapply(rev(binaryLocalFiles), remove.packages)
+    packageName <- getOnlyPackageName(basename(binaryLocalFiles))
+    lapply(packageName, remove.packages)
     
     # Then install:
     lapply(rev(binaryLocalFiles), install.packages, repos = NULL)

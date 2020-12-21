@@ -111,6 +111,10 @@ installNonRstoxDependencies <- function(
         ...
     )
     
+    # For a clean install remove the packages first:
+    lapply(rev(binaryLocalFiles), remove.packages)
+    
+    # Then install:
     lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
 }
 
@@ -151,7 +155,10 @@ installOfficialRstoxPackages <- function(
     binaryLocalFiles <- file.path(destdir, basename(binaries))
     system.time(mapply(download.file, binaries, destfile = binaryLocalFiles, ...))
     
-    # Install:
+    # For a clean install remove the packages first:
+    lapply(rev(binaryLocalFiles), remove.packages)
+    
+    # Then install:
     lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
     
     
@@ -576,3 +583,9 @@ buildReposContrib <- function(repos = "https://cloud.r-project.org", platform = 
     
     return(reposContrib)
 }
+
+
+vector2json <- function(x) {
+    paste0("[", paste(sapply(x, deparse), collapse = ","), "]")
+}
+

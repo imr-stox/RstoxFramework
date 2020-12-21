@@ -17,8 +17,6 @@ ReportBootstrap(
 )
 }
 \arguments{
-\item{BootstrapData}{The \code{\link[RstoxBase]{BootstrapData}} data.}
-
 \item{BaselineProcess}{A vector of character strings naming the baseline processes to report from the boostrap output.}
 
 \item{TargetVariable}{The variable to report.}

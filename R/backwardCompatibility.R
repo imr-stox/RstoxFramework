@@ -129,30 +129,6 @@ readProjectXMLToProjectDescription2.7 <- function(projectPath) {
 }
 
 
-getProjectAttributes <- function(FileVersion = "", Template = "") {
-    list(
-        TimeSaved = strftime(as.POSIXlt(Sys.time(), "UTC", "%Y-%m-%dT%H:%M:%S") , "%Y-%m-%dT%H:%M:%OS3Z"), 
-        FileVersion = FileVersion, 
-        RVersion = R.version.string, 
-        RstoxFrameworkVersion = as.character(utils::packageVersion("RstoxFramework")),
-        RstoxFrameworkDependencies = getDependenciesWithVersion("RstoxFramework", dependencies = c("Depends", "Imports", "LinkingTo")), 
-        Template = Template
-    )
-}
-
-
-
-
-getDependenciesWithVersion <- function(packageName, dependencies = c("Depends", "Imports", "LinkingTo")) {
-    dep <- gtools::getDependencies(packageName, dependencies = dependencies)
-    ver <- lapply(dep, packageVersion)
-    data.table::data.table(dep = dep, ver = sapply(ver, as.character))
-}
-
-
-
-
-
 
 
 # Rename DefineStratumPolygon to DefineStratum:

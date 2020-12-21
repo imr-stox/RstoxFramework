@@ -1037,18 +1037,18 @@ convertToPOSIX <- function(x) {
 
 
 
-# Convert a process data object to JSON string.
-processData2JSON <- function(processData, digits = getRstoxFrameworkDefinitions("digits")$JSON) {
-    if("StratumPolygon" %in% names(processData)) {
-        #as.character(geojsonio::geojson_json(processData))
-        as.character(geojsonio::geojson_json(processData, lon = "x", lat = "y"))
-    }
-    else {
-        #jsonlite::toJSON(processData, digits = digits, pretty = TRUE, auto_unbox = TRUE)
-        processData
-    }
-    
-}
+## Convert a process data object to JSON string.
+#processData2JSON <- function(processData, digits = getRstoxFrameworkDefinitions("digits")$JSON) {
+#    if("StratumPolygon" %in% names(processData)) {
+#        #as.character(geojsonio::geojson_json(processData))
+#        as.character(geojsonio::geojson_json(processData, lon = "x", lat = "y"))
+#    }
+#    else {
+#        #jsonlite::toJSON(processData, digits = digits, pretty = TRUE, auto_unbox = TRUE)
+#        processData
+#    }
+#    
+#}
 
 # Convert JSON string to a process data object.
 JSON2processData <- function(JSON) {
@@ -1120,9 +1120,6 @@ writeProjectDescriptionRData <- function(projectDescription, projectDescriptionF
 #' @param projectDescription  a list of lists with project description.
 #' @param projectDescriptionFile  a file name.
 #' 
-#' 
-#'
-#'
 writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile, GUI) {
     
     # Order the argument of each process:
@@ -1146,14 +1143,15 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     )
     
     # Convert project description to json structure: 
-    json <- toJSON_Rstox(projectDescriptionList)
+    json <- RstoxBase::toJSON_Rstox(projectDescriptionList)
     
     # Read any geojson objects stored in temporary file by convertProcessDataToGeojson():
     json <- replaceSpatialFileReference(json)
     
     # Fix pretty formatting by reading in and writing back the file:
-    write(json, projectDescriptionFile)
-    json <- toJSON_Rstox(jsonlite::read_json(projectDescriptionFile), pretty = TRUE)
+    #write(json, projectDescriptionFile)
+    #json <- RstoxBase::toJSON_Rstox(jsonlite::read_json(projectDescriptionFile), pretty = TRUE)
+    json <- jsonlite::prettify(json)
     
     # Validate the json structure with json schema
     projectValidator <- getRstoxFrameworkDefinitions("projectValidator")
@@ -1240,7 +1238,8 @@ getDependentPackageVersion <- function() {
         "RstoxFramework", 
         officialStoxLibraryPackages
     )
-    dependencies <- gtools:: getDependencies("RstoxFramework", available = FALSE)
+    #dependencies <- gtools:: getDependencies("RstoxFramework", available = FALSE)
+    dependencies <- getNonRstoxDependencies("RstoxFramework")
     # Remove the Rstox packcages:
     dependencies <- setdiff(
         dependencies, 
@@ -1252,6 +1251,352 @@ getDependentPackageVersion <- function() {
     
     return(DependentPackageVersion)
 }
+
+
+
+
+
+
+
+
+#' Function to get the non Rstox dependencies of a package
+#' 
+#' @param packageName The packages to get dependencies from.
+#' @param dependencies A character vector listing the dependencies to get, with possible values "Depends", "Imports", "LinkingTo", "Suggests", "Enhances". Default is NA, implying c("Depends", "Imports", "LinkingTo").
+#' @param repos Either NULL to search for packages locally, or a repository passed to \code{\link[utils]{available.packages}}. 
+#' @param sort Logical: If TRUE sort the dependent packages, defaulted to FALSE to enable installing the most basic dependencies first.
+#' @param destdir The directory to download binaries to, defaulted to NA which implies tempdir().
+#' 
+#' @export
+#' 
+getNonRstoxDependencies <- function(packageName = getRstoxFrameworkDefinitions("officialStoxLibraryPackagesAll"), dependencies = NA, repos = NULL, sort = FALSE) {
+    # Get non-Rstox dependencies:
+    nonRstoxDependencies <- lapply(
+        packageName, 
+        getDependencies, 
+        repos = repos, 
+        dependencies = dependencies, 
+        excludeStartingWith = "Rstox", 
+        recursive = FALSE, 
+        sort = sort
+    )
+    # The order of the pakcages is defined in getRstoxFrameworkDefinitions("officialStoxLibraryPackagesAll"), and is kept if sort = FALSE:
+    nonRstoxDependencies <- unique(unlist(nonRstoxDependencies))
+    
+    # Get also dependencies of dependencies:
+    allNonRstoxDependencies <- getDependencies(
+        packageName = nonRstoxDependencies, 
+        repos = repos, 
+        dependencies = dependencies, 
+        append = TRUE, 
+        sort = sort
+    )
+    
+    return(allNonRstoxDependencies)
+}
+#' 
+#' @export
+#' @rdname getNonRstoxDependencies
+#' 
+downloadNonRstoxDependencies <- function(packageName = getRstoxFrameworkDefinitions("officialStoxLibraryPackagesAll"), destdir = NA, dependencies = NA, repos = NULL, download.repos = "https://cloud.r-project.org", sort = FALSE, platform = NA, twoDigitRVersion = NA) {
+    # Get the dependencies:
+    nonRstoxDependencies <- getNonRstoxDependencies(
+        packageName = packageName, 
+        dependencies = dependencies, 
+        repos = repos, 
+        sort = sort
+    )
+    
+    # Download the files to the specified directory (or to the tempdir() if not specified):
+    if(length(destdir) && is.na(destdir)) {
+        destdir <- tempdir()
+    }
+    
+    # using the path to the releavnt binaries:
+    binaries <- getPackageBinaryURL(
+        packageName = nonRstoxDependencies, 
+        repos = download.repos, 
+        platform = platform, 
+        twoDigitRVersion = twoDigitRVersion
+    )
+    
+    # Install:
+    binaryLocalFiles <- file.path(destdir, basename(binaries))
+    system.time(mapply(download.file, binaries, destfile = binaryLocalFiles))
+    
+    return(binaryLocalFiles)
+}
+
+# Function to read the description file of an RstoxPackcage
+getDependencies <- function(packageName, repos = "https://cloud.r-project.org", dependencies = NA, excludeStartingWith = NULL, recursive = TRUE, append = FALSE, sort = TRUE) {
+    
+    # Get the dependencies of the Rstox packages:
+    if(identical(NA, dependencies)) {
+        dependencies <- c("Depends", "Imports", "LinkingTo")
+    }
+    
+    # Read the available packcages:
+    allAvail <- getAvailablePackages(repos = repos)
+    
+    # Get the dependent packages
+    dependentPackcages <- extractDependencies(
+        packageName = packageName, 
+        allAvail = allAvail, 
+        dependencies = dependencies, 
+        recursive = recursive
+    )
+    # Remove the intitial packageName:
+    if(!append) {
+        dependentPackcages <- setdiff(dependentPackcages, packageName)
+    }
+    
+    # Remove other starting patterns:
+    for(pattern in excludeStartingWith) {
+        dependentPackcages <- subset(dependentPackcages, !startsWith(dependentPackcages, pattern))
+    }
+    
+    dependentPackcages <- unique(dependentPackcages)
+    if(sort) {
+        dependentPackcages <- sort(dependentPackcages)
+    }
+    
+    return(dependentPackcages)
+}
+
+
+extractDependencies <- function(packageName, allAvail, dependencies, recursive = TRUE) {
+    # Extract the dependencies of the packageName:
+    onlyDependencies <- subset(allAvail, Package %in% packageName)[dependencies]
+    if(!nrow(onlyDependencies)) {
+        warning("Package ", packageName, " not present in the repos.")
+    }
+    
+    # Paste together to prepare for parsing:
+    onlyDependencies <- apply(onlyDependencies, 1, paste, collapse = ", ")
+    
+    # Remove annoying line spaces:
+    onlyDependencies <- gsub("\n", " ", onlyDependencies)
+    # Split by comma:
+    onlyDependencies <- strsplit(onlyDependencies, ", |,")
+    # Remove R and NA:
+    onlyDependencies <- lapply(onlyDependencies, function(x) subset(x, !startsWith(x, "R ") & !startsWith(x, "R(") & x != "NA"))
+    
+    # Get only package names:
+    onlyDependencies <- unique(unlist(lapply(onlyDependencies, function(x) gsub(" .*$", "", x))))
+    
+    # Exlude base packages:
+    onlyDependencies <- exlcudeBasePackages(onlyDependencies)
+    
+    if(recursive) {
+        if(length(onlyDependencies)) {
+            return(c(
+                packageName, 
+                extractDependencies(
+                    onlyDependencies, 
+                    allAvail = allAvail, 
+                    dependencies = dependencies
+                )
+            ))
+        }
+        else {
+            return(packageName)
+        }
+    }
+    else {
+        return(onlyDependencies)
+    }
+}
+
+getAvailablePackages <- function(packageName = NULL, repos = "https://cloud.r-project.org", platform = NA, twoDigitRVersion = NA) {
+    
+    # Get the available packages in the repos:
+    if(length(repos)) {
+        URL <- buildReposContrib(
+            repos = repos, 
+            platform = platform, 
+            twoDigitRVersion = twoDigitRVersion
+        )
+        #avail <- utils::available.packages(utils::contrib.url(repos, type = type))
+        avail <- utils::available.packages(URL)
+    }
+    # Or locally:
+    else {
+        avail <- installed.packages()
+    }
+    
+    # For convenience convert to data.frame:
+    avail <- as.data.frame(avail, stringsAsFactors = FALSE)
+    
+    # Check for packageName not in the repos:
+    notPresent <- setdiff(packageName, avail$Package)
+    if(length(notPresent)) {
+        warning("The following packages were not found in the rpeos ", repos, ": ", paste(notPresent, collapse = ", "))
+    }
+    
+    # Extract the packages:
+    if(length(packageName)) {
+        avail <- subset(avail, Package %in% packageName)
+    }
+    
+    return(avail)
+}
+
+exlcudeBasePackages <- function(x) {
+    setdiff(x, rownames(installed.packages(priority="base")))
+}
+
+# Funcction to get platform code used in the path to the package binarry:
+getPlatformCode <- function(platform = NA, twoDigitRVersion = NA) {
+    # Declare the output:
+    platformCode <- getPlatform(platform)
+    
+    # Append "el-capitan" if R_3.6 on mac:
+    if (platformCode == "macosx") {
+        if(getTwoDigitRVersion(twoDigitRVersion) == "3.6") {
+            platformCode <- file.path(platformCode, "el-capitan")
+        }
+    }
+    
+    return(platformCode)
+}
+
+getBinaryType <- function(platform = NA, twoDigitRVersion = NA) {
+    # Declare the output:
+    binaryType <- paste(substr(getPlatform(platform), 1, 3), "binary", sep = ".")
+    
+    # Append "el-capitan" if R_3.6 on mac:
+    if (platform == "macosx") {
+        if(getTwoDigitRVersion(twoDigitRVersion) == "3.6") {
+            binaryType <- paste(binaryType, "el-capitan", sep = ".")
+        }
+    }
+    
+    return(binaryType)
+}
+
+
+
+
+
+getPlatform <- function(platform = NA) {
+    if(is.na(platform)) {
+        if (.Platform$OS.type == "windows") {
+            platform <- "windows"
+        }
+        else if (Sys.info()["sysname"] == "Darwin") {
+            platform <- "macosx"
+        } 
+        else {
+            stop("Only Windows and MacOS are currently supported.")
+        }
+    }
+    
+    return(platform)
+}
+
+
+getTwoDigitRVersion <- function(twoDigitRVersion = NA) {
+    if(is.na(twoDigitRVersion)) {
+        RMajor <- R.Version()$major
+        RMinor <- gsub("(.+?)([.].*)", "\\1", R.Version()$minor)
+        twoDigitRVersion <- paste(RMajor, RMinor, sep = ".")
+    }
+    
+    return(twoDigitRVersion)
+}
+
+
+
+# Function to build one installation line with install.packages():
+getPackageBinaryURL <- function(packageName, version = NULL, repos = "https://cloud.r-project.org", platform = NA, twoDigitRVersion = NA) {
+    # https://stoxproject.github.io/repo/bin/windows/contrib/4.0/RstoxData_1.0.9.zip
+    # windows:
+    # https://stoxproject.github.io/repo/bin/windows/contrib/<R-ver>/<package_name>_<ver>.zip
+    # macos-R3.6:
+    # https://stoxproject.github.io/repo/bin/macosx/el-capitan/contrib/3.6/<package_name>_<ver>.tgz
+    # macos-R4.0:
+    # https://stoxproject.github.io/repo/bin/macosx/contrib/4.0/<package_name>_<ver>.tgz
+    
+    # Get the available packages in the repos:
+    avail <- getAvailablePackages(
+        packageName = packageName, 
+        repos = repos, 
+        #type = getBinaryType(
+            platform = platform, 
+            twoDigitRVersion = twoDigitRVersion
+        #)
+    ) 
+    
+    # Overwrite versions if given:
+    for(ind in seq_along(version)) {
+        avail[Package == names(version)[ind]]$Version <- version[[ind]]
+    }
+    
+    # Get the R version as two digit string:
+    twoDigitRVersion <- getTwoDigitRVersion(twoDigitRVersion)
+    
+    # Get the file extention:
+    fileExt <- getBinaryFileExt(platform)
+    
+    # Build the path to the package binary:
+    pathSansExt <- paste(
+        buildReposContrib(
+            repos = repos, 
+            platform = platform, 
+            twoDigitRVersion = twoDigitRVersion
+        ), 
+        paste(
+            avail$Package, 
+            avail$Version, 
+            sep = "_"
+        ), 
+        sep = "/"
+    )
+    
+    # Add file extension:
+    path <- paste(pathSansExt, fileExt, sep = ".")
+    
+    return(path)
+}
+
+getBinaryFileExt <- function(platform = NA) {
+    platform <- getPlatform(platform)
+    
+    if (platform == "windows") {
+        fileExt <- "zip"
+    }
+    else if (platform == "macosx") {
+        fileExt <- "tgz"
+    }
+    
+    return(fileExt)
+}
+
+buildReposContrib <- function(repos = "https://cloud.r-project.org", platform = NA, twoDigitRVersion = NA) {
+    
+    # Get the two digit R version, as it is used several places below:
+    twoDigitRVersion <- getTwoDigitRVersion(twoDigitRVersion)
+    
+    reposContrib <- paste(
+        repos, 
+        "bin", 
+        getPlatformCode(
+            platform = platform, 
+            twoDigitRVersion = twoDigitRVersion
+        ), 
+        "contrib", 
+        twoDigitRVersion, 
+        sep = "/"
+    )
+    
+    return(reposContrib)
+}
+
+
+
+
+
+
 
 
 #' Logical verctor giving 
@@ -1368,7 +1713,11 @@ readCharAll <- function(spatialFile) {
 
 buildSpatialFileReferenceString <- function(x) {
     filePath <- tempfile()
-    write(geojsonio::geojson_json(x), file = filePath)
+    
+    # Write the input SpatialPolygonsDataFrame to a temporary file, but uses geojsonsf instead of geojsonio to reduce dependencies:
+    #write(geojsonio::geojson_json(x), file = filePath)
+    write(geojsonsf::sf_geojson(sf::st_as_sf(x)), filePath)
+    
     SpatialFileReferenceString <- paste0(
         getRstoxFrameworkDefinitions("spatialFileReferenceCodeStart"), 
         filePath, 
@@ -3764,7 +4113,11 @@ formatProcessDataOne <-  function(processDataOne) {
     }
     # Convert to sp:
     else if("features" %in% tolower(names(processDataOne))) {
-        processDataOne <- geojsonio::geojson_sp(toJSON_Rstox(processDataOne, pretty = TRUE))
+        
+        # Using geojsonsf instead of geojsonio to reduce the number of dependencies:
+        #processDataOne <- geojsonio::geojson_sp(RstoxBase::toJSON_Rstox(processDataOne, pretty = TRUE))
+        processDataOne <-  sf::as_Spatial(geojsonsf::geojson_sf(RstoxBase::toJSON_Rstox(processDataOne, pretty = TRUE)))
+        
         row.names(processDataOne) <- as.character(processDataOne@data$polygonName)
         processDataOne <- addCoordsNames(processDataOne)
         
@@ -3790,7 +4143,7 @@ formatProcessDataOne <-  function(processDataOne) {
 
 
 simplifyListReadFromJSON <- function(x) {
-    jsonlite::fromJSON(toJSON_Rstox(x), simplifyVector = TRUE)
+    jsonlite::fromJSON(RstoxBase::toJSON_Rstox(x), simplifyVector = TRUE)
 }
 
 
@@ -4689,10 +5042,13 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
     return(data)
 }
 
+
+
 flattenProcessOutput <- function(processOutput) {
     #if(firstClass(processOutput) == "SpatialPolygons") {
     if(firstClass(processOutput) == "SpatialPolygonsDataFrame") {
-        geojsonio::geojson_json(processOutput, pretty = TRUE)
+        #geojsonio::geojson_json(processOutput, pretty = TRUE)
+        jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(processOutput)))
     }
     else if(firstClass(processOutput) == "data.table") {
         # Check whether the table is rugged:
@@ -5065,12 +5421,16 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
     # Write the file differently depending on the file type:
     if(ext == "geojson") {
         # Write the file:
-        jsonObject <- geojsonio::geojson_json(processOutputOne)
+        #jsonObject <- geojsonio::geojson_json(processOutputOne)
+        jsonObject <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(processOutputOne)))
         
+        # It seems this is no longer relevant as we moved from geojsonio to geojsonsf:
         # Hack to rermove all IDs from the geojson:
-        jsonObject <- removeIDsFromGeojson(jsonObject)
+        #jsonObject <- removeIDsFromGeojson(jsonObject)
         
-        jsonlite::write_json(jsonObject, path = filePath)
+        # Changed on 2020-12-19 to simply using write, as it writes as actual geojson:
+        #jsonlite::write_json(jsonObject, path = filePath)
+        write(jsonObject, file = filePath)
     }
     else if(ext == "txt") {
         # Write the file:

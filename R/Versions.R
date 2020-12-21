@@ -112,8 +112,8 @@ installNonRstoxDependencies <- function(
     )
     
     # For a clean install remove the packages first:
-    packageName <- getOnlyPackageName(basename(binaryLocalFiles))
-    lapply(packageName, remove.packages)
+    packagesToRemove <- getOnlyPackageName(basename(binaryLocalFiles))
+    removeExistingPackages(packagesToRemove)
     
     # Then install:
     lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
@@ -157,8 +157,8 @@ installOfficialRstoxPackages <- function(
     system.time(mapply(download.file, binaries, destfile = binaryLocalFiles, ...))
     
     # For a clean install remove the packages first:
-    packageName <- getOnlyPackageName(basename(binaryLocalFiles))
-    lapply(packageName, remove.packages)
+    packagesToRemove <- getOnlyPackageName(basename(binaryLocalFiles))
+    removeExistingPackages(packagesToRemove)
     
     # Then install:
     lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
@@ -167,7 +167,11 @@ installOfficialRstoxPackages <- function(
     return(binaryLocalFiles)
 }
 
-
+removeExistingPackages <- function(pkgs) {
+    installed <- installed.packages()[, "Package"]
+    packagesToRemove <- intersect(pkgs, installed)
+    lapply(pkgs, remove.packages)
+}
 #' Function to download all official Rstox packages and their CRAN dependencies
 #' 
 #' @inheritParams getNonRstoxDependencies

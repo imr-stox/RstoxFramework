@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Resamples biotic PSUs — ResampleMeanLengthDistributionData • RstoxFramework</title>
+<title>Report Bootstrap — ReportBootstrap • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Resamples biotic PSUs — ResampleMeanLengthDistributionData" />
-<meta property="og:description" content="This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight." />
+<meta property="og:title" content="Report Bootstrap — ReportBootstrap" />
+<meta property="og:description" content="Reports the sum, mean or other functions on a variable of the BootstrapData." />
 
 
 
@@ -102,31 +102,79 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Resamples biotic PSUs</h1>
+    <h1>Report Bootstrap</h1>
     <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/resample.R'><code>R/resample.R</code></a></small>
-    <div class="hidden name"><code>ResampleMeanLengthDistributionData.Rd</code></div>
+    <div class="hidden name"><code>ReportBootstrap.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.</p>
+    <p>Reports the sum, mean or other functions on a variable of the <code><a href='BootstrapData.html'>BootstrapData</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>ResampleMeanLengthDistributionData</span><span class='op'>(</span><span class='va'>MeanLengthDistributionData</span>, <span class='va'>Seed</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>ReportBootstrap</span><span class='op'>(</span>
+  <span class='va'>BootstrapData</span>,
+  <span class='va'>BaselineProcess</span>,
+  <span class='va'>TargetVariable</span>,
+  AggregationFunction <span class='op'>=</span> <span class='fu'>getReportFunctions</span><span class='op'>(</span>getMultiple <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>,
+  BootstrapReportFunction <span class='op'>=</span> <span class='fu'>getReportFunctions</span><span class='op'>(</span><span class='op'>)</span>,
+  GroupingVariables <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
+  RemoveMissingValues <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  AggregationWeightingVariable <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
+  BootstrapReportWeightingVariable <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>MeanLengthDistributionData</th>
-      <td><p>The <code><a href='https://rdrr.io/pkg/RstoxBase/man/MeanLengthDistributionData.html'>MeanLengthDistributionData</a></code> data.</p></td>
+      <th>BaselineProcess</th>
+      <td><p>A vector of character strings naming the baseline processes to report from the boostrap output.</p></td>
     </tr>
     <tr>
-      <th>Seed</th>
-      <td><p>The seed, given as a sinigle initeger.</p></td>
+      <th>TargetVariable</th>
+      <td><p>The variable to report.</p></td>
+    </tr>
+    <tr>
+      <th>AggregationFunction</th>
+      <td><p>The function to apply to each bootstrap run. This must be a function returning a single value.</p></td>
+    </tr>
+    <tr>
+      <th>BootstrapReportFunction</th>
+      <td><p>The function to apply across bootstrap run, such as "cv" or "stoxSummary".</p></td>
+    </tr>
+    <tr>
+      <th>GroupingVariables</th>
+      <td><p>The variables to report by, e.g. "Stratum" or "SpeciesCategory". Can be given as a comma separated list of variables (with no spaces).</p></td>
+    </tr>
+    <tr>
+      <th>RemoveMissingValues</th>
+      <td><p>Logical: If TRUE, remove missing values (NAs). The default (FALSE) implies to report NA if at least one of the values used in the <code>ReportFunction</code> is NA.</p></td>
+    </tr>
+    <tr>
+      <th>AggregationWeightingVariable</th>
+      <td><p>The variable to weight by in the <code>AggregationFunction</code>.</p></td>
+    </tr>
+    <tr>
+      <th>BootstrapReportWeightingVariable</th>
+      <td><p>The variable to weight by in the <code>BootstrapReportFunction</code>.</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
+    <p>A <code><a href='ReportBootstrapData.html'>ReportBootstrapData</a></code> object.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>This function is useful to, e.g, sum Biomass for each SpeciesCategory and IndividualTotalLenght, or average IndividualTotalLenght for each IndiivdualAge and Stratum.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'>
+
+</div>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

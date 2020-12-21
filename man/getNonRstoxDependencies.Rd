@@ -8,7 +8,8 @@
 getNonRstoxDependencies(
   packageName = c("RstoxFramework", "RstoxBase", "RstoxData"),
   dependencies = NA,
-  repos = NULL,
+  Rstox.repos = NULL,
+  nonRstox.repos = "https://cloud.r-project.org",
   sort = FALSE
 )
 
@@ -16,11 +17,12 @@ downloadNonRstoxDependencies(
   packageName = c("RstoxFramework", "RstoxBase", "RstoxData"),
   destdir = NA,
   dependencies = NA,
-  repos = NULL,
+  Rstox.repos = NULL,
   download.repos = "https://cloud.r-project.org",
   sort = FALSE,
   platform = NA,
-  twoDigitRVersion = NA
+  twoDigitRVersion = NA,
+  ...
 )
 }
 \arguments{
@@ -28,7 +30,7 @@ downloadNonRstoxDependencies(
 
 \item{dependencies}{A character vector listing the dependencies to get, with possible values "Depends", "Imports", "LinkingTo", "Suggests", "Enhances". Default is NA, implying c("Depends", "Imports", "LinkingTo").}
 
-\item{repos}{Either NULL to search for packages locally, or a repository passed to \code{\link[utils]{available.packages}}.}
+\item{Rstox.repos, nonRstox.repos}{Either NULL to search for packages locally, or a repository passed to \code{\link[utils]{available.packages}}, where \code{Rstox.repos} is used to locate direct dependencies of the Rstox packages, and \code{nonRstox.reposs} is used to get the dependencies of the direct dependencies recursievly, defaulted to the CRAN repository.}
 
 \item{sort}{Logical: If TRUE sort the dependent packages, defaulted to FALSE to enable installing the most basic dependencies first.}
 

@@ -21,7 +21,7 @@ getOfficialRstoxPackageVersion(
 )
 }
 \arguments{
-\item{StoXGUIVersion}{The version of the StoX GUI defining the combination of official Rstox packcage versions.}
+\item{StoXGUIVersion}{The version of the StoX GUI defining the combination of official Rstox package versions.}
 
 \item{officialRstoxPackageVersionsFile}{The path to the file holding the link between StoX GUI version and Rstox package versions.}
 

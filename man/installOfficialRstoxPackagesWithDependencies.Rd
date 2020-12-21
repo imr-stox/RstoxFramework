@@ -8,18 +8,23 @@ installOfficialRstoxPackagesWithDependencies(
   StoXGUIVersion,
   officialRstoxPackageVersionsFile,
   destdir = NA,
+  Rstox.repos = "https://stoxproject.github.io/repo",
+  download.repos = "https://cloud.r-project.org",
   dependencies = NA,
   sort = FALSE,
   platform = NA,
-  twoDigitRVersion = NA
+  twoDigitRVersion = NA,
+  ...
 )
 }
 \arguments{
-\item{StoXGUIVersion}{The version of the StoX GUI defining the combination of official Rstox packcage versions.}
+\item{StoXGUIVersion}{The version of the StoX GUI defining the combination of official Rstox package versions.}
 
 \item{officialRstoxPackageVersionsFile}{The path to the file holding the link between StoX GUI version and Rstox package versions.}
 
 \item{destdir}{The directory to download binaries to, defaulted to NA which implies tempdir().}
+
+\item{Rstox.repos}{Either NULL to search for packages locally, or a repository passed to \code{\link[utils]{available.packages}}, where \code{Rstox.repos} is used to locate direct dependencies of the Rstox packages, and \code{nonRstox.reposs} is used to get the dependencies of the direct dependencies recursievly, defaulted to the CRAN repository.}
 
 \item{dependencies}{A character vector listing the dependencies to get, with possible values "Depends", "Imports", "LinkingTo", "Suggests", "Enhances". Default is NA, implying c("Depends", "Imports", "LinkingTo").}
 

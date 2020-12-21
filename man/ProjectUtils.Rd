@@ -24,7 +24,11 @@ readProjectDescription(
   type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats")
 )
 
-writeProjectDescription(projectPath, type = c("JSON", "RData"))
+writeProjectDescription(
+  projectPath,
+  type = c("JSON", "RData"),
+  GUI = "unspecified"
+)
 
 initiateActiveProcessID(projectPath)
 

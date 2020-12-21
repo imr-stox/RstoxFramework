@@ -15,7 +15,8 @@ createProject(
   template = "EmptyTemplate",
   ow = FALSE,
   showWarnings = FALSE,
-  open = TRUE
+  open = TRUE,
+  GUI = "unspecified"
 )
 
 openProject(
@@ -27,16 +28,17 @@ openProject(
   saveIfAlreadyOpen = FALSE
 )
 
-closeProject(projectPath, save = NULL, msg = TRUE)
+closeProject(projectPath, save = NULL, GUI = "unspecified", msg = TRUE)
 
 saveProject(
   projectPath,
   type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"),
   force = FALSE,
+  GUI = "unspecified",
   msg = TRUE
 )
 
-saveAsProject(projectPath, newProjectPath, ow = FALSE)
+saveAsProject(projectPath, newProjectPath, ow = FALSE, GUI = "unspecified")
 
 copyProject(projectPath, newProjectPath, ow = FALSE)
 }
@@ -50,6 +52,8 @@ copyProject(projectPath, newProjectPath, ow = FALSE)
 \item{showWarnings}{Logical: If TRUE display warninigs when creting the project folders.}
 
 \item{open}{Logical: If TRUE open the project after creating it.}
+
+\item{GUI}{A single string naming the GUI used when saving the project. Defaulted to "unspecified".}
 
 \item{force}{Logical: If TRUE reopen (close and then open) the project if already open.}
 

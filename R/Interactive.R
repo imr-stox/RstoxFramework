@@ -5,15 +5,6 @@
 
 
 
-
-
-
-#- Add formatProjectDescription() which converts process data to JSON strings (except Stratum, which is GEOJSON) using processData2JSON()
-#- 
-#
-
-
-
 ############################################################
 ############################################################
 #' Add or remove biotic hauls to/from assignment of hauls to acoustic PSU/Layer

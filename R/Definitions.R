@@ -372,6 +372,7 @@ initiateRstoxFramework <- function(){
         sp::SpatialPolygons(list()), 
         data = data.frame()
     )
+    emptyStratumPolygonGeojson <- "{\n\t\"type\": \"FeatureCollection\",\n\t\"features\": []\n}\n"
     
     # Define the process parameters with default values, display names and descriptions:
     processParameters <- list(

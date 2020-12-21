@@ -55,7 +55,13 @@ Bootstrap <- function(
     preRunTo <- min(processIndexTable$processIndex)
     if(activeProcessID < preRunTo) {
         message("StoX: Running baseline until the first process to bootstrap...")
-        temp <- runProcesses(projectPath, modelName = "baseline", endProcess = preRunTo)
+        temp <- runProcesses(
+            projectPath, 
+            modelName = "baseline", 
+            endProcess = preRunTo, 
+            save = FALSE, 
+            saveProcessData = FALSE
+        )
     }
     
     # Draw the seeds in a table, and then split into a list for each bootstrap run:
@@ -96,7 +102,13 @@ Bootstrap <- function(
     ###     shift = -1
     ### )
     # Rerun the baseline to the end:
-    temp <- runProcesses(projectPath, modelName = "baseline", startProcess = processIndexTable$processIndex[1])
+    temp <- runProcesses(
+        projectPath, 
+        modelName = "baseline", 
+        startProcess = processIndexTable$processIndex[1], 
+        save = FALSE, 
+        saveProcessData = FALSE
+    )
     
     # Get the data types to return:
     dataTypeNames <- names(BootstrapData[[1]])
@@ -413,3 +425,76 @@ ResampleMeanNASCData <- function(MeanNASCData, Seed) {
     
     return(MeanNASCData)
 }
+
+
+
+##################################################
+##################################################
+#' Report Bootstrap
+#' 
+#' Reports the sum, mean or other functions on a variable of the \code{\link{BootstrapData}}.
+#' 
+#' @inheritParams RstoxBase::ModelData
+#' @inheritParams RstoxBase::ProcessData
+#' @inheritParams RstoxBase::general_report_arguments
+#' @param BaselineProcess A vector of character strings naming the baseline processes to report from the boostrap output.
+#' @param AggregationFunction The function to apply to each bootstrap run. This must be a function returning a single value.
+#' @param BootstrapReportFunction The function to apply across bootstrap run, such as "cv" or "stoxSummary".
+#' @param AggregationWeightingVariable The variable to weight by in the \code{AggregationFunction}.
+#' @param BootstrapReportWeightingVariable The variable to weight by in the \code{BootstrapReportFunction}.
+#'
+#' @details This function is useful to, e.g, sum Biomass for each SpeciesCategory and IndividualTotalLenght, or average IndividualTotalLenght for each IndiivdualAge and Stratum.
+#' 
+#' @return
+#' A \code{\link{ReportBootstrapData}} object.
+#' 
+#' @examples
+#' 
+#' @seealso 
+#' 
+#' @export
+#' 
+ReportBootstrap <- function(
+    BootstrapData, 
+    BaselineProcess, 
+    TargetVariable, 
+    AggregationFunction = getReportFunctions(getMultiple = FALSE), 
+    BootstrapReportFunction = getReportFunctions(), 
+    GroupingVariables = character(), 
+    RemoveMissingValues = FALSE, 
+    AggregationWeightingVariable = character(), 
+    BootstrapReportWeightingVariable = character()
+) 
+{
+    # Run the initial aggregation (only applicable for single output functions):
+    AggregationFunction <- match.arg(AggregationFunction)
+    out <- RstoxBase::aggregateBaselineDataOneTable(
+        stoxData = BootstrapData[[BaselineProcess]], 
+        targetVariable = TargetVariable, 
+        aggregationFunction = AggregationFunction, 
+        groupingVariables = c(GroupingVariables, "BootstrapID"), 
+        na.rm = RemoveMissingValues, 
+        weightingVariable = AggregationWeightingVariable
+    )
+    
+    
+    # Get the name of the new TargetVariable:
+    TargetVariableAfterInitialAggregation <- RstoxBase::getReportFunctionVariableName(
+        functionName = AggregationFunction, 
+        targetVariable = TargetVariable
+    )
+    
+    # Run the report function of the bootstraps:
+    BootstrapReportFunction <- match.arg(BootstrapReportFunction)
+    out <- RstoxBase::aggregateBaselineDataOneTable(
+        stoxData = out, 
+        targetVariable = TargetVariableAfterInitialAggregation, 
+        aggregationFunction = BootstrapReportFunction, 
+        groupingVariables = GroupingVariables, 
+        na.rm = RemoveMissingValues, 
+        weightingVariable = BootstrapReportWeightingVariable
+    )
+    
+    return(out)
+}
+

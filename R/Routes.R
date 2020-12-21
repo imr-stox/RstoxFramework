@@ -264,7 +264,8 @@ getMapData  <- function(projectPath, modelName, processID) {
     }
     else {
         warning("StoX: No map data available from the process ", processID, " of model ", modelName, " of project ", projectPath)
-        geojsonio::geojson_json(getRstoxFrameworkDefinitions("emptyStratumPolygon"))
+        #geojsonio::geojson_json(getRstoxFrameworkDefinitions("emptyStratumPolygon"))
+        getRstoxFrameworkDefinitions("emptyStratumPolygonGeojson")
     }
 }
 
@@ -288,7 +289,10 @@ getStratumData <- function(projectPath, modelName, processID) {
     }
     
     # Create the objects EDSU_PSU, PSU_Stratum and Stratum
-    stratumPolygon <- geojsonio::geojson_json(processData$StratumPolygon)
+    # On 2020-12-21 changed to using geojsonsf to reduce depencdencies:
+    #stratumPolygon <- geojsonio::geojson_json(processData$StratumPolygon)
+    stratumPolygon <- geojsonsf::sf_geojson(sf::st_as_sf(processData$StratumPolygon))
+    
     #stratum <- data.table::data.table(
     #    stratum = names(processData), 
     #    includeInTotal = 
@@ -448,7 +452,8 @@ getStationData <- function(projectPath, modelName, processID) {
     
     # Create a spatial points data frame and convert to geojson:
     stationPoints <- sp::SpatialPointsDataFrame(coordinates, properties, match.ID = TRUE)
-    stationPoints <- geojsonio::geojson_json(stationPoints)
+    #stationPoints <- geojsonio::geojson_json(stationPoints)
+    stationPoints <- geojsonsf::sf_geojson(sf::st_as_sf(stationPoints))
     
     return(
         list(
@@ -496,7 +501,8 @@ getEDSUData <- function(projectPath, modelName, processID) {
     
     # Create a spatial points data frame and convert to geojson:
     EDSUPoints <- sp::SpatialPointsDataFrame(clickPoints, properties, match.ID = FALSE)
-    EDSUPoints <- geojsonio::geojson_json(EDSUPoints)
+    #EDSUPoints <- geojsonio::geojson_json(EDSUPoints)
+    EDSUPoints <- geojsonsf::sf_geojson(sf::st_as_sf(EDSUPoints))
     
     # (2) Line segments:
     #lineStrings <- CruiseLog[, sp::Line(cbind(c(startLongitude, endLongitude), c(startLatitude, endLatitude))), by = EDSU]
@@ -508,7 +514,8 @@ getEDSUData <- function(projectPath, modelName, processID) {
     LinesList <- lapply(seq_along(LineList), function(ind) sp::Lines(LineList[[ind]], ID = CruiseLog$EDSU[ind]))
     EDSULines <- sp::SpatialLines(LinesList)
     EDSULines <- sp::SpatialLinesDataFrame(EDSULines, data = CruiseLog[, "interpolated"], match.ID = FALSE)
-    EDSULines <- geojsonio::geojson_json(EDSULines)
+    #EDSULines <- geojsonio::geojson_json(EDSULines)
+    EDSULines <- geojsonsf::sf_geojson(sf::st_as_sf(EDSULines))
     
     ## List the points and lines and return:
     #EDSUData <- list(
@@ -729,13 +736,13 @@ parameter2JSONString <- function(parameter) {
         return(parameter)
     }
     else {
-        return(as.character(toJSON_Rstox(parameter)))
+        return(as.character(RstoxBase::toJSON_Rstox(parameter)))
     }
 }
 
 
 formatJSONString <- function(parameter) {
-    as.character(toJSON_Rstox(parameter))
+    as.character(RstoxBase::toJSON_Rstox(parameter))
 }
 
 
@@ -1112,7 +1119,7 @@ cellToJSONStringOne <- function(x) {
         x <- ""
     }
     if(!is.character(x)) {
-        x <- as.character(toJSON_Rstox(x))
+        x <- as.character(RstoxBase::toJSON_Rstox(x))
     }
     return(x)
 }
@@ -1144,7 +1151,7 @@ vectorToJSONStringOne <- function(x, stringifyVector = TRUE) {
     # Convert to JSON string for each element if not already character:
     else if(!data.table::is.data.table(x)) {
         if(!is.character(x)) {
-            x <- sapply(x, function(y) as.character(toJSON_Rstox(y)))
+            x <- sapply(x, function(y) as.character(RstoxBase::toJSON_Rstox(y)))
         }
         if(length(x) == 1) {
             # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):
@@ -1153,7 +1160,7 @@ vectorToJSONStringOne <- function(x, stringifyVector = TRUE) {
     }
     
     if(stringifyVector) {
-        x <- as.character(toJSON_Rstox(x))
+        x <- as.character(RstoxBase::toJSON_Rstox(x))
     }
     return(x)
 }
@@ -1168,7 +1175,7 @@ possibleValuesToJSONStringOne <- function(x, nrow) {
     # Convert to JSON string for each element if not already character:
     else {
         if(!is.character(x)) {
-            x <- sapply(x, function(y) as.character(toJSON_Rstox(y)))
+            x <- sapply(x, function(y) as.character(RstoxBase::toJSON_Rstox(y)))
         }
         if(length(x) == 1) {
             # This trick with a double list is to ensure that data.table actually converts to a list so that jsonlite returns square brackets (do not change this unless you really know what you are doing!!!!!!!!!!):

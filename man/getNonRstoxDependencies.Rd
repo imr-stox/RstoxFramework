@@ -23,7 +23,7 @@ downloadNonRstoxDependencies(
   platform = NA,
   twoDigitRVersion = NA,
   skip.identical = FALSE,
-  ...
+  quiet = FALSE
 )
 }
 \arguments{

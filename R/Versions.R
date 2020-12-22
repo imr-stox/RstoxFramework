@@ -57,8 +57,7 @@ downloadNonRstoxDependencies <- function(
     platform = NA, 
     twoDigitRVersion = NA, 
     skip.identical = FALSE, 
-    ...
-) {
+    quiet = FALSE) {
     
     # Get the dependencies:
     nonRstoxDependencies <- getNonRstoxDependencies(
@@ -88,7 +87,7 @@ downloadNonRstoxDependencies <- function(
     
     # Download:
     binaryLocalFiles <- file.path(destdir, basename(binaries))
-    mapply(download.file, binaries, destfile = binaryLocalFiles, ...)
+    mapply(download.file, binaries, destfile = binaryLocalFiles, quiet = quiet)
     
     return(binaryLocalFiles)
 }
@@ -103,7 +102,7 @@ installNonRstoxDependencies <- function(
     platform = NA, 
     twoDigitRVersion = NA, 
     skip.identical = FALSE, 
-    ...
+    quiet = FALSE
 ) {
     
     # Get the dependencies:
@@ -116,7 +115,7 @@ installNonRstoxDependencies <- function(
         platform = platform, 
         twoDigitRVersion = twoDigitRVersion, 
         skip.identical = skip.identical, 
-        ...
+        quiet = quiet
     )
     if(!length(binaryLocalFiles)) {
         return(NULL)
@@ -130,7 +129,7 @@ installNonRstoxDependencies <- function(
     installBinaryRemove00LOCK(
         rev(binaryLocalFiles), 
         repos = NULL, 
-        ...
+        quiet = quiet
     )
     #lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
     
@@ -147,7 +146,7 @@ installOfficialRstoxPackages <- function(
     Rstox.repos = "https://stoxproject.github.io/repo", 
     platform = NA, 
     twoDigitRVersion = NA, 
-    ...
+    quiet = FALSE
 ) {
     
     # Get the official versions defined by the officialRstoxPackageVersionsFile for the particular StoXGUIVersion:
@@ -175,7 +174,7 @@ installOfficialRstoxPackages <- function(
         destdir <- tempdir()
     }
     binaryLocalFiles <- file.path(destdir, basename(binaries))
-    system.time(mapply(download.file, binaries, destfile = binaryLocalFiles, ...))
+    system.time(mapply(download.file, binaries, destfile = binaryLocalFiles, quiet = quiet))
     
     # For a clean install remove the packages first:
     packagesToRemove <- getOnlyPackageName(basename(binaryLocalFiles))
@@ -191,9 +190,8 @@ installOfficialRstoxPackages <- function(
     # Then install:
     installBinaryRemove00LOCK(
         rev(binaryLocalFiles), 
-        dependencies = dependencies, 
         repos = NULL, 
-        ...
+        quiet = quiet
     )
     
     
@@ -201,7 +199,7 @@ installOfficialRstoxPackages <- function(
 }
 
 
-installBinaryRemove00LOCK <- function(binaryPath, lib = NULL, ...) {
+installBinaryRemove00LOCK <- function(binaryPath, lib = NULL, repos = NULL, quiet = FALSE) {
     # Select the first library if not specified:
     if(!length(lib)) {
         lib <- .libPaths()[1]
@@ -213,7 +211,7 @@ installBinaryRemove00LOCK <- function(binaryPath, lib = NULL, ...) {
     unlink(lockedDirs, recursive = TRUE, force = TRUE)
     
     # Then install into lib:
-    install.packages(binaryPath, type = "binary", ...)
+    install.packages(binaryPath, type = "binary", repos = repos, quiet = quiet)
     
     return(binaryPath)
 }
@@ -288,7 +286,7 @@ installOfficialRstoxPackagesWithDependencies <- function(
     skip.identical = FALSE, 
     twoDigitRVersion = NA, 
     toJSON = FALSE, 
-    ...
+    quiet = FALSE
 ) {
     
     # First install the officical Rstox pakcage versions with no dependencies:
@@ -297,10 +295,10 @@ installOfficialRstoxPackagesWithDependencies <- function(
         officialRstoxPackageVersionsFile = officialRstoxPackageVersionsFile, 
         include.optional = FALSE, 
         dependencies = FALSE, 
-        download.repos = download.repos, 
+        Rstox.repos = Rstox.repos, 
         platform = platform, 
         twoDigitRVersion = twoDigitRVersion, 
-        ...
+        quiet = quiet
     )
     
     # Then install non-Rstox dependencies using no repo to list the dependencies (Rstox.repos = NULL):
@@ -313,7 +311,7 @@ installOfficialRstoxPackagesWithDependencies <- function(
         platform = platform, 
         skip.identical = skip.identical, 
         twoDigitRVersion = twoDigitRVersion, 
-        ...
+        quiet = quiet
     )
     
     binaryFiles <- c(RstoxPackageBinaryFiles, nonRstoxPackageBinaryFiles)

@@ -16,7 +16,7 @@ installOfficialRstoxPackagesWithDependencies(
   skip.identical = FALSE,
   twoDigitRVersion = NA,
   toJSON = FALSE,
-  ...
+  quiet = FALSE
 )
 }
 \arguments{

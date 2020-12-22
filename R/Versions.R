@@ -287,6 +287,7 @@ installOfficialRstoxPackagesWithDependencies <- function(
     platform = NA, 
     skip.identical = FALSE, 
     twoDigitRVersion = NA, 
+    toJSON = FALSE, 
     ...
 ) {
     
@@ -315,7 +316,13 @@ installOfficialRstoxPackagesWithDependencies <- function(
         ...
     )
     
-    return(c(RstoxPackageBinaryFiles, nonRstoxPackageBinaryFiles))
+    binaryFiles <- c(RstoxPackageBinaryFiles, nonRstoxPackageBinaryFiles)
+    
+    if(toJSON) {
+        binaryFiles <- vector2json(binaryFiles)
+    }
+    
+    return(binaryFiles)
 }
 
 

@@ -238,12 +238,13 @@ subsetBinaryPathsByIdenticallyInstalled <- function(binaryPath, lib = NULL) {
     ### toInstall <- subset(toInstall, Version != newVersion | is.na(Version))
     
     # Install only the packages that are not already installed with the exact same version:
-    installed <- as.data.frame(installed.packages(lib))
+    installed <- as.data.frame(installed.packages(lib), stringsAsFactors = FALSE)
     # Create a table of the pakcages to install:
     toInstall <- data.frame(
         Package = getOnlyPackageName(basename(binaryPath)), 
         newVersion = getOnlyPackageVersion(basename(binaryPath)), 
-        binaryPath = binaryPath
+        binaryPath = binaryPath, 
+        stringsAsFactors = FALSE
     )
     # Match the packcage names:
     toInstall <- merge(installed, toInstall, all.y = TRUE)

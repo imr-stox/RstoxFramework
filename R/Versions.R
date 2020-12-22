@@ -82,10 +82,13 @@ downloadNonRstoxDependencies <- function(
         twoDigitRVersion = twoDigitRVersion, 
         skip.identical = skip.identical
     )
+    if(!length(binaries)) {
+        return(NULL)
+    }
     
     # Download:
     binaryLocalFiles <- file.path(destdir, basename(binaries))
-    system.time(mapply(download.file, binaries, destfile = binaryLocalFiles, ...))
+    mapply(download.file, binaries, destfile = binaryLocalFiles, ...)
     
     return(binaryLocalFiles)
 }
@@ -115,6 +118,9 @@ installNonRstoxDependencies <- function(
         skip.identical = skip.identical, 
         ...
     )
+    if(!length(binaryLocalFiles)) {
+        return(NULL)
+    }
     
     # For a clean install remove the packages first:
     packagesToRemove <- getOnlyPackageName(basename(binaryLocalFiles))
@@ -123,7 +129,8 @@ installNonRstoxDependencies <- function(
     # Then install:
     installBinaryRemove00LOCK(
         rev(binaryLocalFiles), 
-        repos = NULL
+        repos = NULL, 
+        ...
     )
     #lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
 }
@@ -183,7 +190,8 @@ installOfficialRstoxPackages <- function(
     installBinaryRemove00LOCK(
         rev(binaryLocalFiles), 
         dependencies = dependencies, 
-        repos = NULL
+        repos = NULL, 
+        ...
     )
     
     
@@ -643,8 +651,13 @@ getPackageBinaryURL <- function(packageName, version = NULL, repos = "https://cl
         pathSansExt <- subsetBinaryPathsByIdenticallyInstalled(pathSansExt)
     }
     
-    # Add file extension:
-    path <- paste(pathSansExt, fileExt, sep = ".")
+    if(length(pathSansExt)) {
+        # Add file extension:
+        path <- paste(pathSansExt, fileExt, sep = ".")
+    }
+    else {
+        return(NULL)
+    }
     
     return(path)
 }

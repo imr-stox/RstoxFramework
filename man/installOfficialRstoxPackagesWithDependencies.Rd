@@ -13,6 +13,7 @@ installOfficialRstoxPackagesWithDependencies(
   dependencies = NA,
   sort = FALSE,
   platform = NA,
+  skip.identical = FALSE,
   twoDigitRVersion = NA,
   ...
 )

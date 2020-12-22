@@ -18,6 +18,7 @@ getNonRstoxDependencies <- function(
     sort = FALSE
 ) {
 #getNonRstoxDependencies <- function(packageName = getRstoxFrameworkDefinitions("officialStoxLibraryPackagesAll"), dependencies = NA, repos = NULL, sort = FALSE) {
+    
     # Get non-Rstox dependencies:
     nonRstoxDependencies <- lapply(
         packageName, 
@@ -55,6 +56,7 @@ downloadNonRstoxDependencies <- function(
     sort = FALSE, 
     platform = NA, 
     twoDigitRVersion = NA, 
+    skip.identical = FALSE, 
     ...
 ) {
     
@@ -77,7 +79,8 @@ downloadNonRstoxDependencies <- function(
         packageName = nonRstoxDependencies, 
         repos = download.repos, 
         platform = platform, 
-        twoDigitRVersion = twoDigitRVersion
+        twoDigitRVersion = twoDigitRVersion, 
+        skip.identical = skip.identical
     )
     
     # Download:
@@ -96,6 +99,7 @@ installNonRstoxDependencies <- function(
     sort = FALSE, 
     platform = NA, 
     twoDigitRVersion = NA, 
+    skip.identical = FALSE, 
     ...
 ) {
     
@@ -108,6 +112,7 @@ installNonRstoxDependencies <- function(
         sort = sort, 
         platform = platform, 
         twoDigitRVersion = twoDigitRVersion, 
+        skip.identical = skip.identical, 
         ...
     )
     
@@ -116,7 +121,11 @@ installNonRstoxDependencies <- function(
     removeExistingPackages(packagesToRemove)
     
     # Then install:
-    lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
+    installBinaryRemove00LOCK(
+        rev(binaryLocalFiles), 
+        repos = NULL
+    )
+    #lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
 }
 
 
@@ -125,6 +134,7 @@ installOfficialRstoxPackages <- function(
     officialRstoxPackageVersionsFile, 
     destdir = NA, 
     include.optional = FALSE, 
+    dependencies = NA, 
     Rstox.repos = "https://stoxproject.github.io/repo", 
     platform = NA, 
     twoDigitRVersion = NA, 
@@ -148,8 +158,10 @@ installOfficialRstoxPackages <- function(
         version = officialRstoxPackageVersionList, 
         repos = Rstox.repos, 
         platform = platform, 
-        twoDigitRVersion = twoDigitRVersion
+        twoDigitRVersion = twoDigitRVersion, 
+        skip.identical = FALSE
     )
+    
     if(length(destdir) && is.na(destdir)) {
         destdir <- tempdir()
     }
@@ -160,17 +172,87 @@ installOfficialRstoxPackages <- function(
     packagesToRemove <- getOnlyPackageName(basename(binaryLocalFiles))
     removeExistingPackages(packagesToRemove)
     
+    ## Then install:
+    #lapply(
+    #    rev(binaryLocalFiles), 
+    #    install.packages, 
+    #    repos = NULL, 
+    #    dependencies = dependencies
+    #)
     # Then install:
-    lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
+    installBinaryRemove00LOCK(
+        rev(binaryLocalFiles), 
+        dependencies = dependencies, 
+        repos = NULL
+    )
     
     
     return(binaryLocalFiles)
 }
 
-removeExistingPackages <- function(pkgs) {
+
+installBinaryRemove00LOCK <- function(binaryPath, lib = NULL, ...) {
+    # Select the first library if not specified:
+    if(!length(lib)) {
+        lib <- .libPaths()[1]
+    }
+    
+    # Locate lockced folders:
+    dirs <- list.dirs(lib, recursive = FALSE)
+    lockedDirs <- subset(dirs, startsWith(basename(dirs), "00LOCK"))
+    unlink(lockedDirs, recursive = TRUE, force = TRUE)
+    
+    # Then install into lib:
+    install.packages(binaryPath, type = "binary", ...)
+}
+
+
+subsetBinaryPathsByIdenticallyInstalled <- function(binaryPath, lib = NULL) {
+    # Select the first library if not specified:
+    if(!length(lib)) {
+        lib <- .libPaths()[1]
+    }
+    
+    # Cannot use data.table, as it is not shipped with R:
+    ### # Install only the packages that are not already installed with the exact same version:
+    ### installed <- data.table::as.data.table(installed.packages(lib))
+    ### # Create a table of the pakcages to install:
+    ### toInstall <- data.table::data.table(
+    ###     Package = getOnlyPackageName(basename(binaryPath)), 
+    ###     newVersion = getOnlyPackageVersion(basename(binaryPath)), 
+    ###     binaryPath = binaryPath
+    ### )
+    ### # Match the packcage names:
+    ### toInstall <- merge(installed, toInstall, all.y = TRUE)
+    ### # Select only those with new version different from installed version:
+    ### toInstall <- subset(toInstall, Version != newVersion | is.na(Version))
+    
+    # Install only the packages that are not already installed with the exact same version:
+    installed <- as.data.frame(installed.packages(lib))
+    # Create a table of the pakcages to install:
+    toInstall <- data.frame(
+        Package = getOnlyPackageName(basename(binaryPath)), 
+        newVersion = getOnlyPackageVersion(basename(binaryPath)), 
+        binaryPath = binaryPath
+    )
+    # Match the packcage names:
+    toInstall <- merge(installed, toInstall, all.y = TRUE)
+    # Select only those with new version different from installed version:
+    toInstall <- subset(toInstall, Version != newVersion | is.na(Version))
+    
+    return(toInstall$binaryPath)
+}
+
+
+removeExistingPackages <- function(pkgs, lib = NULL) {
+    # Select the first library if not specified:
+    if(!length(lib)) {
+        lib <- .libPaths()[1]
+    }
+    # Remove only installed packages to avoid error in remove.packages():
     installed <- installed.packages()[, "Package"]
     packagesToRemove <- intersect(pkgs, installed)
-    lapply(pkgs, remove.packages)
+    lapply(packagesToRemove, remove.packages, lib = lib)
 }
 #' Function to download all official Rstox packages and their CRAN dependencies
 #' 
@@ -191,32 +273,37 @@ installOfficialRstoxPackagesWithDependencies <- function(
     dependencies = NA, 
     sort = FALSE, 
     platform = NA, 
+    skip.identical = FALSE, 
     twoDigitRVersion = NA, 
     ...
 ) {
     
-    # Install non-Rstox dependencies first:
-    installNonRstoxDependencies(
-        destdir = destdir, 
-        dependencies = dependencies, 
-        Rstox.repos = Rstox.repos, 
+    # First install the officical Rstox pakcage versions with no dependencies:
+    installOfficialRstoxPackages(
+        StoXGUIVersion = StoXGUIVersion, 
+        officialRstoxPackageVersionsFile = officialRstoxPackageVersionsFile, 
+        include.optional = FALSE, 
+        dependencies = FALSE, 
         download.repos = download.repos, 
-        sort = FALSE, 
         platform = platform, 
         twoDigitRVersion = twoDigitRVersion, 
         ...
     )
     
-    # Then install the officical Rstox pakcage versions:
-    installOfficialRstoxPackages(
-        StoXGUIVersion = StoXGUIVersion, 
-        officialRstoxPackageVersionsFile = officialRstoxPackageVersionsFile, 
-        include.optional = FALSE, 
+    # Then install non-Rstox dependencies using no repo to list the dependencies (Rstox.repos = NULL):
+    installNonRstoxDependencies(
+        destdir = destdir, 
+        dependencies = dependencies, 
+        Rstox.repos = NULL, 
         download.repos = download.repos, 
+        sort = FALSE, 
         platform = platform, 
+        skip.identical = skip.identical, 
         twoDigitRVersion = twoDigitRVersion, 
         ...
     )
+    
+    
 }
 
 
@@ -505,7 +592,7 @@ getTwoDigitRVersion <- function(twoDigitRVersion = NA, coerceToCRANContrib = TRU
 
 
 # Function to build one installation line with install.packages():
-getPackageBinaryURL <- function(packageName, version = NULL, repos = "https://cloud.r-project.org", platform = NA, twoDigitRVersion = NA) {
+getPackageBinaryURL <- function(packageName, version = NULL, repos = "https://cloud.r-project.org", platform = NA, twoDigitRVersion = NA, skip.identical = FALSE) {
     # https://stoxproject.github.io/repo/bin/windows/contrib/4.0/RstoxData_1.0.9.zip
     # windows:
     # https://stoxproject.github.io/repo/bin/windows/contrib/<R-ver>/<package_name>_<ver>.zip
@@ -550,6 +637,11 @@ getPackageBinaryURL <- function(packageName, version = NULL, repos = "https://cl
         ), 
         sep = "/"
     )
+    
+    # Subset to only those that differ from the installed version:
+    if(skip.identical) {
+        pathSansExt <- subsetBinaryPathsByIdenticallyInstalled(pathSansExt)
+    }
     
     # Add file extension:
     path <- paste(pathSansExt, fileExt, sep = ".")

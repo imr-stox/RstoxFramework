@@ -86,7 +86,7 @@ downloadNonRstoxDependencies <- function(
     }
     
     # Download:
-    binaryLocalFiles <- file.path(destdir, basename(binaries))
+    binaryLocalFiles <- paste(destdir, basename(binaries), sep ="/")
     mapply(download.file, binaries, destfile = binaryLocalFiles, quiet = quiet)
     
     return(binaryLocalFiles)
@@ -173,7 +173,7 @@ installOfficialRstoxPackages <- function(
     if(length(destdir) && is.na(destdir)) {
         destdir <- tempdir()
     }
-    binaryLocalFiles <- file.path(destdir, basename(binaries))
+    binaryLocalFiles <- paste(destdir, basename(binaries), sep ="/")
     system.time(mapply(download.file, binaries, destfile = binaryLocalFiles, quiet = quiet))
     
     # For a clean install remove the packages first:
@@ -533,7 +533,7 @@ getPlatformCode <- function(platform = NA, twoDigitRVersion = NA) {
     # Append "el-capitan" if R_3.6 on mac:
     if (platformCode == "macosx") {
         if(getTwoDigitRVersion(twoDigitRVersion) == "3.6") {
-            platformCode <- file.path(platformCode, "el-capitan")
+            platformCode <- paste(platformCode, "el-capitan", sep ="/")
         }
     }
     

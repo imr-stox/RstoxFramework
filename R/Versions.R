@@ -133,6 +133,8 @@ installNonRstoxDependencies <- function(
         ...
     )
     #lapply(rev(binaryLocalFiles), install.packages, repos = NULL)
+    
+    return(binaryLocalFiles)
 }
 
 
@@ -212,6 +214,8 @@ installBinaryRemove00LOCK <- function(binaryPath, lib = NULL, ...) {
     
     # Then install into lib:
     install.packages(binaryPath, type = "binary", ...)
+    
+    return(binaryPath)
 }
 
 
@@ -287,7 +291,7 @@ installOfficialRstoxPackagesWithDependencies <- function(
 ) {
     
     # First install the officical Rstox pakcage versions with no dependencies:
-    installOfficialRstoxPackages(
+    RstoxPackageBinaryFiles <- installOfficialRstoxPackages(
         StoXGUIVersion = StoXGUIVersion, 
         officialRstoxPackageVersionsFile = officialRstoxPackageVersionsFile, 
         include.optional = FALSE, 
@@ -299,7 +303,7 @@ installOfficialRstoxPackagesWithDependencies <- function(
     )
     
     # Then install non-Rstox dependencies using no repo to list the dependencies (Rstox.repos = NULL):
-    installNonRstoxDependencies(
+    nonRstoxPackageBinaryFiles <- installNonRstoxDependencies(
         destdir = destdir, 
         dependencies = dependencies, 
         Rstox.repos = NULL, 
@@ -311,7 +315,7 @@ installOfficialRstoxPackagesWithDependencies <- function(
         ...
     )
     
-    
+    return(c(RstoxPackageBinaryFiles, nonRstoxPackageBinaryFiles))
 }
 
 

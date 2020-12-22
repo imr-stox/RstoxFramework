@@ -289,6 +289,8 @@ installOfficialRstoxPackagesWithDependencies <- function(
     quiet = FALSE
 ) {
     
+    originalTimeout <- options("timeout")
+    options(timeout = 24*60*60)
     # First install the officical Rstox pakcage versions with no dependencies:
     RstoxPackageBinaryFiles <- installOfficialRstoxPackages(
         StoXGUIVersion = StoXGUIVersion, 
@@ -313,6 +315,7 @@ installOfficialRstoxPackagesWithDependencies <- function(
         twoDigitRVersion = twoDigitRVersion, 
         quiet = quiet
     )
+    options(timeout = originalTimeout)
     
     binaryFiles <- c(RstoxPackageBinaryFiles, nonRstoxPackageBinaryFiles)
     

@@ -294,7 +294,7 @@ installOfficialRstoxPackagesWithDependencies <- function(
     toJSON = FALSE, 
     quiet = FALSE
 ) {
-    
+    res <- tryCatch({
     originalTimeout <- options("timeout")
     options(timeout = 24*60*60)
     # First install the officical Rstox pakcage versions with no dependencies:
@@ -328,7 +328,11 @@ installOfficialRstoxPackagesWithDependencies <- function(
     if(toJSON) {
         binaryFiles <- vector2json(binaryFiles)
     }
-    
+    },
+    error=function(e) {
+        e
+    })
+    binaryFiles <- res
     return(binaryFiles)
 }
 
@@ -721,7 +725,6 @@ vector2json <- function(x) {
 
 replace4backslashWithOneForward <- function(x) {
     x <- gsub("\\", "/", x, fixed = TRUE)
-    x <- gsub("//", "/", x, fixed = TRUE)
     return(x)
 }
 

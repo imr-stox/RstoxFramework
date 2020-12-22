@@ -86,8 +86,13 @@ downloadNonRstoxDependencies <- function(
     }
     
     # Download:
-    binaryLocalFiles <- paste(destdir, basename(binaries), sep ="/")
-    mapply(download.file, binaries, destfile = binaryLocalFiles, quiet = quiet)
+    binaryLocalFiles <- paste(destdir, basename(binaries), sep = "/")
+    mapply(
+        download.file, 
+        replace4backslashWithOneForward(binaries), 
+        destfile = replace4backslashWithOneForward(binaryLocalFiles), 
+        quiet = quiet
+    )
     
     return(binaryLocalFiles)
 }
@@ -173,7 +178,7 @@ installOfficialRstoxPackages <- function(
     if(length(destdir) && is.na(destdir)) {
         destdir <- tempdir()
     }
-    binaryLocalFiles <- paste(destdir, basename(binaries), sep ="/")
+    binaryLocalFiles <- paste(destdir, basename(binaries), sep = "/")
     system.time(mapply(download.file, binaries, destfile = binaryLocalFiles, quiet = quiet))
     
     # For a clean install remove the packages first:
@@ -533,7 +538,7 @@ getPlatformCode <- function(platform = NA, twoDigitRVersion = NA) {
     # Append "el-capitan" if R_3.6 on mac:
     if (platformCode == "macosx") {
         if(getTwoDigitRVersion(twoDigitRVersion) == "3.6") {
-            platformCode <- paste(platformCode, "el-capitan", sep ="/")
+            platformCode <- paste(platformCode, "el-capitan", sep = "/")
         }
     }
     
@@ -712,4 +717,12 @@ buildReposContrib <- function(repos = "https://cloud.r-project.org", platform = 
 vector2json <- function(x) {
     paste0("[", paste(sapply(x, deparse), collapse = ","), "]")
 }
+
+
+replace4backslashWithOneForward <- function(x) {
+    x <- gsub("\\", "/", x, fixed = TRUE)
+    x <- gsub("//", "/", x, fixed = TRUE)
+    return(x)
+}
+
 

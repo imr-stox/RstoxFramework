@@ -70,7 +70,7 @@ downloadNonRstoxDependencies <- function(
     
     # Download the files to the specified directory (or to the tempdir() if not specified):
     if(length(destdir) && is.na(destdir)) {
-        destdir <- tempdir()
+        destdir <- replace4backslashWithOneForward(tempdir())
     }
     
     # using the path to the releavnt binaries:
@@ -176,7 +176,7 @@ installOfficialRstoxPackages <- function(
     )
     
     if(length(destdir) && is.na(destdir)) {
-        destdir <- tempdir()
+        destdir <- replace4backslashWithOneForward(tempdir())
     }
     binaryLocalFiles <- paste(destdir, basename(binaries), sep = "/")
     system.time(mapply(download.file, binaries, destfile = binaryLocalFiles, quiet = quiet))

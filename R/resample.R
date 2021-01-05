@@ -470,29 +470,29 @@ ReportBootstrap <- function(
     AggregationFunction <- match.arg(AggregationFunction)
     out <- RstoxBase::aggregateBaselineDataOneTable(
         stoxData = BootstrapData[[BaselineProcess]], 
-        targetVariable = TargetVariable, 
+        TargetVariable = TargetVariable, 
         aggregationFunction = AggregationFunction, 
-        groupingVariables = c(GroupingVariables, "BootstrapID"), 
+        GroupingVariables = c(GroupingVariables, "BootstrapID"), 
         na.rm = RemoveMissingValues, 
-        weightingVariable = AggregationWeightingVariable
+        WeightingVariable = AggregationWeightingVariable
     )
     
     
     # Get the name of the new TargetVariable:
     TargetVariableAfterInitialAggregation <- RstoxBase::getReportFunctionVariableName(
         functionName = AggregationFunction, 
-        targetVariable = TargetVariable
+        TargetVariable = TargetVariable
     )
     
     # Run the report function of the bootstraps:
     BootstrapReportFunction <- match.arg(BootstrapReportFunction)
     out <- RstoxBase::aggregateBaselineDataOneTable(
         stoxData = out, 
-        targetVariable = TargetVariableAfterInitialAggregation, 
+        TargetVariable = TargetVariableAfterInitialAggregation, 
         aggregationFunction = BootstrapReportFunction, 
-        groupingVariables = GroupingVariables, 
+        GroupingVariables = GroupingVariables, 
         na.rm = RemoveMissingValues, 
-        weightingVariable = BootstrapReportWeightingVariable
+        WeightingVariable = BootstrapReportWeightingVariable
     )
     
     return(out)

@@ -109,7 +109,20 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
     # Add the column names:
     out <- rbindlist(list(structure(as.list(names(x)), names = names(x)), x))
     # Left pad with space:
-    out <- out[, lapply(.SD, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))]
+    padWithSpace <- function(x, width) {
+        spaces <- rep(" ", width - nchar(x))
+        paste0(x, spaces, collapse = "")
+    }
+    
+    #out <- out[, lapply(.SD, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))]
+    #out <- out[, lapply(.SD, function(y) padWithSpace(y, max(nchar(y))))]
+    
+    for(name in names(out)) {
+        out[, eval(name) := lapply(get(name), function(y) paste0(y, paste(rep(" ", max(nchar(get(name))) - nchar(y)), collapse = "")))]
+    }
+    
+    
+    
     
     # Collapse to lines:
     out <- out[, do.call
@@ -130,7 +143,8 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
 getTrailingInteger <- function(x, integer = TRUE) {
     # Get the trailing numerics:
     #trailing <- stringr::str_extract(x, "[^[a-z]]*$")
-    trailing <- stringr::str_extract(x, "\\-*\\d+\\.*\\d*")
+    #trailing <- stringr::str_extract(x, "\\-*\\d+\\.*\\d*")
+    trailing <- gsub("^\\d.*|[A-Za-z]", "", x)
     
     # Convert to numeric if specified:
     if(integer) {

@@ -747,7 +747,11 @@ createLocalLibrary <- function() {
         
         writable <- file.access(lib, mode = 2) == 0
         if(!any(writable) || !writable[1]) {
-            newLib <- paste(path.expand('~'), 'R', 'win-library', paste(R.Version()$major, gsub("(.+?)([.].*)", "\\1", R.Version()$minor), sep = "."), sep="/")
+            homeFolder <- utils::readRegistry(key="Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", hive="HCU")$Personal
+            twoDigitRVersion <- paste(R.Version()$major, gsub("(.+?)([.].*)", "\\1", R.Version()$minor), sep = ".")
+            #newLib <- paste(path.expand('~'), 'R', 'win-library', paste(R.Version()$major, gsub("(.+?)([.].*)", "\\1", R.Version()$minor), sep = "."), sep="/")
+            newLib <- paste(homeFolder, 'R', 'win-library', twoDigitRVersion, sep="/")
+            
             # Add the local library as the first:
             dir.create(newLib, recursive = TRUE)
             .libPaths(newLib)

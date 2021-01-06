@@ -745,7 +745,8 @@ createLocalLibrary <- function() {
         if(!any(writable) || !writable[1]) {
             newLib <- paste(path.expand('~'), 'R', 'win-library', paste(R.Version()$major, gsub("(.+?)([.].*)", "\\1", R.Version()$minor), sep = "."), sep="/")
             # Add the local library as the first:
-            .libPaths() <- c(newLib, lib)
+            dir.create(newLib, recursive = TRUE)
+            .libPaths(newLib)
         }
     }
 }

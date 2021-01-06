@@ -294,7 +294,11 @@ installOfficialRstoxPackagesWithDependencies <- function(
     toJSON = FALSE, 
     quiet = FALSE
 ) {
+    
     res <- tryCatch({
+        #  Create a local library if not present as the first of .libPaths():
+        createLocalLibrary()
+        
     originalTimeout <- options("timeout")
     options(timeout = 24*60*60)
     # First install the officical Rstox pakcage versions with no dependencies:

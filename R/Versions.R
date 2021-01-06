@@ -215,8 +215,8 @@ installBinaryRemove00LOCK <- function(binaryPath, lib = NULL, repos = NULL, quie
     lockedDirs <- subset(dirs, startsWith(basename(dirs), "00LOCK"))
     unlink(lockedDirs, recursive = TRUE, force = TRUE)
     
-    # Then install into lib:
-    install.packages(binaryPath, type = "binary", repos = repos, quiet = quiet)
+    # Then install into first of .libPaths():
+    install.packages(binaryPath, type = "binary", repos = repos, quiet = quiet, lib = lib)
     
     return(binaryPath)
 }
@@ -266,7 +266,7 @@ removeExistingPackages <- function(pkgs, lib = NULL) {
         lib <- .libPaths()[1]
     }
     # Remove only installed packages to avoid error in remove.packages():
-    installed <- installed.packages()[, "Package"]
+    installed <- installed.packages(lib.loc = lib)[, "Package"]
     packagesToRemove <- intersect(pkgs, installed)
     lapply(packagesToRemove, remove.packages, lib = lib)
 }

@@ -734,3 +734,25 @@ replace4backslashWithOneForward <- function(x) {
 }
 
 
+
+createLocalLibrary <- function() {
+    # Check that we are on Windows:
+    if (.Platform$OS.type == "windows") {
+        # If no non-programfiles libraries, create the same that Rstudio creates:
+        lib <- .libPaths()
+        
+        writable <- file.access(lib, mode = 2) == 0
+        if(!any(writable) || !writable[1]) {
+            newLib <- paste(path.expand('~'), 'R', 'win-library', paste(R.Version()$major, gsub("(.+?)([.].*)", "\\1", R.Version()$minor), sep = "."), sep="/")
+            # Add the local library as the first:
+            .libPaths() <- c(newLib, lib)
+        }
+    }
+}
+
+
+
+
+
+
+

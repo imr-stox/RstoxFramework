@@ -3545,7 +3545,7 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
             filePath
         }
         else {
-            warning("StoX: The file ", filePath, " does not exist.")
+            #warning("StoX: The file ", filePath, " does not exist.")
             filePath
         }
     }

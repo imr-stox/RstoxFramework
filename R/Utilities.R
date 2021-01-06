@@ -108,20 +108,12 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
     
     # Add the column names:
     out <- rbindlist(list(structure(as.list(names(x)), names = names(x)), x))
-    # Left pad with space:
-    padWithSpace <- function(x, width) {
-        spaces <- rep(" ", width - nchar(x))
-        paste0(x, spaces, collapse = "")
-    }
+    # Right pad with spaecs:
+    out <- out[, lapply(.SD, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))]
     
-    #out <- out[, lapply(.SD, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))]
-    #out <- out[, lapply(.SD, function(y) padWithSpace(y, max(nchar(y))))]
-    
-    for(name in names(out)) {
-        out[, eval(name) := lapply(get(name), function(y) paste0(y, paste(rep(" ", max(nchar(get(name))) - nchar(y)), collapse = "")))]
-    }
-    
-    
+    #for(name in names(out)) {
+    #    out[, eval(name) := lapply(get(name), function(y) paste0(y, paste(rep(" ", max(nchar(get(name))) - nchar(y)), collapse = "")))]
+    #}
     
     
     # Collapse to lines:

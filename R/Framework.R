@@ -160,6 +160,25 @@ applyBackwardCompatibility <- function(projectDescription) {
         }
     }
     
+    # Remname functions:
+    for(packageName in names(backwardCompatibility)) {
+        for(renameFunctionAction in backwardCompatibility[[packageName]]$renameFunction) {
+            run <- checkBackwardCompatibilityVersion(
+                backwardCompatibilityAction = renameFunctionAction, 
+                projectDescription = projectDescription, 
+                packageName = packageName
+            )
+            if(run) {
+                projectDescription <- applyRenameFunction(
+                    renameFunctionAction = renameFunctionAction, 
+                    projectDescription = projectDescription, 
+                    packageName = packageName
+                )
+                saved <- FALSE
+            }
+        }
+    }
+    
     return(
         list(
             projectDescription = projectDescription, 
@@ -177,7 +196,7 @@ interpretVersionString <- function(versionString) {
 checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, projectDescription, packageName) {
     
     # Skip if not a valid backwardCompatibilityAction:
-    if(!checkRemoveParameter(backwardCompatibilityAction)) {
+    if(!checkActionKeys(backwardCompatibilityAction)) {
         return(FALSE)
     }
     
@@ -202,13 +221,12 @@ checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, proj
 
 applyRemoveParameter <- function(removeParameterAction, projectDescription, packageName) {
     
-    
-    # Get the function names (packageName::functionName) of the processes of the model on which the removeParameterAction works:
-    functionNames <- sapply(projectDescription[[removeParameterAction$modelName]], "[[", "functionName")
-    
-    # Match with the function in the removeParameterAction:
-    removeParameterAction_functionName <- paste(packageName, removeParameterAction$functionName, sep = "::")
-    atFunctionName <- which(removeParameterAction_functionName == functionNames)
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = removeParameterAction, 
+        packageName = packageName
+    )
     
     for(ind in atFunctionName) {
         
@@ -225,9 +243,41 @@ applyRemoveParameter <- function(removeParameterAction, projectDescription, pack
         )
     }
     
+    return(projectDescription)
+}
+
+
+applyRenameFunction <- function(renameFunctionAction, projectDescription, packageName) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = renameFunctionAction, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        # Rename function: 
+        projectDescription[[renameFunctionAction$modelName]][[ind]]$functionName <- renameFunctionAction$newFunctionName
+    }
     
     return(projectDescription)
 }
+
+
+
+getIndicesAtFunctionName <- function(projectDescription, action, packageName) {
+    # Get the function names (packageName::functionName) of the processes of the model on which the action works:
+    functionNames <- sapply(projectDescription[[action$modelName]], "[[", "functionName")
+    
+    # Match with the function in the action:
+    action_functionName <- paste(packageName, action$functionName, sep = "::")
+    atFunctionName <- which(action_functionName == functionNames)
+    
+    return(atFunctionName)
+}
+
+
 
 removeInOneProcess <- function(list, removeParameterAction) {
     # Find the objects to remove:
@@ -241,19 +291,18 @@ removeInOneProcess <- function(list, removeParameterAction) {
 
 
 
-checkRemoveParameter <- function(removeParameterAction) {
+checkActionKeys <- function(action) {
     required <- c(
         "changeVersion",
         "functionName",
-        "modelName",
-        "parameterName"
+        "modelName"
     )
     
     # Check whether all required elements are present:
-    allPresent <- all(required %in% names(removeParameterAction))
+    allPresent <- all(required %in% names(action))
     
     if(!allPresent) {
-        warning("The following removeParameterAction of package ", removeParameterAction$packageName, "does not contain all required elements (", paste(required, collapse = ", "), "): \n", paste("\t", names(removeParameterAction), removeParameterAction, sep = ": ", collapse = "\n"))
+        warning("The following action of package ", action$packageName, "does not contain all required elements (", paste(required, collapse = ", "), "): \n", paste("\t", names(action), action, sep = ": ", collapse = "\n"))
     }
     
     return(allPresent)
@@ -3496,7 +3545,7 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
             filePath
         }
         else {
-            warning("StoX: The file ", filePath, " does not exist.")
+            #warning("StoX: The file ", filePath, " does not exist.")
             filePath
         }
     }

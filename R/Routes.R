@@ -154,7 +154,7 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
     else if(dataType %in% getRstoxFrameworkDefinitions("bioticLayerDataType")) {
         "bioticLayer"
     }
-    else if(dataType %in% getRstoxFrameworkDefinitions("bioticAssignmentDataType")) {
+    else if(dataType %in% getRstoxFrameworkDefinitions("bioticAssignmentDataType") && isProcessDataFunction(functionName)) {
         "bioticAssignment"
     }
     #else if(functionName == "StoxBiotic" && dataType %in% getRstoxFrameworkDefinitions("stationDataType") && showInMap) {
@@ -482,8 +482,10 @@ getEDSUData <- function(projectPath, modelName, processID) {
     # Order by Beam:
     setorderv(CruiseLog, c("Beam", "EDSU"))
     
-    # Extrapolate:  
-    CruiseLog <- extrapolateEDSU(CruiseLog)
+    # Extrapolate: 
+    #if(!all(is.na(CruiseLog$LogOrigin)) && !all(is.na(CruiseLog$LogOrigin2))) {
+        CruiseLog <- extrapolateEDSU(CruiseLog)
+    #}
     
     # Define two feature collections, (1) one for the click points for the EDSUs with properties such as position, time, log etc., and (2) the line segments from start to stop point, with the property 'interpolated':
     
@@ -597,10 +599,11 @@ getStartMiddleEndPosition <- function(Log, positionOrigins = c("start", "middle"
     
     # Create a table with missing positions:
     positionsNA <- data.table::as.data.table(
-        array(dim = c(numPositions, length(positionNames)), dimnames = list(NULL, positionNames))
+        array(NA_real_, dim = c(numPositions, length(positionNames)), dimnames = list(NULL, positionNames))
     )
     # Fill in the present data:
-    if(!all(Log$LogOrigin[1] == Log$LogOrigin && Log$LogOrigin2[1] == Log$LogOrigin2)) {
+    #if(!all(Log$LogOrigin[1] == Log$LogOrigin && Log$LogOrigin2[1] == Log$LogOrigin2)) {
+    if(!Log[, RstoxBase::allEqual(LogOrigin) && RstoxBase::allEqual(LogOrigin2)]) {
         stop("StoX: LogOrigin or LogOrigin2 is not constant")
     }
     
@@ -618,8 +621,9 @@ extrapolateLongitudeLatitude <- function(Log) {
     
     # Funciton to map values outside of a range to the maximum value:
     mapToRange <- function(x, length) {
+        x[x < 1] <- 1
         x[x > length] <- length
-        x
+        return(x)
     }
     
     # Get the number of positions of the Log:
@@ -640,6 +644,12 @@ extrapolateLongitudeLatitude <- function(Log) {
     EndNotStart <- which(naStart & !naEnd)
     
     
+    truncateTo1_length <- function(x, length) {
+        x[x <= 0] <- 1
+        x[x >= length] <- length
+        return(x)
+    }
+    
     # Interpolate:
     if(length(StartNotEnd)) {
         Log[StartNotEnd, c("endLongitude", "endLatitude")] <- Log[mapToRange(StartNotEnd + 1, numPositions), c("startLongitude", "startLatitude")]
@@ -650,6 +660,7 @@ extrapolateLongitudeLatitude <- function(Log) {
             Log[mapToRange(onlyMiddle - 1, numPositions), c("middleLongitude", "middleLatitude")] +
             Log[onlyMiddle, c("middleLongitude", "middleLatitude")]
         ) / 2
+        
         Log[onlyMiddle, c("endLongitude", "endLatitude")] <- (
             Log[onlyMiddle, c("middleLongitude", "middleLatitude")] + 
             Log[mapToRange(onlyMiddle + 1, numPositions), c("middleLongitude", "middleLatitude")]

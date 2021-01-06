@@ -22,7 +22,8 @@ downloadNonRstoxDependencies(
   sort = FALSE,
   platform = NA,
   twoDigitRVersion = NA,
-  ...
+  skip.identical = FALSE,
+  quiet = FALSE
 )
 }
 \arguments{

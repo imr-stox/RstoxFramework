@@ -39,18 +39,29 @@ stoxFunctionAttributes <- list(
 #' @export
 #' 
 getResamplableProcesses <- function(projectPath) {
+   
     # Get the data types that can be resampled:
     resamplableDataTypes <- getRstoxFrameworkDefinitions("resamplableDataTypes")
     # Find the processes that can be resampled:
     stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
-    sapply(stoxLibrary, "[[", "functionOutputDataType")  == "MeanNASCData"
+    validFunctions <- names(stoxLibrary)[sapply(stoxLibrary, "[[", "functionOutputDataType")  %in% resamplableDataTypes]
+    
+    # Get the baseline processes with valid functions:
+    baselineProcesses <- getProcessAndFunctionNames(
+        projectPath = projectPath, 
+        modelName = "baseline"
+    )
+    
+    processNames <- baselineProcesses[getFunctionNameFromPackageFunctionName(functionName) %in% validFunctions, processName]
+    
+    return(processNames)
 }
 
 #' 
 #' @export
 #' 
-getResampleFunctions <- function(projectPath) {
-    getRstoxFrameworkDefinitions("resampleFunctions")
+getResampleFunctions <- function() {
+    paste0("Resample", getRstoxFrameworkDefinitions("resamplableDataTypes"))
 }
 
 # Define the process property formats:
@@ -72,7 +83,15 @@ processPropertyFormats <- list(
             "character", 
             #"character",
             "integer"
-        )#, 
+        ), 
+        possibleValues = function(projectPath) {
+            # Must be an unnamed list:
+            possibleValues = list(
+                getResamplableProcesses(projectPath), 
+                getResampleFunctions(),
+                NULL
+            )
+        }
         #possibleValues = list(
         #    NULL, 
         #    getResampleFunctions(),

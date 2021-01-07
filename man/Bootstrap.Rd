@@ -18,13 +18,16 @@ Bootstrap(
 
 \item{projectPath}{The path to the project to containing the baseline to bootstrap.}
 
-\item{BootstrapMethodTable}{A table of the columns ProcessName, ResampleFunction and Seed, where each row defines the resampel function to apply to the output of the given process (and the seed to use in the resampling).}
+\item{BootstrapMethodTable}{A table of the columns ProcessName, ResampleFunction and Seed, where each row defines the resample function to apply to the output of the given process (and the seed to use in the resampling).}
 
 \item{NumberOfBootstraps}{Integer: The number of bootstrap replicates.}
 
 \item{OutputProcesses}{A vector of the processes to save from each bootstrap replicate.}
 
 \item{UseOutputData}{Logical: If TRUE use the existing output file from the function.}
+}
+\value{
+A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.
 }
 \description{
 Run a subset of the baseline model a number of times after resampling e.g. Hauls in each Stratum, EDUSs in each Stratum.

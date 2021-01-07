@@ -4,10 +4,13 @@
 #' 
 #' @param outputData The output of the function from an earlier run.
 #' @param projectPath The path to the project to containing the baseline to bootstrap.
-#' @param BootstrapMethodTable A table of the columns ProcessName, ResampleFunction and Seed, where each row defines the resampel function to apply to the output of the given process (and the seed to use in the resampling).
+#' @param BootstrapMethodTable A table of the columns ProcessName, ResampleFunction and Seed, where each row defines the resample function to apply to the output of the given process (and the seed to use in the resampling). Run RstoxFramework::getResampleFunctions() to get a list of the implemented resample functions. 
 #' @param NumberOfBootstraps Integer: The number of bootstrap replicates.
 #' @param OutputProcesses A vector of the processes to save from each bootstrap replicate.
 #' @param UseOutputData Logical: If TRUE use the existing output file from the function.
+#' 
+#' @return
+#' A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.
 #' 
 #' @export
 #' 

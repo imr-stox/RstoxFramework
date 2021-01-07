@@ -82,6 +82,12 @@ jobs:
           sudo apt update
           sudo apt install libjq-dev
 
+      - name: Install MacOS dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install gdal
+        shell: bash
+
       - name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)

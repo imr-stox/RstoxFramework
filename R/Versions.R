@@ -744,7 +744,8 @@ initLocalLibrary <- function() {
         lib <- .libPaths()
         
         writable <- file.access(lib, mode = 2) == 0
-        if(!any(writable) || !writable[1]) {
+        #if(!any(writable) || !writable[1]) {
+        if(!writable[1]) {
             homeFolder <- utils::readRegistry(key="Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", hive="HCU")$Personal
             twoDigitRVersion <- paste(R.Version()$major, gsub("(.+?)([.].*)", "\\1", R.Version()$minor), sep = ".")
             #newLib <- paste(path.expand('~'), 'R', 'win-library', paste(R.Version()$major, gsub("(.+?)([.].*)", "\\1", R.Version()$minor), sep = "."), sep="/")
@@ -758,6 +759,11 @@ initLocalLibrary <- function() {
             # Add the locacl library in this session:
             .libPaths(newLib)
         }
+        
+        return(newLib)
+    }
+    else {
+        return(NA)
     }
 }
 

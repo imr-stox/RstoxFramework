@@ -752,9 +752,9 @@ initLocalLibrary <- function() {
             
             # Add the local library as the first:
             if(!dir.exists(newLib)) {
-                
+                dir.create(newLib, recursive = TRUE)
             }
-            dir.create(newLib, recursive = TRUE)
+            
             # Add the locacl library in this session:
             .libPaths(newLib)
         }

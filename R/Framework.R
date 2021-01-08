@@ -138,7 +138,7 @@ applyBackwardCompatibility <- function(projectDescription) {
     
     # Get the backwardCompatibility specifications:
     backwardCompatibility <- getRstoxFrameworkDefinitions("backwardCompatibility")
-    # Set saved status to FALSE if any bacckwards compatibility actions are taken:
+    # Set saved status to FALSE if any backwards compatibility actions are taken:
     saved <- TRUE
     
     # Remove parameters:
@@ -231,13 +231,13 @@ applyRemoveParameter <- function(removeParameterAction, projectDescription, pack
     for(ind in atFunctionName) {
         
         # Remove any relevant function input: 
-        projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs <- removeInOneProcess(
+        projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs <- removeParameterInOneProcess(
             projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs, 
             removeParameterAction
         )
         
         # Remove any relevant function parameter: 
-        projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters <- removeInOneProcess(
+        projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters <- removeParameterInOneProcess(
             projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters, 
             removeParameterAction
         )
@@ -279,7 +279,7 @@ getIndicesAtFunctionName <- function(projectDescription, action, packageName) {
 
 
 
-removeInOneProcess <- function(list, removeParameterAction) {
+removeParameterInOneProcess <- function(list, removeParameterAction) {
     # Find the objects to remove:
     toRemove <- names(list) == removeParameterAction$parameterName
     # Remove if any to remove:
@@ -288,6 +288,10 @@ removeInOneProcess <- function(list, removeParameterAction) {
     }
     return(list)
 }
+
+
+
+
 
 
 

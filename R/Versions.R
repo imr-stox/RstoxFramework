@@ -296,8 +296,6 @@ installOfficialRstoxPackagesWithDependencies <- function(
 ) {
     
     res <- tryCatch({
-        #  Create a local library if not present as the first of .libPaths():
-        createLocalLibrary()
         
     originalTimeout <- options("timeout")
     options(timeout = 24*60*60)
@@ -739,7 +737,7 @@ replace4backslashWithOneForward <- function(x) {
 
 
 
-createLocalLibrary <- function() {
+initLocalLibrary <- function() {
     # Check that we are on Windows:
     if (.Platform$OS.type == "windows") {
         # If no non-programfiles libraries, create the same that Rstudio creates:
@@ -753,7 +751,11 @@ createLocalLibrary <- function() {
             newLib <- paste(homeFolder, 'R', 'win-library', twoDigitRVersion, sep="/")
             
             # Add the local library as the first:
+            if(!dir.exists(newLib)) {
+                
+            }
             dir.create(newLib, recursive = TRUE)
+            # Add the locacl library in this session:
             .libPaths(newLib)
         }
     }

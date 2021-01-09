@@ -100,6 +100,11 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
         return(x)
     }
     
+    # Hack to make it possible to print matrices:
+    if(is.matrix(x)) {
+        x <- data.table::as.data.table(x)
+    }
+    
     # First convert all columns to character:
     x <- x[, (colnames(x)) := lapply(.SD, as.character), .SDcols = names(x)]
     

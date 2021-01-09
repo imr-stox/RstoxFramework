@@ -138,8 +138,6 @@ applyBackwardCompatibility <- function(projectDescription) {
     
     # Get the backwardCompatibility specifications:
     backwardCompatibility <- getRstoxFrameworkDefinitions("backwardCompatibility")
-    # Set saved status to FALSE if any bacckwards compatibility actions are taken:
-    saved <- TRUE
     
     # Remove parameters:
     for(packageName in names(backwardCompatibility)) {
@@ -155,7 +153,6 @@ applyBackwardCompatibility <- function(projectDescription) {
                     projectDescription = projectDescription, 
                     packageName = packageName
                 )
-                saved <- FALSE
             }
         }
     }
@@ -174,17 +171,11 @@ applyBackwardCompatibility <- function(projectDescription) {
                     projectDescription = projectDescription, 
                     packageName = packageName
                 )
-                saved <- FALSE
             }
         }
     }
     
-    return(
-        list(
-            projectDescription = projectDescription, 
-            saved = saved
-        )
-    )
+    return(projectDescription)
 }
 
 
@@ -231,13 +222,13 @@ applyRemoveParameter <- function(removeParameterAction, projectDescription, pack
     for(ind in atFunctionName) {
         
         # Remove any relevant function input: 
-        projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs <- removeInOneProcess(
+        projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs <- removeParameterInOneProcess(
             projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs, 
             removeParameterAction
         )
         
         # Remove any relevant function parameter: 
-        projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters <- removeInOneProcess(
+        projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters <- removeParameterInOneProcess(
             projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters, 
             removeParameterAction
         )
@@ -279,7 +270,7 @@ getIndicesAtFunctionName <- function(projectDescription, action, packageName) {
 
 
 
-removeInOneProcess <- function(list, removeParameterAction) {
+removeParameterInOneProcess <- function(list, removeParameterAction) {
     # Find the objects to remove:
     toRemove <- names(list) == removeParameterAction$parameterName
     # Remove if any to remove:
@@ -288,6 +279,10 @@ removeInOneProcess <- function(list, removeParameterAction) {
     }
     return(list)
 }
+
+
+
+
 
 
 
@@ -667,15 +662,14 @@ openProject <- function(
     # Create the project session folder structure:
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
     
-    # Read the project description file:
-    saved <- TRUE
-    temp <- readProjectDescription(projectPath, type = type)
-    projectDescription <- temp$projectDescription
-    saved <- saved && temp$saved
-    
     # Set the active process ID to 0 for all models:
     initiateActiveProcessID(projectPath)
     
+    # Read the project description file:
+    #projectDescription <- readProjectDescription(projectPath, type = type)
+    temp <- readProjectDescription(projectPath, type = type)
+    projectDescription <- temp$projectDescription
+    saved <- temp$saved
     
     # Set the project memory:
     temp <- addProcesses(
@@ -689,8 +683,7 @@ openProject <- function(
     # Store the changes:
     archiveProject(projectPath)
     
-    
-    # Set the status of the projcet as saved:
+    ### # Set the status of the projcet as saved. This must take place after adding the processes, since there saved is set to FALSE:
     setSavedStatus(projectPath, status = saved)
     
     # Return the project path project name and saved status:
@@ -900,12 +893,11 @@ isOpenProject <- function(projectPath) {
 readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats")) {
     # Read the project.RData or json file depending on the 'type':
     type <- match.arg(type)
-    saved <- TRUE
     
     # Get the projectDescriptionFile path:
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
     
-    # If it does not exist, searhc for other project files:
+    # If it does not exist, search for other project files:
     if(!file.exists(projectDescriptionFile)) {
         # Get all possible file types, and select those different from that specified in 'type':
         allTypes <- getRstoxFrameworkDefinitions("projectDescriptionFileFormats")
@@ -938,10 +930,23 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
         projectDescriptionFile = projectDescriptionFile
     ))
     
+    
+    # Make sure all models are present (at least as empty models): 
+    missingModels <- setdiff(getRstoxFrameworkDefinitions("stoxModelNames"), names(projectDescription))
+    for(modelName in missingModels) {
+        projectDescription[[modelName]] <- list()
+    }
+   # Order the models:
+    if(!identical(names(projectDescription), getRstoxFrameworkDefinitions("stoxModelNames"))) {
+        projectDescription <- projectDescription[getRstoxFrameworkDefinitions("stoxModelNames")]
+    }
+    
     # Apply backward compatibility:
-    temp <- applyBackwardCompatibility(projectDescription)
-    projectDescription <- temp$projectDescription
-    saved <- saved && temp$saved
+    projectDescriptionAfterBackwardCompatibility <- applyBackwardCompatibility(projectDescription)
+    
+    # Set saved to TRUE if no backward compatibility actions were taken: 
+    saved <- identical(projectDescription, projectDescriptionAfterBackwardCompatibility)
+    #setSavedStatus(projectPath, status = saved)
         
     # Introduce process IDs: 
     projectDescription <- defineProcessIDs(projectDescription)
@@ -2453,9 +2458,9 @@ readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NUL
     }
     
     # Extract the model:
-    if(! modelName %in% processIndexTable$modelName) {
-        stop("The modelName \"", modelName, "\" is not the name of an existing model (a model with one or more processes). Possible values are ", paste(names(sort(unique(processIndexTable$modelName)))))
-    }
+    #if(! modelName %in% processIndexTable$modelName) {
+    #    stop("The modelName \"", modelName, "\" is not the name of an existing model (a model with one or more processes). Poss#ible values are ", paste(names(sort(unique(processIndexTable$modelName)))))
+    #}
     validRows <- processIndexTable$modelName %in% modelName
     processIndexTable <- subset(processIndexTable, validRows)
     
@@ -4706,7 +4711,7 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
     }
     
     # If a table, allow additional options:
-    if(data.table::is.data.table(data)) {
+    if(data.table::is.data.table(data) || is.matrix(data)) {
         # Extract the requested lines:
         numberOfLines <- nrow(data)
         numberOfPages <- ceiling(numberOfLines / linesPerPage)
@@ -4770,6 +4775,9 @@ flattenProcessOutput <- function(processOutput) {
         if(isDataTableRugged(processOutput)) {
             flattenDataTable(processOutput)
         }
+    }
+    else if(firstClass(processOutput) == "matrix") {
+        processOutput
     }
     else {
         stop("Invalid process output.")

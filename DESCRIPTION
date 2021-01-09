@@ -1,6 +1,6 @@
 Package: RstoxFramework
-Version: 1.2.30
-Date: 2021-01-07
+Version: 1.2.31
+Date: 2021-01-09
 Title: The Engine of StoX
 Authors@R: c(
   person(given = "Arne Johannes", 

@@ -1390,6 +1390,7 @@ getPathToSingleFunctionPDF <- function(functionName) {
 #' @export
 #' 
 getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = NULL, stylesheet = "") {
+    
     # Extract the packageName::functionName:
     packageName_functionName <- getFunctionName(
         projectPath = projectPath, 
@@ -1406,7 +1407,7 @@ getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = N
     functionName <- getFunctionNameFromPackageFunctionName(packageName_functionName)
     # Get the help:
     html <- getObjectHelpAsHtml(packageName = packageName, objectName = functionName, outfile = outfile, stylesheet = stylesheet)
-    html
+    return(html)
 }
 
 
@@ -1434,7 +1435,8 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
     tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links, stylesheet = stylesheet)
     html <- paste(readLines(outfile), collapse="\n")
     unlink(outfile, force = TRUE)
-    html
+    
+    return(html)
 }
 
 

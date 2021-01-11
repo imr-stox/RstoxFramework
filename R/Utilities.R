@@ -456,7 +456,6 @@ verifyPaths <- function(x) {
 
 
 getMemoryFileFormat <- function(x) {
-    
     if(length(x) == 0) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Empty")
     }
@@ -471,6 +470,9 @@ getMemoryFileFormat <- function(x) {
     }
     else if("SpatialPointsDataFrame" %in% class(x)) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Spatial")
+    }
+    else if(is.character(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Character")
     }
     else if(is.list(x)) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_List")

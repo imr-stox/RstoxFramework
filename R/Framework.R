@@ -949,7 +949,7 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
     #setSavedStatus(projectPath, status = saved)
         
     # Introduce process IDs: 
-    projectDescription <- defineProcessIDs(projectDescription)
+    projectDescription <- defineProcessIDs(projectDescriptionAfterBackwardCompatibility)
     
     return(
         list(
@@ -5056,7 +5056,7 @@ getProcessOutputTextFilePath <- function(
                     # Set file extension:
                     ext <- "txt"
                 }
-                else if("matrix" %in% class(processOutput[[1]])) {
+                else if("matrix" %in% class(processOutput[[1]]) || "character" %in% class(processOutput[[1]])) {
                     # Set file extension:
                     ext <- "csv"
                 }
@@ -5136,7 +5136,7 @@ writeProcessOutputTextFile <- function(processOutput, projectPath, modelName, pr
 }
 
 # Function for writing one element of the function output list:
-reportFunctionOutputOne <- function(processOutputOne, filePath) {
+reportFunctionOutputOneOld <- function(processOutputOne, filePath) {
     
     # Extract the file extension from the file path:
     ext <- tools::file_ext(filePath)
@@ -5180,9 +5180,55 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
     else {
         stop("StoX: Inavlid file extension: ", ext)
     }
+}
+
+
+# Function for writing one element of the function output list:
+reportFunctionOutputOne <- function(processOutputOne, filePath) {
     
-    
-    
+    if("SpatialPolygonsDataFrame" %in% class(processOutputOne)) {
+        # Write the file:
+        #jsonObject <- geojsonio::geojson_json(processOutputOne)
+        jsonObject <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(processOutputOne)))
+        
+        # It seems this is no longer relevant as we moved from geojsonio to geojsonsf:
+        # Hack to rermove all IDs from the geojson:
+        #jsonObject <- removeIDsFromGeojson(jsonObject)
+        
+        # Changed on 2020-12-19 to simply using write, as it writes as actual geojson:
+        #jsonlite::write_json(jsonObject, path = filePath)
+        write(jsonObject, file = filePath)
+    }
+    else if("data.table" %in% class(processOutputOne)) {
+        # Write the file:
+        if(length(processOutputOne) == 0) {
+            cat("", file = filePath)
+        }
+        else {
+            data.table::fwrite(processOutputOne, filePath, sep = "\t")
+        }
+    }
+    else if("matrix" %in% class(processOutputOne)) {
+        # Write the file:
+        if(length(processOutputOne) == 0) {
+            cat("", file = filePath)
+        }
+        else {
+            data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE)
+        }
+    }
+    else if("character" %in% class(processOutputOne)) {
+        # Write the file:
+        if(length(processOutputOne) == 0) {
+            cat("", file = filePath)
+        }
+        else {
+            writeLines(processOutputOne, filePath)
+        }
+    }
+    else {
+        stop("Unknown process output: ", class(processOutputOne))
+    }
 }
 
 

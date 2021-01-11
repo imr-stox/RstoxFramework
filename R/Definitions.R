@@ -51,6 +51,7 @@ initiateRstoxFramework <- function(){
     memoryFileFormat_Matrix <- "rds"
     memoryFileFormat_Spatial <- "rds"
     memoryFileFormat_List <- "rds"
+    memoryFileFormat_Character <- "rds"
     memoryFileFormat_Other <- "rds"
     allMemoryFileFormats <- unique(
         c(
@@ -59,6 +60,7 @@ initiateRstoxFramework <- function(){
             memoryFileFormat_Matrix, 
             memoryFileFormat_Spatial, 
             memoryFileFormat_List, 
+            memoryFileFormat_Character, 
             memoryFileFormat_Other
         )
     )
@@ -237,6 +239,7 @@ initiateRstoxFramework <- function(){
     validOutputDataClasses <- c(
         "data.table", 
         "matrix", 
+        "character", 
         "SpatialPolygonsDataFrame"
     )
     
@@ -572,6 +575,24 @@ initiateRstoxFramework <- function(){
     definitions
 }
 
+
+##################################################
+##################################################
+#' Re-define definitions stored in the RstoxFramework environment
+#' 
+#' This function is useful e.g. to test a new package as an official package:
+#' 
+#' @return
+#' A list of definitions.
+#' 
+#' @noRd
+#' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
+#' 
+reinitiateRstoxFramework <- function(){
+    
+}
+
+
 orderBackwardCompatibility <- function(x) {
     lapply(x, orderBackwardCompatibilityOne)
 }
@@ -592,8 +613,8 @@ getStoxLibrary <- function(packageNames, requestedFunctionAttributeNames) {
     
     # Collapse to one list:
     stoxFunctionAttributes <- unlist(stoxFunctionAttributeLists, recursive = FALSE)
-    
     # Check for duplicaetd function names:
+    
     functionNames <- names(stoxFunctionAttributes)
     packageNames <- sapply(stoxFunctionAttributes, "[[", "packageName")
     areDuplicatedFunctionNames <- duplicated(functionNames)

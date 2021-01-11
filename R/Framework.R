@@ -949,7 +949,7 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
     #setSavedStatus(projectPath, status = saved)
         
     # Introduce process IDs: 
-    projectDescription <- defineProcessIDs(projectDescription)
+    projectDescription <- defineProcessIDs(projectDescriptionAfterBackwardCompatibility)
     
     return(
         list(
@@ -5230,8 +5230,6 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
         stop("Unknown process output: ", class(processOutputOne))
     }
 }
-
-
 
 
 removeIDsFromGeojson <- function(json) {

@@ -434,8 +434,8 @@ extractPackageNameAsNames <- function(x) {
 
 getPackageNameAndVersionString <- function(packageName, version, sep = "_") {
     if(is.list(packageName)) {
-        packageName <- names(packageName)
         version <- packageName
+        packageName <- names(packageName)
     }
     paste(packageName, version, sep = sep)
 }

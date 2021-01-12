@@ -87,7 +87,7 @@ getStoxFunctionAttributes <- function(packageName, requestedFunctionAttributeNam
     }
     
     # Add the argument descriptions:
-    argumentDescriptionFile <- file.path(system.file("extdata", package = packageName), "functionArguments.rds")
+    argumentDescriptionFile <- system.file("extdata", "functionArguments.rds", package = packageName)
     if(file.exists(argumentDescriptionFile)) {
         
         # Read the argument descriptions:
@@ -536,7 +536,7 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' @param saveIfAlreadyOpen Logical: If TRUE save the project before closing if already open and force is TRUE.
 #' @param newProjectPath    The path to the copied StoX project.
 #' @param type              The type of file to save the project to.
-#' @param GUI               A single string naming the GUI used when saving the project. Defaulted to "unspecified".
+#' @param Application       A single string naming the application used when saving the project. Defaulted to R.version.string.
 #' 
 #' @name Projects
 #' 
@@ -551,7 +551,7 @@ createProject <- function(
     ow = FALSE, 
     showWarnings = FALSE, 
     open = TRUE, 
-    GUI = "unspecified"
+    Application = R.version.string
 ) {
     
     # Get the template:
@@ -587,14 +587,14 @@ createProject <- function(
     saveProject(
         projectPath, 
         msg = FALSE, 
-        GUI = GUI
+        Application = Application
     )
     
     if(!open) {
         closeProject(
             projectPath, 
             save = TRUE, 
-            GUI = GUI
+            Application = Application
         )
     }
     
@@ -649,7 +649,7 @@ openProject <- function(
         )
         return(out)
     }
-    # No need for GUI here as tsaveIfAlreadyOpen should not be used by any GUI:
+    # No need for Application here as saveIfAlreadyOpen should not be used by any Application:
     closeProject(projectPath, save = saveIfAlreadyOpen, msg = FALSE)
     
     
@@ -700,7 +700,7 @@ openProject <- function(
 closeProject <- function(
     projectPath, 
     save = NULL, 
-    GUI = "unspecified",
+    Application = R.version.string,
     msg =TRUE
 ) {
     # Check that the project has been saved:
@@ -709,14 +709,14 @@ closeProject <- function(
             saveProject(
                 projectPath, 
                 msg = FALSE, 
-                GUI = GUI
+                Application = Application
             )
         }
         else if(is.character(save)) {
             saveProject(
                 projectPath, 
                 type = save, 
-                GUI = GUI, 
+                Application = Application, 
                 msg = FALSE
             )
         }
@@ -725,7 +725,7 @@ closeProject <- function(
             if(identical(tolower(answer), "y")) {
                 saveProject(
                     projectPath, 
-                    GUI = GUI, 
+                    Application = Application, 
                     msg = FALSE
                 )
             }
@@ -754,7 +754,7 @@ saveProject <- function(
     projectPath, 
     type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), 
     force = FALSE, 
-    GUI = "unspecified", 
+    Application = R.version.string, 
     msg = TRUE
 ) {
     
@@ -794,14 +794,14 @@ saveAsProject <- function(
     projectPath, 
     newProjectPath, 
     ow = FALSE, 
-    GUI = "unspecified"
+    Application = R.version.string
 ) {
     
     # Copy the current project and save it:
     copyProject(projectPath, newProjectPath, ow = ow)
-    saveProject(newProjectPath, msg = FALSE, GUI = GUI)
+    saveProject(newProjectPath, msg = FALSE, Application = Application)
     
-    # Close the current project without saving (no need to GUI here as save = FALSE)
+    # Close the current project without saving (no need to Application here as save = FALSE)
     closeProject(projectPath, save = FALSE)
     
     # Return the project path project name and saved status:
@@ -1129,7 +1129,7 @@ JSON2processData <- function(JSON) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), GUI = "unspecified") {
+writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Application = R.version.string) {
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     
@@ -1154,12 +1154,12 @@ writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), GUI 
     do.call(functionName, list(
         projectDescription = projectDescription, 
         projectDescriptionFile = projectDescriptionFile, 
-        GUI = GUI
+        Application = Application
     ))
 }
 
-writeProjectDescriptionRData <- function(projectDescription, projectDescriptionFile, GUI) {
-    warning("The input GUI is not used then type = RData")
+writeProjectDescriptionRData <- function(projectDescription, projectDescriptionFile, Application) {
+    warning("The input Application is not used then type = RData")
     # Get the path to the project description file, and save the current project description:
     save(projectDescription, file = projectDescriptionFile)
 }
@@ -1174,7 +1174,7 @@ writeProjectDescriptionRData <- function(projectDescription, projectDescriptionF
 #' @param projectDescription  a list of lists with project description.
 #' @param projectDescriptionFile  a file name.
 #' 
-writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile, GUI) {
+writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile, Application) {
     
     # Order the argument of each process:
     projectDescription <- orderEachProcess(projectDescription)
@@ -1191,7 +1191,7 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
             OfficalRstoxPackageVersion = attr(projectDescription, "OfficalRstoxPackageVersion"), 
             AllOfficialRstoxPackageVersion = attr(projectDescription, "AllOfficialRstoxPackageVersion"), 
             DependentPackageVersion = attr(projectDescription, "DependentPackageVersion"), 
-            GUI = GUI, 
+            Application = Application, 
             models = projectDescription # Do we need to remove the attributes???
         )
     )
@@ -1241,25 +1241,34 @@ orderEachProcess <- function(projectDescription) {
 
 
 addProjectDescriptionAttributes <- function(projectDescription) {
+    
     # Get packcage versions as strings "PACKAGENAME vPACKAGEVERSION":
     DependentPackageVersion <- getDependentPackageVersion()
     
-    # Get the installed and official Rstox package versions, and test for equality:
-    versions <- getOfficialRstoxPackageVersion()
+    # Get the official Rstox package versions:
+    officialRstoxPackageVersionList <- getOfficialRstoxPackageVersion(list.out = TRUE)
+    
+    
     # Paste the package name and version_
-    pastePackcageNameAndVersion <- function(x) {
-        paste(x$packageName, x$version, collapse = " v")
-    }
-    RstoxPackageVersion = sapply(versions$InstalledRstoxPackageVersion, pastePackcageNameAndVersion)
-    OfficalRstoxPackageVersion = sapply(versions$OfficalRstoxPackageVersion, pastePackcageNameAndVersion)
+    OfficalRstoxPackageVersion <- getPackageNameAndVersionString(
+        officialRstoxPackageVersionList$packageName, 
+        officialRstoxPackageVersionList$version
+    )
+    
+    # Get installed versions:
+    InstalledRstoxPackageVersion <- getPackageVersion(officialRstoxPackageVersionList$packageName, only.version = FALSE)
+    
     # Get the all official tag:
-    AllOfficialRstoxPackageVersion = all(versions$AreOfficialRstoxPackageVersion)
+    AllOfficialRstoxPackageVersion = identical(
+        sort(OfficalRstoxPackageVersion), 
+        sort(InstalledRstoxPackageVersion)
+    )
     
     # Gather and add the attributes:
     attrs <- list(
         TimeSaved = strftime(as.POSIXlt(Sys.time(), "UTC", "%Y-%m-%dT%H:%M:%S") , "%Y-%m-%dT%H:%M:%OS3Z"), 
         RVersion = R.version.string, 
-        RstoxPackageVersion = RstoxPackageVersion, 
+        RstoxPackageVersion = InstalledRstoxPackageVersion, 
         OfficalRstoxPackageVersion = OfficalRstoxPackageVersion, 
         AllOfficialRstoxPackageVersion = AllOfficialRstoxPackageVersion, 
         DependentPackageVersion = DependentPackageVersion
@@ -1274,18 +1283,19 @@ addProjectDescriptionAttributes <- function(projectDescription) {
 
 
 # Function to get the package version of several packages as strings:
-getPackageVersion <- function(packageNames, only.version = FALSE) {
+getPackageVersion <- function(packageNames, only.version = FALSE, sep = "_") {
     version <- sapply(packageNames, function(x) as.character(packageVersion(x)))
     if(only.version) {
         version
     }
     else {
-        paste0(packageNames, " v", version)
+        getPackageNameAndVersionString(packageNames, version, sep = sep)
     }
 }
 
 # Get the versions of the dependent packages recursively:
 getDependentPackageVersion <- function() {
+    
     # Get the Rstox packcages and the dependencies:
     officialStoxLibraryPackages <- getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
     RstoxPackages <- c(
@@ -1318,62 +1328,6 @@ getDependentPackageVersion <- function() {
 
 
 
-
-#' Logical verctor giving 
-#' 
-#' @export
-#' 
-# Test whether all RstoxPackcages have official versions:
-getOfficialRstoxPackageVersion <- function() {
-    
-    # Get the Rstox packages:
-    officialStoxLibraryPackages <- getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
-    RstoxPackages <- c(
-        "RstoxFramework", 
-        officialStoxLibraryPackages
-    )
-    # Get installed package versions:
-    InstalledRstoxPackageVersion <- unlist(getRstoxFrameworkDefinitions("InstalledRstoxPackageVersion"))
-    
-    # Get the minimum versions defined in the DESCRIPTION file:
-    PackageVersionsFromDESCRIPTION <- strsplit(packageDescription("RstoxFramework", fields = "Imports"), "\n")[[1]]
-    PackageNamesFromDESCRIPTION <- sub("\\ \\(.*", "", PackageVersionsFromDESCRIPTION)
-    PackageVersionsFromDESCRIPTION <- sub('.+>= (.+)).*', '\\1', PackageVersionsFromDESCRIPTION)
-    names(PackageVersionsFromDESCRIPTION) <- PackageNamesFromDESCRIPTION
-    
-    OfficalRstoxPackageVersion <- c(
-        # Change the RstoxFramework version to a minor version and not a patch:
-        RstoxFramework = paste0(
-            substr(InstalledRstoxPackageVersion[1], 1, nchar(InstalledRstoxPackageVersion[1]) - 1), 
-            "0"
-        ), 
-        #paste0(
-            #officialStoxLibraryPackages, 
-            #" v", 
-            PackageVersionsFromDESCRIPTION[
-                match(
-                    officialStoxLibraryPackages, 
-                    PackageNamesFromDESCRIPTION
-                )
-            ]
-        #)
-    )
-    
-    # Test for installed equal official:
-    AreOfficialRstoxPackageVersion <- InstalledRstoxPackageVersion == OfficalRstoxPackageVersion
-    
-    # Convert to unnamed list of name-value-official pairs:
-    InstalledRstoxPackageVersion <- mapply(list, packageName = names(InstalledRstoxPackageVersion), version = InstalledRstoxPackageVersion, official = OfficalRstoxPackageVersion, SIMPLIFY = FALSE, USE.NAMES = FALSE)
-    OfficalRstoxPackageVersion <- mapply(list, packageName = names(OfficalRstoxPackageVersion), version = OfficalRstoxPackageVersion, SIMPLIFY = FALSE, USE.NAMES = FALSE)
-    
-    return(
-        list(
-            AreOfficialRstoxPackageVersion = AreOfficialRstoxPackageVersion, 
-            InstalledRstoxPackageVersion = InstalledRstoxPackageVersion, 
-            OfficalRstoxPackageVersion = OfficalRstoxPackageVersion
-        )
-    )
-}
 
 
 
@@ -5399,18 +5353,17 @@ runProcesses <- function(
     replaceArgs = list(), 
     output.file.type = c("default", "text", "RData", "rds"), 
     ...
-    # No need for GUI here as GUIs should runProcesses() and then saveProject():
 ) {
 
     # Open the project if not open:
     if(!isOpenProject(projectPath)) {
-        # No need for GUI here as runProcesses() should be used after opening the project in a GUI:
+        # No need for Application here as runProcesses() should be used after opening the project in a Application:
         openProject(projectPath)
     }
     
     # Save both before and after for safety:
     if(save) {
-        saveProject(projectPath, msg = FALSE, GUI = GUI)
+        saveProject(projectPath, msg = FALSE, Application = Application)
     }
     
     # Get the processIDs:
@@ -5497,7 +5450,7 @@ runProcesses <- function(
     
     # Save the project after each run:
     if(save) {
-        saveProject(projectPath, msg = FALSE, GUI = GUI)
+        saveProject(projectPath, msg = FALSE, Application = Application)
     }
     
     #status

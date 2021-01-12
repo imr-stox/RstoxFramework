@@ -4,7 +4,11 @@
 \alias{writeProjectDescriptionJSON}
 \title{Write project description to a file in json format}
 \usage{
-writeProjectDescriptionJSON(projectDescription, projectDescriptionFile, GUI)
+writeProjectDescriptionJSON(
+  projectDescription,
+  projectDescriptionFile,
+  Application
+)
 }
 \arguments{
 \item{projectDescription}{a list of lists with project description.}

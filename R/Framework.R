@@ -773,7 +773,11 @@ saveProject <- function(
     }
     
     # Get the current project description and save it to the project.RData file:
-    writeProjectDescription(projectPath, type = type)
+    writeProjectDescription(
+        projectPath, 
+        type = type, 
+        Application = Application
+    )
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     

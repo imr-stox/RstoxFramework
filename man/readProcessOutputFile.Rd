@@ -26,14 +26,6 @@ readProcessOutputFile(
 \item{pageindex}{A vevctor of the pages to return with \code{linesPerPage} number of lines (rows). Default is to not split into pages.}
 
 \item{linesPerPage}{The number of lines per page if \code{pageindex} is given.}
-
-\item{columnSeparator}{The string to separate columns by, defaulted to a single space.}
-
-\item{lineSeparator}{The string to separate lines by, defaulted to a NULL, which keeps the output as a vector of strings.}
-
-\item{na}{The string to replace NAs by, defaulted to "-".}
-
-\item{list.pretty}{Logical: If TRUE wrap the output in a list in the case that \code{pretty} is TRUE.}
 }
 \description{
 Function to read a single process output file, possibly by pages and in flattened and pretty view:

@@ -4511,7 +4511,7 @@ readOutputRDataFile <- function(outputDataPath) {
 #' 
 #' Gets the output of a process that has been run.
 #' 
-#' @inheritParams fixedWidthDataTable
+#' @inheritParams fixedWidthTable
 #' @inheritParams readProcessOutputFile
 #' @param modelName The name of the model (one of "baseline", "analysis" and "report").
 #' @param processID The ID of the process.
@@ -4651,7 +4651,7 @@ getModelData <- function(projectPath, modelName, processes = NULL, startProcess 
 
 #' Function to read a single process output file, possibly by pages and in flattened and pretty view:
 #' 
-#' @inheritParams fixedWidthDataTable
+#' @inheritParams fixedWidthTable
 #' @param filePath The file path of the process output file to read.
 #' @param flatten Logical: Should the output tables that contain cells of length > 1 be expanded to that the other columns are repeated, resulting in a regular table.
 #' @param pretty Logical: If TRUE pad with space in each cell to the maximum number of characters of the column including header.
@@ -4659,6 +4659,7 @@ getModelData <- function(projectPath, modelName, processes = NULL, startProcess 
 #' @param linesPerPage The number of lines per page if \code{pageindex} is given.
 #' 
 readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pageindex = integer(0), linesPerPage = 1000L, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
+    
     
     # Read the process output file:
     data <- readMemoryFile(filePath)
@@ -4668,8 +4669,28 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
         data <- flattenProcessOutput(data)
     }
     
+    # If a character vector, convert to matrix for convenience (allowing to use the following treatment of numberOfLines):
+    if(!length(dim(data)) && is.character(data)) {
+        
+        # Extract the requested lines:
+        numberOfLines <- length(data)
+        numberOfPages <- ceiling(numberOfLines / linesPerPage)
+        if(length(pageindex)) {
+            linesToExtract <- seq_len(linesPerPage) + rep((pageindex - 1) * linesPerPage, each = linesPerPage)
+            linesToExtract <- linesToExtract[linesToExtract <= numberOfLines]
+            data <- data[linesToExtract]
+        }
+        
+        if(pretty) {
+             data <- list(
+                data = data, 
+                numberOfLines = numberOfLines, 
+                numberOfPages = numberOfPages
+            )
+        }
+    }
     # If a table, allow additional options:
-    if(data.table::is.data.table(data) || is.matrix(data)) {
+    else if(data.table::is.data.table(data) || is.matrix(data)) {
         # Extract the requested lines:
         numberOfLines <- nrow(data)
         numberOfPages <- ceiling(numberOfLines / linesPerPage)
@@ -4681,7 +4702,7 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
         
         # Convert to pretty view, which inserts spaces to obtain 
         if(pretty) {
-            data <- fixedWidthDataTable(
+            data <- fixedWidthTable(
                 data, 
                 columnSeparator = columnSeparator, 
                 lineSeparator = lineSeparator, 
@@ -4734,7 +4755,7 @@ flattenProcessOutput <- function(processOutput) {
             flattenDataTable(processOutput)
         }
     }
-    else if(firstClass(processOutput) == "matrix") {
+    else if(firstClass(processOutput) %in% c("matrix", "character")) {
         processOutput
     }
     else {

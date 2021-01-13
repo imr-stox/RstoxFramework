@@ -74,7 +74,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.32</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.33</span>
       </span>
     </div>
 
@@ -119,7 +119,7 @@
   ow <span class='op'>=</span> <span class='cn'>FALSE</span>,
   showWarnings <span class='op'>=</span> <span class='cn'>FALSE</span>,
   open <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  GUI <span class='op'>=</span> <span class='st'>"unspecified"</span>
+  Application <span class='op'>=</span> <span class='va'>R.version.string</span>
 <span class='op'>)</span>
 
 <span class='fu'>openProject</span><span class='op'>(</span>
@@ -131,17 +131,27 @@
   saveIfAlreadyOpen <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span>
 
-<span class='fu'>closeProject</span><span class='op'>(</span><span class='va'>projectPath</span>, save <span class='op'>=</span> <span class='cn'>NULL</span>, GUI <span class='op'>=</span> <span class='st'>"unspecified"</span>, msg <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+<span class='fu'>closeProject</span><span class='op'>(</span>
+  <span class='va'>projectPath</span>,
+  save <span class='op'>=</span> <span class='cn'>NULL</span>,
+  Application <span class='op'>=</span> <span class='va'>R.version.string</span>,
+  msg <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span>
 
 <span class='fu'>saveProject</span><span class='op'>(</span>
   <span class='va'>projectPath</span>,
   type <span class='op'>=</span> <span class='fu'><a href='getRstoxFrameworkDefinitions.html'>getRstoxFrameworkDefinitions</a></span><span class='op'>(</span><span class='st'>"projectDescriptionFileFormats"</span><span class='op'>)</span>,
   force <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  GUI <span class='op'>=</span> <span class='st'>"unspecified"</span>,
+  Application <span class='op'>=</span> <span class='va'>R.version.string</span>,
   msg <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span>
 
-<span class='fu'>saveAsProject</span><span class='op'>(</span><span class='va'>projectPath</span>, <span class='va'>newProjectPath</span>, ow <span class='op'>=</span> <span class='cn'>FALSE</span>, GUI <span class='op'>=</span> <span class='st'>"unspecified"</span><span class='op'>)</span>
+<span class='fu'>saveAsProject</span><span class='op'>(</span>
+  <span class='va'>projectPath</span>,
+  <span class='va'>newProjectPath</span>,
+  ow <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  Application <span class='op'>=</span> <span class='va'>R.version.string</span>
+<span class='op'>)</span>
 
 <span class='fu'>copyProject</span><span class='op'>(</span><span class='va'>projectPath</span>, <span class='va'>newProjectPath</span>, ow <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
@@ -169,8 +179,8 @@
       <td><p>Logical: If TRUE open the project after creating it.</p></td>
     </tr>
     <tr>
-      <th>GUI</th>
-      <td><p>A single string naming the GUI used when saving the project. Defaulted to "unspecified".</p></td>
+      <th>Application</th>
+      <td><p>A single string naming the application used when saving the project. Defaulted to R.version.string.</p></td>
     </tr>
     <tr>
       <th>force</th>

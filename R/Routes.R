@@ -291,7 +291,7 @@ getStratumData <- function(projectPath, modelName, processID) {
     # Create the objects EDSU_PSU, PSU_Stratum and Stratum
     # On 2020-12-21 changed to using geojsonsf to reduce depencdencies:
     #stratumPolygon <- geojsonio::geojson_json(processData$StratumPolygon)
-    stratumPolygon <- geojsonsf::sf_geojson(sf::st_as_sf(processData$StratumPolygon))
+    stratumPolygon <- geojsonsf::sf_geojson(sf::st_as_sf(processData$StratumPolygon), simplify = FALSE)
     
     #stratum <- data.table::data.table(
     #    stratum = names(processData), 

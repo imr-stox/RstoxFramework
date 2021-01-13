@@ -1392,9 +1392,10 @@ readCharAll <- function(spatialFile) {
 buildSpatialFileReferenceString <- function(x) {
     filePath <- tempfile()
     
-    # Write the input SpatialPolygonsDataFrame to a temporary file, but uses geojsonsf instead of geojsonio to reduce dependencies:
+    # Write the input SpatialPolygonsDataFrame to a temporary file, but use geojsonsf instead of geojsonio to reduce dependencies:
     #write(geojsonio::geojson_json(x), file = filePath)
-    write(geojsonsf::sf_geojson(sf::st_as_sf(x)), filePath)
+    #write(geojsonsf::sf_geojson(sf::st_as_sf(x)), filePath)
+    write(geojsonsf::sf_geojson(sf::st_as_sf(x), simplify = FALSE), filePath)
     
     SpatialFileReferenceString <- paste0(
         getRstoxFrameworkDefinitions("spatialFileReferenceCodeStart"), 
@@ -4315,7 +4316,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     if(failed){
         return(FALSE)
     }
-    else if(length(processOutput)){
+    else if(length(processOutput) || "SpatialPolygonsDataFrame" %in% class(processOutput)){
         
         # Update the active process ID:
         writeActiveProcessID(projectPath, modelName, processID, processDirty = FALSE)
@@ -4573,7 +4574,6 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     }
     
     
-    
     # Read the files recursively:
     processOutput <- rapply(
         processOutputFiles, 
@@ -4665,12 +4665,25 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
     data <- readMemoryFile(filePath)
     
     # Flatten the output so that cells which are vectors are transposed and the non-vector cells of the same line repeated:
-    if(flatten) {
-        data <- flattenProcessOutput(data)
-    }
+    #if(flatten) {
+    #    data <- flattenProcessOutput(data)
+    #}
     
+    # If a SpatialPolygonsDataFrame, prettify and convert to character
+    if(firstClass(data) == "SpatialPolygonsDataFrame") {
+        #geojsonio::geojson_json(processOutput, pretty = TRUE)
+        data <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(data)))
+        
+        if(pretty) {
+            data <- list(
+                data = data, 
+                numberOfLines = 1, 
+                numberOfPages = 1
+            )
+        }
+    }
     # If a character vector, convert to matrix for convenience (allowing to use the following treatment of numberOfLines):
-    if(!length(dim(data)) && is.character(data)) {
+    else if(!length(dim(data)) && is.character(data)) {
         
         # Extract the requested lines:
         numberOfLines <- length(data)
@@ -4691,6 +4704,12 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
     }
     # If a table, allow additional options:
     else if(data.table::is.data.table(data) || is.matrix(data)) {
+        
+        # Check whether the table is rugged:
+        if(data.table::is.data.table(data) && isDataTableRugged(data)) {
+            flattenDataTable(data)
+        }
+        
         # Extract the requested lines:
         numberOfLines <- nrow(data)
         numberOfPages <- ceiling(numberOfLines / linesPerPage)
@@ -5114,61 +5133,16 @@ writeProcessOutputTextFile <- function(processOutput, projectPath, modelName, pr
     }
 }
 
-# Function for writing one element of the function output list:
-reportFunctionOutputOneOld <- function(processOutputOne, filePath) {
-    
-    # Extract the file extension from the file path:
-    ext <- tools::file_ext(filePath)
-    
-    # Write the file differently depending on the file type:
-    if(ext == "geojson") {
-        # Write the file:
-        #jsonObject <- geojsonio::geojson_json(processOutputOne)
-        jsonObject <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(processOutputOne)))
-        
-        # It seems this is no longer relevant as we moved from geojsonio to geojsonsf:
-        # Hack to rermove all IDs from the geojson:
-        #jsonObject <- removeIDsFromGeojson(jsonObject)
-        
-        # Changed on 2020-12-19 to simply using write, as it writes as actual geojson:
-        #jsonlite::write_json(jsonObject, path = filePath)
-        write(jsonObject, file = filePath)
-    }
-    else if(ext == "txt") {
-        # Write the file:
-        if(length(processOutputOne) == 0) {
-            cat("", file = filePath)
-        }
-        else {
-            data.table::fwrite(processOutputOne, filePath, sep = "\t")
-        }
-    }
-    else if(ext == "csv") {
-        # Write the file:
-        if(length(processOutputOne) == 0) {
-            cat("", file = filePath)
-        }
-        else {
-            data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE)
-        }
-    }
-    else if(ext == "rds") {
-        # Write to rds file:
-        saveRDS(processOutputOne, file = filePath)
-    }
-    else {
-        stop("StoX: Inavlid file extension: ", ext)
-    }
-}
 
 
 # Function for writing one element of the function output list:
 reportFunctionOutputOne <- function(processOutputOne, filePath) {
     
     if("SpatialPolygonsDataFrame" %in% class(processOutputOne)) {
+        
         # Write the file:
         #jsonObject <- geojsonio::geojson_json(processOutputOne)
-        jsonObject <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(processOutputOne)))
+        jsonObject <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(processOutputOne), simplify = FALSE))
         
         # It seems this is no longer relevant as we moved from geojsonio to geojsonsf:
         # Hack to rermove all IDs from the geojson:

@@ -1507,7 +1507,7 @@ stoxTemplates <- list(
 		description = "DATRAS conversion"
 	),
 	#### UserDefined Template: User defined (empty models): ####
-	UserDefined = structure(
+	EmptyTemplate = structure(
 		list(), 
 		description = "User defined (empty models)"
 	), 

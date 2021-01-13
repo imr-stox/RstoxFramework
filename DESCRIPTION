@@ -50,7 +50,7 @@ Imports:
     xml2 (>= 1.2.2),
     stringr (>= 1.0.0),
     RstoxData (>= 1.0.22),
-    RstoxBase (>= 1.2.40)
+    RstoxBase (>= 1.2.41)
 Suggests: 
     testthat
 Additional_repositories: 

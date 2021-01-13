@@ -87,7 +87,7 @@ getStoxFunctionAttributes <- function(packageName, requestedFunctionAttributeNam
     }
     
     # Add the argument descriptions:
-    argumentDescriptionFile <- file.path(system.file("extdata", package = packageName), "functionArguments.rds")
+    argumentDescriptionFile <- system.file("extdata", "functionArguments.rds", package = packageName)
     if(file.exists(argumentDescriptionFile)) {
         
         # Read the argument descriptions:
@@ -536,7 +536,7 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' @param saveIfAlreadyOpen Logical: If TRUE save the project before closing if already open and force is TRUE.
 #' @param newProjectPath    The path to the copied StoX project.
 #' @param type              The type of file to save the project to.
-#' @param GUI               A single string naming the GUI used when saving the project. Defaulted to "unspecified".
+#' @param Application       A single string naming the application used when saving the project. Defaulted to R.version.string.
 #' 
 #' @name Projects
 #' 
@@ -551,7 +551,7 @@ createProject <- function(
     ow = FALSE, 
     showWarnings = FALSE, 
     open = TRUE, 
-    GUI = "unspecified"
+    Application = R.version.string
 ) {
     
     # Get the template:
@@ -587,14 +587,14 @@ createProject <- function(
     saveProject(
         projectPath, 
         msg = FALSE, 
-        GUI = GUI
+        Application = Application
     )
     
     if(!open) {
         closeProject(
             projectPath, 
             save = TRUE, 
-            GUI = GUI
+            Application = Application
         )
     }
     
@@ -649,7 +649,7 @@ openProject <- function(
         )
         return(out)
     }
-    # No need for GUI here as tsaveIfAlreadyOpen should not be used by any GUI:
+    # No need for Application here as saveIfAlreadyOpen should not be used by any Application:
     closeProject(projectPath, save = saveIfAlreadyOpen, msg = FALSE)
     
     
@@ -700,7 +700,7 @@ openProject <- function(
 closeProject <- function(
     projectPath, 
     save = NULL, 
-    GUI = "unspecified",
+    Application = R.version.string,
     msg =TRUE
 ) {
     # Check that the project has been saved:
@@ -709,14 +709,14 @@ closeProject <- function(
             saveProject(
                 projectPath, 
                 msg = FALSE, 
-                GUI = GUI
+                Application = Application
             )
         }
         else if(is.character(save)) {
             saveProject(
                 projectPath, 
                 type = save, 
-                GUI = GUI, 
+                Application = Application, 
                 msg = FALSE
             )
         }
@@ -725,7 +725,7 @@ closeProject <- function(
             if(identical(tolower(answer), "y")) {
                 saveProject(
                     projectPath, 
-                    GUI = GUI, 
+                    Application = Application, 
                     msg = FALSE
                 )
             }
@@ -754,7 +754,7 @@ saveProject <- function(
     projectPath, 
     type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), 
     force = FALSE, 
-    GUI = "unspecified", 
+    Application = R.version.string, 
     msg = TRUE
 ) {
     
@@ -773,7 +773,11 @@ saveProject <- function(
     }
     
     # Get the current project description and save it to the project.RData file:
-    writeProjectDescription(projectPath, type = type)
+    writeProjectDescription(
+        projectPath, 
+        type = type, 
+        Application = Application
+    )
     # Set the status of the projcet as saved:
     setSavedStatus(projectPath, status = TRUE)
     
@@ -794,14 +798,14 @@ saveAsProject <- function(
     projectPath, 
     newProjectPath, 
     ow = FALSE, 
-    GUI = "unspecified"
+    Application = R.version.string
 ) {
     
     # Copy the current project and save it:
     copyProject(projectPath, newProjectPath, ow = ow)
-    saveProject(newProjectPath, msg = FALSE, GUI = GUI)
+    saveProject(newProjectPath, msg = FALSE, Application = Application)
     
-    # Close the current project without saving (no need to GUI here as save = FALSE)
+    # Close the current project without saving (no need to Application here as save = FALSE)
     closeProject(projectPath, save = FALSE)
     
     # Return the project path project name and saved status:
@@ -1129,7 +1133,7 @@ JSON2processData <- function(JSON) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), GUI = "unspecified") {
+writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Application = R.version.string) {
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     
@@ -1154,12 +1158,12 @@ writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), GUI 
     do.call(functionName, list(
         projectDescription = projectDescription, 
         projectDescriptionFile = projectDescriptionFile, 
-        GUI = GUI
+        Application = Application
     ))
 }
 
-writeProjectDescriptionRData <- function(projectDescription, projectDescriptionFile, GUI) {
-    warning("The input GUI is not used then type = RData")
+writeProjectDescriptionRData <- function(projectDescription, projectDescriptionFile, Application) {
+    warning("The input Application is not used then type = RData")
     # Get the path to the project description file, and save the current project description:
     save(projectDescription, file = projectDescriptionFile)
 }
@@ -1174,7 +1178,7 @@ writeProjectDescriptionRData <- function(projectDescription, projectDescriptionF
 #' @param projectDescription  a list of lists with project description.
 #' @param projectDescriptionFile  a file name.
 #' 
-writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile, GUI) {
+writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFile, Application) {
     
     # Order the argument of each process:
     projectDescription <- orderEachProcess(projectDescription)
@@ -1191,7 +1195,7 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
             OfficalRstoxPackageVersion = attr(projectDescription, "OfficalRstoxPackageVersion"), 
             AllOfficialRstoxPackageVersion = attr(projectDescription, "AllOfficialRstoxPackageVersion"), 
             DependentPackageVersion = attr(projectDescription, "DependentPackageVersion"), 
-            GUI = GUI, 
+            Application = Application, 
             models = projectDescription # Do we need to remove the attributes???
         )
     )
@@ -1241,25 +1245,34 @@ orderEachProcess <- function(projectDescription) {
 
 
 addProjectDescriptionAttributes <- function(projectDescription) {
+    
     # Get packcage versions as strings "PACKAGENAME vPACKAGEVERSION":
     DependentPackageVersion <- getDependentPackageVersion()
     
-    # Get the installed and official Rstox package versions, and test for equality:
-    versions <- getOfficialRstoxPackageVersion()
+    # Get the official Rstox package versions:
+    officialRstoxPackageVersionList <- getOfficialRstoxPackageVersion(list.out = TRUE)
+    
+    
     # Paste the package name and version_
-    pastePackcageNameAndVersion <- function(x) {
-        paste(x$packageName, x$version, collapse = " v")
-    }
-    RstoxPackageVersion = sapply(versions$InstalledRstoxPackageVersion, pastePackcageNameAndVersion)
-    OfficalRstoxPackageVersion = sapply(versions$OfficalRstoxPackageVersion, pastePackcageNameAndVersion)
+    OfficalRstoxPackageVersion <- getPackageNameAndVersionString(
+        officialRstoxPackageVersionList$packageName, 
+        officialRstoxPackageVersionList$version
+    )
+    
+    # Get installed versions:
+    InstalledRstoxPackageVersion <- getPackageVersion(officialRstoxPackageVersionList$packageName, only.version = FALSE)
+    
     # Get the all official tag:
-    AllOfficialRstoxPackageVersion = all(versions$AreOfficialRstoxPackageVersion)
+    AllOfficialRstoxPackageVersion = identical(
+        sort(OfficalRstoxPackageVersion), 
+        sort(InstalledRstoxPackageVersion)
+    )
     
     # Gather and add the attributes:
     attrs <- list(
         TimeSaved = strftime(as.POSIXlt(Sys.time(), "UTC", "%Y-%m-%dT%H:%M:%S") , "%Y-%m-%dT%H:%M:%OS3Z"), 
         RVersion = R.version.string, 
-        RstoxPackageVersion = RstoxPackageVersion, 
+        RstoxPackageVersion = InstalledRstoxPackageVersion, 
         OfficalRstoxPackageVersion = OfficalRstoxPackageVersion, 
         AllOfficialRstoxPackageVersion = AllOfficialRstoxPackageVersion, 
         DependentPackageVersion = DependentPackageVersion
@@ -1274,18 +1287,19 @@ addProjectDescriptionAttributes <- function(projectDescription) {
 
 
 # Function to get the package version of several packages as strings:
-getPackageVersion <- function(packageNames, only.version = FALSE) {
+getPackageVersion <- function(packageNames, only.version = FALSE, sep = "_") {
     version <- sapply(packageNames, function(x) as.character(packageVersion(x)))
     if(only.version) {
         version
     }
     else {
-        paste0(packageNames, " v", version)
+        getPackageNameAndVersionString(packageNames, version, sep = sep)
     }
 }
 
 # Get the versions of the dependent packages recursively:
 getDependentPackageVersion <- function() {
+    
     # Get the Rstox packcages and the dependencies:
     officialStoxLibraryPackages <- getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
     RstoxPackages <- c(
@@ -1318,62 +1332,6 @@ getDependentPackageVersion <- function() {
 
 
 
-
-#' Logical verctor giving 
-#' 
-#' @export
-#' 
-# Test whether all RstoxPackcages have official versions:
-getOfficialRstoxPackageVersion <- function() {
-    
-    # Get the Rstox packages:
-    officialStoxLibraryPackages <- getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
-    RstoxPackages <- c(
-        "RstoxFramework", 
-        officialStoxLibraryPackages
-    )
-    # Get installed package versions:
-    InstalledRstoxPackageVersion <- unlist(getRstoxFrameworkDefinitions("InstalledRstoxPackageVersion"))
-    
-    # Get the minimum versions defined in the DESCRIPTION file:
-    PackageVersionsFromDESCRIPTION <- strsplit(packageDescription("RstoxFramework", fields = "Imports"), "\n")[[1]]
-    PackageNamesFromDESCRIPTION <- sub("\\ \\(.*", "", PackageVersionsFromDESCRIPTION)
-    PackageVersionsFromDESCRIPTION <- sub('.+>= (.+)).*', '\\1', PackageVersionsFromDESCRIPTION)
-    names(PackageVersionsFromDESCRIPTION) <- PackageNamesFromDESCRIPTION
-    
-    OfficalRstoxPackageVersion <- c(
-        # Change the RstoxFramework version to a minor version and not a patch:
-        RstoxFramework = paste0(
-            substr(InstalledRstoxPackageVersion[1], 1, nchar(InstalledRstoxPackageVersion[1]) - 1), 
-            "0"
-        ), 
-        #paste0(
-            #officialStoxLibraryPackages, 
-            #" v", 
-            PackageVersionsFromDESCRIPTION[
-                match(
-                    officialStoxLibraryPackages, 
-                    PackageNamesFromDESCRIPTION
-                )
-            ]
-        #)
-    )
-    
-    # Test for installed equal official:
-    AreOfficialRstoxPackageVersion <- InstalledRstoxPackageVersion == OfficalRstoxPackageVersion
-    
-    # Convert to unnamed list of name-value-official pairs:
-    InstalledRstoxPackageVersion <- mapply(list, packageName = names(InstalledRstoxPackageVersion), version = InstalledRstoxPackageVersion, official = OfficalRstoxPackageVersion, SIMPLIFY = FALSE, USE.NAMES = FALSE)
-    OfficalRstoxPackageVersion <- mapply(list, packageName = names(OfficalRstoxPackageVersion), version = OfficalRstoxPackageVersion, SIMPLIFY = FALSE, USE.NAMES = FALSE)
-    
-    return(
-        list(
-            AreOfficialRstoxPackageVersion = AreOfficialRstoxPackageVersion, 
-            InstalledRstoxPackageVersion = InstalledRstoxPackageVersion, 
-            OfficalRstoxPackageVersion = OfficalRstoxPackageVersion
-        )
-    )
-}
 
 
 
@@ -1434,9 +1392,10 @@ readCharAll <- function(spatialFile) {
 buildSpatialFileReferenceString <- function(x) {
     filePath <- tempfile()
     
-    # Write the input SpatialPolygonsDataFrame to a temporary file, but uses geojsonsf instead of geojsonio to reduce dependencies:
+    # Write the input SpatialPolygonsDataFrame to a temporary file, but use geojsonsf instead of geojsonio to reduce dependencies:
     #write(geojsonio::geojson_json(x), file = filePath)
-    write(geojsonsf::sf_geojson(sf::st_as_sf(x)), filePath)
+    #write(geojsonsf::sf_geojson(sf::st_as_sf(x)), filePath)
+    write(geojsonsf::sf_geojson(sf::st_as_sf(x), simplify = FALSE), filePath)
     
     SpatialFileReferenceString <- paste0(
         getRstoxFrameworkDefinitions("spatialFileReferenceCodeStart"), 
@@ -3836,10 +3795,20 @@ formatProcessDataOne <-  function(processDataOne) {
         
         # Using geojsonsf instead of geojsonio to reduce the number of dependencies:
         #processDataOne <- geojsonio::geojson_sp(RstoxBase::toJSON_Rstox(processDataOne, pretty = TRUE))
-        processDataOne <-  sf::as_Spatial(geojsonsf::geojson_sf(RstoxBase::toJSON_Rstox(processDataOne, pretty = TRUE)))
         
-        row.names(processDataOne) <- as.character(processDataOne@data$polygonName)
-        processDataOne <- addCoordsNames(processDataOne)
+        # Check for empty multipolygonm, which is not well treated by sf:
+        geosf <- geojsonsf::geojson_sf(RstoxBase::toJSON_Rstox(processDataOne, pretty = TRUE))
+        if(length(geosf$geometry)) {
+            processDataOne <- sf::as_Spatial(geosf)
+            
+            # Add names:
+            row.names(processDataOne) <- as.character(processDataOne@data$polygonName)
+            processDataOne <- addCoordsNames(processDataOne)
+        }
+        else {
+            processDataOne <- getRstoxFrameworkDefinitions("emptyStratumPolygon")
+        }
+        
         
         sp::proj4string(processDataOne) <- as.character(NA)
         
@@ -3880,7 +3849,7 @@ simplifyListReadFromJSON <- function(x) {
 #    }
 #    parameter
 #}
-#' 
+#' Function to parse a parameter coming from the GUI
 #' 
 #' @param parameter 
 #' @param simplifyVector 
@@ -4012,11 +3981,11 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive 
     
     # Get a default new process name, or check the validity of the given process name:
     if(length(processName)) {
-        validProcessnName <- validateProcessName(
+        validProcessName <- validateProcessName(
             projectPath = projectPath, 
             newProcessName = processName
         )
-        if(!validProcessnName) {
+        if(!validProcessName) {
             stop("Process not added")
         }
     }
@@ -4357,7 +4326,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     if(failed){
         return(FALSE)
     }
-    else if(length(processOutput)){
+    else if(length(processOutput) || "SpatialPolygonsDataFrame" %in% class(processOutput)){
         
         # Update the active process ID:
         writeActiveProcessID(projectPath, modelName, processID, processDirty = FALSE)
@@ -4553,7 +4522,7 @@ readOutputRDataFile <- function(outputDataPath) {
 #' 
 #' Gets the output of a process that has been run.
 #' 
-#' @inheritParams fixedWidthDataTable
+#' @inheritParams fixedWidthTable
 #' @inheritParams readProcessOutputFile
 #' @param modelName The name of the model (one of "baseline", "analysis" and "report").
 #' @param processID The ID of the process.
@@ -4613,7 +4582,6 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
     if(length(processOutputFiles) == 0) {
         warning("StoX: Invalid specification of projectPath, modelName, processID or tableName (most likely tableName).")
     }
-    
     
     
     # Read the files recursively:
@@ -4693,7 +4661,7 @@ getModelData <- function(projectPath, modelName, processes = NULL, startProcess 
 
 #' Function to read a single process output file, possibly by pages and in flattened and pretty view:
 #' 
-#' @inheritParams fixedWidthDataTable
+#' @inheritParams fixedWidthTable
 #' @param filePath The file path of the process output file to read.
 #' @param flatten Logical: Should the output tables that contain cells of length > 1 be expanded to that the other columns are repeated, resulting in a regular table.
 #' @param pretty Logical: If TRUE pad with space in each cell to the maximum number of characters of the column including header.
@@ -4702,16 +4670,56 @@ getModelData <- function(projectPath, modelName, processes = NULL, startProcess 
 #' 
 readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pageindex = integer(0), linesPerPage = 1000L, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
     
+    
     # Read the process output file:
     data <- readMemoryFile(filePath)
     
     # Flatten the output so that cells which are vectors are transposed and the non-vector cells of the same line repeated:
-    if(flatten) {
-        data <- flattenProcessOutput(data)
-    }
+    #if(flatten) {
+    #    data <- flattenProcessOutput(data)
+    #}
     
+    # If a SpatialPolygonsDataFrame, prettify and convert to character
+    if(firstClass(data) == "SpatialPolygonsDataFrame") {
+        #geojsonio::geojson_json(processOutput, pretty = TRUE)
+        data <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(data)))
+        
+        if(pretty) {
+            data <- list(
+                data = data, 
+                numberOfLines = 1, 
+                numberOfPages = 1
+            )
+        }
+    }
+    # If a character vector, convert to matrix for convenience (allowing to use the following treatment of numberOfLines):
+    else if(!length(dim(data)) && is.character(data)) {
+        
+        # Extract the requested lines:
+        numberOfLines <- length(data)
+        numberOfPages <- ceiling(numberOfLines / linesPerPage)
+        if(length(pageindex)) {
+            linesToExtract <- seq_len(linesPerPage) + rep((pageindex - 1) * linesPerPage, each = linesPerPage)
+            linesToExtract <- linesToExtract[linesToExtract <= numberOfLines]
+            data <- data[linesToExtract]
+        }
+        
+        if(pretty) {
+             data <- list(
+                data = data, 
+                numberOfLines = numberOfLines, 
+                numberOfPages = numberOfPages
+            )
+        }
+    }
     # If a table, allow additional options:
-    if(data.table::is.data.table(data) || is.matrix(data)) {
+    else if(data.table::is.data.table(data) || is.matrix(data)) {
+        
+        # Check whether the table is rugged:
+        if(data.table::is.data.table(data) && isDataTableRugged(data)) {
+            flattenDataTable(data)
+        }
+        
         # Extract the requested lines:
         numberOfLines <- nrow(data)
         numberOfPages <- ceiling(numberOfLines / linesPerPage)
@@ -4723,7 +4731,7 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
         
         # Convert to pretty view, which inserts spaces to obtain 
         if(pretty) {
-            data <- fixedWidthDataTable(
+            data <- fixedWidthTable(
                 data, 
                 columnSeparator = columnSeparator, 
                 lineSeparator = lineSeparator, 
@@ -4776,7 +4784,7 @@ flattenProcessOutput <- function(processOutput) {
             flattenDataTable(processOutput)
         }
     }
-    else if(firstClass(processOutput) == "matrix") {
+    else if(firstClass(processOutput) %in% c("matrix", "character")) {
         processOutput
     }
     else {
@@ -4784,7 +4792,7 @@ flattenProcessOutput <- function(processOutput) {
     }
 }
 
-# Function to get all process output memory files of a process:
+#' Function to get all process output memory files of a process:
 #' 
 #' @inheritParams Projects
 #' @inheritParams getProcessOutput
@@ -5135,61 +5143,16 @@ writeProcessOutputTextFile <- function(processOutput, projectPath, modelName, pr
     }
 }
 
-# Function for writing one element of the function output list:
-reportFunctionOutputOneOld <- function(processOutputOne, filePath) {
-    
-    # Extract the file extension from the file path:
-    ext <- tools::file_ext(filePath)
-    
-    # Write the file differently depending on the file type:
-    if(ext == "geojson") {
-        # Write the file:
-        #jsonObject <- geojsonio::geojson_json(processOutputOne)
-        jsonObject <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(processOutputOne)))
-        
-        # It seems this is no longer relevant as we moved from geojsonio to geojsonsf:
-        # Hack to rermove all IDs from the geojson:
-        #jsonObject <- removeIDsFromGeojson(jsonObject)
-        
-        # Changed on 2020-12-19 to simply using write, as it writes as actual geojson:
-        #jsonlite::write_json(jsonObject, path = filePath)
-        write(jsonObject, file = filePath)
-    }
-    else if(ext == "txt") {
-        # Write the file:
-        if(length(processOutputOne) == 0) {
-            cat("", file = filePath)
-        }
-        else {
-            data.table::fwrite(processOutputOne, filePath, sep = "\t")
-        }
-    }
-    else if(ext == "csv") {
-        # Write the file:
-        if(length(processOutputOne) == 0) {
-            cat("", file = filePath)
-        }
-        else {
-            data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE)
-        }
-    }
-    else if(ext == "rds") {
-        # Write to rds file:
-        saveRDS(processOutputOne, file = filePath)
-    }
-    else {
-        stop("StoX: Inavlid file extension: ", ext)
-    }
-}
 
 
 # Function for writing one element of the function output list:
 reportFunctionOutputOne <- function(processOutputOne, filePath) {
     
     if("SpatialPolygonsDataFrame" %in% class(processOutputOne)) {
+        
         # Write the file:
         #jsonObject <- geojsonio::geojson_json(processOutputOne)
-        jsonObject <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(processOutputOne)))
+        jsonObject <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(processOutputOne), simplify = FALSE))
         
         # It seems this is no longer relevant as we moved from geojsonio to geojsonsf:
         # Hack to rermove all IDs from the geojson:
@@ -5399,18 +5362,17 @@ runProcesses <- function(
     replaceArgs = list(), 
     output.file.type = c("default", "text", "RData", "rds"), 
     ...
-    # No need for GUI here as GUIs should runProcesses() and then saveProject():
 ) {
 
     # Open the project if not open:
     if(!isOpenProject(projectPath)) {
-        # No need for GUI here as runProcesses() should be used after opening the project in a GUI:
+        # No need for Application here as runProcesses() should be used after opening the project in a Application:
         openProject(projectPath)
     }
     
     # Save both before and after for safety:
     if(save) {
-        saveProject(projectPath, msg = FALSE, GUI = GUI)
+        saveProject(projectPath, msg = FALSE, Application = Application)
     }
     
     # Get the processIDs:
@@ -5497,7 +5459,7 @@ runProcesses <- function(
     
     # Save the project after each run:
     if(save) {
-        saveProject(projectPath, msg = FALSE, GUI = GUI)
+        saveProject(projectPath, msg = FALSE, Application = Application)
     }
     
     #status

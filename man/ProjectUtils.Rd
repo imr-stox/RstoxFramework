@@ -27,7 +27,7 @@ readProjectDescription(
 writeProjectDescription(
   projectPath,
   type = c("JSON", "RData"),
-  GUI = "unspecified"
+  Application = R.version.string
 )
 
 initiateActiveProcessID(projectPath)

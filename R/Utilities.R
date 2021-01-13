@@ -94,7 +94,7 @@ flattenDataTable <- function(x, replace = NA) {
 #' @param na The string to replace NAs by, defaulted to "-".
 #' @param list.pretty Logical: If TRUE wrap the output in a list in the case that \code{pretty} is TRUE.
 #' 
-fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
+fixedWidthTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
     # Return immediately if x has length 0:
     if(length(x) == 0) {
         return(x)
@@ -102,38 +102,50 @@ fixedWidthDataTable <- function(x, columnSeparator = " ", lineSeparator = NULL, 
     
     # Hack to make it possible to print matrices:
     if(is.matrix(x)) {
-        x <- data.table::as.data.table(x)
+        # Replace all NA with the user specified na:
+        x[is.na(x)] <- na
+        
+        # Add the column names:
+        if(length(colnames(x))) {
+            x <- rbind(colnames(x), x)
+        }
+        
+        # Right pad with spaecs:
+        x <- apply(x, 2, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))
+        
+        # Collapse to lines:
+        x <- apply(x, 1, paste, collapse = columnSeparator)
     }
-    
-    # First convert all columns to character:
-    x <- x[, (colnames(x)) := lapply(.SD, as.character), .SDcols = names(x)]
-    
-    # Replace all NA with the user specified na:
-    x[is.na(x)] <- na
-    
-    # Add the column names:
-    out <- rbindlist(list(structure(as.list(names(x)), names = names(x)), x))
-    # Right pad with spaecs:
-    out <- out[, lapply(.SD, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))]
-    
-    #for(name in names(out)) {
-    #    out[, eval(name) := lapply(get(name), function(y) paste0(y, paste(rep(" ", max(nchar(get(name))) - nchar(y)), collapse = "")))]
-    #}
-    
-    
-    # Collapse to lines:
-    out <- out[, do.call
-               (paste, c(.SD, sep = columnSeparator)), .SDcols = names(x)]
+    else if(data.table::is.data.table(x)) {
+        # First convert all columns to character:
+        x <- x[, (colnames(x)) := lapply(.SD, as.character), .SDcols = names(x)]
+        
+        # Replace all NA with the user specified na:
+        x[is.na(x)] <- na
+        
+        # Add the column names:
+        x <- rbindlist(list(structure(as.list(names(x)), names = names(x)), x))
+        # Right pad with spaecs:
+        x <- x[, lapply(.SD, function(y) stringr::str_pad(y, max(nchar(y)), pad = " "))]
+        
+        #for(name in names(x)) {
+        #    x[, eval(name) := lapply(get(name), function(y) paste0(y, paste(rep(" ", max(nchar(get(name))) - nchar(y)), collapse = "")))]
+        #}
+        
+        
+        # Collapse to lines:
+        x <- x[, do.call(paste, c(.SD, sep = columnSeparator)), .SDcols = names(x)]
+    }
     
     # Collapse the lines if requested:
     if(length(lineSeparator)) {
-        out <- paste(out, collapse = lineSeparator)
+        x <- paste(x, collapse = lineSeparator)
     }
     else if(list.pretty) {
-        out <- list(out)
+        x <- list(x)
     }
     
-    out
+    return(x)
 }
 
 # Function to extract the trailing integer of a string (vector):
@@ -141,7 +153,8 @@ getTrailingInteger <- function(x, integer = TRUE) {
     # Get the trailing numerics:
     #trailing <- stringr::str_extract(x, "[^[a-z]]*$")
     #trailing <- stringr::str_extract(x, "\\-*\\d+\\.*\\d*")
-    trailing <- gsub("^\\d.*|[A-Za-z]", "", x)
+    #trailing <- gsub("^\\d.*|[A-Za-z]", "", x) # Kept the underscore
+    trailing <- gsub( "^\\d.*|[A-Za-z[:punct:][:space:]]", "", x )
     
     # Convert to numeric if specified:
     if(integer) {

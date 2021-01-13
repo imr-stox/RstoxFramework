@@ -16,7 +16,7 @@ createProject(
   ow = FALSE,
   showWarnings = FALSE,
   open = TRUE,
-  GUI = "unspecified"
+  Application = R.version.string
 )
 
 openProject(
@@ -28,17 +28,27 @@ openProject(
   saveIfAlreadyOpen = FALSE
 )
 
-closeProject(projectPath, save = NULL, GUI = "unspecified", msg = TRUE)
+closeProject(
+  projectPath,
+  save = NULL,
+  Application = R.version.string,
+  msg = TRUE
+)
 
 saveProject(
   projectPath,
   type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"),
   force = FALSE,
-  GUI = "unspecified",
+  Application = R.version.string,
   msg = TRUE
 )
 
-saveAsProject(projectPath, newProjectPath, ow = FALSE, GUI = "unspecified")
+saveAsProject(
+  projectPath,
+  newProjectPath,
+  ow = FALSE,
+  Application = R.version.string
+)
 
 copyProject(projectPath, newProjectPath, ow = FALSE)
 }
@@ -53,7 +63,7 @@ copyProject(projectPath, newProjectPath, ow = FALSE)
 
 \item{open}{Logical: If TRUE open the project after creating it.}
 
-\item{GUI}{A single string naming the GUI used when saving the project. Defaulted to "unspecified".}
+\item{Application}{A single string naming the application used when saving the project. Defaulted to R.version.string.}
 
 \item{force}{Logical: If TRUE reopen (close and then open) the project if already open.}
 

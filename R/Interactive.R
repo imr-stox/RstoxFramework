@@ -423,7 +423,9 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     # If given as a GeoJSON string, parse to a SpatialPolygonsDataFrame object:
     if(is.character(stratum)) {
         #stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
-        stratum <- rgdal::readOGR(stratum, stringsAsFactors = FALSE)
+        #stratum <- rgdal::readOGR(stratum, stringsAsFactors = FALSE)
+        stratum <- sf::as_Spatial(geojsonsf::geojson_sf(stratum))
+        
         stratum <- copyPolygonNameToID(stratum)
         # Add "x", "y" as column names of the coords, since readOGR() does not do this:
         stratum <- addCoordsNames(stratum)
@@ -565,7 +567,9 @@ modifyStratum <- function(stratum, projectPath, modelName, processID) {
     # If given as a GeoJSON string, parse to a SpatialPolygonsDataFrame object:
     if(is.character(stratum)) {
         #stratum <- geojsonio::geojson_sp(geojsonio::as.json(stratum))
-        stratum <- rgdal::readOGR(stratum)
+        #stratum <- rgdal::readOGR(stratum)
+        stratum <- sf::as_Spatial(geojsonsf::geojson_sf(stratum))
+        
         # Add "x", "y" as column names of the coords, since readOGR() does not do this:
         stratum <- addCoordsNames(stratum)
     }

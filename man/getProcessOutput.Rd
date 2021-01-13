@@ -41,6 +41,14 @@ getProcessOutput(
 
 \item{linesPerPage}{The number of lines per page if \code{pageindex} is given.}
 
+\item{columnSeparator}{The string to separate columns by, defaulted to a single space.}
+
+\item{lineSeparator}{The string to separate lines by, defaulted to a NULL, which keeps the output as a vector of strings.}
+
+\item{na}{The string to replace NAs by, defaulted to "-".}
+
+\item{list.pretty}{Logical: If TRUE wrap the output in a list in the case that \code{pretty} is TRUE.}
+
 \item{drop}{Logical: If TRUE drop the list if only one element.}
 
 \item{drop.datatype}{Logical: If TRUE drop the top level of the output if in a list, which is the level named by the data type.}

@@ -94,8 +94,6 @@ flattenDataTable <- function(x, replace = NA) {
 #' @param na The string to replace NAs by, defaulted to "-".
 #' @param list.pretty Logical: If TRUE wrap the output in a list in the case that \code{pretty} is TRUE.
 #' 
-#' @noRd
-#' 
 fixedWidthTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
     # Return immediately if x has length 0:
     if(length(x) == 0) {
@@ -155,7 +153,8 @@ getTrailingInteger <- function(x, integer = TRUE) {
     # Get the trailing numerics:
     #trailing <- stringr::str_extract(x, "[^[a-z]]*$")
     #trailing <- stringr::str_extract(x, "\\-*\\d+\\.*\\d*")
-    trailing <- gsub("^\\d.*|[A-Za-z]", "", x)
+    #trailing <- gsub("^\\d.*|[A-Za-z]", "", x) # Kept the underscore
+    trailing <- gsub( "^\\d.*|[A-Za-z[:punct:][:space:]]", "", x )
     
     # Convert to numeric if specified:
     if(integer) {

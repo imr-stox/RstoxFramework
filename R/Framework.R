@@ -3795,10 +3795,20 @@ formatProcessDataOne <-  function(processDataOne) {
         
         # Using geojsonsf instead of geojsonio to reduce the number of dependencies:
         #processDataOne <- geojsonio::geojson_sp(RstoxBase::toJSON_Rstox(processDataOne, pretty = TRUE))
-        processDataOne <-  sf::as_Spatial(geojsonsf::geojson_sf(RstoxBase::toJSON_Rstox(processDataOne, pretty = TRUE)))
         
-        row.names(processDataOne) <- as.character(processDataOne@data$polygonName)
-        processDataOne <- addCoordsNames(processDataOne)
+        # Check for empty multipolygonm, which is not well treated by sf:
+        geosf <- geojsonsf::geojson_sf(RstoxBase::toJSON_Rstox(processDataOne, pretty = TRUE))
+        if(length(geosf$geometry)) {
+            processDataOne <- sf::as_Spatial(geosf)
+            
+            # Add names:
+            row.names(processDataOne) <- as.character(processDataOne@data$polygonName)
+            processDataOne <- addCoordsNames(processDataOne)
+        }
+        else {
+            processDataOne <- getRstoxFrameworkDefinitions("emptyStratumPolygon")
+        }
+        
         
         sp::proj4string(processDataOne) <- as.character(NA)
         
@@ -3839,7 +3849,7 @@ simplifyListReadFromJSON <- function(x) {
 #    }
 #    parameter
 #}
-#' 
+#' Function to parse a parameter coming from the GUI
 #' 
 #' @param parameter 
 #' @param simplifyVector 
@@ -3971,11 +3981,11 @@ addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive 
     
     # Get a default new process name, or check the validity of the given process name:
     if(length(processName)) {
-        validProcessnName <- validateProcessName(
+        validProcessName <- validateProcessName(
             projectPath = projectPath, 
             newProcessName = processName
         )
-        if(!validProcessnName) {
+        if(!validProcessName) {
             stop("Process not added")
         }
     }
@@ -4782,7 +4792,7 @@ flattenProcessOutput <- function(processOutput) {
     }
 }
 
-# Function to get all process output memory files of a process:
+#' Function to get all process output memory files of a process:
 #' 
 #' @inheritParams Projects
 #' @inheritParams getProcessOutput

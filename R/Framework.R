@@ -133,7 +133,7 @@ applyBackwardCompatibility <- function(projectDescription) {
     # Save the original projectDescription:
     originalProjectDescription <- projectDescription
     temp <- tempfile()
-    message(paste("Original file saved to", temp))
+    #message(paste("Original file saved to", temp))
     save(projectDescription, file = temp)
     
     # Get the backwardCompatibility specifications:
@@ -3810,7 +3810,8 @@ formatProcessDataOne <-  function(processDataOne) {
         }
         
         
-        sp::proj4string(processDataOne) <- as.character(NA)
+        #sp::proj4string(processDataOne) <- as.character(NA)
+        sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string")
         
         
         #sp::CRS(x) <- as.character(NA)
@@ -4389,7 +4390,12 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
     
     # Check that the function name is given:
     if(length(process$functionName) == 0 || nchar(process$functionName) == 0) {
-        stop("The process with process ID ", processID, " does not specify a function name.")
+        processName <- getProcessNameFromProcessID(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        )
+        stop("The process ", processName, " does not specify a function name.")
     }
     
     # If not not enabled, return immediately:
@@ -4674,63 +4680,43 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
     # Read the process output file:
     data <- readMemoryFile(filePath)
     
-    # Flatten the output so that cells which are vectors are transposed and the non-vector cells of the same line repeated:
-    #if(flatten) {
-    #    data <- flattenProcessOutput(data)
-    #}
-    
-    # If a SpatialPolygonsDataFrame, prettify and convert to character
-    if(firstClass(data) == "SpatialPolygonsDataFrame") {
-        #geojsonio::geojson_json(processOutput, pretty = TRUE)
-        data <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(data)))
-        
-        if(pretty) {
-            data <- list(
-                data = data, 
-                numberOfLines = 1, 
-                numberOfPages = 1
-            )
-        }
+    # Check whether the table is rugged:
+    if(flatten && data.table::is.data.table(data) && isDataTableRugged(data)) {
+        data <- flattenDataTable(data)
     }
-    # If a character vector, convert to matrix for convenience (allowing to use the following treatment of numberOfLines):
-    else if(!length(dim(data)) && is.character(data)) {
-        
-        # Extract the requested lines:
-        numberOfLines <- length(data)
-        numberOfPages <- ceiling(numberOfLines / linesPerPage)
-        if(length(pageindex)) {
-            linesToExtract <- seq_len(linesPerPage) + rep((pageindex - 1) * linesPerPage, each = linesPerPage)
-            linesToExtract <- linesToExtract[linesToExtract <= numberOfLines]
-            data <- data[linesToExtract]
-        }
-        
-        if(pretty) {
-             data <- list(
+    
+    if(pretty) {
+        # If a SpatialPolygonsDataFrame, prettify and convert to character
+        if(firstClass(data) == "SpatialPolygonsDataFrame") {
+            #geojsonio::geojson_json(processOutput, pretty = TRUE)
+            data <- jsonlite::prettify(geojsonsf::sf_geojson(sf::st_as_sf(data)))
+            
+            # We need to split into a vector of lines:
+            data <- strsplit(data, "\n", fixed = TRUE)[[1]]
+            
+            # Extract the requested lines:
+            numberOfLines <- length(data)
+            numberOfPages <- ceiling(numberOfLines / linesPerPage)
+            
+            data <- list(
                 data = data, 
                 numberOfLines = numberOfLines, 
                 numberOfPages = numberOfPages
             )
         }
-    }
-    # If a table, allow additional options:
-    else if(data.table::is.data.table(data) || is.matrix(data)) {
-        
-        # Check whether the table is rugged:
-        if(data.table::is.data.table(data) && isDataTableRugged(data)) {
-            flattenDataTable(data)
-        }
-        
-        # Extract the requested lines:
-        numberOfLines <- nrow(data)
-        numberOfPages <- ceiling(numberOfLines / linesPerPage)
-        if(length(pageindex)) {
-            linesToExtract <- seq_len(linesPerPage) + rep((pageindex - 1) * linesPerPage, each = linesPerPage)
-            linesToExtract <- linesToExtract[linesToExtract <= numberOfLines]
-            data <- data[linesToExtract, ]
-        }
-        
-        # Convert to pretty view, which inserts spaces to obtain 
-        if(pretty) {
+        # If a table, allow additional options:
+        else if(data.table::is.data.table(data) || is.matrix(data)) {
+            
+            # Extract the requested lines:
+            numberOfLines <- nrow(data)
+            numberOfPages <- ceiling(numberOfLines / linesPerPage)
+            if(length(pageindex)) {
+                linesToExtract <- seq_len(linesPerPage) + rep((pageindex - 1) * linesPerPage, each = linesPerPage)
+                linesToExtract <- linesToExtract[linesToExtract <= numberOfLines]
+                data <- data[linesToExtract, ]
+            }
+            
+            # Convert to pretty view, which inserts spaces to obtain 
             data <- fixedWidthTable(
                 data, 
                 columnSeparator = columnSeparator, 
@@ -4738,6 +4724,7 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
                 na = na, 
                 list.pretty = list.pretty
             )
+                
             # In the pretty model, output a list containing the number of lines and the number of pages:
             data <- list(
                 data = data, 
@@ -4745,15 +4732,17 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
                 numberOfPages = numberOfPages
             )
         }
-    }
-    else {
-        # Add numberOfLines = 1 and numberOfPages = 1 to conform to the output used for tables in the GUI:
-        if(pretty) {
+        else {
+            # Add numberOfLines = 1 and numberOfPages = 1 to conform to the output used for tables in the GUI:
             if(length(data)) {
+                # Extract the requested lines:
+                numberOfLines <- length(data)
+                numberOfPages <- ceiling(numberOfLines / linesPerPage)
+                
                 data <- list(
-                    data = list(data), 
-                    numberOfLines = 1, 
-                    numberOfPages = 1
+                    data = data, 
+                    numberOfLines = numberOfLines, 
+                    numberOfPages = numberOfPages
                 )
             }
             else {
@@ -4763,7 +4752,6 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
                     numberOfPages = 0
                 )
             }
-            
         }
     }
     

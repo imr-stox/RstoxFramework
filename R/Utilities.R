@@ -84,6 +84,8 @@ flattenDataTable <- function(x, replace = NA) {
     x <- replaceEmptyInDataTable(x, replace = replace)
 
     x <- expandDT(x)
+    
+    return(x)
 }
 
 #' Function to convert data.table to fixed width:

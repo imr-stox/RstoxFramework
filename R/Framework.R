@@ -3412,8 +3412,10 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData,
     }
     
     # Store the changes:
-    if(!identical(processData, modifiedProcessData)) {
-        setProcessMemory(
+    #if(!identical(processData, modifiedProcessData)) {
+    # At 2021-01-14 this was eased to isTRUE(all.equal()) instead of identical, as identical may react to non-essential attributes:
+    if(!isTRUE(all.equal(processData, modifiedProcessData))) {
+            setProcessMemory(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -3811,8 +3813,7 @@ formatProcessDataOne <-  function(processDataOne) {
         
         
         #sp::proj4string(processDataOne) <- as.character(NA)
-        sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string")
-        
+        suppressWarnings(sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string"))
         
         #sp::CRS(x) <- as.character(NA)
     }
@@ -5351,7 +5352,8 @@ runProcesses <- function(
     output.file.type = c("default", "text", "RData", "rds"), 
     ...
 ) {
-
+    
+    
     # Open the project if not open:
     if(!isOpenProject(projectPath)) {
         # No need for Application here as runProcesses() should be used after opening the project in a Application:

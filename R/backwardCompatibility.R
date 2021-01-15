@@ -108,9 +108,9 @@ readProjectXMLToProjectDescription2.7 <- function(projectPath) {
     # Extract project attributes:
     list(
         TimeSaved = strftime(as.POSIXlt(attrs[["lastmodified"]], "UTC", "%Y/%m/%d %H:%M") , "%Y-%m-%dT%H:%M:%OS3Z"), 
-        FileVersion = "", 
+        #FileVersion = "", 
         RVersion = attrs[["rversion"]], 
-        RstoxFrameworkVersion = "",
+        RstoxPackageVersion = list(),
         RstoxFrameworkDependencies = data.table::data.table()
         #Template = attrs[["template"]]
     )

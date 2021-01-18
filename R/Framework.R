@@ -935,14 +935,17 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
     ))
     
     
+    browser()
     # Make sure all models are present (at least as empty models): 
     missingModels <- setdiff(getRstoxFrameworkDefinitions("stoxModelNames"), names(projectDescription))
     for(modelName in missingModels) {
         projectDescription[[modelName]] <- list()
     }
-   # Order the models:
+   # Order the models, but keep attributes:
     if(!identical(names(projectDescription), getRstoxFrameworkDefinitions("stoxModelNames"))) {
+        att <- attributes(projectDescription)
         projectDescription <- projectDescription[getRstoxFrameworkDefinitions("stoxModelNames")]
+        attributes(projectDescription) <- att
     }
     
     # Apply backward compatibility:
@@ -990,6 +993,7 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
     # Add the headers as attributes:
     projectDescription <- projectDescriptionList$project$models
     attrs <- projectDescriptionList$project[! names(projectDescriptionList$project) %in% "models"]
+    
     # Unlist all attributes, as these are vectors only and simplifyVector = FALSE was used when reading:
     attrs <- lapply(attrs, unlist)
     for(attrsName in names(attrs)) {
@@ -3806,6 +3810,8 @@ formatProcessDataOne <-  function(processDataOne) {
             # Add names:
             row.names(processDataOne) <- as.character(processDataOne@data$polygonName)
             processDataOne <- addCoordsNames(processDataOne)
+            
+            suppressWarnings(sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string"))
         }
         else {
             processDataOne <- getRstoxFrameworkDefinitions("emptyStratumPolygon")
@@ -3813,7 +3819,7 @@ formatProcessDataOne <-  function(processDataOne) {
         
         
         #sp::proj4string(processDataOne) <- as.character(NA)
-        suppressWarnings(sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string"))
+        #### suppressWarnings(sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string"))
         
         #sp::CRS(x) <- as.character(NA)
     }

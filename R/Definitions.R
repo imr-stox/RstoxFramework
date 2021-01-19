@@ -52,6 +52,9 @@ initiateRstoxFramework <- function(){
     memoryFileFormat_Spatial <- "rds"
     memoryFileFormat_List <- "rds"
     memoryFileFormat_Character <- "rds"
+    memoryFileFormat_Numeric <- "rds"
+    memoryFileFormat_Integer <- "rds"
+    memoryFileFormat_Logical <- "rds"
     memoryFileFormat_Other <- "rds"
     allMemoryFileFormats <- unique(
         c(
@@ -61,6 +64,9 @@ initiateRstoxFramework <- function(){
             memoryFileFormat_Spatial, 
             memoryFileFormat_List, 
             memoryFileFormat_Character, 
+            memoryFileFormat_Numeric, 
+            memoryFileFormat_Integer, 
+            memoryFileFormat_Logical, 
             memoryFileFormat_Other
         )
     )
@@ -240,7 +246,16 @@ initiateRstoxFramework <- function(){
         "data.table", 
         "matrix", 
         "character", 
+        "numeric", 
+        "integer", 
+        "logical", 
         "SpatialPolygonsDataFrame"
+    )
+    vectorClasses <- c(
+        "character", 
+        "numeric", 
+        "integer", 
+        "logical"
     )
     
     # Define code words for the start and end of files to write geojson data to, which are read into the project.json after being written for a project:

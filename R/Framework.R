@@ -4543,6 +4543,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     if(failed){
         return(FALSE)
     }
+    # If the processOutput has length (or is an empty SpatialPolygonsDataFrame):
     else if(length(processOutput) || "SpatialPolygonsDataFrame" %in% class(processOutput)){
         
         # Update the active process ID:
@@ -5258,6 +5259,10 @@ getProcessOutputTextFilePath <- function(
         filePathSansExt <- file.path(folderPath, fileNameSansExt)
         
         # Interpret the file type for text output:
+        print(class(processOutput[[1]]))
+        print(getRstoxFrameworkDefinitions("vectorClasses"))
+        print(class(processOutput[[1]]))
+        print(getRstoxFrameworkDefinitions("vectorClasses") %in% class(processOutput[[1]]))
         if(output.file.type == "text") {
             if(length(processOutput)){
                 if("SpatialPolygonsDataFrame" %in% class(processOutput[[1]])) {
@@ -5268,7 +5273,7 @@ getProcessOutputTextFilePath <- function(
                     # Set file extension:
                     ext <- "txt"
                 }
-                else if("matrix" %in% class(processOutput[[1]]) || "character" %in% class(processOutput[[1]])) {
+                else if("matrix" %in% class(processOutput[[1]]) || any(getRstoxFrameworkDefinitions("vectorClasses") %in% class(processOutput[[1]]))) {
                     # Set file extension:
                     ext <- "csv"
                 }
@@ -5384,13 +5389,13 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
             data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE)
         }
     }
-    else if("character" %in% class(processOutputOne)) {
+    else if(any(getRstoxFrameworkDefinitions("vectorClasses") %in% class(processOutputOne))) {
         # Write the file:
         if(length(processOutputOne) == 0) {
             cat("", file = filePath)
         }
         else {
-            writeLines(processOutputOne, filePath)
+            writeLines(as.character(processOutputOne), filePath)
         }
     }
     else {

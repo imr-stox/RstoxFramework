@@ -11,7 +11,8 @@ modifyProcess(
   newValues,
   archive = TRUE,
   add.defaults = FALSE,
-  purge.processData = FALSE
+  purge.processData = FALSE,
+  strict = TRUE
 )
 }
 \arguments{

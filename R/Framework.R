@@ -3313,22 +3313,33 @@ onlyValidCharactersInProcessnName <- function(newProcessName) {
     }
 }
 
-checkProcessNameAgainstExisting <- function(projectPath, newProcessName) {
+processNameExists <- function(processName, projectPath) {
     # Check the process names of the model:
     processIndexTable <- readProcessIndexTable(projectPath = projectPath)
-    if(newProcessName %in% processIndexTable$processName) {
-        #warning("StoX: The new process name (", newProcessName, ") cannot be identical to the name of an existing process #within the same model (", paste(processIndexTable$processName, collapse = ", "), ")")
-        #FALSE
-        stop("StoX: The new process name (", newProcessName, ") cannot be identical to the name of an existing process within the same model (", paste(processIndexTable$processName, collapse = ", "), ")")
-    }
-    else {
-        TRUE
-    }
+    exists <- processName %in% processIndexTable$processName
+    
+    return(exists)
 }
 
-validateProcessName <- function(projectPath, newProcessName) {
-    onlyValidCharactersInProcessnName(newProcessName) & checkProcessNameAgainstExisting(projectPath = projectPath, newProcessName = newProcessName)
+
+
+checkProcessName <- function(processName, projectPath, strict = TRUE) {
+    
+    # If the process name is not valid:
+    if(!onlyValidCharactersInProcessnName(processName) || processNameExists(processName, projectPath)) {
+        if(strict) {
+            stop("Invalid or already used process name \"", processName, "\" of project ", projectPath)
+        }
+        else {
+            newProcessName <- getNewDefaultProcessName(projectPath)
+            warning("Invalid or already used process name \"", processName, "\" of project ", projectPath, ". Channged from ", processName, " to ", newProcessName, ".")
+            processName <- newProcessName
+        }
+    }
+    
+    return(processName)
 }
+
 
 
 setListElements <- function(list, insertList, projectPath, modelName, processID) {
@@ -3405,7 +3416,7 @@ modifyFunctionName <- function(projectPath, modelName, processID, newFunctionNam
     }
     #process
 }
-modifyProcessName <- function(projectPath, modelName, processID, newProcessName, archive = TRUE) {
+modifyProcessName <- function(projectPath, modelName, processID, newProcessName, archive = TRUE, strict = TRUE) {
     
     # Get the current process name:
     processName <- getProcessName(
@@ -3417,7 +3428,21 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName,
     # Change the process name only if different from the existing:
     if(!identical(processName, newProcessName)) {
         # Validate the new process name (for invalid characters):
-        if(validateProcessName(projectPath = projectPath, newProcessName = newProcessName)) {
+        #validProcessName <- validateProcessName(
+        #    projectPath = projectPath, 
+        #    modelName = modelName, 
+        #    newProcessName = newProcessName, 
+        #    strict = TRUE
+        #)
+        
+        newProcessName <- checkProcessName(
+            newProcessName, 
+            projectPath = projectPath, 
+            strict = strict
+        )
+        
+        
+        #if(validProcessName) {
             setProcessMemory(
                 projectPath = projectPath, 
                 modelName = modelName, 
@@ -3426,7 +3451,7 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName,
                 argumentValue = newProcessName, 
                 archive = archive
             )
-        }
+        #}
         
         # Modify the process name also in the proces index table:
         modifyProcessNameInProcessIndexTable(projectPath, modelName, processName, newProcessName)
@@ -3721,7 +3746,7 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
 #' 
 #' @export
 #' 
-modifyProcess <- function(projectPath, modelName, processName, newValues, archive = TRUE, add.defaults = FALSE, purge.processData = FALSE) {
+modifyProcess <- function(projectPath, modelName, processName, newValues, archive = TRUE, add.defaults = FALSE, purge.processData = FALSE, strict = TRUE) {
     
     # The values of the process must be changed in the following order:
     # 1. Function name
@@ -3786,7 +3811,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
             modelName = modelName, 
             processID = processID, 
             newProcessName = newValues$processName, 
-            archive = archive
+            archive = archive, 
+            strict = strict
         )
     }
     
@@ -4074,10 +4100,13 @@ is.convertableToVector <- function(x, minLength = 1) {
 
 
 
-getNewDefaultProcessName <- function(projectPath, modelName) {
+getNewDefaultProcessName <- function(projectPath) {
     
     # Get all process names of the specified model:
-    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    #processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    
+    # Changed on 2021-01-19 to check against all processes of all models, as all process named should be unnique across models due to the possibility of gettinng output from processes in other models: 
+    processIndexTable <- readProcessIndexTable(projectPath, modelName = NULL)
     processNames <- processIndexTable$processName
     
     getNewDefaultName(processNames, getRstoxFrameworkDefinitions("process_Prefix"))
@@ -4156,23 +4185,30 @@ createProcessIDString <- function(integerID) {
 #' 
 #' @export
 #' 
-addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive = TRUE) {
+addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive = TRUE, strict = TRUE) {
     
     # Get a default new process name, or check the validity of the given process name:
     if(length(processName)) {
-        validProcessName <- validateProcessName(
+        # Use warning and replacement of the process name here instead of error, as addProcess() is used to build a project from project description, and we want it to be able to open, only with modified process name, whereas a GUI uses no processName, but rather adds that afterwards:
+        #validProcessName <- validateProcessName(
+        #    projectPath = projectPath, 
+        #    modelName = modelName, 
+        #    newProcessName = processName, 
+        #    strict = FALSE
+        #    
+        #)
+        #if(!validProcessName) {
+        #    warning("StoX: Process not added")
+        #}
+        
+        processName <- checkProcessName(
+            processName, 
             projectPath = projectPath, 
-            newProcessName = processName
+            strict = strict
         )
-        if(!validProcessName) {
-            stop("Process not added")
-        }
     }
     else {
-        processName <- getNewDefaultProcessName(
-            projectPath = projectPath, 
-            modelName = modelName
-        )
+        processName <- getNewDefaultProcessName(projectPath)
     }
     
     # Create an empty process:
@@ -4229,7 +4265,8 @@ addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE, 
                 values = projectMemory[[modelName]][[ind]], 
                 returnProcessTable = returnProcessTable, 
                 archive = archive, 
-                add.defaults = add.defaults
+                add.defaults = add.defaults, 
+                strict = FALSE # We want to be able to open a project without error, and rather rename processes.
             )
         }
     }
@@ -4262,7 +4299,7 @@ addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE, 
 #' 
 #' @export
 #' 
-addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable = TRUE, archive = TRUE, add.defaults = FALSE) {
+addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable = TRUE, archive = TRUE, add.defaults = FALSE, strict = TRUE) {
     
     # values must be a list:
     if(length(values) && !is.list(values)) {
@@ -4274,7 +4311,8 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
         projectPath = projectPath, 
         modelName = modelName, 
         processName = values$processName, 
-        archive = FALSE
+        archive = FALSE, 
+        strict = strict
     )
     
     # Apply the arguments:

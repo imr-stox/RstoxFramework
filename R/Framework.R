@@ -157,6 +157,46 @@ applyBackwardCompatibility <- function(projectDescription) {
         }
     }
     
+    # Rename parameters: 
+    for(packageName in names(backwardCompatibility)) {
+        for(renameParameterAction in backwardCompatibility[[packageName]]$renameParameter) {
+            run <- checkBackwardCompatibilityVersion(
+                backwardCompatibilityAction = renameParameterAction, 
+                projectDescription = projectDescription, 
+                packageName = packageName
+            )
+            if(run) {
+                projectDescription <- applyRenameParameter(
+                    renameParameterAction = renameParameterAction, 
+                    projectDescription = projectDescription, 
+                    packageName = packageName
+                )
+            }
+        }
+    }
+    
+    
+    browser()
+    
+    # Translate parameters: 
+    for(packageName in names(backwardCompatibility)) {
+        for(translateParameterAction in backwardCompatibility[[packageName]]$translateParameter) {
+            run <- checkBackwardCompatibilityVersion(
+                backwardCompatibilityAction = translateParameterAction, 
+                projectDescription = projectDescription, 
+                packageName = packageName
+            )
+            if(run) {
+                projectDescription <- applyTranslateParameter(
+                    translateParameterAction = translateParameterAction, 
+                    projectDescription = projectDescription, 
+                    packageName = packageName
+                )
+            }
+        }
+    }
+    
+    
     # Remname functions:
     for(packageName in names(backwardCompatibility)) {
         for(renameFunctionAction in backwardCompatibility[[packageName]]$renameFunction) {
@@ -238,6 +278,57 @@ applyRemoveParameter <- function(removeParameterAction, projectDescription, pack
 }
 
 
+applyRenameParameter <- function(renameParameterAction, projectDescription, packageName) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = renameParameterAction, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        
+        # Rename any relevant function input: 
+        projectDescription[[renameParameterAction$modelName]][[ind]]$functionInputs <- renameParameterInOneProcess(
+            projectDescription[[renameParameterAction$modelName]][[ind]]$functionInputs, 
+            renameParameterAction
+        )
+        
+        # Rename any relevant function parameter: 
+        projectDescription[[renameParameterAction$modelName]][[ind]]$functionParameters <- renameParameterInOneProcess(
+            projectDescription[[renameParameterAction$modelName]][[ind]]$functionParameters, 
+            renameParameterAction
+        )
+    }
+    
+    return(projectDescription)
+}
+
+
+applyTranslateParameter <- function(translateParameterAction, projectDescription, packageName) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = translateParameterAction, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        # Only relevant for function parameters, as function inputs are without possible values:
+        # Remove any relevant function parameter: 
+        projectDescription[[translateParameterAction$modelName]][[ind]]$functionParameters <- translateParameterInOneProcess(
+            projectDescription[[translateParameterAction$modelName]][[ind]]$functionParameters, 
+            translateParameterAction
+        )
+    }
+    
+    return(projectDescription)
+}
+
+
+
 applyRenameFunction <- function(renameFunctionAction, projectDescription, packageName) {
     
     # Get the indices at functions to apply the action to:
@@ -280,7 +371,29 @@ removeParameterInOneProcess <- function(list, removeParameterAction) {
     return(list)
 }
 
+renameParameterInOneProcess <- function(list, renameParameterAction) {
+    # Find the objects to remove:
+    toRename <- names(list) == renameParameterAction$parameterName
+    # Remove if any to remove:
+    if(any(toRename)) {
+        names(list)[names(list) == renameParameterAction$parameterName] <- renameParameterAction$newParameterName
+    }
+    return(list)
+}
 
+
+translateParameterInOneProcess <- function(list, removeParameterAction) {
+    
+    # Find the objects to remove:
+    toTranslate <- which(names(list) == removeParameterAction$parameterName)
+    # Remove if any to remove:
+    if(length(toTranslate) == 1) {
+        if(identical(list[[toTranslate]], removeParameterAction$value)) {
+            list[[toTranslate]] <- removeParameterAction$newValue
+        }
+    }
+    return(list)
+}
 
 
 

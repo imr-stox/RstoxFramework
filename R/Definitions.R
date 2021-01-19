@@ -324,6 +324,11 @@ initiateRstoxFramework <- function(){
         analysis = "Analysis", 
         report = "Report"
     )
+    stoxModelHierarchy <- c(
+        baseline = "baseline", 
+        analysis = "analysis", 
+        report = "report"
+    )
     stoxModelDescriptions <- c(
         baseline = "Baseline: The estimation model", 
         analysis = "Analysis: Processes that run Baseline for analysis, such as estimation of variation", 

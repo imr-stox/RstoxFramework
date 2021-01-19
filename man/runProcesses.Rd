@@ -12,6 +12,7 @@ runProcesses(
   msg = TRUE,
   save = TRUE,
   saveProcessData = TRUE,
+  Application = R.version.string,
   force.restart = FALSE,
   fileOutput = NULL,
   setUseProcessDataToTRUE = TRUE,
@@ -26,6 +27,8 @@ runProcesses(
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
 \item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
+
+\item{Application}{A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.}
 
 \item{replaceDataList}{A list named by the processes to replace output data for. See \code{\link{runProcess}}.}
 }

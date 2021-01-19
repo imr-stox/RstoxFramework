@@ -43,6 +43,8 @@ setNotRunning(projectPath, modelName)
 
 \item{type}{The type of file to read.}
 
+\item{Application}{A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.}
+
 \item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
 }
 \description{

@@ -21,7 +21,8 @@ isOpenProject(projectPath)
 
 readProjectDescription(
   projectPath,
-  type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats")
+  type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"),
+  verbose = FALSE
 )
 
 writeProjectDescription(
@@ -42,6 +43,8 @@ setNotRunning(projectPath, modelName)
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
 \item{type}{The type of file to read.}
+
+\item{Application}{A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.}
 
 \item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
 }

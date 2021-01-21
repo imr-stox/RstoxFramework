@@ -19,6 +19,8 @@
 \item{ow}{Logical: If TRUE overwrite the project.}
 
 \item{showWarnings}{Logical: If TRUE display warninigs when creting the project folders.}
+
+\item{Application}{A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.}
 }
 \description{
 All functions referring to a project, a model, a process or an output table use the same parameters, listed here.

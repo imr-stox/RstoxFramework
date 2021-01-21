@@ -10,7 +10,8 @@ addProcess(
   values = NULL,
   returnProcessTable = TRUE,
   archive = TRUE,
-  add.defaults = FALSE
+  add.defaults = FALSE,
+  strict = TRUE
 )
 }
 \arguments{

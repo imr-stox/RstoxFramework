@@ -489,6 +489,15 @@ getMemoryFileFormat <- function(x) {
     else if(is.character(x)) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Character")
     }
+    else if(is.numeric(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Numeric")
+    }
+    else if(is.integer(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Integer")
+    }
+    else if(is.logical(x)) {
+        memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_Logical")
+    }
     else if(is.list(x)) {
         memoryFileFormat <- getRstoxFrameworkDefinitions("memoryFileFormat_List")
     }

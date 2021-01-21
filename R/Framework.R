@@ -11,7 +11,8 @@
 #' @param tableName The name of the output table to get from the process.
 #' @param template A string naming the template to use when generating the project. See \code{getAvaiableTemplates} for a list of available templates.
 #' @param ow Logical: If TRUE overwrite the project.
-#' @param showWarnings      Logical: If TRUE display warninigs when creting the project folders.
+#' @param showWarnings Logical: If TRUE display warninigs when creting the project folders.
+#' @param Application A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.
 #' 
 #' @name general_arguments
 #' 
@@ -128,7 +129,7 @@ addMissingAttributes <- function(stoxFunctionAttributes, requestedFunctionAttrib
 
 
 
-applyBackwardCompatibility <- function(projectDescription) {
+applyBackwardCompatibility <- function(projectDescription, verbose = FALSE) {
     
     # Save the original projectDescription:
     originalProjectDescription <- projectDescription
@@ -136,55 +137,107 @@ applyBackwardCompatibility <- function(projectDescription) {
     #message(paste("Original file saved to", temp))
     save(projectDescription, file = temp)
     
-    # Get the backwardCompatibility specifications:
+    # Get the backward compatibility specifications:
     backwardCompatibility <- getRstoxFrameworkDefinitions("backwardCompatibility")
     
-    # Remove parameters:
-    for(packageName in names(backwardCompatibility)) {
-        for(removeParameterAction in backwardCompatibility[[packageName]]$removeParameter) {
-            run <- checkBackwardCompatibilityVersion(
-                backwardCompatibilityAction = removeParameterAction, 
-                projectDescription = projectDescription, 
-                packageName = packageName
-            )
-            if(run) {
-                projectDescription <- applyRemoveParameter(
-                    removeParameterAction = removeParameterAction, 
-                    projectDescription = projectDescription, 
-                    packageName = packageName
-                )
-            }
-        }
-    }
+    # Get the supported backward compatibility actions:
+    backwardCompatibilityActionNames <- getRstoxFrameworkDefinitions("backwardCompatibilityActionNames")
     
-    # Remname functions:
-    for(packageName in names(backwardCompatibility)) {
-        for(renameFunctionAction in backwardCompatibility[[packageName]]$renameFunction) {
-            run <- checkBackwardCompatibilityVersion(
-                backwardCompatibilityAction = renameFunctionAction, 
-                projectDescription = projectDescription, 
-                packageName = packageName
-            )
-            if(run) {
-                projectDescription <- applyRenameFunction(
-                    renameFunctionAction = renameFunctionAction, 
-                    projectDescription = projectDescription, 
-                    packageName = packageName
-                )
-            }
-        }
-    }
+    # Run the backward compatibility actions:
+    projectDescription <- applyBackwardCompatibilityActions(
+        backwardCompatibilityActionNames = backwardCompatibilityActionNames, 
+        backwardCompatibility = backwardCompatibility, 
+        projectDescription = projectDescription, 
+        verbose = verbose
+    )
     
     return(projectDescription)
 }
 
 
+
+applyBackwardCompatibilityActions <- function(
+    backwardCompatibilityActionNames, 
+    backwardCompatibility, 
+    projectDescription, 
+    verbose = FALSE
+) {
+    
+    
+    # Run through the supported backward compatibility action names:
+    for(backwardCompatibilityActionName in backwardCompatibilityActionNames) {
+        
+        # Run through the packcages with backward compatibility actions:
+        for(packageName in names(backwardCompatibility)) {
+            
+            # Run through the backward compatibility actions:
+            for(backwardCompatibilityAction in backwardCompatibility [[packageName]] [[backwardCompatibilityActionName]]) {
+                run <- checkBackwardCompatibilityVersion(
+                    backwardCompatibilityAction = backwardCompatibilityAction, 
+                    projectDescription = projectDescription, 
+                    packageName = packageName
+                )
+                
+                if(run) {
+                    # Apply the backwardCompatibilityAction:
+                    projectDescription <- applyBackwardCompatibilityAction(
+                        backwardCompatibilityActionName = backwardCompatibilityActionName, 
+                        backwardCompatibilityAction = backwardCompatibilityAction, 
+                        projectDescription = projectDescription, 
+                        packageName = packageName, 
+                        verbose = verbose
+                    )
+                }
+            }
+            
+        }
+        
+    }
+    
+    return(projectDescription)
+    
+}
+
+applyBackwardCompatibilityAction <- function(
+    backwardCompatibilityActionName, 
+    backwardCompatibilityAction, 
+    projectDescription, 
+    packageName, 
+    verbose = FALSE
+) {
+    # Construct the function name:
+    applyFunctionName <- paste0("apply", capitalizeFirstLetter(backwardCompatibilityActionName))
+    args <- list(
+        backwardCompatibilityAction, 
+        projectDescription = projectDescription, 
+        packageName = packageName, 
+        verbose = verbose
+    )
+    # Call the function:
+    projectDescription <- do.call(applyFunctionName, args)
+    
+    return(projectDescription)
+}
+
+
+
+
 interpretVersionString <- function(versionString) {
-    sub('.* ', '', versionString)
+    # Keep everything after first underscore:
+    versionString <- sub("^[^_| ]*_", "", versionString)
+    # Keep everything after first space:
+    versionString <- sub("^\\S+\\s+", '', versionString)
+    
+    return(versionString)
+}
+
+capitalizeFirstLetter <- function(x) {
+    gsub("(^[[:alpha:]])", "\\U\\1", x, perl=TRUE)
 }
 
 
 checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, projectDescription, packageName) {
+    
     
     # Skip if not a valid backwardCompatibilityAction:
     if(!checkActionKeys(backwardCompatibilityAction)) {
@@ -195,14 +248,15 @@ checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, proj
     # Get last saved version:
     lastSavedVersion <- attr(projectDescription, "RstoxPackageVersion")
     
-    # If the projectDescription does not have attrtibutes, always apply the conversion:
+    # If the projectDescription does not have attrtibutes, apply the conversion with a warning:
     if(length(lastSavedVersion)) {
-        # ... of the relevant package:
+        # ..of the relevant package:
         lastSavedVersion <- lastSavedVersion[startsWith(lastSavedVersion, packageName)]
         lastSavedVersion <- interpretVersionString(lastSavedVersion)
         convert <- lastSavedVersion < backwardCompatibilityAction$changeVersion
     }
     else {
+        warning("StoX: The project does not have attributes, and is assumed to be of an old form prior to SttoX 2.9.16. All backward compatibility actions are attempted.")
         convert <- TRUE
     }
     
@@ -210,27 +264,52 @@ checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, proj
 }
 
 
-applyRemoveParameter <- function(removeParameterAction, projectDescription, packageName) {
+#### These functions are run by applyBackwardCompatibilityAction(): 
+applyRenameFunction <- function(action, projectDescription, packageName, verbose = FALSE) {
     
     # Get the indices at functions to apply the action to:
     atFunctionName <- getIndicesAtFunctionName(
         projectDescription = projectDescription, 
-        action = removeParameterAction, 
+        action = action, 
+        packageName = packageName
+    )
+    
+    if(verbose && length(atFunctionName)) {
+        message("Backward compatibility: Renaming function ", action$functionName, " to ", action$newFunctionName)
+    }
+    
+    for(ind in atFunctionName) {
+        # Rename function: 
+        projectDescription[[action$modelName]][[ind]]$functionName <- action$newFunctionName
+    }
+    
+    return(projectDescription)
+}
+
+
+applyRemoveParameter <- function(action, projectDescription, packageName, verbose = FALSE) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = action, 
         packageName = packageName
     )
     
     for(ind in atFunctionName) {
         
         # Remove any relevant function input: 
-        projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs <- removeParameterInOneProcess(
-            projectDescription[[removeParameterAction$modelName]][[ind]]$functionInputs, 
-            removeParameterAction
+        projectDescription[[action$modelName]][[ind]]$functionInputs <- removeParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionInputs, 
+            action, 
+            verbose = verbose
         )
         
         # Remove any relevant function parameter: 
-        projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters <- removeParameterInOneProcess(
-            projectDescription[[removeParameterAction$modelName]][[ind]]$functionParameters, 
-            removeParameterAction
+        projectDescription[[action$modelName]][[ind]]$functionParameters <- removeParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionParameters, 
+            action, 
+            verbose = verbose
         )
     }
     
@@ -238,22 +317,84 @@ applyRemoveParameter <- function(removeParameterAction, projectDescription, pack
 }
 
 
-applyRenameFunction <- function(renameFunctionAction, projectDescription, packageName) {
+applyRenameParameter <- function(action, projectDescription, packageName, verbose = FALSE) {
     
     # Get the indices at functions to apply the action to:
     atFunctionName <- getIndicesAtFunctionName(
         projectDescription = projectDescription, 
-        action = renameFunctionAction, 
+        action = action, 
         packageName = packageName
     )
     
     for(ind in atFunctionName) {
-        # Rename function: 
-        projectDescription[[renameFunctionAction$modelName]][[ind]]$functionName <- renameFunctionAction$newFunctionName
+        
+        # Rename any relevant function input: 
+        projectDescription[[action$modelName]][[ind]]$functionInputs <- renameParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionInputs, 
+            action, 
+            verbose = verbose
+        )
+        
+        # Rename any relevant function parameter: 
+        projectDescription[[action$modelName]][[ind]]$functionParameters <- renameParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionParameters, 
+            action, 
+            verbose = verbose
+        )
     }
     
     return(projectDescription)
 }
+
+
+applyTranslateParameter <- function(action, projectDescription, packageName, verbose = FALSE) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = action, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        # Only relevant for function parameters, as function inputs are without possible values:
+        # Remove any relevant function parameter: 
+        projectDescription[[action$modelName]][[ind]]$functionParameters <- translateParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionParameters, 
+            action, 
+            verbose = verbose
+        )
+    }
+    
+    return(projectDescription)
+}
+
+
+
+
+applyRenameProcessData <- function(action, projectDescription, packageName, verbose = FALSE) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = action, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        
+        # Rename any relevant function parameter: 
+        projectDescription[[action$modelName]][[ind]]$processData <- renameProcessDataInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$processData, 
+            action, 
+            verbose = verbose
+        )
+    }
+    
+    return(projectDescription)
+}
+
+
 
 
 
@@ -270,19 +411,72 @@ getIndicesAtFunctionName <- function(projectDescription, action, packageName) {
 
 
 
-removeParameterInOneProcess <- function(list, removeParameterAction) {
+
+
+
+#### The actual backward compatibility actions are performed using the following functions:
+removeParameterInOneProcess <- function(list, action, verbose = FALSE) {
     # Find the objects to remove:
-    toRemove <- names(list) == removeParameterAction$parameterName
+    toRemove <- names(list) == action$parameterName
     # Remove if any to remove:
     if(any(toRemove)) {
+        if(verbose) {
+            message("Backward compatibility: Removing parameter ", action$parameterName, " in function ", action$functionName)
+        }
+        
+        # Remove the parameter:
         list <- list[!toRemove]
     }
     return(list)
 }
 
+renameParameterInOneProcess <- function(list, action, verbose = FALSE) {
+    # Find the objects to remove:
+    toRename <- names(list) == action$parameterName
+    # Remname if any to remove:
+    if(any(toRename)) {
+        if(verbose) {
+            message("Backward compatibility: Remnaming parameter ", action$parameterName, " to ", action$newParameterName, " in function ", action$functionName)
+        }
+        
+        # Remname the parameter:
+        names(list)[names(list) == action$parameterName] <- action$newParameterName
+    }
+    return(list)
+}
 
 
+translateParameterInOneProcess <- function(list, action, verbose = FALSE) {
+    
+    # Find the objects to remove:
+    toTranslate <- which(names(list) == action$parameterName)
+    # Remove if any to remove:
+    if(length(toTranslate) == 1) {
+        if(identical(list[[toTranslate]], action$value)) {
+            if(verbose) {
+                message("Backward compatibility: Translating parameter ", action$parameterName, " from ", action$value, " to ", action$newValue, " in function ", action$functionName)
+            }
+            
+            # Translate the parameter:
+            list[[toTranslate]] <- action$newValue
+        }
+    }
+    return(list)
+}
 
+renameProcessDataInOneProcess <- function(list, action, verbose = FALSE) {
+    # Rename if the processData has the old name:
+    if(names(list) == action$processDataName) {
+        if(verbose) {
+            message("Backward compatibility: Renaming process data ", action$processDataName, " to ", action$newProcessDataName, " in function ", action$functionName)
+        }
+        
+        # Rename the process data:
+        names(list) <- action$newProcessDataName
+    }
+    
+    return(list)
+}
 
 
 
@@ -537,6 +731,7 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' @param newProjectPath    The path to the copied StoX project.
 #' @param type              The type of file to save the project to.
 #' @param Application       A single string naming the application used when saving the project. Defaulted to R.version.string.
+#' @param verbose           Logical: If TRUE, print information to the console, e.g. about backward compatibility.
 #' 
 #' @name Projects
 #' 
@@ -615,7 +810,8 @@ openProject <- function(
     force = FALSE, 
     reset = FALSE, 
     type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), 
-    saveIfAlreadyOpen = FALSE
+    saveIfAlreadyOpen = FALSE, 
+    verbose = FALSE
 ) {
     
     # Resolve the projectPath:
@@ -658,6 +854,9 @@ openProject <- function(
         warning("StoX: The selected projectPath is not a StoX project or a folder/file inside a StoX project.")
         return(NULL)
     }
+    else if(verbose) {
+        message("Opening project ", projectPath)
+    }
     
     # Create the project session folder structure:
     createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
@@ -667,7 +866,7 @@ openProject <- function(
     
     # Read the project description file:
     #projectDescription <- readProjectDescription(projectPath, type = type)
-    temp <- readProjectDescription(projectPath, type = type)
+    temp <- readProjectDescription(projectPath, type = type, verbose = verbose)
     projectDescription <- temp$projectDescription
     saved <- temp$saved
     
@@ -894,7 +1093,7 @@ isOpenProject <- function(projectPath) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats")) {
+readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), verbose = FALSE) {
     # Read the project.RData or json file depending on the 'type':
     type <- match.arg(type)
     
@@ -923,6 +1122,7 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
             saved <- FALSE
         }
     }
+
     
     if(!file.exists(projectDescriptionFile)) {
         stop("StoX: The project description file ", projectDescriptionFile, " does not exist.")
@@ -941,19 +1141,27 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
         projectDescription[[modelName]] <- list()
     }
    # Order the models:
-    if(!identical(names(projectDescription), getRstoxFrameworkDefinitions("stoxModelNames"))) {
-        projectDescription <- projectDescription[getRstoxFrameworkDefinitions("stoxModelNames")]
+    if(!all(names(projectDescription) == getRstoxFrameworkDefinitions("stoxModelNames"))) {
+        projectDescription <- orderProjectDescription(projectDescription)
     }
     
     # Apply backward compatibility:
-    projectDescriptionAfterBackwardCompatibility <- applyBackwardCompatibility(projectDescription)
+    projectDescriptionAfterBackwardCompatibility <- applyBackwardCompatibility(projectDescription, verbose = verbose)
     
     # Set saved to TRUE if no backward compatibility actions were taken: 
     saved <- identical(projectDescription, projectDescriptionAfterBackwardCompatibility)
     #setSavedStatus(projectPath, status = saved)
-        
+    projectDescription <- projectDescriptionAfterBackwardCompatibility
+    
+    # Format the processes, ensuring correcct primitive types:
+    for(modelName in names(projectDescription)) {
+        for(processIndex in seq_along(projectDescription [[modelName]])) {
+            projectDescription [[modelName]] [[processIndex]] <- formatProcess(projectDescription [[modelName]] [[processIndex]])
+        }
+    }
+    
     # Introduce process IDs: 
-    projectDescription <- defineProcessIDs(projectDescriptionAfterBackwardCompatibility)
+    projectDescription <- defineProcessIDs(projectDescription)
     
     return(
         list(
@@ -995,16 +1203,6 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
     for(attrsName in names(attrs)) {
         attr(projectDescription, attrsName) <- attrs[[attrsName]]
     }
-    
-    
-    for(modelName in names(projectDescription)) {
-        for(processIndex in seq_along(projectDescription [[modelName]])) {
-            projectDescription [[modelName]] [[processIndex]] <- formatProcess(projectDescription [[modelName]] [[processIndex]])
-        }
-    }
-    
-        
-        
     
     ## Convert geojson to spatial object and list to data.table:
     #projectDescription <- convertProjectDescription(projectDescription)
@@ -1134,6 +1332,7 @@ JSON2processData <- function(JSON) {
 #' @rdname ProjectUtils
 #' 
 writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Application = R.version.string) {
+    
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
     
@@ -1143,11 +1342,11 @@ writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Appl
     }
     
     # Get full project description:
-    projectDescription <- getProjectMemoryData(projectPath, named.list = TRUE)
+    projectDescription <- getProjectMemoryData(projectPath, modelName = "all", named.list = TRUE)
     # Get the file to write it to:
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
     
-    # Unname the models (removing processIDs):
+    # Unname the processes (removing processIDs):
     projectDescription <- lapply(projectDescription, unname)
     
     # Add the attirbutes:
@@ -1238,10 +1437,27 @@ orderEachProcess <- function(projectDescription) {
         )
     )
     
+    # Reset attributes:
     attributes(projectDescription) <- att
     
     return(projectDescription)
 }
+
+
+orderProjectDescription <- function(projectDescription) {
+    # Store the attributes:
+    att <- attributes(projectDescription)
+    
+    # Order the project:
+    projectDescription <- projectDescription[getRstoxFrameworkDefinitions("stoxModelNames")]
+    
+    # Reset attributes, but keep the new names:
+    att$names <- names(projectDescription)
+    attributes(projectDescription) <- att
+    
+    return(projectDescription)
+}
+
 
 
 addProjectDescriptionAttributes <- function(projectDescription) {
@@ -2893,29 +3109,13 @@ getProcessAndFunctionNames <- function(projectPath, modelName = NULL, afterProce
     }
     
     # Subset the table to up until the reuqested beforeProcessID, if given:
-    if(length(beforeProcessID)) {
-        atProcessID <- which(beforeProcessID == processIndexTable$processID)
-        if(length(atProcessID) == 0) {
-            stop("The processID specified in 'beforeProcessID' does not exist in the model ", modelName, " of project ", projectPath, ".")
-        }
-        processIndexTable <- processIndexTable[seq_len(atProcessID - 1), ]
-        # Return an empty data.table if the processIndexTable is empty:
-        if(nrow(processIndexTable) == 0) {
-            return(data.table::data.table())
-        }
-    }
-    # Remove the table up until the reuqested afterProcessID, if given:
-    if(length(afterProcessID)) {
-        atProcessID <- which(afterProcessID == processIndexTable$processID)
-        if(length(atProcessID) == 0) {
-            stop("The processID specified in 'afterProcessID' does not exist in the model ", modelName, " of project ", projectPath, ".")
-        }
-        processIndexTable <- processIndexTable[- seq_len(atProcessID), ]
-        # Return an empty data.table if the processIndexTable is empty:
-        if(nrow(processIndexTable) == 0) {
-            return(data.table::data.table())
-        }
-    }
+    processIDs <- getProcessIDsFromBeforeAfter(
+        afterProcessID = afterProcessID, 
+        beforeProcessID = beforeProcessID, 
+        processIndexTable = processIndexTable
+    )
+    processIndices <- match(processIDs, processIndexTable$processID)
+    processIndexTable <- processIndexTable[processIndices, ]
     
     # Add the projectPath:
     processIndexTable[, projectPath := projectPath]
@@ -2933,6 +3133,33 @@ getProcessAndFunctionNames <- function(projectPath, modelName = NULL, afterProce
     
     return(processIndexTable)
 }
+
+getProcessIDsFromBeforeAfter <- function(afterProcessID = NULL, beforeProcessID = NULL, processIndexTable) {
+    # First get the model hierarchy. This enables us to search for processes in one model before the other: 
+    stoxModelHierarchy <- getRstoxFrameworkDefinitions("stoxModelHierarchy")
+    
+    # Get a vector of the process IDs ordered by model:
+    orderedProcessIDs <- unlist(lapply(stoxModelHierarchy, function(thisModelName) processIndexTable[modelName == thisModelName, processID]))
+    
+    if(length(beforeProcessID)) {
+        atProcessID <- which(beforeProcessID == orderedProcessIDs)
+        if(length(atProcessID) == 0) {
+            stop("The processID specified in 'beforeProcessID' does not exist in the project ", projectPath, ".")
+        }
+        orderedProcessIDs <- orderedProcessIDs[seq_len(atProcessID - 1)]
+    }
+    # Remove the table up until the reuqested afterProcessID, if given:
+    if(length(afterProcessID)) {
+        atProcessID <- which(afterProcessID == orderedProcessIDs)
+        if(length(atProcessID) == 0) {
+            stop("The processID specified in 'afterProcessID' does not exist in the project ", projectPath, ".")
+        }
+        orderedProcessIDs <- orderedProcessIDs[- seq_len(atProcessID)]
+    }
+    
+    return(orderedProcessIDs)
+}
+
 
 
 checkFunctionInput <- function(functionInput, functionInputDataType, processIndexTable) {
@@ -3098,9 +3325,9 @@ setFunctionName <- function(process, newFunctionName, add.defaults = FALSE) {
         areInputs <- isFunctionInput(names(defaults))
         
         if(!add.defaults) {
-            areNonEmpryString <- sapply(defaults, function(x) length(x) && is.character(x))
-            if(any(areNonEmpryString)) {
-                defaults[areNonEmpryString] <- lapply(defaults[areNonEmpryString], function(x) character(0))
+            areNonEmptyString <- sapply(defaults, function(x) length(x) && is.character(x))
+            if(any(areNonEmptyString)) {
+                defaults[areNonEmptyString] <- lapply(defaults[areNonEmptyString], function(x) character(0))
             }
         }
         # Split the defaults into function parameters and function inputs:
@@ -3136,22 +3363,33 @@ onlyValidCharactersInProcessnName <- function(newProcessName) {
     }
 }
 
-checkProcessNameAgainstExisting <- function(projectPath, newProcessName) {
+processNameExists <- function(processName, projectPath) {
     # Check the process names of the model:
     processIndexTable <- readProcessIndexTable(projectPath = projectPath)
-    if(newProcessName %in% processIndexTable$processName) {
-        #warning("StoX: The new process name (", newProcessName, ") cannot be identical to the name of an existing process #within the same model (", paste(processIndexTable$processName, collapse = ", "), ")")
-        #FALSE
-        stop("StoX: The new process name (", newProcessName, ") cannot be identical to the name of an existing process within the same model (", paste(processIndexTable$processName, collapse = ", "), ")")
-    }
-    else {
-        TRUE
-    }
+    exists <- processName %in% processIndexTable$processName
+    
+    return(exists)
 }
 
-validateProcessName <- function(projectPath, newProcessName) {
-    onlyValidCharactersInProcessnName(newProcessName) & checkProcessNameAgainstExisting(projectPath = projectPath, newProcessName = newProcessName)
+
+
+checkProcessName <- function(processName, projectPath, strict = TRUE) {
+    
+    # If the process name is not valid:
+    if(!onlyValidCharactersInProcessnName(processName) || processNameExists(processName, projectPath)) {
+        if(strict) {
+            stop("Invalid or already used process name \"", processName, "\" of project ", projectPath)
+        }
+        else {
+            newProcessName <- getNewDefaultProcessName(projectPath)
+            warning("Invalid or already used process name \"", processName, "\" of project ", projectPath, ". Channged from ", processName, " to ", newProcessName, ".")
+            processName <- newProcessName
+        }
+    }
+    
+    return(processName)
 }
+
 
 
 setListElements <- function(list, insertList, projectPath, modelName, processID) {
@@ -3228,7 +3466,7 @@ modifyFunctionName <- function(projectPath, modelName, processID, newFunctionNam
     }
     #process
 }
-modifyProcessName <- function(projectPath, modelName, processID, newProcessName, archive = TRUE) {
+modifyProcessName <- function(projectPath, modelName, processID, newProcessName, archive = TRUE, strict = TRUE) {
     
     # Get the current process name:
     processName <- getProcessName(
@@ -3240,7 +3478,21 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName,
     # Change the process name only if different from the existing:
     if(!identical(processName, newProcessName)) {
         # Validate the new process name (for invalid characters):
-        if(validateProcessName(projectPath = projectPath, newProcessName = newProcessName)) {
+        #validProcessName <- validateProcessName(
+        #    projectPath = projectPath, 
+        #    modelName = modelName, 
+        #    newProcessName = newProcessName, 
+        #    strict = TRUE
+        #)
+        
+        newProcessName <- checkProcessName(
+            newProcessName, 
+            projectPath = projectPath, 
+            strict = strict
+        )
+        
+        
+        #if(validProcessName) {
             setProcessMemory(
                 projectPath = projectPath, 
                 modelName = modelName, 
@@ -3249,7 +3501,7 @@ modifyProcessName <- function(projectPath, modelName, processID, newProcessName,
                 argumentValue = newProcessName, 
                 archive = archive
             )
-        }
+        #}
         
         # Modify the process name also in the proces index table:
         modifyProcessNameInProcessIndexTable(projectPath, modelName, processName, newProcessName)
@@ -3389,7 +3641,6 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
     #modifiedProcessParameters
 }
 modifyProcessData <- function(projectPath, modelName, processID, newProcessData, archive = TRUE, purge.processData = FALSE) {
-    
     # Get the process data:
     processData<- getProcessData(
         projectPath = projectPath, 
@@ -3415,7 +3666,7 @@ modifyProcessData <- function(projectPath, modelName, processID, newProcessData,
     #if(!identical(processData, modifiedProcessData)) {
     # At 2021-01-14 this was eased to isTRUE(all.equal()) instead of identical, as identical may react to non-essential attributes:
     if(!isTRUE(all.equal(processData, modifiedProcessData))) {
-            setProcessMemory(
+        setProcessMemory(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = processID, 
@@ -3544,7 +3795,7 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
 #' 
 #' @export
 #' 
-modifyProcess <- function(projectPath, modelName, processName, newValues, archive = TRUE, add.defaults = FALSE, purge.processData = FALSE) {
+modifyProcess <- function(projectPath, modelName, processName, newValues, archive = TRUE, add.defaults = FALSE, purge.processData = FALSE, strict = TRUE) {
     
     # The values of the process must be changed in the following order:
     # 1. Function name
@@ -3609,7 +3860,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
             modelName = modelName, 
             processID = processID, 
             newProcessName = newValues$processName, 
-            archive = archive
+            archive = archive, 
+            strict = strict
         )
     }
     
@@ -3704,9 +3956,9 @@ formatProcessParameters <-  function(processParameters) {
 }
 
 formatFunctionInputs <-  function(functionInputs) {
-    notCharacterOrEmpry <- sapply(functionInputs, function(x) length(x) && !is.character(x))
-    if(any(notCharacterOrEmpry)) {
-        functionInputs[notCharacterOrEmpry] <- lapply(functionInputs[notCharacterOrEmpry], as.character)
+    notCharacterOrEmpty <- sapply(functionInputs, function(x) length(x) && !is.character(x))
+    if(any(notCharacterOrEmpty)) {
+        functionInputs[notCharacterOrEmpty] <- lapply(functionInputs[notCharacterOrEmpty], as.character)
     }
     return(functionInputs)
 }
@@ -3789,6 +4041,7 @@ formatProcessData <-  function(processData) {
 
 formatProcessDataOne <-  function(processDataOne) {
     
+    
     if(!length(processDataOne)) {
         processDataOne <- data.table::data.table()
     }
@@ -3816,6 +4069,15 @@ formatProcessDataOne <-  function(processDataOne) {
         suppressWarnings(sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string"))
         
         #sp::CRS(x) <- as.character(NA)
+    }
+    # Support for project.RData files, which contained SpatialPolygonsDataFrame for the stratum polygons:
+    else if("SpatialPolygonsDataFrame" %in% class(processDataOne)) {
+        suppressWarnings(sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string"))
+        
+    }
+    # If a data.table:
+    else if(length(processDataOne) && data.table::is.data.table(processDataOne)) {
+        convertToPosixInDataTable(processDataOne)
     }
     # Otherwise try to convert to data.table:
     else if(length(processDataOne) && is.convertableToTable(processDataOne)) {
@@ -3897,10 +4159,13 @@ is.convertableToVector <- function(x, minLength = 1) {
 
 
 
-getNewDefaultProcessName <- function(projectPath, modelName) {
+getNewDefaultProcessName <- function(projectPath) {
     
     # Get all process names of the specified model:
-    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    #processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    
+    # Changed on 2021-01-19 to check against all processes of all models, as all process named should be unnique across models due to the possibility of gettinng output from processes in other models: 
+    processIndexTable <- readProcessIndexTable(projectPath, modelName = NULL)
     processNames <- processIndexTable$processName
     
     getNewDefaultName(processNames, getRstoxFrameworkDefinitions("process_Prefix"))
@@ -3979,23 +4244,30 @@ createProcessIDString <- function(integerID) {
 #' 
 #' @export
 #' 
-addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive = TRUE) {
+addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive = TRUE, strict = TRUE) {
     
     # Get a default new process name, or check the validity of the given process name:
     if(length(processName)) {
-        validProcessName <- validateProcessName(
+        # Use warning and replacement of the process name here instead of error, as addProcess() is used to build a project from project description, and we want it to be able to open, only with modified process name, whereas a GUI uses no processName, but rather adds that afterwards:
+        #validProcessName <- validateProcessName(
+        #    projectPath = projectPath, 
+        #    modelName = modelName, 
+        #    newProcessName = processName, 
+        #    strict = FALSE
+        #    
+        #)
+        #if(!validProcessName) {
+        #    warning("StoX: Process not added")
+        #}
+        
+        processName <- checkProcessName(
+            processName, 
             projectPath = projectPath, 
-            newProcessName = processName
+            strict = strict
         )
-        if(!validProcessName) {
-            stop("Process not added")
-        }
     }
     else {
-        processName <- getNewDefaultProcessName(
-            projectPath = projectPath, 
-            modelName = modelName
-        )
+        processName <- getNewDefaultProcessName(projectPath)
     }
     
     # Create an empty process:
@@ -4052,7 +4324,8 @@ addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE, 
                 values = projectMemory[[modelName]][[ind]], 
                 returnProcessTable = returnProcessTable, 
                 archive = archive, 
-                add.defaults = add.defaults
+                add.defaults = add.defaults, 
+                strict = FALSE # We want to be able to open a project without error, and rather rename processes.
             )
         }
     }
@@ -4085,7 +4358,7 @@ addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE, 
 #' 
 #' @export
 #' 
-addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable = TRUE, archive = TRUE, add.defaults = FALSE) {
+addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable = TRUE, archive = TRUE, add.defaults = FALSE, strict = TRUE) {
     
     # values must be a list:
     if(length(values) && !is.list(values)) {
@@ -4097,7 +4370,8 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
         projectPath = projectPath, 
         modelName = modelName, 
         processName = values$processName, 
-        archive = FALSE
+        archive = FALSE, 
+        strict = strict
     )
     
     # Apply the arguments:
@@ -4328,6 +4602,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     if(failed){
         return(FALSE)
     }
+    # If the processOutput has length (or is an empty SpatialPolygonsDataFrame):
     else if(length(processOutput) || "SpatialPolygonsDataFrame" %in% class(processOutput)){
         
         # Update the active process ID:
@@ -5053,7 +5328,7 @@ getProcessOutputTextFilePath <- function(
                     # Set file extension:
                     ext <- "txt"
                 }
-                else if("matrix" %in% class(processOutput[[1]]) || "character" %in% class(processOutput[[1]])) {
+                else if("matrix" %in% class(processOutput[[1]]) || any(getRstoxFrameworkDefinitions("vectorClasses") %in% class(processOutput[[1]]))) {
                     # Set file extension:
                     ext <- "csv"
                 }
@@ -5169,13 +5444,13 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
             data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE)
         }
     }
-    else if("character" %in% class(processOutputOne)) {
+    else if(any(getRstoxFrameworkDefinitions("vectorClasses") %in% class(processOutputOne))) {
         # Write the file:
         if(length(processOutputOne) == 0) {
             cat("", file = filePath)
         }
         else {
-            writeLines(processOutputOne, filePath)
+            writeLines(as.character(processOutputOne), filePath)
         }
     }
     else {
@@ -5344,7 +5619,7 @@ runProcesses <- function(
     modelName, 
     startProcess = 1, endProcess = Inf, 
     msg = TRUE, 
-    save = TRUE, saveProcessData = TRUE, 
+    save = TRUE, saveProcessData = TRUE, Application = R.version.string, 
     force.restart = FALSE, 
     fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, 
     replaceDataList = list(), 

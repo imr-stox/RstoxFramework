@@ -1235,7 +1235,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
                 projectPath = projectPath, 
                 modelName = modelName, 
                 processID = processID, 
-                newProcessName = newProcessName
+                newProcessName = newProcessName, 
+                strict = TRUE
             )
         }
         # Modify function name:
@@ -1633,6 +1634,9 @@ getParameterTablePossibleValues <- function(projectPath, modelName, processID, f
         # This results in the JSON string "[[],[],[]]" as is expected by the GUI:
         possibleValues <- rep(list(list()), length(columnNames))
     }
+    
+    # Ensure that the output is an unnnamed list, which will appear as array in JSON even for length 1:
+    possibleValues <- lapply(possibleValues, as.list)
     
     return(possibleValues)
 }

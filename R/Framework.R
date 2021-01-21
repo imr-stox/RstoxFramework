@@ -1088,6 +1088,7 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
             saved <- FALSE
         }
     }
+
     
     if(!file.exists(projectDescriptionFile)) {
         stop("StoX: The project description file ", projectDescriptionFile, " does not exist.")
@@ -1106,8 +1107,8 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
         projectDescription[[modelName]] <- list()
     }
    # Order the models:
-    if(!identical(names(projectDescription), getRstoxFrameworkDefinitions("stoxModelNames"))) {
-        projectDescription <- projectDescription[getRstoxFrameworkDefinitions("stoxModelNames")]
+    if(!all(names(projectDescription) == getRstoxFrameworkDefinitions("stoxModelNames"))) {
+        projectDescription <- orderProjectDescription(projectDescription)
     }
     
     # Apply backward compatibility:
@@ -1404,10 +1405,26 @@ orderEachProcess <- function(projectDescription) {
         )
     )
     
+    # Reset attributes:
     attributes(projectDescription) <- att
     
     return(projectDescription)
 }
+
+
+orderProjectDescription <- function(projectDescription) {
+    # Store the attributes:
+    att <- attributes(projectDescription)
+    
+    # Order the project:
+    projectDescription <- projectDescription[getRstoxFrameworkDefinitions("stoxModelNames")]
+    
+    # Reset attributes:
+    attributes(projectDescription) <- att
+    
+    return(projectDescription)
+}
+
 
 
 addProjectDescriptionAttributes <- function(projectDescription) {
@@ -5259,10 +5276,6 @@ getProcessOutputTextFilePath <- function(
         filePathSansExt <- file.path(folderPath, fileNameSansExt)
         
         # Interpret the file type for text output:
-        print(class(processOutput[[1]]))
-        print(getRstoxFrameworkDefinitions("vectorClasses"))
-        print(class(processOutput[[1]]))
-        print(getRstoxFrameworkDefinitions("vectorClasses") %in% class(processOutput[[1]]))
         if(output.file.type == "text") {
             if(length(processOutput)){
                 if("SpatialPolygonsDataFrame" %in% class(processOutput[[1]])) {

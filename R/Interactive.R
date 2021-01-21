@@ -68,7 +68,7 @@ modifyAssignment <- function(Stratum, PSU, Haul, projectPath, modelName, process
         warning("StoX: The acoustic PSU with name ", PSU, " does not exist. Please choose a different PSU name or add the PSU using DefineAcousticPSU.")
     }
     
-    # Add the hauls:
+    # Add or remove the hauls (either using assignment_addHaul() or assignment_removeHaul()):
     utilityFunctionName <- paste0("assignment_", action[1], "Haul")
     BioticAssignment <- do.call(
         utilityFunctionName, 
@@ -110,12 +110,20 @@ assignment_addHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     toAdd <- data.table::data.table(
         Stratum = Stratum, 
         PSU = PSU, 
-        # Changed to add NA as Layer. The Layers are added later in RstoxBase::DefineBioticAssignment():
+        # Changed to add NA as Layer. The Layers are added when RstoxBase::DefineBioticAssignment() is run:
         #Layer = Layer, 
         Layer = NA, 
         Haul = Haul, 
         WeightingFactor = 1
     )
+    # If the PSU does not have any assignments it is still present with Haul = NA. If this is the case, remove that row before rbinnding, as such a row implies no assigned hauls:
+    #atThisPSU <- BioticAssignment$Stratum == Stratum & BioticAssignment$PSU == PSU
+    atThisPSU <- BioticAssignment$PSU == PSU
+    numberOfAssignments <- sum(atThisPSU)
+    if(numberOfAssignments == 1) {
+        BioticAssignment <- BioticAssignment[!atThisPSU, ]
+    }
+    # Add the new assignment:
     BioticAssignment <- rbind(
         BioticAssignment, 
         toAdd
@@ -123,7 +131,7 @@ assignment_addHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     
     # Order the BioticAssignment:
     #setorderv(BioticAssignment, cols = c("PSU", "Layer", "Haul"), na.last = TRUE)
-    # Format the output:
+    # Format the output, also ordering by PSUs:
     RstoxBase::formatOutput(BioticAssignment, dataType = "BioticAssignment", keep.all = FALSE)
     
     return(BioticAssignment)
@@ -137,7 +145,7 @@ assignment_removeHaul <- function(Stratum, PSU, Haul, BioticAssignment) {
     #atPSU <- BioticAssignment$PSU %in% PSU
     #atLayer <- BioticAssignment$Layer  %in% Layer
     #at <- which(atPSU & atLayer)
-    at <- BioticAssignment$PSU %in% PSU
+    at <- which(BioticAssignment$PSU %in% PSU)
     
     # Get the indices in 'at' to remove:
     atHauls <- BioticAssignment[at, ]$Haul %in% Haul
@@ -145,7 +153,23 @@ assignment_removeHaul <- function(Stratum, PSU, Haul, BioticAssignment) {
     # Remove the hauls:
     BioticAssignment <- BioticAssignment[-at[atHauls], ]
     
-    # Format the output:
+    # If all Hauls were removed add a row with Haul = NA to keep the PSU in the data:
+    if(!sum(BioticAssignment$PSU == PSU)) {
+        dummyRowWithNAHaul <- data.table::data.table(
+            Stratum = Stratum, 
+            PSU = PSU, 
+            Layer = NA, 
+            Haul = NA, 
+            WeightingFactor = 1
+        )
+        # Add the row with Haul = NA:
+        BioticAssignment <- rbind(
+            BioticAssignment, 
+            dummyRowWithNAHaul
+        )
+    }
+
+    # Format the output, also ordering by PSUs:
     RstoxBase::formatOutput(BioticAssignment, dataType = "BioticAssignment", keep.all = FALSE)
     
     return(BioticAssignment)

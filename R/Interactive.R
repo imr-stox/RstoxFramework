@@ -454,7 +454,8 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
         # Add "x", "y" as column names of the coords, since readOGR() does not do this:
         stratum <- addCoordsNames(stratum)
         # added by aasmund: Set projection to empty by default, rbind will then work.
-        stratum@proj4string <- sp::CRS()
+        #stratum@proj4string <- sp::CRS()
+        suppressWarnings(sp::proj4string(stratum) <- RstoxBase::getRstoxBaseDefinitions("proj4string"))
     }
     
     # Add the new strata, but check that the stratum names are not in use:

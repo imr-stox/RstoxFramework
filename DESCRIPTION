@@ -49,7 +49,7 @@ Imports:
     sf (>= 0.9.0),
     xml2 (>= 1.2.2),
     stringr (>= 1.0.0),
-    RstoxData (>= 1.0.23),
+    RstoxData (>= 1.0.24),
     RstoxBase (>= 1.2.43)
 Suggests: 
     testthat

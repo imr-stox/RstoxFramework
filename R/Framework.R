@@ -858,17 +858,17 @@ openProject <- function(
         message("Opening project ", projectPath)
     }
     
-    # Create the project session folder structure:
-    createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
-    
-    # Set the active process ID to 0 for all models:
-    initiateActiveProcessID(projectPath)
-    
     # Read the project description file:
     #projectDescription <- readProjectDescription(projectPath, type = type)
     temp <- readProjectDescription(projectPath, type = type, verbose = verbose)
     projectDescription <- temp$projectDescription
     saved <- temp$saved
+    
+    # Create the project session folder structure:
+    createProjectSessionFolderStructure(projectPath, showWarnings = showWarnings)
+    
+    # Set the active process ID to 0 for all models:
+    initiateActiveProcessID(projectPath)
     
     # Set the project memory:
     temp <- addProcesses(
@@ -1134,6 +1134,16 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
         projectDescriptionFile = projectDescriptionFile
     ))
     
+    # Warning if not official:
+    if(!attr(projectDescription, "AllOfficialRstoxPackageVersion")) {
+        warning(
+            "StoX: The project was saved with one or more non-official Rstox package versions (", 
+            "Used: ", 
+            paste(attr(projectDescription, "RstoxPackageVersion"), collapse = ", "), 
+            ". Oficical: ", 
+            paste(attr(projectDescription, "OfficalRstoxPackageVersion"), collapse = ", "), 
+            ".) This implies that reproducibility is not guaranteed.")
+    }
     
     # Make sure all models are present (at least as empty models): 
     missingModels <- setdiff(getRstoxFrameworkDefinitions("stoxModelNames"), names(projectDescription))
@@ -2664,7 +2674,7 @@ readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NUL
             endProcessNumeric <- startProcessNumeric
         }
         
-        # Allow for a vector of start processes, in which case the earlies is selected (and the latest end process):
+        # Allow for a vector of start processes, in which case the earliest is selected (and the latest end process):
         startProcessNumeric <- min(startProcessNumeric)
         endProcessNumeric <- max(endProcessNumeric)
         

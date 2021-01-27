@@ -1218,7 +1218,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     
     # Parse the value (this takes care of converting true to TRUE, interpret integers and strings, and even to parse JSON strings to R objects):
     #value <- parseParameter(value)
-    value <- jsonlite::fromJSON(value, simplifyVector = FALSE)
+    #value <- jsonlite::fromJSON(value, simplifyVector = FALSE)
+    value <- parseParameter(value, simplifyVector = FALSE)
     
     # The flag updateHelp is TRUE only if the functionName is changed:
     updateHelp <- FALSE

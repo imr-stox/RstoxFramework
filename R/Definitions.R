@@ -26,8 +26,8 @@ initiateRstoxFramework <- function(){
     ##### Packages: #####
     officialStoxLibraryPackages <- c(
         "RstoxBase", 
-        "RstoxData"
-        #"RstoxFDA"
+        "RstoxData", 
+        "RstoxFDA"
     )
     # Remove non-installed packages (typically packcages that are suggests):
     officialStoxLibraryPackages <- intersect(

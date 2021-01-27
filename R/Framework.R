@@ -1137,12 +1137,12 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
     # Warning if not official:
     if(!attr(projectDescription, "AllOfficialRstoxPackageVersion")) {
         warning(
-            "StoX: The project was saved with one or more non-official Rstox package versions (", 
+            "StoX: The project was saved with unofficial Rstox package versions. This implies that reproducibility is not guaranteed. (", 
             "Used: ", 
             paste(attr(projectDescription, "RstoxPackageVersion"), collapse = ", "), 
             ". Oficical: ", 
             paste(attr(projectDescription, "OfficalRstoxPackageVersion"), collapse = ", "), 
-            ".) This implies that reproducibility is not guaranteed.")
+            ".)")
     }
     
     # Make sure all models are present (at least as empty models): 
@@ -4550,6 +4550,9 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     process <- functionArguments$process
     functionArguments <- functionArguments$functionArguments
     
+    # Discard empty function arguments. This enables the "argument ___ is missing, with no default" error in R:
+    functionArguments <- functionArguments[lengths(functionArguments) > 0]
+    
     # Try running the function, and return FALSE if failing:
     failed <- FALSE
     if(msg) {
@@ -4612,8 +4615,8 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     if(failed){
         return(FALSE)
     }
-    # If the processOutput has length (or is an empty SpatialPolygonsDataFrame):
-    else if(length(processOutput) || "SpatialPolygonsDataFrame" %in% class(processOutput)){
+    # If the processOutput has length (or is an empty SpatialPolygonsDataFrame) or empty data.table:
+    else if(length(processOutput) || any(c("data.table", "SpatialPolygonsDataFrame") %in% class(processOutput))){
         
         # Update the active process ID:
         writeActiveProcessID(projectPath, modelName, processID, processDirty = FALSE)

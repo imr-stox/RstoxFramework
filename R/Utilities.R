@@ -649,3 +649,13 @@ expandDT <- function(DT, toExpand = NULL) {
     DT
 }
 
+as.list1 <- function(x) {
+    if(!length(x) && !is.list(x) && is.vector(x)) {
+        x <- list()
+    }
+    if(length(x) == 1 && !is.list(x) && is.vector(x)) {
+        x <- list(x)
+    }
+    
+    return(x)
+}

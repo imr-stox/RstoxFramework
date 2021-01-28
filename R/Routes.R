@@ -1218,7 +1218,8 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     
     # Parse the value (this takes care of converting true to TRUE, interpret integers and strings, and even to parse JSON strings to R objects):
     #value <- parseParameter(value)
-    value <- jsonlite::fromJSON(value, simplifyVector = FALSE)
+    #value <- jsonlite::fromJSON(value, simplifyVector = FALSE)
+    value <- parseParameter(value, simplifyVector = FALSE)
     
     # The flag updateHelp is TRUE only if the functionName is changed:
     updateHelp <- FALSE
@@ -1505,7 +1506,7 @@ getFilterOptionsAll <- function(projectPath, modelName, processID, include.numer
     
     # Add the fields level:
     output <- list(
-        tableNames = names(output),
+        tableNames = as.list1(names(output)),
         allFields = output
     )
     
@@ -1610,7 +1611,7 @@ getParameterVariableTypes <- function(projectPath, modelName, processID, format)
 }
     
 # Get the possible values of a parameter table:
-getParameterTablePossibleValues <- function(projectPath, modelName, processID, format, stopIfEmptyPossibleValues = FALSE) {
+getParameterTablePossibleValues <- function(projectPath, modelName, processID, format, stopIfEmptyPossibleValues = FALSE, length1ToList = FALSE) {
     possibleValues <- getParameterFormatElement(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -1634,7 +1635,12 @@ getParameterTablePossibleValues <- function(projectPath, modelName, processID, f
         # This results in the JSON string "[[],[],[]]" as is expected by the GUI:
         possibleValues <- rep(list(list()), length(columnNames))
     }
-    
+    else {
+        # If only one element, wrap to a list to make sure the array is kept when converting to JSON with auto_unbox = TRUE:
+        if(length1ToList) {
+            possibleValues <- lapply(possibleValues, as.list1)
+        }
+    }
     # Ensure that the output is an unnnamed list, which will appear as array in JSON even for length 1:
     possibleValues <- lapply(possibleValues, as.list)
     
@@ -1642,7 +1648,7 @@ getParameterTablePossibleValues <- function(projectPath, modelName, processID, f
 }
 
 # Get the possible values of a parameter table:
-getParameterVectorPossibleValues <- function(projectPath, modelName, processID, format, stopIfEmptyPossibleValues = FALSE) {
+getParameterVectorPossibleValues <- function(projectPath, modelName, processID, format, stopIfEmptyPossibleValues = FALSE, length1ToList = FALSE) {
     possibleValues <- getParameterFormatElement(
         projectPath = projectPath, 
         modelName = modelName, 
@@ -1650,6 +1656,7 @@ getParameterVectorPossibleValues <- function(projectPath, modelName, processID, 
         format = format, 
         element = "possibleValues"
     )
+    
     if(!length(possibleValues)) {
         warnText <- paste0("StoX: One or more input processes of the process ", getProcessName(projectPath, modelName, processID), " have not been run.")
         if(stopIfEmptyPossibleValues) {
@@ -1659,6 +1666,12 @@ getParameterVectorPossibleValues <- function(projectPath, modelName, processID, 
         #    warning(warnText)
         #}
         possibleValues <- list()
+    }
+    else {
+        # If only one element, wrap to a list to make sure the array is kept when converting to JSON with auto_unbox = TRUE:
+        if(length1ToList) {
+            possibleValues <- as.list1(possibleValues)
+        }
     }
     
     return(possibleValues)
@@ -1700,7 +1713,8 @@ getParameterTableInfo <- function(projectPath, modelName, processID, format, sto
             modelName = modelName, 
             processID = processID, 
             format = format, 
-            stopIfEmptyPossibleValues = stopIfEmptyPossibleValues
+            stopIfEmptyPossibleValues = stopIfEmptyPossibleValues, 
+            length1ToList = TRUE
         )
     )
 }
@@ -1735,7 +1749,8 @@ getParameterVectorInfo <- function(projectPath, modelName, processID, format, st
             modelName = modelName, 
             processID = processID, 
             format = format, 
-            stopIfEmptyPossibleValues = stopIfEmptyPossibleValues
+            stopIfEmptyPossibleValues = stopIfEmptyPossibleValues, 
+            length1ToList = TRUE
         )
     )
 }

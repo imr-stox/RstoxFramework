@@ -11,7 +11,8 @@ stoxFunctionAttributes <- list(
         functionCategory = "analysis", 
         functionOutputDataType = "BootstrapData", 
         functionParameterFormat = list(
-            BootstrapMethodTable = "bootstrapMethodTable"
+            BootstrapMethodTable = "bootstrapMethodTable", 
+            OutputProcesses = "outputProcesses"
         )
     ), 
     
@@ -73,8 +74,8 @@ processPropertyFormats <- list(
         class = "table", 
         title = "Define the bootstrap method",
         columnNames = c(
-            "ProcessName", 
             "ResampleFunction", 
+            "ProcessName", 
             #"ResampleBy", 
             "Seed"
         ), 
@@ -87,8 +88,8 @@ processPropertyFormats <- list(
         possibleValues = function(projectPath) {
             # Must be an unnamed list:
             possibleValues = list(
-                getResamplableProcesses(projectPath), 
                 getResampleFunctions(),
+                getResamplableProcesses(projectPath), 
                 NULL
             )
         }
@@ -111,6 +112,22 @@ processPropertyFormats <- list(
         title = "One or more variables to group super-individuals by when reporting BootstrapData", 
         possibleValues = function(BootstrapData, BaselineProcess) {
             sort(setdiff(names(BootstrapData[[BaselineProcess]]), "BootstrapID"))
+        }, 
+        variableTypes <- "character"
+    ), 
+    
+    outputProcesses = list(
+        class = "vector", 
+        title = "One or more processes to store in BootstrapData", 
+        possibleValues = function(projectPath, BootstrapMethodTable) {
+            # Get the reasmpled processes:
+            reasmpledProcesses <- BootstrapMethodTable$ProcessName
+            
+            # Get the process table:
+            processIndexTable <- readProcessIndexTable(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = Inf)
+            
+            # Must be an unnamed list:
+            possibleValues = as.list(processIndexTable$processName)
         }, 
         variableTypes <- "character"
     )

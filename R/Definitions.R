@@ -121,6 +121,8 @@ initiateRstoxFramework <- function(){
     
     # Define the supported backward compatibility actions:
     backwardCompatibilityActionNames <- c(
+        "renameAttribute", 
+        "addAttribute", 
         "renameFunction", 
         "removeParameter", 
         "renameParameter", 
@@ -825,11 +827,12 @@ getRstoxFrameworkDefinitions <- function(name = NULL, ...) {
 
 # Function for reading the backwardCompatibility object of a package.
 getBackwardCompatibility <- function(packageName) {
-    
-    backwardCompatibility <- tryCatch(
-        getExportedValue(packageName, "backwardCompatibility"), 
-        error = function(err) NULL
-    )
+    if(packageName != "RstoxFramework") {
+        backwardCompatibility <- tryCatch(
+            getExportedValue(packageName, "backwardCompatibility"), 
+            error = function(err) NULL
+        )
+    }
     
     backwardCompatibility
 }

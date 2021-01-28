@@ -144,6 +144,7 @@ applyBackwardCompatibility <- function(projectDescription, verbose = FALSE) {
     backwardCompatibilityActionNames <- getRstoxFrameworkDefinitions("backwardCompatibilityActionNames")
     
     # Run the backward compatibility actions:
+    
     projectDescription <- applyBackwardCompatibilityActions(
         backwardCompatibilityActionNames = backwardCompatibilityActionNames, 
         backwardCompatibility = backwardCompatibility, 
@@ -265,6 +266,46 @@ checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, proj
 
 
 #### These functions are run by applyBackwardCompatibilityAction(): 
+
+applyRenameAttribute <- function(action, projectDescription, packageName, verbose = FALSE) {
+    # Get the indices at functions to apply the action to:
+    att <- attributes(projectDescription)
+    
+    if(action$attributeName %in% names(att)) {
+        if(verbose) {
+            message("Backward compatibility: Renaming attribute ", action$attributeName, " to ", action$newAttributeName)
+        }
+        # Add the new attribute name:
+        att[[action$newAttributeName]] <- att[[action$attributeName]]
+        # Delete the old:
+        att[[action$attributeName]] <- NULL
+        # Add the moodified attributes:
+        attributes(projectDescription) <- att
+    }
+    
+    return(projectDescription)
+}
+
+
+
+applyAddAttribute <- function(action, projectDescription, packageName, verbose = FALSE) {
+    # Get the indices at functions to apply the action to:
+    att <- attributes(projectDescription)
+    
+    if(!action$attributeName %in% names(att)) {
+        if(verbose) {
+            message("Backward compatibility: Adding attribute ", action$attributeName, " = ", action$attributeValue)
+        }
+        # Add the new attribute name:
+        attr(projectDescription, action$attributeName) <- action$attributeValue
+        
+    }
+    
+    return(projectDescription)
+}
+
+
+
 applyRenameFunction <- function(action, projectDescription, packageName, verbose = FALSE) {
     
     # Get the indices at functions to apply the action to:
@@ -481,17 +522,21 @@ renameProcessDataInOneProcess <- function(list, action, verbose = FALSE) {
 
 
 checkActionKeys <- function(action) {
-    required <- c(
+    required_function <- c(
         "changeVersion",
         "functionName",
         "modelName"
     )
+    required_attribute <- c(
+        "changeVersion",
+        "attributeName"
+    )
     
     # Check whether all required elements are present:
-    allPresent <- all(required %in% names(action))
+    allPresent <- all(required_function %in% names(action)) || all(required_attribute %in% names(action))
     
     if(!allPresent) {
-        warning("The following action of package ", action$packageName, "does not contain all required elements (", paste(required, collapse = ", "), "): \n", paste("\t", names(action), action, sep = ": ", collapse = "\n"))
+        warning("The following action of package ", action$packageName, "does not contain all required elements (", paste(required_function, collapse = ", "), " or ", paste(required_attribute, collapse = ", "), "): \n", paste("\t", names(action), action, sep = ": ", collapse = "\n"))
     }
     
     return(allPresent)
@@ -1134,17 +1179,6 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
         projectDescriptionFile = projectDescriptionFile
     ))
     
-    # Warning if not official:
-    if(!attr(projectDescription, "AllOfficialRstoxPackageVersion")) {
-        warning(
-            "StoX: The project was saved with unofficial Rstox package versions. This implies that reproducibility is not guaranteed. (", 
-            "Used: ", 
-            paste(attr(projectDescription, "RstoxPackageVersion"), collapse = ", "), 
-            ". Oficical: ", 
-            paste(attr(projectDescription, "OfficalRstoxPackageVersion"), collapse = ", "), 
-            ".)")
-    }
-    
     # Make sure all models are present (at least as empty models): 
     missingModels <- setdiff(getRstoxFrameworkDefinitions("stoxModelNames"), names(projectDescription))
     for(modelName in missingModels) {
@@ -1157,11 +1191,23 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
     
     # Apply backward compatibility:
     projectDescriptionAfterBackwardCompatibility <- applyBackwardCompatibility(projectDescription, verbose = verbose)
-    
     # Set saved to TRUE if no backward compatibility actions were taken: 
     saved <- identical(projectDescription, projectDescriptionAfterBackwardCompatibility)
     #setSavedStatus(projectPath, status = saved)
     projectDescription <- projectDescriptionAfterBackwardCompatibility
+    
+    # Warning if not certified Rstox packages:
+    if(!attr(projectDescription, "AllCertifiedRstoxPackageVersion")) {
+        warning(
+            "StoX: The project was saved with uncertified Rstox package versions. This implies that reproducibility is not guaranteed. (", 
+            "Used: ", 
+            paste(attr(projectDescription, "RstoxPackageVersion"), collapse = ", "), 
+            ". Certified: ", 
+            paste(attr(projectDescription, "CertifiedRstoxPackageVersion"), collapse = ", "), 
+            ".)"
+        )
+    }
+    
     
     # Format the processes, ensuring correcct primitive types:
     for(modelName in names(projectDescription)) {
@@ -1401,8 +1447,9 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
             TimeSaved = attr(projectDescription, "TimeSaved"), 
             RVersion = attr(projectDescription, "RVersion"),  
             RstoxPackageVersion = attr(projectDescription, "RstoxPackageVersion"), 
-            OfficalRstoxPackageVersion = attr(projectDescription, "OfficalRstoxPackageVersion"), 
-            AllOfficialRstoxPackageVersion = attr(projectDescription, "AllOfficialRstoxPackageVersion"), 
+            CertifiedRstoxPackageVersion = attr(projectDescription, "CertifiedRstoxPackageVersion"), 
+            AllCertifiedRstoxPackageVersion = attr(projectDescription, "AllCertifiedRstoxPackageVersion"), 
+            OfficialRstoxFrameworkVersion = isOfficialRstoxFrameworkVersion(),
             DependentPackageVersion = attr(projectDescription, "DependentPackageVersion"), 
             Application = Application, 
             models = projectDescription # Do we need to remove the attributes???
@@ -1433,6 +1480,14 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
     # 5. Write the validated json to file: 
     write(json, projectDescriptionFile) 
 }
+
+
+isOfficialRstoxFrameworkVersion <- function() {
+    StoXVersion <- attr(getOfficialRstoxPackageVersion(), "StoX")
+    officialRstoxFrameworkVersion <- endsWith(StoXVersion, ".0")
+    return(officialRstoxFrameworkVersion)
+}
+
 
 orderEachProcess <- function(projectDescription) {
     # Store the attributes:
@@ -1475,22 +1530,22 @@ addProjectDescriptionAttributes <- function(projectDescription) {
     # Get packcage versions as strings "PACKAGENAME vPACKAGEVERSION":
     DependentPackageVersion <- getDependentPackageVersion()
     
-    # Get the official Rstox package versions:
-    officialRstoxPackageVersionList <- getOfficialRstoxPackageVersion(list.out = TRUE)
+    # Get the certified Rstox package versions:
+    certifiedRstoxPackageVersionList <- getOfficialRstoxPackageVersion(list.out = TRUE)
     
     
     # Paste the package name and version_
-    OfficalRstoxPackageVersion <- getPackageNameAndVersionString(
-        officialRstoxPackageVersionList$packageName, 
-        officialRstoxPackageVersionList$version
+    CertifiedRstoxPackageVersion <- getPackageNameAndVersionString(
+        certifiedRstoxPackageVersionList$packageName, 
+        certifiedRstoxPackageVersionList$version
     )
     
     # Get installed versions:
-    InstalledRstoxPackageVersion <- getPackageVersion(officialRstoxPackageVersionList$packageName, only.version = FALSE)
+    InstalledRstoxPackageVersion <- getPackageVersion(certifiedRstoxPackageVersionList$packageName, only.version = FALSE)
     
-    # Get the all official tag:
-    AllOfficialRstoxPackageVersion = identical(
-        sort(OfficalRstoxPackageVersion), 
+    # Get the all certified tag:
+    AllCertifiedRstoxPackageVersion = identical(
+        sort(CertifiedRstoxPackageVersion), 
         sort(InstalledRstoxPackageVersion)
     )
     
@@ -1499,8 +1554,8 @@ addProjectDescriptionAttributes <- function(projectDescription) {
         TimeSaved = strftime(as.POSIXlt(Sys.time(), "UTC", "%Y-%m-%dT%H:%M:%S") , "%Y-%m-%dT%H:%M:%OS3Z"), 
         RVersion = R.version.string, 
         RstoxPackageVersion = InstalledRstoxPackageVersion, 
-        OfficalRstoxPackageVersion = OfficalRstoxPackageVersion, 
-        AllOfficialRstoxPackageVersion = AllOfficialRstoxPackageVersion, 
+        CertifiedRstoxPackageVersion = CertifiedRstoxPackageVersion, 
+        AllCertifiedRstoxPackageVersion = AllCertifiedRstoxPackageVersion, 
         DependentPackageVersion = DependentPackageVersion
     )
     for(attrsName in names(attrs)) {
@@ -4538,7 +4593,8 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         projectPath = projectPath, 
         modelName = modelName, 
         processID = processID, 
-        replaceArgs = replaceArgs
+        replaceArgs = replaceArgs, 
+        keepEmptyFunctionInputs = FALSE
     )
     
     # Jump out if nothing is returned, indicative of disabled process:
@@ -4549,9 +4605,6 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     # Extract the process and the function arguments:
     process <- functionArguments$process
     functionArguments <- functionArguments$functionArguments
-    
-    # Discard empty function arguments. This enables the "argument ___ is missing, with no default" error in R:
-    functionArguments <- functionArguments[lengths(functionArguments) > 0]
     
     # Try running the function, and return FALSE if failing:
     failed <- FALSE
@@ -4666,7 +4719,7 @@ setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
 }
 
 
-getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs = list()) {
+getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs = list(), keepEmptyFunctionInputs = TRUE) {
     
     # Get the process:
     process <- getProcess(
@@ -4730,7 +4783,8 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
     # Add functionInputs and functionParameters:
     functionArguments <- c(
         functionArguments, 
-        process$functionInputs, 
+        # Discard empty function inputs if keepEmptyFunctionInputs. This enables the "argument ___ is missing, with no default" error in R:
+        if(keepEmptyFunctionInputs) process$functionInputs else process$functionInputs[lengths(process$functionInputs) > 0], 
         process$functionParameters
     )
     

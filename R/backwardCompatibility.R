@@ -1,3 +1,31 @@
+#' Backward compabitibility actions:
+#' @export
+#' @noRd
+backwardCompatibility <- list(
+    renameAttribute = list(
+        list(
+            changeVersion = "1.2.39", 
+            attributeName = "OfficalRstoxPackageVersion", 
+            newAttributeName = "CertifiedRstoxPackageVersion"
+        ), 
+        list(
+            changeVersion = "1.2.39", 
+            attributeName = "AllOfficialRstoxPackageVersion", 
+            newAttributeName = "AllCertifiedRstoxPackageVersion"
+        )
+    ), 
+    
+    addAttribute = list(
+        list(
+            changeVersion = "1.2.39", 
+            attributeName = "OfficialRstoxFrameworkVersion", 
+            attributeValue = FALSE
+        )
+    )
+)
+
+
+
 # Backwards compatibility:
 
 # 1. Re-organize models
@@ -363,7 +391,7 @@ findProcessFromFunctionName <- function(functionName, projectDescription, modelN
 #' 
 #' @export
 #' 
-backwardCompatibility <- list(
+backwardCompatibility2.7 <- list(
     # rename_DefineStratumPolygon_to_DefineStratum, 
     split_ReadBioticXML_to_ReadBiotic_and_StoxBiotic
 )

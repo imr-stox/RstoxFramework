@@ -314,12 +314,12 @@ initiateRstoxFramework <- function(){
     
     # Define filter operators for the different data types:
     filterOperators <- list(
-        character = c("==", "!=", "%in%", "%notin%"), 
-        logical   = c("==", "!="), # This may never be used
-        integer   = c("==", "!=", "<", "<=", ">=", ">", "%in%", "%notin%"),
-        double    = c("==", "!=", "<", "<=", ">=", ">", "%in%", "%notin%"),
-        numeric   = c("==", "!=", "<", "<=", ">=", ">", "%in%", "%notin%"),
-        POSIXct   = c("==", "!=", "<", "<=", ">=", ">", "%in%", "%notin%")
+        character = c("==", "!=", "%notequal%", "%in%", "%notin%"), 
+        logical   = c("==", "!=", "%notequal%"), # This may never be used
+        integer   = c("%in%", "%notin%", "==", "!=", "%notequal%", "<", "<=", ">=", ">"),
+        double    = c("%in%", "%notin%", "==", "!=", "%notequal%", "<", "<=", ">=", ">"),
+        numeric   = c("%in%", "%notin%", "==", "!=", "%notequal%", "<", "<=", ">=", ">"),
+        POSIXct   = c("%in%", "%notin%", "==", "!=", "%notequal%", "<", "<=", ">=", ">")
     )
     
     # Define the StoX folders, data sources, model names, model display names, model descriptions, and the latter three grouped as model info:

@@ -314,7 +314,7 @@ initiateRstoxFramework <- function(){
     
     # Define filter operators for the different data types:
     filterOperators <- list(
-        character = c("==", "!=", "%notequal%", "%in%", "%notin%"), 
+        character = c("%in%", "%notin%", "==", "!=", "%notequal%"), 
         logical   = c("==", "!=", "%notequal%"), # This may never be used
         integer   = c("%in%", "%notin%", "==", "!=", "%notequal%", "<", "<=", ">=", ">"),
         double    = c("%in%", "%notin%", "==", "!=", "%notequal%", "<", "<=", ">=", ">"),

@@ -17,6 +17,7 @@ runModel(
   fileOutput = NULL,
   setUseProcessDataToTRUE = TRUE,
   purge.processData = FALSE,
+  try = TRUE,
   ...
 )
 }

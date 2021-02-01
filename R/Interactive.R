@@ -475,10 +475,18 @@ addStratum <- function(stratum, projectPath, modelName, processID) {
     #    StratumPolygon$StratumPolygon@polygons, 
     #    stratum@polygons
     #)
-    StratumPolygon$StratumPolygon <- rbind(
-        StratumPolygon$StratumPolygon, 
-        stratum
-    )
+    
+    # Avoid errors due to difference in projection, as an empty SpatialPolygonsDataFrame cannot have projection:
+    if(length(StratumPolygon$StratumPolygon)) {
+        StratumPolygon$StratumPolygon <- rbind(
+            StratumPolygon$StratumPolygon, 
+            stratum
+        )
+    }
+    else {
+        StratumPolygon$StratumPolygon <- stratum
+    }
+    
     
     # Set the StratumPolygon back to the process data of the process:
     setProcessMemory(

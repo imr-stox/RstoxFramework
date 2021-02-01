@@ -440,7 +440,7 @@ ResampleMeanNASCData <- function(MeanNASCData, Seed) {
 #' @inheritParams RstoxBase::ModelData
 #' @inheritParams RstoxBase::ProcessData
 #' @inheritParams RstoxBase::general_report_arguments
-#' @param BaselineProcess A vector of character strings naming the baseline processes to report from the boostrap output.
+#' @param BaselineProcess A strings naming the baseline process to report from the boostrap output.
 #' @param AggregationFunction The function to apply to each bootstrap run. This must be a function returning a single value.
 #' @param BootstrapReportFunction The function to apply across bootstrap run, such as "cv" or "stoxSummary".
 #' @param AggregationWeightingVariable The variable to weight by in the \code{AggregationFunction}.
@@ -459,10 +459,10 @@ ResampleMeanNASCData <- function(MeanNASCData, Seed) {
 #' 
 ReportBootstrap <- function(
     BootstrapData, 
-    BaselineProcess, 
-    TargetVariable, 
+    BaselineProcess = character(), 
+    TargetVariable = character(), 
     AggregationFunction = RstoxBase::getReportFunctions(getMultiple = FALSE), 
-    BootstrapReportFunction = RstoxBase::getReportFunctions(), 
+    BootstrapReportFunction = RstoxBase::getReportFunctions(getMultiple = TRUE), 
     GroupingVariables = character(), 
     RemoveMissingValues = FALSE, 
     AggregationWeightingVariable = character(), 

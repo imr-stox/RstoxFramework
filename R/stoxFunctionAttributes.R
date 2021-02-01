@@ -27,10 +27,10 @@ stoxFunctionAttributes <- list(
         ), 
         functionArgumentHierarchy = list(
             AggregationWeightingVariable = list(
-                ReportFunction = expression(RstoxBase::getWeightingFunctions())
+                AggregationFunction = expression(RstoxBase::getWeightingFunctions())
             ), 
             BootstrapReportWeightingVariable = list(
-                ReportFunction = expression(RstoxBase::getWeightingFunctions())
+                BootstrapReportFunction = expression(RstoxBase::getWeightingFunctions())
             )
         )
     )

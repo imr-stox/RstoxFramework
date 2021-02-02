@@ -9,7 +9,7 @@ fixedWidthTable(
   columnSeparator = " ",
   lineSeparator = NULL,
   na = "-",
-  list.pretty = FALSE
+  enable.auto_unbox = TRUE
 )
 }
 \arguments{
@@ -21,7 +21,7 @@ fixedWidthTable(
 
 \item{na}{The string to replace NAs by, defaulted to "-".}
 
-\item{list.pretty}{Logical: If TRUE wrap the output in a list in the case that \code{pretty} is TRUE.}
+\item{enable.auto_unbox}{Logical: If TRUE wrap the output in a list if  \code{pretty} is TRUE and the output is of length 1. This keeps the array when converting to JSON also for length 1.}
 }
 \description{
 Function to convert data.table to fixed width:

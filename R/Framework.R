@@ -4106,7 +4106,6 @@ formatProcessData <-  function(processData) {
 
 formatProcessDataOne <-  function(processDataOne) {
     
-    
     if(!length(processDataOne)) {
         processDataOne <- data.table::data.table()
     }
@@ -4129,9 +4128,11 @@ formatProcessDataOne <-  function(processDataOne) {
             processDataOne <- getRstoxFrameworkDefinitions("emptyStratumPolygon")
         }
         
-        
         #sp::proj4string(processDataOne) <- as.character(NA)
-        suppressWarnings(sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string"))
+        if(length(processDataOne)) {
+            suppressWarnings(sp::proj4string(processDataOne) <- RstoxBase::getRstoxBaseDefinitions("proj4string"))
+        }
+        
         
         #sp::CRS(x) <- as.character(NA)
     }
@@ -4586,7 +4587,7 @@ isProcess <- function(x) {
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProcessData = TRUE, returnProcessOutput = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds")) {
+runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProcessData = TRUE, returnProcessOutput = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds"), try = TRUE) {
     
     # Get the function argument and the process info:
     functionArguments <- getFunctionArguments(
@@ -4623,17 +4624,27 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     
     # Run the process:
     packageName <- getPackageNameFromPackageFunctionName(process$functionName)
-    processOutput <- tryCatch(
-        do.call(
+    if(try) {
+        processOutput <- tryCatch(
+            do.call(
+                getFunctionNameFromPackageFunctionName(process$functionName), 
+                functionArguments, 
+                envir = if(packageName == "RstoxFramework") environment() else as.environment(paste("package", packageName, sep = ":"))
+            ), 
+            error = function(err) {
+                failed <<- TRUE
+                stop(err)
+            }
+        )
+    }
+    else {
+        processOutput <- do.call(
             getFunctionNameFromPackageFunctionName(process$functionName), 
             functionArguments, 
             envir = if(packageName == "RstoxFramework") environment() else as.environment(paste("package", packageName, sep = ":"))
-        ), 
-        error = function(err) {
-            failed <<- TRUE
-            stop(err)
-        }
-    )
+        )
+    }
+    
     
     # Apply the replaceData, which can be a function with first parameter the processOutput and additional parameters given in ..., or an actual object to replace the output by:
     #thisReplaceData <- replaceData[[process$processName]]
@@ -4885,7 +4896,7 @@ readOutputRDataFile <- function(outputDataPath) {
 #' @inheritParams Projects
 #' @export
 #' 
-getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, pageindex = integer(0), linesPerPage = 1000L, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE, drop = FALSE, drop.datatype = TRUE) {
+getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL, subFolder = NULL, flatten = FALSE, pretty = FALSE, pageindex = integer(0), linesPerPage = 1000L, columnSeparator = " ", lineSeparator = NULL, na = "-", enable.auto_unbox = TRUE, drop = FALSE, drop.datatype = TRUE) {
     
     # If the 'tableName' contains "/", extract the 'subFolder' and 'tableName':
     if(any(grepl("/", tableName))) {
@@ -4944,7 +4955,7 @@ getProcessOutput <- function(projectPath, modelName, processID, tableName = NULL
         columnSeparator = columnSeparator, 
         lineSeparator = lineSeparator, 
         na = na, 
-        list.pretty = list.pretty, 
+        enable.auto_unbox = enable.auto_unbox, 
         how = "replace"
     )
 
@@ -5017,7 +5028,7 @@ getModelData <- function(projectPath, modelName, processes = NULL, startProcess 
 #' @param pageindex A vevctor of the pages to return with \code{linesPerPage} number of lines (rows). Default is to not split into pages.
 #' @param linesPerPage The number of lines per page if \code{pageindex} is given.
 #' 
-readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pageindex = integer(0), linesPerPage = 1000L, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
+readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pageindex = integer(0), linesPerPage = 1000L, columnSeparator = " ", lineSeparator = NULL, na = "-", enable.auto_unbox = FALSE) {
     
     
     # Read the process output file:
@@ -5065,7 +5076,7 @@ readProcessOutputFile <- function(filePath, flatten = FALSE, pretty = FALSE, pag
                 columnSeparator = columnSeparator, 
                 lineSeparator = lineSeparator, 
                 na = na, 
-                list.pretty = list.pretty
+                enable.auto_unbox = enable.auto_unbox
             )
                 
             # In the pretty model, output a list containing the number of lines and the number of pages:
@@ -5692,6 +5703,7 @@ runProcesses <- function(
     replaceDataList = list(), 
     replaceArgs = list(), 
     output.file.type = c("default", "text", "RData", "rds"), 
+    try = TRUE, 
     ...
 ) {
     
@@ -5766,7 +5778,8 @@ runProcesses <- function(
             fileOutput = fileOutput, 
             setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
             purge.processData = purge.processData, 
-            output.file.type = output.file.type
+            output.file.type = output.file.type, 
+            try = try
         )
     )
     

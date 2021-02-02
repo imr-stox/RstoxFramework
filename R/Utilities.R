@@ -94,9 +94,9 @@ flattenDataTable <- function(x, replace = NA) {
 #' @param columnSeparator The string to separate columns by, defaulted to a single space. 
 #' @param lineSeparator The string to separate lines by, defaulted to a NULL, which keeps the output as a vector of strings.
 #' @param na The string to replace NAs by, defaulted to "-".
-#' @param list.pretty Logical: If TRUE wrap the output in a list in the case that \code{pretty} is TRUE.
+#' @param enable.auto_unbox Logical: If TRUE wrap the output in a list if  \code{pretty} is TRUE and the output is of length 1. This keeps the array when converting to JSON also for length 1.
 #' 
-fixedWidthTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na = "-", list.pretty = FALSE) {
+fixedWidthTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na = "-", enable.auto_unbox = TRUE) {
     # Return immediately if x has length 0:
     if(length(x) == 0) {
         return(x)
@@ -143,7 +143,7 @@ fixedWidthTable <- function(x, columnSeparator = " ", lineSeparator = NULL, na =
     if(length(lineSeparator)) {
         x <- paste(x, collapse = lineSeparator)
     }
-    else if(list.pretty) {
+    else if(enable.auto_unbox && length(x) == 1) {
         x <- list(x)
     }
     

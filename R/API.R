@@ -18,7 +18,7 @@
 #' 
 #' @export
 #' 
-runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, run = TRUE, save = TRUE, force.restart = FALSE, replaceDataList = list(), replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, ...) {
+runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, run = TRUE, save = TRUE, force.restart = FALSE, replaceDataList = list(), replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, try = TRUE, ...) {
     # Run the model if required:
     modelData <- NULL
     if(run) {
@@ -41,6 +41,7 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
                 fileOutput = fileOutput, 
                 setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
                 purge.processData = purge.processData, 
+                try = try, 
                 ...
             )
             # Get the model data:

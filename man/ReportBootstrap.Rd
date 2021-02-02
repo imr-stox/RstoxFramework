@@ -6,10 +6,10 @@
 \usage{
 ReportBootstrap(
   BootstrapData,
-  BaselineProcess,
-  TargetVariable,
+  BaselineProcess = character(),
+  TargetVariable = character(),
   AggregationFunction = RstoxBase::getReportFunctions(getMultiple = FALSE),
-  BootstrapReportFunction = RstoxBase::getReportFunctions(),
+  BootstrapReportFunction = RstoxBase::getReportFunctions(getMultiple = TRUE),
   GroupingVariables = character(),
   RemoveMissingValues = FALSE,
   AggregationWeightingVariable = character(),
@@ -17,7 +17,7 @@ ReportBootstrap(
 )
 }
 \arguments{
-\item{BaselineProcess}{A vector of character strings naming the baseline processes to report from the boostrap output.}
+\item{BaselineProcess}{A strings naming the baseline process to report from the boostrap output.}
 
 \item{TargetVariable}{The variable to report.}
 

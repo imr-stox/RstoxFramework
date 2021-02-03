@@ -476,7 +476,8 @@ getEDSUData <- function(projectPath, modelName, processID) {
     EDSUData <- sapply(tableNames, function(tableName) getProcessOutput(projectPath, modelName, processID, tableName = tableName)[[tableName]], simplify = FALSE)
     CruiseLog <- RstoxData::mergeDataTables(EDSUData, tableNames = tableNames, output.only.last = TRUE)
     # Uniquify in case e.g. there are data from different instruments:
-    EDSUInfoToKeep <- c("EDSU", "Platform", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
+    #EDSUInfoToKeep <- c("EDSU", "Platform", "Log", "DateTime", "Longitude", "Latitude", "EffectiveLogDistance", "BottomDepth")
+    EDSUInfoToKeep <- c("EDSU", "Longitude", "Latitude")
     CruiseLog <- unique(CruiseLog, by = EDSUInfoToKeep)
     
     # Order by Beam:

@@ -1,5 +1,5 @@
 Package: RstoxFramework
-Version: 1.2.40
+Version: 1.2.41
 Date: 2021-02-02
 Title: The Engine of StoX
 Authors@R: c(
@@ -49,8 +49,8 @@ Imports:
     sf (>= 0.9.0),
     xml2 (>= 1.2.2),
     stringr (>= 1.0.0),
-    RstoxData (>= 1.0.25),
-    RstoxBase (>= 1.2.45)
+    RstoxData (>= 1.0.26),
+    RstoxBase (>= 1.2.47)
 Suggests: 
     testthat
 Additional_repositories: 

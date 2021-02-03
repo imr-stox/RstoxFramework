@@ -1387,7 +1387,7 @@ JSON2processData <- function(JSON) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Application = R.version.string) {
+writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Application = R.version.string, projectDescription = NULL) {
     
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
@@ -1398,7 +1398,10 @@ writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Appl
     }
     
     # Get full project description:
-    projectDescription <- getProjectMemoryData(projectPath, modelName = "all", named.list = TRUE)
+    if(!length(projectDescription)) {
+        projectDescription <- getProjectMemoryData(projectPath, modelName = "all", named.list = TRUE)
+    }
+    
     # Get the file to write it to:
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
     

@@ -1138,12 +1138,14 @@ isOpenProject <- function(projectPath) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), verbose = FALSE) {
+readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), verbose = FALSE, projectDescriptionFile = NULL) {
     # Read the project.RData or json file depending on the 'type':
     type <- match.arg(type)
     
     # Get the projectDescriptionFile path:
-    projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
+    if(!length(projectDescriptionFile)) {
+        projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
+    }
     
     # If it does not exist, search for other project files:
     if(!file.exists(projectDescriptionFile)) {
@@ -1591,7 +1593,7 @@ getDependentPackageVersion <- function() {
         officialStoxLibraryPackages
     )
     #dependencies <- gtools:: getDependencies("RstoxFramework", available = FALSE)
-    dependencies <- getNonRstoxDependencies("RstoxFramework")
+    dependencies <- getNonRstoxDependencies(RstoxPackages)
     # Remove the Rstox packcages:
     dependencies <- setdiff(
         dependencies, 

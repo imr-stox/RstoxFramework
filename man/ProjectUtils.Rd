@@ -22,7 +22,8 @@ isOpenProject(projectPath)
 readProjectDescription(
   projectPath,
   type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"),
-  verbose = FALSE
+  verbose = FALSE,
+  projectDescriptionFile = NULL
 )
 
 writeProjectDescription(

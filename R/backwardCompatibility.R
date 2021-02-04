@@ -464,10 +464,22 @@ redefineAcousticPSUFrom2.7 <- function(projectPath, newProjectPath) {
     projectList <- readProjectXMLToList(projectPath)
     
     # Create the StratumPSU table:
-    Stratum_PSU <- data.table::as.data.table(matrix(unlist(projectList$processdata$psustratum), ncol = 2, byrow = TRUE))
+    Stratum_PSU <- data.table::as.data.table(
+        matrix(
+            unlist(projectList$processdata$psustratum), 
+            ncol = 2, 
+            byrow = TRUE
+        )
+    )
     names(Stratum_PSU) <- c("Stratum", "PSU")
     
-    EDSU_PSU <- data.table::as.data.table(matrix(unlist(projectList$processdata$edsupsu), ncol = 2, byrow = TRUE))
+    EDSU_PSU <- data.table::as.data.table(
+        matrix(
+            unlist(projectList$processdata$edsupsu), 
+            ncol = 2, 
+            byrow = TRUE
+        )
+    )
     names(EDSU_PSU) <- c("PSU", "EDSU")
     data.table::setcolorder(EDSU_PSU, c("EDSU", "PSU"))
     
@@ -495,3 +507,54 @@ redefineAcousticPSUFrom2.7 <- function(projectPath, newProjectPath) {
     
     writeProjectDescription(newProjectPath, projectDescription = projectDescription$projectDescription)
 }
+
+
+
+# Unifnished!!!!!!!!!!!!
+redefineBioticAssignmentFrom2.7 <- function(projectPath, newProjectPath) {
+    
+    # Read the old project.xml file:
+    projectList <- readProjectXMLToList(projectPath)
+    
+    # Read the BioticAssignment:
+    bioticassignment <- data.table::as.data.table(
+        matrix(
+            unlist(projectList$processdata$bioticassignment), 
+            ncol = 3, 
+            byrow = TRUE
+        )
+    )
+    names(bioticassignment) <- c("WeightingFactor", "AssignmentID", "Haul")
+    
+    # Read the link between AssignmentID and PSU:
+    suassignment <- data.table::as.data.table(
+        matrix(
+            unlist(projectList$processdata$suassignment), 
+            ncol = 3, 
+            byrow = TRUE
+        )
+    )
+    names(suassignment) <- c("AssignmentID", "PSU", "Layer")
+    
+    if(!suassignment[, RstoxBase::allEqual(Layer)]) {
+        stop("Currently, only StoX 2.7 projects with layer type \"WaterColumn\" can be automatically converted to StoX 3.0 and higher.")
+    }
+    suassignment[, Layer := "WaterColumn"]
+    
+    # Add stratum:
+    psustratum <- data.table::as.data.table(
+        matrix(
+            unlist(projectList$processdata$psustratum), 
+            ncol = 2, 
+            byrow = TRUE
+        )
+    )
+    names(psustratum) <- c("Stratum", "PSU")
+    
+    BioticAssignment <- merge(bioticassignment, suassignment, by = "AssignmentID", allow.cartesian = TRUE)
+    BioticAssignment <- merge(BioticAssignment, psustratum, by = "PSU", allow.cartesian = TRUE)
+    
+    
+}
+
+

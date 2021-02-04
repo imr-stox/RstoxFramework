@@ -120,7 +120,7 @@ assignment_addHaul <- function(Stratum, PSU, Layer, Haul, BioticAssignment) {
     #atThisPSU <- BioticAssignment$Stratum == Stratum & BioticAssignment$PSU == PSU
     atThisPSU <- BioticAssignment$PSU == PSU
     numberOfAssignments <- sum(atThisPSU)
-    if(numberOfAssignments == 1) {
+    if(numberOfAssignments == 1 && is.na(BioticAssignment[atThisPSU, Haul])) {
         BioticAssignment <- BioticAssignment[!atThisPSU, ]
     }
     # Add the new assignment:

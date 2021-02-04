@@ -1138,12 +1138,14 @@ isOpenProject <- function(projectPath) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), verbose = FALSE) {
+readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), verbose = FALSE, projectDescriptionFile = NULL) {
     # Read the project.RData or json file depending on the 'type':
     type <- match.arg(type)
     
     # Get the projectDescriptionFile path:
-    projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
+    if(!length(projectDescriptionFile)) {
+        projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
+    }
     
     # If it does not exist, search for other project files:
     if(!file.exists(projectDescriptionFile)) {
@@ -1387,7 +1389,7 @@ JSON2processData <- function(JSON) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Application = R.version.string) {
+writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Application = R.version.string, projectDescription = NULL) {
     
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
@@ -1398,7 +1400,10 @@ writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Appl
     }
     
     # Get full project description:
-    projectDescription <- getProjectMemoryData(projectPath, modelName = "all", named.list = TRUE)
+    if(!length(projectDescription)) {
+        projectDescription <- getProjectMemoryData(projectPath, modelName = "all", named.list = TRUE)
+    }
+    
     # Get the file to write it to:
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
     
@@ -1588,7 +1593,7 @@ getDependentPackageVersion <- function() {
         officialStoxLibraryPackages
     )
     #dependencies <- gtools:: getDependencies("RstoxFramework", available = FALSE)
-    dependencies <- getNonRstoxDependencies("RstoxFramework")
+    dependencies <- getNonRstoxDependencies(RstoxPackages)
     # Remove the Rstox packcages:
     dependencies <- setdiff(
         dependencies, 

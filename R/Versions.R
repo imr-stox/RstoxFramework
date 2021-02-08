@@ -608,8 +608,11 @@ getPlatform <- function(platform = NA) {
         else if (Sys.info()["sysname"] == "Darwin") {
             platform <- "macosx"
         } 
+        else if (Sys.info()["sysname"] == "Linux") {
+            platform <- "linux"
+        } 
         else {
-            stop("Only Windows and MacOS are currently supported.")
+            stop("Only Windows, MacOS and Linux are currently supported.")
         }
     }
     

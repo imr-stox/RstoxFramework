@@ -439,7 +439,7 @@ getStationData <- function(projectPath, modelName, processID) {
     stationInfo <- CruiseStation[, ..stationInfoToKeep]
     properties <- stationInfo[, "Station"]
     
-    haulInfoToKeep <- c("Station", "Haul", "Gear", "EffectiveTowedDistance", "MinHaulDepth", "MaxHaulDepth")
+    haulInfoToKeep <- c("Station", "Haul", "Gear", "EffectiveTowDistance", "MinHaulDepth", "MaxHaulDepth")
     haulInfo <- Station_Haul[, ..haulInfoToKeep]
     
     

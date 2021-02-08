@@ -40,6 +40,9 @@ initiateRstoxFramework <- function(){
     # Get installed versions:
     InstalledRstoxPackageVersion <- as.list(getPackageVersion(officialStoxLibraryPackagesAll, only.version = TRUE))
     
+    # Get the versions of the dependencies:
+    dependentPackageVersion <- getDependentPackageVersion(officialStoxLibraryPackagesAll)
+    
     # Define the possible projectDescription file formats:
     projectDescriptionFileFormats <- c("JSON", "RData")
     

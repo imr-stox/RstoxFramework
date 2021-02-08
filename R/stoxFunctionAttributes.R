@@ -110,9 +110,10 @@ processPropertyFormats <- list(
     groupingVariables_ReportBootstrap = list(
         class = "vector", 
         title = "One or more variables to group super-individuals by when reporting BootstrapData", 
-        possibleValues = function(BootstrapData, BaselineProcess) {
-            sort(setdiff(names(BootstrapData[[BaselineProcess]]), "BootstrapID"))
-        }, 
+        #possibleValues = function(BootstrapData, BaselineProcess) {
+        #    sort(setdiff(names(BootstrapData[[BaselineProcess]]), "BootstrapID"))
+        #}, 
+        possibleValues = list(), 
         variableTypes <- "character"
     ), 
     

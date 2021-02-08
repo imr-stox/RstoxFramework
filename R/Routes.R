@@ -439,7 +439,7 @@ getStationData <- function(projectPath, modelName, processID) {
     stationInfo <- CruiseStation[, ..stationInfoToKeep]
     properties <- stationInfo[, "Station"]
     
-    haulInfoToKeep <- c("Station", "Haul", "Gear", "EffectiveTowedDistance", "MinHaulDepth", "MaxHaulDepth")
+    haulInfoToKeep <- c("Station", "Haul", "Gear", "EffectiveTowDistance", "MinHaulDepth", "MaxHaulDepth")
     haulInfo <- Station_Haul[, ..haulInfoToKeep]
     
     
@@ -686,7 +686,7 @@ extrapolateLongitudeLatitude <- function(Log) {
 getEDSUColours <- function(n = 5, as.rgb = FALSE) {
     col <- colorRampPalette(c("pink", "red4", "darkorange2"))(n)
     if(as.rgb) {
-        col <- col2rgb(col)
+        col <- grDevices::col2rgb(col)
     }
     return(col)
 }
@@ -696,7 +696,7 @@ getEDSUColours <- function(n = 5, as.rgb = FALSE) {
 #' @export
 #' 
 getStationColours <- function(n = 5, as.rgb = FALSE) {
-    col <- colorRampPalette(c("steelblue2", "darkblue", "mediumvioletred"))(n)
+    col <- grDevices::colorRampPalette(c("steelblue2", "darkblue", "mediumvioletred"))(n)
     if(as.rgb) {
         col <- col2rgb(col)
     }

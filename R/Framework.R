@@ -131,11 +131,11 @@ addMissingAttributes <- function(stoxFunctionAttributes, requestedFunctionAttrib
 
 applyBackwardCompatibility <- function(projectDescription, verbose = FALSE) {
     
-    # Save the original projectDescription:
-    originalProjectDescription <- projectDescription
-    temp <- tempfile()
-    #message(paste("Original file saved to", temp))
-    save(projectDescription, file = temp)
+    ## Save the original projectDescription:
+    #originalProjectDescription <- projectDescription
+    #temp <- tempfile()
+    ##message(paste("Original file saved to", temp))
+    #save(projectDescription, file = temp)
     
     # Get the backward compatibility specifications:
     backwardCompatibility <- getRstoxFrameworkDefinitions("backwardCompatibility")
@@ -144,7 +144,6 @@ applyBackwardCompatibility <- function(projectDescription, verbose = FALSE) {
     backwardCompatibilityActionNames <- getRstoxFrameworkDefinitions("backwardCompatibilityActionNames")
     
     # Run the backward compatibility actions:
-    
     projectDescription <- applyBackwardCompatibilityActions(
         backwardCompatibilityActionNames = backwardCompatibilityActionNames, 
         backwardCompatibility = backwardCompatibility, 
@@ -279,7 +278,7 @@ applyRenameAttribute <- function(action, projectDescription, packageName, verbos
         att[[action$newAttributeName]] <- att[[action$attributeName]]
         # Delete the old:
         att[[action$attributeName]] <- NULL
-        # Add the moodified attributes:
+        # Add the modified attributes:
         attributes(projectDescription) <- att
     }
     
@@ -1097,6 +1096,10 @@ NULL
 #' @rdname ProjectUtils
 #' 
 isProject <- function(projectPath) {
+    sapply(projectPath, isProjectOne)
+}
+# Checks only one project:
+isProjectOne <- function(projectPath) {
     existsFolders <- sapply(getProjectPaths(projectPath, "stoxFolders"), file.exists)
     length(existsFolders) && all(existsFolders)
 }
@@ -1170,7 +1173,6 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
         }
     }
 
-    
     if(!file.exists(projectDescriptionFile)) {
         stop("StoX: The project description file ", projectDescriptionFile, " does not exist.")
     }    
@@ -1199,7 +1201,7 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
     projectDescription <- projectDescriptionAfterBackwardCompatibility
     
     # Warning if not certified Rstox packages:
-    if(!attr(projectDescription, "AllCertifiedRstoxPackageVersion")) {
+    if(!isTRUE(attr(projectDescription, "AllCertifiedRstoxPackageVersion"))) {
         warning(
             "StoX: The project was saved with uncertified Rstox package versions. This implies that reproducibility is not guaranteed. (", 
             "Used: ", 
@@ -1533,7 +1535,7 @@ orderProjectDescription <- function(projectDescription) {
 addProjectDescriptionAttributes <- function(projectDescription) {
     
     # Get packcage versions as strings "PACKAGENAME vPACKAGEVERSION":
-    DependentPackageVersion <- getDependentPackageVersion()
+    dependentPackageVersion <- getRstoxFrameworkDefinitions("dependentPackageVersion")
     
     # Get the certified Rstox package versions:
     certifiedRstoxPackageVersionList <- getOfficialRstoxPackageVersion(list.out = TRUE)
@@ -1561,7 +1563,7 @@ addProjectDescriptionAttributes <- function(projectDescription) {
         RstoxPackageVersion = InstalledRstoxPackageVersion, 
         CertifiedRstoxPackageVersion = CertifiedRstoxPackageVersion, 
         AllCertifiedRstoxPackageVersion = AllCertifiedRstoxPackageVersion, 
-        DependentPackageVersion = DependentPackageVersion
+        DependentPackageVersion = dependentPackageVersion
     )
     for(attrsName in names(attrs)) {
         attr(projectDescription, attrsName) <- attrs[[attrsName]]
@@ -1574,7 +1576,7 @@ addProjectDescriptionAttributes <- function(projectDescription) {
 
 # Function to get the package version of several packages as strings:
 getPackageVersion <- function(packageNames, only.version = FALSE, sep = "_") {
-    version <- sapply(packageNames, function(x) as.character(packageVersion(x)))
+    version <- sapply(packageNames, function(x) as.character(utils::packageVersion(x)))
     if(only.version) {
         version
     }
@@ -1584,26 +1586,23 @@ getPackageVersion <- function(packageNames, only.version = FALSE, sep = "_") {
 }
 
 # Get the versions of the dependent packages recursively:
-getDependentPackageVersion <- function() {
+getDependentPackageVersion <- function(packageName, only.depedencies = TRUE) {
     
-    # Get the Rstox packcages and the dependencies:
-    officialStoxLibraryPackages <- getRstoxFrameworkDefinitions("officialStoxLibraryPackages")
-    RstoxPackages <- c(
-        "RstoxFramework", 
-        officialStoxLibraryPackages
-    )
     #dependencies <- gtools:: getDependencies("RstoxFramework", available = FALSE)
-    dependencies <- getNonRstoxDependencies(RstoxPackages)
-    # Remove the Rstox packcages:
-    dependencies <- setdiff(
-        dependencies, 
-        RstoxPackages
-    )
+    dependencies <- getNonRstoxDependencies(packageName)
+    # Remove the specified packcages:
+    if(only.depedencies) {
+        dependencies <- setdiff(
+            dependencies, 
+            packageName
+        )
+    }
+    
     # Get packcage versions as strings "PACKAGENAME vPACKAGEVERSION":
     #RstoxPackageVersion <- getPackageVersion(RstoxPackages)
-    DependentPackageVersion <- getPackageVersion(dependencies)
+    dependentPackageVersion <- getPackageVersion(dependencies)
     
-    return(DependentPackageVersion)
+    return(dependentPackageVersion)
 }
 
 
@@ -4215,7 +4214,7 @@ is.convertableToTable <- function(x, minLength = 1) {
     length(x) && 
     is.list(x) && # The input must be a list
     all(sapply(x, is.list)) && # ... and a list of lists
-    RstoxBase:::allEqual(lengths(x)) && # ... and all must be of equal length
+    RstoxBase::allEqual(lengths(x)) && # ... and all must be of equal length
     all(lengths(x) >= minLength) && # ... and longer than 1
     !is.list(x[[1]][[1]]) # ... and finally, each list must not contain lists. We only check the first element here
 }
@@ -5834,90 +5833,6 @@ getReplaceArgs <- function(replaceArgs = list(), ...){
     replaceArgs <- replaceArgs[!duplicated(replaceArgs)]
     
     return(replaceArgs)
-}
-
-
-
-
-
-
-##################################################
-##################################################
-# This function applies the conversion functions defined in the \code{stoxFunctionAttributes} list defined in each StoX function package.
-convertProjectDescription1.92 <- function(projectDescription) {
-    # Get the current project description:
-    #projectDescription <- getProjectMemoryData(projectPath)
-    
-    ## Get the StoX version:
-    #StoxVersion <- attr(projectDescription, "StoxVersion")
-    #if(resourceversion < "1.92") {
-    #    stop("Backward compatibility not supported for versions of StoX prior to 2.7")
-    #}
-    
-    # Checkc the version, issuing an error if resourceVersion is set and lower than "1.92":
-    checkVersion(projectDescription)
-    
-    newProjectDescription <- list()
-    
-    
-    #for(modelName in )
-    
-    
-    
-    convertProcess <- function(projectDescription, modelName, processID) {
-        
-        process <- list()
-        
-        # Extract proecess name:
-        projectDescription <- appendProjectDescription(
-            projectDescription = projectDescription, 
-            modelName = modelName, 
-            processID = processID, 
-            argumentName = "processName", 
-            argumentValue = 
-        )
-        
-        # Extract function name:
-        
-        # Extract proecess parameters:
-        
-        # Extract proecess data:
-        
-        # Extract function input:
-        
-        # Extract function parameters:
-    }
-    
-    
-    
-    
-    
-}
-
-
-
-##################################################
-##################################################
-# Check the version for backwards compatibility
-checkVersion <- function(projectDescription, resourceVersion = NULL, RstoxFrameworkVersion = NULL) {
-    # Get the StoxVersion from the attributes:
-    savedResourceVersion <- attr(projectDescription, "resourceversion")
-    savedRstoxFrameworkVersion <- attr(projectDescription, "RstoxFrameworkVersion")
-    
-    # Issue an error if the project.xml is before the backwards compatibility time limit:
-    if(savedResourceVersion < "1.92") {
-        stop("StoX: Backward compatibility not supported for versions of StoX prior to 2.7 (resourceversion 1.92)")
-    }
-    
-    if(length(resourceVersion) && savedResourceVersion == resourceVersion) {
-        return(TRUE)
-    }
-    else if(length(RstoxFrameworkVersion) && savedRstoxFrameworkVersion == RstoxFrameworkVersion) {
-        return(TRUE)
-    }
-    else {
-        return(FALSE)
-    }
 }
 
 

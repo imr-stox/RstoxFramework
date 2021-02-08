@@ -1576,7 +1576,7 @@ addProjectDescriptionAttributes <- function(projectDescription) {
 
 # Function to get the package version of several packages as strings:
 getPackageVersion <- function(packageNames, only.version = FALSE, sep = "_") {
-    version <- sapply(packageNames, function(x) as.character(packageVersion(x)))
+    version <- sapply(packageNames, function(x) as.character(utils::packageVersion(x)))
     if(only.version) {
         version
     }
@@ -4214,7 +4214,7 @@ is.convertableToTable <- function(x, minLength = 1) {
     length(x) && 
     is.list(x) && # The input must be a list
     all(sapply(x, is.list)) && # ... and a list of lists
-    RstoxBase:::allEqual(lengths(x)) && # ... and all must be of equal length
+    RstoxBase::allEqual(lengths(x)) && # ... and all must be of equal length
     all(lengths(x) >= minLength) && # ... and longer than 1
     !is.list(x[[1]][[1]]) # ... and finally, each list must not contain lists. We only check the first element here
 }

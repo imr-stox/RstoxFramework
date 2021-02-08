@@ -524,10 +524,11 @@ writeMemoryFile <- function(x, filePathSansExt, ext = NULL) {
     }
     
     # Write the file:
-    if(ext == "fst") {
-        fst::write_fst(as.data.frame(x), path = filePath)
-    }
-    else if(ext == "rds") {
+    #if(ext == "fst") {
+    #    fst::write_fst(as.data.frame(x), path = filePath)
+    #}
+    #else 
+    if(ext == "rds") {
         saveRDS(x, file = filePath)
     }
     else {
@@ -569,10 +570,11 @@ readMemoryFile <- function(filePath) {
     ext <- tools::file_ext(filePath)
     
     # Read the file:
-    if(grepl("fst", ext, ignore.case = TRUE)) {
-        output <- data.table::as.data.table(fst::read_fst(path = filePath))
-    }
-    else if(grepl("rds", ext, ignore.case = TRUE)) {
+    #if(grepl("fst", ext, ignore.case = TRUE)) {
+    #    output <- data.table::as.data.table(fst::read_fst(path = filePath))
+    #}
+    #else 
+    if(grepl("rds", ext, ignore.case = TRUE)) {
         output <- readRDS(file = filePath)
     }
     else {

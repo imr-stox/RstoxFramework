@@ -31,7 +31,7 @@ initiateRstoxFramework <- function(){
     )
     # Remove non-installed packages (typically packcages that are suggests):
     officialStoxLibraryPackages <- intersect(
-        installed.packages()[, "Package"], 
+        utils::installed.packages()[, "Package"], 
         officialStoxLibraryPackages
     )
     # Add RstoxFramework:
@@ -48,7 +48,7 @@ initiateRstoxFramework <- function(){
     
     # Define formats for files saved by Rstox:
     memoryFileFormat_Empty <- "rds"
-    # 2020-06-08: The fst::write_fst() does not retain the encoding, and has been discarded until these problems are fixed:s
+    # 2020-06-08: The fst::write_fst() does not retain the encoding, and has been discarded until these problems are fixed:
     #memoryFileFormat_Table <- "fst"
     memoryFileFormat_Table <- "rds"
     memoryFileFormat_Matrix <- "rds"

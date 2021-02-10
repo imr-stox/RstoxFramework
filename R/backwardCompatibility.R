@@ -558,3 +558,63 @@ redefineBioticAssignmentFrom2.7 <- function(projectPath, newProjectPath) {
 }
 
 
+
+
+
+# Functions to subset an NMDBiotic or NMDEchosounder file, useful for creating small test-projects:
+subsetNMDBiotic <- function(NMDBioticFile, newNMDBioticFile, stationsIndex = 1) {
+    subsetXMLFile(
+        XMLFile = NMDBioticFile, 
+        newXMLFile = newNMDBioticFile, 
+        tag = "fishstation", 
+        index = stationsIndex
+    )
+}
+
+
+subsetNMDEchosounder <- function(NMDEchosounderFile, newNMDEchosounderFile, distanceIndex = 1) {
+    subsetXMLFile(
+        XMLFile = NMDEchosounderFile, 
+        newXMLFile = newNMDEchosounderFile, 
+        tag = "distance", 
+        index = distanceIndex
+    )
+}
+subsetXMLFile <- function(XMLFile, newXMLFile, tag = "fishstation", index = 1) {
+    # Read the lines of the file:
+    l <- readLines(XMLFile)
+    
+    # Get the start end end tag.
+    tagStart <- paste0("<", tag)
+    tagEnd <- paste0("</", tag)
+    
+    atStart <- which(grepl(tagStart, l))
+    atEnd <- which(grepl(tagEnd, l))
+    numberOfTags <- length(atStart)
+    
+    # Cannot extend the number of tags:
+    index <- subset(index, index <= numberOfTags)
+    
+  
+    
+    before <- l[seq_len(atStart[1] - 1)]
+    bodyIndex <- unlist(mapply(seq, atStart[index], atEnd[index]))
+    body <- l[bodyIndex]
+    after <- l[seq(atEnd[numberOfTags] + 1, length(l))]
+    
+    out <- c(
+        before,  
+        body, 
+        after
+    )
+    
+    if(missing(newXMLFile)) {
+        newXMLFile <- paste(tools::file_path_sans_ext(XMLFile), "_subse.", tools::file_ext(XMLFile))
+    }
+    writeLines(out, newXMLFile)
+}
+
+
+
+
+

@@ -75,6 +75,10 @@ Bootstrap <- function(
     # Create the replaceDataList input to runProcesses, which defines the seed for each bootstrap run:
     replaceDataList <- createReplaceData(Seed = SeedList, BootstrapMethodTable = BootstrapMethodTable)
     
+    # This should be exposed as a parameter.
+    BaselineSeed <- 1
+    BaselineSeedVector <- RstoxBase::getSeedVector(BaselineSeed, size = NumberOfBootstraps)
+    replaceArgs <- list(Seed = BaselineSeedVector)
     
     # Run the subset of the baseline model:
     bootstrapIndex <- seq_len(NumberOfBootstraps)
@@ -85,6 +89,7 @@ Bootstrap <- function(
         # Vector inputs:
         ind = bootstrapIndex, 
         Seed = SeedList, 
+        replaceArgs = replaceArgs, 
         replaceDataList = replaceDataList, 
         # Other inputs:
         MoreArgs = list(
@@ -152,6 +157,7 @@ addFunctionNameToReplaceData <- function(replaceData, BootstrapMethodTable) {
             list(FunctionName = BootstrapMethodTable[ProcessName == name, ResampleFunction]), 
             replaceData[[name]]
         ))
+    # Add the process names to the list to enable replaceDataList in runProcesses():
     names(out) <- names(replaceData)
     return(out)
 }

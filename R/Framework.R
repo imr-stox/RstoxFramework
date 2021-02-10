@@ -5772,7 +5772,7 @@ runProcesses <- function(
     mapply(
         runProcess, 
         processID = processIDs, 
-        replaceArgs = replaceArgs[processNames], 
+        #replaceArgs = replaceArgs[processNames], 
         replaceData = replaceDataList[processNames], 
         MoreArgs = list(
             projectPath = projectPath, 
@@ -5783,6 +5783,7 @@ runProcesses <- function(
             setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
             purge.processData = purge.processData, 
             output.file.type = output.file.type, 
+            replaceArgs = replaceArgs, 
             try = try
         )
     )

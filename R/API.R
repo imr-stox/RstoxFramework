@@ -56,6 +56,47 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
     
     return(modelData)
 }
+##################################################
+##################################################
+#' Run all models of a StoX project
+#' 
+#' This function runs and returns output from all models of a StoX project.
+#' 
+#' @inheritParams runModel
+#' 
+#' @return
+#' A list of model output.
+#' 
+#' @export
+#' 
+runProject <- function(projectPath, run = TRUE, save = TRUE, force.restart = FALSE, replaceDataList = list(), replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, try = TRUE, ...) {
+    
+    modelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
+    
+    projectData <- mapply(
+        runModel, 
+        modelName = modelNames, 
+        MoreArgs = list(
+            projectPath, 
+            startProcess = 1, 
+            endProcess = Inf, 
+            run = run, 
+            save = save, 
+            force.restart = force.restart, 
+            replaceDataList = replaceDataList, 
+            replaceArgs = replaceArgs, 
+            fileOutput = fileOutput, 
+            setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
+            purge.processData = purge.processData, 
+            try = try, 
+            ...
+        ), 
+        SIMPLIFY = FALSE
+    )
+    
+    return(projectData)
+}
+
 
 
 #' 

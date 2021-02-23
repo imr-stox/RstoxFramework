@@ -26,6 +26,346 @@ backwardCompatibility <- list(
 
 
 
+
+
+#### These functions are run by applyBackwardCompatibilityAction(): 
+
+applyRenameAttribute <- function(action, projectDescription, packageName, verbose = FALSE) {
+    # Get the indices at functions to apply the action to:
+    att <- attributes(projectDescription)
+    
+    if(action$attributeName %in% names(att)) {
+        if(verbose) {
+            message("Backward compatibility: Renaming attribute ", action$attributeName, " to ", action$newAttributeName)
+        }
+        # Add the new attribute name:
+        att[[action$newAttributeName]] <- att[[action$attributeName]]
+        # Delete the old:
+        att[[action$attributeName]] <- NULL
+        # Add the modified attributes:
+        attributes(projectDescription) <- att
+    }
+    
+    return(projectDescription)
+}
+
+
+applyAddAttribute <- function(action, projectDescription, packageName, verbose = FALSE) {
+    # Get the indices at functions to apply the action to:
+    att <- attributes(projectDescription)
+    
+    if(!action$attributeName %in% names(att)) {
+        if(verbose) {
+            message("Backward compatibility: Adding attribute ", action$attributeName, " = ", action$attributeValue)
+        }
+        # Add the new attribute name:
+        attr(projectDescription, action$attributeName) <- action$attributeValue
+        
+    }
+    
+    return(projectDescription)
+}
+
+
+applyRenameFunction <- function(action, projectDescription, packageName, verbose = FALSE) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = action, 
+        packageName = packageName
+    )
+    
+    if(verbose && length(atFunctionName)) {
+        message("Backward compatibility: Renaming function ", action$functionName, " to ", action$newFunctionName)
+    }
+    
+    for(ind in atFunctionName) {
+        # Rename function: 
+        projectDescription[[action$modelName]][[ind]]$functionName <- action$newFunctionName
+    }
+    
+    return(projectDescription)
+}
+
+
+applyRemoveParameter <- function(action, projectDescription, packageName, verbose = FALSE) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = action, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        
+        # Remove any relevant function input: 
+        projectDescription[[action$modelName]][[ind]]$functionInputs <- removeParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionInputs, 
+            action, 
+            verbose = verbose
+        )
+        
+        # Remove any relevant function parameter: 
+        projectDescription[[action$modelName]][[ind]]$functionParameters <- removeParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionParameters, 
+            action, 
+            verbose = verbose
+        )
+    }
+    
+    return(projectDescription)
+}
+
+
+applyRenameParameter <- function(action, projectDescription, packageName, verbose = FALSE) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = action, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        
+        # Rename any relevant function input: 
+        projectDescription[[action$modelName]][[ind]]$functionInputs <- renameParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionInputs, 
+            action, 
+            verbose = verbose
+        )
+        
+        # Rename any relevant function parameter: 
+        projectDescription[[action$modelName]][[ind]]$functionParameters <- renameParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionParameters, 
+            action, 
+            verbose = verbose
+        )
+    }
+    
+    return(projectDescription)
+}
+
+
+applyTranslateParameter <- function(action, projectDescription, packageName, verbose = FALSE) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = action, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        # Only relevant for function parameters, as function inputs are without possible values:
+        # Remove any relevant function parameter: 
+        projectDescription[[action$modelName]][[ind]]$functionParameters <- translateParameterInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$functionParameters, 
+            action, 
+            verbose = verbose
+        )
+    }
+    
+    return(projectDescription)
+}
+
+
+applyRenameProcessData <- function(action, projectDescription, packageName, verbose = FALSE) {
+    
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = action, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        
+        # Rename any relevant function parameter: 
+        projectDescription[[action$modelName]][[ind]]$processData <- renameProcessDataInOneProcess(
+            projectDescription[[action$modelName]][[ind]]$processData, 
+            action, 
+            verbose = verbose
+        )
+    }
+    
+    return(projectDescription)
+}
+
+
+#applySplitFunction <- function(action, projectDescription, packageName, verbose = FALSE) {
+#    
+#    # Get the indices at functions to apply the action to:
+#    atFunctionName <- getIndicesAtFunctionName(
+#        projectDescription = projectDescription, 
+#        action = action, 
+#        packageName = packageName
+#    )
+#    
+#    for(ind in atFunctionName) {
+#        
+#        # Rename any relevant function parameter: 
+#        projectDescription[[action$modelName]][[ind]]$processData <- splitFunctionInOneProcess(
+#            projectDescription[[action$modelName]][[ind]]$processData, 
+#            action, 
+#            verbose = verbose
+#        )
+#    }
+#    
+#    return(projectDescription)
+#}
+
+
+
+getIndicesAtFunctionName <- function(projectDescription, action, packageName) {
+    # Get the function names (packageName::functionName) of the processes of the model on which the action works:
+    functionNames <- sapply(projectDescription[[action$modelName]], "[[", "functionName")
+    
+    # Match with the function in the action:
+    action_functionName <- paste(packageName, action$functionName, sep = "::")
+    atFunctionName <- which(action_functionName == functionNames)
+    
+    return(atFunctionName)
+}
+
+
+
+
+
+
+#### The actual backward compatibility actions are performed using the following functions:
+removeParameterInOneProcess <- function(list, action, verbose = FALSE) {
+    # Find the objects to remove:
+    toRemove <- names(list) == action$parameterName
+    # Remove if any to remove:
+    if(any(toRemove)) {
+        if(verbose) {
+            message("Backward compatibility: Removing parameter ", action$parameterName, " in function ", action$functionName)
+        }
+        
+        # Remove the parameter:
+        list <- list[!toRemove]
+    }
+    return(list)
+}
+
+renameParameterInOneProcess <- function(list, action, verbose = FALSE) {
+    # Find the objects to remove:
+    toRename <- names(list) == action$parameterName
+    # Remname if any to remove:
+    if(any(toRename)) {
+        if(verbose) {
+            message("Backward compatibility: Remnaming parameter ", action$parameterName, " to ", action$newParameterName, " in function ", action$functionName)
+        }
+        
+        # Remname the parameter:
+        names(list)[names(list) == action$parameterName] <- action$newParameterName
+    }
+    return(list)
+}
+
+translateParameterInOneProcess <- function(list, action, verbose = FALSE) {
+    
+    # Find the objects to remove:
+    toTranslate <- which(names(list) == action$parameterName)
+    # Remove if any to remove:
+    if(length(toTranslate) == 1) {
+        if(identical(list[[toTranslate]], action$value)) {
+            if(verbose) {
+                message("Backward compatibility: Translating parameter ", action$parameterName, " from ", action$value, " to ", action$newValue, " in function ", action$functionName)
+            }
+            
+            # Translate the parameter:
+            list[[toTranslate]] <- action$newValue
+        }
+    }
+    return(list)
+}
+
+renameProcessDataInOneProcess <- function(list, action, verbose = FALSE) {
+    # Rename if the processData has the old name:
+    if(names(list) == action$processDataName) {
+        if(verbose) {
+            message("Backward compatibility: Renaming process data ", action$processDataName, " to ", action$newProcessDataName, " in function ", action$functionName)
+        }
+        
+        # Rename the process data:
+        names(list) <- action$newProcessDataName
+    }
+    
+    return(list)
+}
+
+#splitFunctionInOneProcess <- function(list, action, verbose = FALSE) {
+#    # Find the objects to remove:
+#    toRemove <- names(list) == action$parameterName
+#    # Remove if any to remove:
+#    if(any(toRemove)) {
+#        if(verbose) {
+#            message("Backward compatibility: Removing parameter ", action$parameterName, " in function ", #action$functionName)
+#        }
+#        
+#        # Remove the parameter:
+#        list <- list[!toRemove]
+#    }
+#    return(list)
+#}
+
+
+checkActionKeys <- function(action) {
+    required_function <- c(
+        "changeVersion",
+        "functionName",
+        "modelName"
+    )
+    required_attribute <- c(
+        "changeVersion",
+        "attributeName"
+    )
+    
+    # Check whether all required elements are present:
+    allPresent <- all(required_function %in% names(action)) || all(required_attribute %in% names(action))
+    
+    if(!allPresent) {
+        warning("The following action of package ", action$packageName, "does not contain all required elements (", paste(required_function, collapse = ", "), " or ", paste(required_attribute, collapse = ", "), "): \n", paste("\t", names(action), action, sep = ": ", collapse = "\n"))
+    }
+    
+    return(allPresent)
+}
+
+
+checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, projectDescription, packageName) {
+    
+    
+    # Skip if not a valid backwardCompatibilityAction:
+    if(!checkActionKeys(backwardCompatibilityAction)) {
+        return(FALSE)
+    }
+    
+    # Do only if the old version is lower than or equal to the fromVersion, and that the current version is higher than or equal to the toVersion:
+    # Get last saved version:
+    lastSavedVersion <- attr(projectDescription, "RstoxPackageVersion")
+    
+    # If the projectDescription does not have attrtibutes, apply the conversion with a warning:
+    if(length(lastSavedVersion)) {
+        # ..of the relevant package:
+        lastSavedVersion <- lastSavedVersion[startsWith(lastSavedVersion, packageName)]
+        lastSavedVersion <- interpretVersionString(lastSavedVersion)
+        convert <- lastSavedVersion < backwardCompatibilityAction$changeVersion
+    }
+    else {
+        warning("StoX: The project does not have attributes, and is assumed to be of an old form prior to SttoX 2.9.16. All backward compatibility actions are attempted.")
+        convert <- TRUE
+    }
+    
+    return(convert)
+}
+
+
+
+
 # Backwards compatibility:
 
 # 1. Re-organize models

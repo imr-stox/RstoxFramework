@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<project xmlns="http://www.imr.no/formats/stox/v3" template="str1234" description="str1234" lastmodified="2012-12-13T12:12:12" rstoxversion="str1234" stoxversion="str1234" rversion="str1234">
-      <baselinemodel>
-        <baselineprocess processname="str1234">
-          <functionparameter paramtypename="unkowntype" name="str1234">str1234</functionparameter>
-        </baselineprocess>
-      </baselinemodel>
-  <rstoxdependencies />
-</project>

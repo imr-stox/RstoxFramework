@@ -18,7 +18,17 @@
 #' 
 #' @export
 #' 
-runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, run = TRUE, save = TRUE, force.restart = FALSE, replaceDataList = list(), replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, try = TRUE, ...) {
+runModel <- function(
+    projectPath, modelName, 
+    processes = NULL, startProcess = 1, endProcess = Inf, 
+    run = TRUE, save = TRUE, force.restart = FALSE, 
+    replaceDataList = list(), replaceArgs = list(), 
+    fileOutput = NULL, 
+    setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, 
+    try = TRUE, 
+    close = FALSE, 
+    ...
+) {
     # Run the model if required:
     modelData <- NULL
     if(run) {
@@ -48,14 +58,23 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
             modelData <- getModelData(
                 projectPath = projectPath, 
                 modelName = modelName, 
+                processes = processes, 
                 startProcess = startProcess, 
-                endProcess = endProcess
+                endProcess = endProcess, 
+                warn = FALSE
             )
+        }
+        # Close after running if requested:
+        if(close) {
+            closeProject(projectPath)
         }
     }
     
     return(modelData)
 }
+
+
+
 ##################################################
 ##################################################
 #' Run all models of a StoX project
@@ -69,33 +88,200 @@ runModel <- function(projectPath, modelName, startProcess = 1, endProcess = Inf,
 #' 
 #' @export
 #' 
-runProject <- function(projectPath, run = TRUE, save = TRUE, force.restart = FALSE, replaceDataList = list(), replaceArgs = list(), fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, try = TRUE, ...) {
-    
-    modelNames <- getRstoxFrameworkDefinitions("stoxModelNames")
+runProject <- function(
+    projectPath, 
+    modelNames = getRstoxFrameworkDefinitions("stoxModelNames"), 
+    processes = NULL, startProcess = 1, endProcess = Inf, 
+    run = TRUE, save = TRUE, force.restart = FALSE, 
+    replaceDataList = list(), replaceArgs = list(), 
+    fileOutput = NULL, 
+    setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, 
+    try = TRUE, drop = TRUE, 
+    close = FALSE, 
+    ...
+) {
     
     projectData <- mapply(
         runModel, 
         modelName = modelNames, 
         MoreArgs = list(
             projectPath, 
-            startProcess = 1, 
-            endProcess = Inf, 
+            startProcess = startProcess, 
+            endProcess = endProcess, 
             run = run, 
             save = save, 
             force.restart = force.restart, 
             replaceDataList = replaceDataList, 
             replaceArgs = replaceArgs, 
             fileOutput = fileOutput, 
+            processes = processes, 
             setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
             purge.processData = purge.processData, 
             try = try, 
+            close = FALSE, 
             ...
         ), 
         SIMPLIFY = FALSE
     )
+    # Close after running if requested:
+    if(close) {
+        closeProject(projectPath)
+    }
+    
+    # Drop the list over models:
+    projectData <- unlist(unname(projectData), recursive = !drop)
     
     return(projectData)
 }
+
+
+##################################################
+##################################################
+#' Run all models of a StoX project
+#' 
+#' This function runs and returns output from all models of a StoX project.
+#' 
+#' @inheritParams runModel
+#' 
+#' @return
+#' A list of model output.
+#' 
+#' @export
+#' 
+runProjects <- function(
+    projectPaths, 
+    modelNames = getRstoxFrameworkDefinitions("stoxModelNames"), 
+    processes = NULL, startProcess = 1, endProcess = Inf, 
+    run = TRUE, save = TRUE, force.restart = FALSE, 
+    replaceDataList = list(), replaceArgs = list(), 
+    fileOutput = NULL, 
+    setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, 
+    try = TRUE, drop = TRUE, 
+    close = FALSE, 
+    ...
+) {
+    
+    # Run all projects:
+    output <- sapply(
+        projectPaths, 
+        runProject, 
+        modelNames = modelNames, 
+        processes = processes, startProcess = startProcess, endProcess = endProcess, 
+        run = run, save = save, force.restart = force.restart, 
+        replaceDataList = replaceDataList, replaceArgs = replaceArgs, 
+        fileOutput = fileOutput, 
+        setUseProcessDataToTRUE = setUseProcessDataToTRUE, purge.processData = purge.processData, 
+        try = try, drop = drop, 
+        close = close, 
+        ..., 
+        simplify = FALSE
+    )
+    
+    output <- rbindListRecursive(output)
+    
+    
+    return(output)
+}
+
+rbindListRecursive <- function(x) {
+    
+    x <- unlist(unname(x), recursive = FALSE)
+    
+    # Scan through the list and identify data.table(s):
+    namesList <- namesRecursive(x)
+    
+    # Loop through the tables and rbind:
+    output <- list()
+    for(namesVector in namesList) {
+        # Declare the list element:
+        output <- createNestedListElement(output, namesVector)
+        # Insert the rbinded table:
+        output[[namesVector]] <- data.table::rbindlist(extractFromAllProcessOutputs(namesVector, x), fill = TRUE)
+    }
+        
+    return(output)
+}
+
+extractFromAllProcessOutputs <- function(nameVector, x) {
+    
+    
+    if(length(nameVector) == 1) {
+        output <- x[names(x) == nameVector]
+    }
+    else if(length(nameVector) == 2) {
+        output <- lapply(x[names(x) == nameVector[1]], "[[", nameVector[2])
+    }
+    else if(length(nameVector) == 3) {
+        output <- lapply(x[names(x) == nameVector[1]], "[[", nameVector[2])
+        output <- lapply(output, "[[", nameVector[3])
+    }
+    else {
+        stop("Process outputs can only have three levels")
+    }
+    
+    # Remove the empty ones:
+    output <- output[lengths(output) > 0]
+    
+    return(output)
+}
+
+pasteNamesRecursive <- function (L, sep = "/") {
+    # Return the names if all elements are not lists, and recurse futher if any are lists:
+    areNotList <- sapply(L, inherits, c("data.table", "data.frame"))
+    areList <- !areNotList
+    
+    if(any(areList)) {
+        return(
+            c(
+                names(L)[areNotList], 
+                mapply(paste,  names(L)[areList], sapply(L[areList], pasteNamesRecursive), sep = sep)
+            )
+        )
+    }
+    
+    else {
+        return(names(L)[areNotList])
+    }
+}
+# Function to get the names of a list recursively:
+namesRecursive <- function (L, uniquify = TRUE) {
+    # Get the names pasted by "/"
+    namesRecursivePasted <- unlist(pasteNamesRecursive(L, sep = "/"))
+    
+    # Split by "/":
+    namesRecursiveSplit <- strsplit(namesRecursivePasted, "/")
+    
+    # Uniquify:
+    if(uniquify) {
+        namesRecursiveSplit <- unique(namesRecursiveSplit)
+    }
+    
+    return(namesRecursiveSplit)
+}
+
+createNestedListElement <- function(x, namesVector) {
+    if(!length(namesVector)) {
+        return(x)
+    }
+    else if(length(namesVector) == 1) {
+        if(!length(x[[namesVector]]) && !is.list(x[[namesVector]])) {
+            x[[namesVector]] <- list()
+        }
+    }
+    else {
+        for(ind in seq_along(namesVector)) {
+            thisNamesVector <- namesVector[seq_len(ind)]
+            if(!length(x[[thisNamesVector]]) && !is.list(x[[thisNamesVector]])) {
+                x[[thisNamesVector]] <- list()
+            }
+        }
+    }
+    return(x)
+}
+
+
+
+
 
 
 

@@ -661,3 +661,8 @@ as.list1 <- function(x) {
     
     return(x)
 }
+
+
+capitalizeFirstLetter <- function(x) {
+    gsub("(^[[:alpha:]])", "\\U\\1", x, perl=TRUE)
+}

@@ -129,111 +129,6 @@ addMissingAttributes <- function(stoxFunctionAttributes, requestedFunctionAttrib
 
 
 
-applyBackwardCompatibility <- function(projectDescription, verbose = FALSE) {
-    
-    ## Save the original projectDescription:
-    #originalProjectDescription <- projectDescription
-    #temp <- tempfile()
-    ##message(paste("Original file saved to", temp))
-    #save(projectDescription, file = temp)
-    
-    # Get the backward compatibility specifications:
-    backwardCompatibility <- getRstoxFrameworkDefinitions("backwardCompatibility")
-    
-    # Get the supported backward compatibility actions:
-    backwardCompatibilityActionNames <- getRstoxFrameworkDefinitions("backwardCompatibilityActionNames")
-    
-    # Run the backward compatibility actions:
-    projectDescription <- applyBackwardCompatibilityActions(
-        backwardCompatibilityActionNames = backwardCompatibilityActionNames, 
-        backwardCompatibility = backwardCompatibility, 
-        projectDescription = projectDescription, 
-        verbose = verbose
-    )
-    
-    return(projectDescription)
-}
-
-
-
-applyBackwardCompatibilityActions <- function(
-    backwardCompatibilityActionNames, 
-    backwardCompatibility, 
-    projectDescription, 
-    verbose = FALSE
-) {
-    
-    
-    # Run through the supported backward compatibility action names:
-    for(backwardCompatibilityActionName in backwardCompatibilityActionNames) {
-        
-        # Run through the packcages with backward compatibility actions:
-        for(packageName in names(backwardCompatibility)) {
-            
-            # Run through the backward compatibility actions:
-            for(backwardCompatibilityAction in backwardCompatibility [[packageName]] [[backwardCompatibilityActionName]]) {
-                run <- checkBackwardCompatibilityVersion(
-                    backwardCompatibilityAction = backwardCompatibilityAction, 
-                    projectDescription = projectDescription, 
-                    packageName = packageName
-                )
-                
-                if(run) {
-                    # Apply the backwardCompatibilityAction:
-                    projectDescription <- applyBackwardCompatibilityAction(
-                        backwardCompatibilityActionName = backwardCompatibilityActionName, 
-                        backwardCompatibilityAction = backwardCompatibilityAction, 
-                        projectDescription = projectDescription, 
-                        packageName = packageName, 
-                        verbose = verbose
-                    )
-                }
-            }
-            
-        }
-        
-    }
-    
-    return(projectDescription)
-    
-}
-
-applyBackwardCompatibilityAction <- function(
-    backwardCompatibilityActionName, 
-    backwardCompatibilityAction, 
-    projectDescription, 
-    packageName, 
-    verbose = FALSE
-) {
-    # Construct the function name:
-    applyFunctionName <- paste0("apply", capitalizeFirstLetter(backwardCompatibilityActionName))
-    args <- list(
-        backwardCompatibilityAction, 
-        projectDescription = projectDescription, 
-        packageName = packageName, 
-        verbose = verbose
-    )
-    # Call the function:
-    projectDescription <- do.call(applyFunctionName, args)
-    
-    return(projectDescription)
-}
-
-
-
-
-interpretVersionString <- function(versionString) {
-    # Keep everything after first underscore:
-    versionString <- sub("^[^_| ]*_", "", versionString)
-    # Keep everything after first space:
-    versionString <- sub("^\\S+\\s+", '', versionString)
-    
-    return(versionString)
-}
-
-capitalizeFirstLetter <- function(x) {
-    gsub("(^[[:alpha:]])", "\\U\\1", x, perl=TRUE)
-}
 
 
 
@@ -2379,7 +2274,7 @@ checkDataType <- function(dataType, projectPath, modelName, processID) {
     
 
 ##### Functions for manipulating the process index table, which defines the order of the processes. These functions are used by the frontend to delete, add, and reorder processes: #####
-readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NULL, startProcess = 1, endProcess = Inf, return.processIndex = FALSE) {
+readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NULL, startProcess = 1, endProcess = Inf, return.processIndex = FALSE, warn = TRUE) {
     
     # Get the path to the process index file:
     processIndexTableFile <- getProjectPaths(projectPath, "processIndexTableFile")
@@ -2418,7 +2313,14 @@ readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NUL
     
     # If present, interpret the requested 'processes' input:
     if(length(processes)) {
-        processesNumeric <- matchProcesses(processes, processIndexTable)
+        if(is.na(processes)) {
+            return(processIndexTable[FALSE, ])
+        }
+        processesNumeric <- matchProcesses(
+            processes, 
+            processIndexTable, 
+            warn = warn
+        )
     }
     else {
         # startProcess and endProcess can be given as process names or IDs:
@@ -2457,7 +2359,7 @@ readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NUL
     return(processIndexTable)
 }
 
-matchProcesses <- function(processes, processIndexTable) {
+matchProcesses <- function(processes, processIndexTable, warn = TRUE) {
     if(is.numeric(processes)) {
         processesNumeric <- processes
     }
@@ -2469,7 +2371,10 @@ matchProcesses <- function(processes, processIndexTable) {
         processesNumeric[unassigned] <- match(processes[unassigned], processIndexTable$processID)
         # Strip of the processes that were not regocnised:
         if(any(is.na(processesNumeric))) {
-            stop("StoX: The following processes were not recognized as process names or process IDs: ", paste(processes[is.na(processesNumeric)], collapse = ", "), ".")
+            # stop("StoX: The following processes were not recognized as process names or process IDs: ", paste(processes[is.na(processesNumeric)], collapse = ", "), ".")
+            if(warn) {
+                warning("StoX: The following processes were not recognized as process names or process IDs: ", paste(processes[is.na(processesNumeric)], collapse = ", "), ".")
+            }
             processesNumeric <- processesNumeric[!is.na(processesNumeric)]
         }
     }
@@ -4700,25 +4605,33 @@ unlistProcessOutput <- function(processOutput) {
 #' 
 #' @export
 #' 
-getModelData <- function(projectPath, modelName, processes = NULL, startProcess = 1, endProcess = Inf, drop.datatype = TRUE) {
+getModelData <- function(projectPath, modelName, processes = NULL, startProcess = 1, endProcess = Inf, drop.datatype = TRUE, warn = TRUE) {
     
+    # Get the processes to get output from, either specified with the 'processes' argument or the 'startProcess' and 'endProcess' arguments:
     processTable <- readProcessIndexTable(
         projectPath = projectPath, 
         modelName = modelName, 
         processes = processes, 
         startProcess = startProcess, 
-        endProcess = endProcess
+        endProcess = endProcess, 
+        warn = warn
     )
     
-    processOutput <- mapply(
-        getProcessOutput, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processTable$processID, 
-        drop.datatype = drop.datatype, 
-        SIMPLIFY = FALSE
-    )
-    names(processOutput) <- processTable$processName
+    if(nrow(processTable)) {
+        # Get the process outputs:
+        processOutput <- mapply(
+            getProcessOutput, 
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processTable$processID, 
+            drop.datatype = drop.datatype, 
+            SIMPLIFY = FALSE
+        )
+        names(processOutput) <- processTable$processName
+    }
+    else {
+        processOutput <- NULL
+    }
     
     return(processOutput)
 }
@@ -5034,16 +4947,7 @@ getProcessNameFromProcessID <- function(projectPath, modelName, processID) {
     processIndexTable[processID == thisProcessID, processName]
 }
 
-getProcessID <- function(projectPath, modelName, startProcess = 1, endProcess = Inf, processes = NULL) {
-    # Read the processIndexTable:
-    processIndexTable <- readProcessIndexTable(projectPath, modelName)
-    
-    # If 
-    
-    
-    thisProcessID <- processID
-    processIndexTable[processID == thisProcessID, processName]
-}
+
 
 
 
@@ -5142,6 +5046,48 @@ getProcessOutputTextFilePath <- function(
 }
     
 
+
+##### #' Get process output file paths of a process
+##### #' 
+##### #' @inheritParams general_arguments
+##### #' 
+##### #' @export
+##### #'
+##### getProcessOutputFilePaths <- function(projectPath, processName) {
+#####     
+#####     # Open the project if not open:
+#####     if(!isOpenProject(projectPath)) {
+#####         # No need for Application here as runProcesses() should be used after opening the project in a Application:
+#####         openProject(projectPath)
+#####         on.exit({
+#####             closeProject(projectPath)
+#####         })
+#####     }
+#####     
+#####     # Get the processes:
+#####     processTable <- getProcessAndFunctionNames(projectPath)
+#####     
+#####     # Subset to only the line of the requested process.
+#####     atProcess <- which(processTable$processName == processName)
+#####     if(length(atProcess) > 1) {
+#####         stop("The project has non-unique process names: ", processName, ".")
+#####     }
+#####     else if(!length(atProcess)){
+#####         warning("The process name", processName, "does not exist in the project", projectPath)
+#####         return(NULL)
+#####     }
+#####     else{
+#####         processOutputFilePaths <- getProcessOutputTextFilePath(
+#####             projectPath = projectPath, 
+#####             modelName = processTable$modelName[atProcess], 
+#####             processID = processTable$processID[atProcess], 
+#####             processOutput = NULL, 
+#####             output.file.type = "default"
+#####         )
+#####         
+#####         return(processOutputFilePaths)    
+#####     }
+##### }
     
     
 # Function to write process output to a text file in the output folder:
@@ -5429,7 +5375,7 @@ runProcesses <- function(
     processIDs <- processIndexTable$processID
     processNames <- processIndexTable$processName
     if(!length(processIDs)) {
-        warning("StoX: Empty project, ", projectPath)
+        warning("StoX: Empty model ", modelName, "of project, ", projectPath)
         return(NULL)
     }
     

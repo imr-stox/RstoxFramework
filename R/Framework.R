@@ -1439,7 +1439,7 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
 #' 
 #' @export
 #'
-resetModel <- function(projectPath, modelName, processID = NULL, processDirty = FALSE, shift = 0, returnProcessTable = FALSE) {
+resetModel <- function(projectPath, modelName, processID = NULL, processDirty = FALSE, shift = 0, returnProcessTable = FALSE, purgeOutputFiles = FALSE) {
     
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -1459,7 +1459,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
     # Read the active proces ID and reset if that is not NA:
     currentActiveProcessID <- getActiveProcess(projectPath = projectPath, modelName = modelName)$processID
     
-    # If activevprocessID is NA, do nothing, as this indicates that the model has not been run:
+    # If activeprocessID is NA, do nothing, as this indicates that the model has not been run:
     if(!is.na(currentActiveProcessID)) {
         
         ##### (1) Set active process: #####
@@ -1471,7 +1471,7 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
             newActiveProcessID <- NA
         }
         else {
-            # Reset only if the input process ID is before that the active:
+            # Reset only if the input process ID is before that of the active:
             if(processIndex < currentActiveProcessIndex) {
                     newActiveProcessID <- processIndexTable$processID[processIndex]
                 }
@@ -1529,6 +1529,18 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
             )
             unlink(foldersToDelete, recursive = TRUE, force = TRUE)
         }
+    }
+    else if(purgeOutputFiles) {
+        foldersToDelete <- sapply(
+            processIndexTable$processID, 
+            function(thisProcessID) getProcessOutputFolder(
+                projectPath = projectPath, 
+                modelName = modelName, 
+                processID = thisProcessID, 
+                type = "text"
+            )
+        )
+        unlink(foldersToDelete, recursive = TRUE, force = TRUE)
     }
     
     # Return a list of the active process and the process table:
@@ -3428,21 +3440,46 @@ convertToRelativePaths <- function(functionParameters, projectPath, modelName, p
 # Function to detect function parameter format filePath, filePaths or directoryPath, and convert to abolute paths for use in functions:
 getAbsolutePaths <- function(functionParameters, projectPath, modelName, processID) {
     
-    # Function to attempt to convert to relative path:
+    #browser()
+    ## Function to attempt to convert to relative path:
+    #getAbsolutePath <- function(filePath, projectPath) {
+    #    # Check first whether the file exists as a relative path:
+    #    absolutePath <- file.path(projectPath, filePath)
+    #    if(all(file.exists(absolutePath))) {
+    #        absolutePath
+    #    }
+    #    else if(all(file.exists(filePath))) {
+    #        filePath
+    #    }
+    #    else {
+    #        #warning("StoX: The file ", filePath, " does not exist.")
+    #        filePath
+    #    }
+    #}
+    
+    
+    
     getAbsolutePath <- function(filePath, projectPath) {
+        
+        getAbsolutePathOne <- function(filePath, projectPath) {
+            # Check first whether the file exists as a relative path:
+            absolutePath <- file.path(projectPath, filePath)
+            if(file.exists(absolutePath)) {
+                absolutePath
+            }
+            else if(file.exists(filePath)) {
+                filePath
+            }
+            else {
+                #warning("StoX: The file ", filePath, " does not exist.")
+                filePath
+            }
+        }
+        
         # Check first whether the file exists as a relative path:
-        absolutePath <- file.path(projectPath, filePath)
-        if(all(file.exists(absolutePath))) {
-            absolutePath
-        }
-        else if(all(file.exists(filePath))) {
-            filePath
-        }
-        else {
-            #warning("StoX: The file ", filePath, " does not exist.")
-            filePath
-        }
+        sapply(filePath, getAbsolutePathOne, projectPath = projectPath)
     }
+    
     
     # Detect the file paths:
     areFilePathsAndNonEmpty <- detectFilePaths(
@@ -4192,6 +4229,7 @@ isProcess <- function(x) {
 #'
 #' @inheritParams general_arguments
 #' @param replaceData Either the data to replace the process output by, or a list of two elements \code{FunctionName} and \code{MoreArgs}, giving a function to apply to the output from the process with additional arguments stored in \code{MoreArgs}. The function is applied using \code{\link{do.call}}, with \code{args} being a list with the process output first, followed by the \code{MoreArgs}.
+#' @param returnProcessOutput  Logical: If TRUE return the process output immediately after it is available. Used to get filter options.
 #' 
 #' @export
 #' 
@@ -4229,7 +4267,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     
     # Reset the model to the process just before the process to be run:
     if(!returnProcessOutput) {
-        resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1)
+        resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1, purgeOutputFiles = TRUE)
     }
     
     # Run the process:
@@ -4986,7 +5024,7 @@ getProcessOutputTextFilePath <- function(
         dir.create(folderPath)
     }
     
-    # Store the process output:
+    # Define the process output file path:
     if(output.file.type == "RData") {
         # Define a single file output named by the process name:
         fileNameSansExt <- processName
@@ -4996,8 +5034,10 @@ getProcessOutputTextFilePath <- function(
     }
     else {
         # Added on 2020-06-16. Add the data type in the file name only if multiple outputs, but not for RData files (default for analysis processes):
+        # Changed onn 2021-03-10 to only use the names of the output, not prefixed by the process name:
         if(length(processOutput)) {
-            fileNameSansExt <- paste(processName, names(processOutput), sep = "_")
+            #fileNameSansExt <- paste(processName, names(processOutput), sep = "_")
+            fileNameSansExt <- names(processOutput)
         }
         else {
             fileNameSansExt <- processName

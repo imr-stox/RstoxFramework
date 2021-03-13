@@ -485,6 +485,7 @@ ReportBootstrap <- function(
         aggregationFunction = AggregationFunction, 
         GroupingVariables = c(GroupingVariables, "BootstrapID"), 
         na.rm = RemoveMissingValues, 
+        padWithZeros = FALSE, 
         WeightingVariable = AggregationWeightingVariable
     )
     
@@ -503,6 +504,7 @@ ReportBootstrap <- function(
         aggregationFunction = BootstrapReportFunction, 
         GroupingVariables = GroupingVariables, 
         na.rm = RemoveMissingValues, 
+        padWithZeros = TRUE, 
         WeightingVariable = BootstrapReportWeightingVariable
     )
     

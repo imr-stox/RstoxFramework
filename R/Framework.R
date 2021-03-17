@@ -1174,7 +1174,10 @@ addProjectDescriptionAttributes <- function(projectDescription) {
 
 # Function to get the package version of several packages as strings:
 getPackageVersion <- function(packageNames, only.version = FALSE, sep = "_") {
-    version <- sapply(packageNames, function(x) as.character(utils::packageVersion(x)))
+    # Cchanged from using utils::packageVersion, which returns a numeric sequence which when converted to character separates with dots only, ignoring any hyphens in the original package version, to getNamespaceVersion(), which gives us exactly what we need:
+    #version <- sapply(packageNames, function(x) as.character(utils::packageVersion(x)))
+    version <- sapply(packageNames, getNamespaceVersion)
+    
     if(only.version) {
         version
     }
@@ -1184,17 +1187,30 @@ getPackageVersion <- function(packageNames, only.version = FALSE, sep = "_") {
 }
 
 # Get the versions of the dependent packages recursively:
-getDependentPackageVersion <- function(packageName, only.depedencies = TRUE) {
-    
+#getDependentPackageVersion <- function(packageName, only.depedencies = TRUE) {
+getDependentPackageVersion <- function(
+    packageName, 
+    dependencyTypes = NA, 
+    Rstox.repos = NULL, 
+    nonRstox.repos = "https://cloud.r-project.org", 
+    sort = FALSE
+) {
+        
     #dependencies <- gtools:: getDependencies("RstoxFramework", available = FALSE)
-    dependencies <- getNonRstoxDependencies(packageName)
-    # Remove the specified packcages:
-    if(only.depedencies) {
-        dependencies <- setdiff(
-            dependencies, 
-            packageName
+    dependencies <- getNonRstoxDependencies(
+        packageName = packageName, 
+        dependencyTypes = dependencyTypes, 
+        Rstox.repos = Rstox.repos, 
+        nonRstox.repos = nonRstox.repos, 
+        sort = sort
         )
-    }
+    # Remove the specified packcages:
+    ###if(only.depedencies) {
+    ###    dependencies <- setdiff(
+    ###        dependencies, 
+    ###        packageName
+    ###    )
+    ###}
     
     # Get packcage versions as strings "PACKAGENAME vPACKAGEVERSION":
     #RstoxPackageVersion <- getPackageVersion(RstoxPackages)

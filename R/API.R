@@ -64,6 +64,10 @@ runModel <- function(
                 warn = FALSE
             )
         }
+        else{
+            warning("The path ", projectPath, " does not point to a valid StoX project.")
+        }
+        
         # Close after running if requested:
         if(close) {
             closeProject(projectPath)

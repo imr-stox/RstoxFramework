@@ -257,10 +257,8 @@ initiateRstoxFramework <- function(){
     )
     
     #### Fundamental settings of StoX: ####
-    # Define the number of digits to use in JSON files:
-    digits <- list(
-        JSON = 6
-    )
+    # The time format used in the project.json:
+    StoxDateTimeFormat <- "%Y-%m-%dT%H:%M:%OS"
     
     # Define the permitted classes for individual outputs from StoX functions:
     validOutputDataClasses <- c(

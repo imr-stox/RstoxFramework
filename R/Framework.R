@@ -938,7 +938,7 @@ is.ConvertableToPOSIX <- function(x) {
 
 convertToPOSIX <- function(x) {
     # Get the DateTime format used by StoX:
-    StoxDateTimeFormat <- RstoxData::getRstoxDataDefinitions("StoxDateTimeFormat")
+    StoxDateTimeFormat <- getRstoxFrameworkDefinitions("StoxDateTimeFormat")
     StoxTimeZone <- RstoxData::getRstoxDataDefinitions("StoxTimeZone")
     
     # Convert to POSIX:
@@ -948,21 +948,6 @@ convertToPOSIX <- function(x) {
 }
 
 
-
-
-
-## Convert a process data object to JSON string.
-#processData2JSON <- function(processData, digits = getRstoxFrameworkDefinitions("digits")$JSON) {
-#    if("StratumPolygon" %in% names(processData)) {
-#        #as.character(geojsonio::geojson_json(processData))
-#        as.character(geojsonio::geojson_json(processData, lon = "x", lat = "y"))
-#    }
-#    else {
-#        #jsonlite::toJSON(processData, digits = digits, pretty = TRUE, auto_unbox = TRUE)
-#        processData
-#    }
-#    
-#}
 
 # Convert JSON string to a process data object.
 JSON2processData <- function(JSON) {
@@ -3346,6 +3331,7 @@ modifyProcessParameters <- function(projectPath, modelName, processID, newProces
     #modifiedProcessParameters
 }
 modifyProcessData <- function(projectPath, modelName, processID, newProcessData, archive = TRUE, purge.processData = FALSE) {
+    
     # Get the process data:
     processData<- getProcessData(
         projectPath = projectPath, 
@@ -3732,7 +3718,8 @@ formatFunctionParameters <-  function(functionParameters, functionName) {
                     
                     # Special case for NULL:
                     if(NULLDefinedAndEmptyProperty) {
-                        functionParameters[this] <- list(NULL)
+                        warning("StoX: Function parameter ", this, " of function ", functionName, " is not declared with a value in the function definition. Please inform the developers that they should declare the parameter, e.g. with double(), character() etc to define the type of the parameter. NULL should be avoided.")
+                        #functionParameters[this] <- list(NULL)
                     }
                     # ... and for empty data.table:
                     else if(emptyTable) {

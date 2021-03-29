@@ -1523,6 +1523,7 @@ getOptionList <- function(option, digits = 6) {
 
 
 getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE, include.POSIXct = FALSE) {
+    
     # Return empty named list if no input:
     if(length(table) == 0) {
         return(emptyNamedList())
@@ -1536,7 +1537,6 @@ getPossibleValuesOneTable <- function(table, type, include.numeric = FALSE, incl
     if(!include.POSIXct) {
         validInd <- setdiff(validInd, which(type %in% c("POSIXct")))
     }
-    
     
     #if(include.numeric) {
     #    validInd <- seq_len(ncol(table))
@@ -1561,11 +1561,19 @@ sortUnique <- function(y) {
     
     # Get first the unique values, then check that the length of these are not identical to the length of the vector, and then sort:
     uniquey <- unique(y)
-    if(length(uniquey) < length(y)) {
-        sort(uniquey, na.last = FALSE)
+    
+    #if(length(uniquey) < length(y)) {
+    #    sort(uniquey, na.last = FALSE)
+    #}
+    #else {
+    #    NULL
+    #}
+    # Get unique values only if not all are unique
+    if(length(uniquey) == length(y) && length(y) > 1) {
+        NULL
     }
     else {
-        NULL
+        sort(uniquey, na.last = FALSE)
     }
 }
 

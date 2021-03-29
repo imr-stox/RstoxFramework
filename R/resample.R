@@ -400,7 +400,7 @@ ResampleMeanLengthDistributionData <- function(MeanLengthDistributionData, Seed)
 #' @export
 #' 
 ResampleBioticAssignment <- function(BioticAssignment, Seed) {
-    # Resample PSUs within Strata, modifying the weighting variable of BioticAssignment:
+    # Resample Hauls within Strata, modifying the weighting variable of BioticAssignment:
     BioticAssignment <- resampleDataBy(
         #data = BioticAssignment$BioticAssignment, 
         data = BioticAssignment, 
@@ -485,6 +485,7 @@ ReportBootstrap <- function(
         aggregationFunction = AggregationFunction, 
         GroupingVariables = c(GroupingVariables, "BootstrapID"), 
         na.rm = RemoveMissingValues, 
+        padWithZeros = FALSE, 
         WeightingVariable = AggregationWeightingVariable
     )
     
@@ -503,6 +504,7 @@ ReportBootstrap <- function(
         aggregationFunction = BootstrapReportFunction, 
         GroupingVariables = GroupingVariables, 
         na.rm = RemoveMissingValues, 
+        padWithZeros = TRUE, 
         WeightingVariable = BootstrapReportWeightingVariable
     )
     

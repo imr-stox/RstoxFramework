@@ -27,6 +27,111 @@ backwardCompatibility <- list(
 
 
 
+applyBackwardCompatibility <- function(projectDescription, verbose = FALSE) {
+    
+    ## Save the original projectDescription:
+    #originalProjectDescription <- projectDescription
+    #temp <- tempfile()
+    ##message(paste("Original file saved to", temp))
+    #save(projectDescription, file = temp)
+    
+    # Get the backward compatibility specifications:
+    backwardCompatibility <- getRstoxFrameworkDefinitions("backwardCompatibility")
+    
+    # Get the supported backward compatibility actions:
+    backwardCompatibilityActionNames <- getRstoxFrameworkDefinitions("backwardCompatibilityActionNames")
+    
+    # Run the backward compatibility actions:
+    projectDescription <- applyBackwardCompatibilityActions(
+        backwardCompatibilityActionNames = backwardCompatibilityActionNames, 
+        backwardCompatibility = backwardCompatibility, 
+        projectDescription = projectDescription, 
+        verbose = verbose
+    )
+    
+    return(projectDescription)
+}
+
+
+
+applyBackwardCompatibilityActions <- function(
+    backwardCompatibilityActionNames, 
+    backwardCompatibility, 
+    projectDescription, 
+    verbose = FALSE
+) {
+    
+    
+    # Run through the supported backward compatibility action names:
+    for(backwardCompatibilityActionName in backwardCompatibilityActionNames) {
+        
+        # Run through the packcages with backward compatibility actions:
+        for(packageName in names(backwardCompatibility)) {
+            
+            # Run through the backward compatibility actions:
+            for(backwardCompatibilityAction in backwardCompatibility [[packageName]] [[backwardCompatibilityActionName]]) {
+                run <- checkBackwardCompatibilityVersion(
+                    backwardCompatibilityAction = backwardCompatibilityAction, 
+                    projectDescription = projectDescription, 
+                    packageName = packageName
+                )
+                
+                if(run) {
+                    # Apply the backwardCompatibilityAction:
+                    projectDescription <- applyBackwardCompatibilityAction(
+                        backwardCompatibilityActionName = backwardCompatibilityActionName, 
+                        backwardCompatibilityAction = backwardCompatibilityAction, 
+                        projectDescription = projectDescription, 
+                        packageName = packageName, 
+                        verbose = verbose
+                    )
+                }
+            }
+            
+        }
+        
+    }
+    
+    return(projectDescription)
+    
+}
+
+applyBackwardCompatibilityAction <- function(
+    backwardCompatibilityActionName, 
+    backwardCompatibilityAction, 
+    projectDescription, 
+    packageName, 
+    verbose = FALSE
+) {
+    # Construct the function name:
+    applyFunctionName <- paste0("apply", capitalizeFirstLetter(backwardCompatibilityActionName))
+    args <- list(
+        backwardCompatibilityAction, 
+        projectDescription = projectDescription, 
+        packageName = packageName, 
+        verbose = verbose
+    )
+    # Call the function:
+    projectDescription <- do.call(applyFunctionName, args)
+    
+    return(projectDescription)
+}
+
+
+
+
+interpretVersionString <- function(versionString) {
+    # Keep everything after first underscore:
+    versionString <- sub("^[^_| ]*_", "", versionString)
+    # Keep everything after first space:
+    versionString <- sub("^\\S+\\s+", '', versionString)
+    
+    return(versionString)
+}
+
+
+
+
 
 #### These functions are run by applyBackwardCompatibilityAction(): 
 
@@ -338,7 +443,6 @@ checkActionKeys <- function(action) {
 
 checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, projectDescription, packageName) {
     
-    
     # Skip if not a valid backwardCompatibilityAction:
     if(!checkActionKeys(backwardCompatibilityAction)) {
         return(FALSE)
@@ -355,8 +459,12 @@ checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, proj
         lastSavedVersion <- interpretVersionString(lastSavedVersion)
         convert <- lastSavedVersion < backwardCompatibilityAction$changeVersion
     }
+    # NA is introduced 
+    else if(is.na(lastSavedVersion)) {
+        convert <- TRUE
+    }
     else {
-        warning("StoX: The project does not have attributes, and is assumed to be of an old form prior to SttoX 2.9.16. All backward compatibility actions are attempted.")
+        warning("StoX: The project does not have attributes, and is assumed to be of an old form prior to StoX 2.9.16. All backward compatibility actions are attempted.")
         convert <- TRUE
     }
     
@@ -458,47 +566,73 @@ checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, proj
 readProjectXMLToList <- function(projectPath) {
     projectXMLFile <- getProjectPaths(projectPath, "projectXMLFile")
     # Read the project.xml file into a list:
-    doc = XML::xmlParse(projectXMLFile)
-    projectList <- XML::xmlToList(doc)
+    #doc = XML::xmlParse(projectXMLFile)
+    doc = xml2::read_xml(projectXMLFile)
+    #projectList <- XML::xmlToList(doc)
+    projectList <- xml2::as_list(doc)$project
     return(projectList)
 }
 
 
 readProjectXMLToProjectDescription2.7 <- function(projectPath) {
+    
     # Read the project.xml file into a list:
     projectList <- readProjectXMLToList(projectPath)
     
     # For convenience separate into models, processdata and attrs:
     models <- projectList[names(projectList) == "model"]
     processdata <- projectList$processdata
-    attrs <- projectList$.attrs
-    
-    # Extract project attributes:
-    list(
-        TimeSaved = strftime(as.POSIXlt(attrs[["lastmodified"]], "UTC", "%Y/%m/%d %H:%M") , "%Y-%m-%dT%H:%M:%OS3Z"), 
-        #FileVersion = "", 
-        RVersion = attrs[["rversion"]], 
-        RstoxPackageVersion = list(),
-        RstoxFrameworkDependencies = data.table::data.table()
-        #Template = attrs[["template"]]
-    )
     
     # Get the model names and group baseline
-    modelNames2.7 <- sapply(models, function(x) x$.attrs[["name"]])
+    modelNames2.7 <- sapply(models, attr, "name")
     names(models) <- modelNames2.7
     
-    # Create new models:
-    modelNameMapping2.7To3 <- getRstoxFrameworkDefinitions("modelNameMapping2.7To3")
-    models <- split(models, modelNameMapping2.7To3[names(models)])
-    # Order the models:
-    models <- models[getRstoxFrameworkDefinitions("stoxModelNames")]
-    
-    
+    return(models)
 }
 
 
 
-
+projectDescription2.7To3 <- function(projectDescription2.7) {
+    
+    # Create new models:
+    modelNameMapping2.7To3 <- getRstoxFrameworkDefinitions("modelNameMapping2.7To3")
+    projectDescription3 <- split(projectDescription2.7, modelNameMapping2.7To3[names(models)])
+    # Order the models:
+    projectDescription3 <- projectDescription3[getRstoxFrameworkDefinitions("stoxModelNames")]
+    
+    # Move single processes between models:
+    
+    
+    
+    
+    
+    # Convert the project attributes:
+    attriributes(projectDescription3) <- list(
+        TimeSaved = strftime(
+            as.POSIXlt(
+                attr(projectDescription2.7, "lastmodified"), 
+                "UTC", 
+                "%Y/%m/%d %H:%M"
+            ), 
+            "%Y-%m-%dT%H:%M:%OS3Z"
+        ), 
+        RVersion = attr(projectDescription2.7, "rversion"), 
+        RstoxPackageVersion = list(
+            Rstox = attr(projectDescription2.7, "rstoxversion")
+        ),
+        RstoxFrameworkDependencies = NA, 
+        CertifiedRstoxPackageVersion = NA,
+        AllCertifiedRstoxPackageVersion = FALSE, 
+        OfficialRstoxFrameworkVersion = FALSE,
+        DependentPackageVersion = NA,
+        Application = attr(projectDescription2.7, "stoxversion")
+    )
+    
+    
+    
+    
+    
+}
 # Rename DefineStratumPolygon to DefineStratum:
 #rename_DefineStratumPolygon_to_DefineStratum <- function(projectDescription) {
 #    if(StoxVersion == 2.7) {
@@ -732,8 +866,57 @@ findProcessFromFunctionName <- function(functionName, projectDescription, modelN
 #' @export
 #' 
 backwardCompatibility2.7 <- list(
-    # rename_DefineStratumPolygon_to_DefineStratum, 
-    split_ReadBioticXML_to_ReadBiotic_and_StoxBiotic
+    
+    # 1. Move process between models:
+    moveProcess = list(
+        list(
+            functionName = "ImpuetByAge", 
+            model = "R", 
+            newModel = "Baseline"
+        )
+    ), 
+    
+    # 2. Remove process: 
+    removeProcess = list(
+        list(
+            functionName = "ReadProcessData", 
+            model = "Baseline"
+        ), 
+        list(
+            functionName = "WriteProcessData", 
+            model = "Baseline"
+        ), 
+        list(
+            functionName = "SumDensity", 
+            model = "Baseline"
+        ), 
+        list(
+            functionName = "saveProjectData", 
+            model = "Analysis"
+        )
+    ), 
+    
+    # 3. Rename process:
+    
+    # 4. Split process:
+    
+    # 5. Join processes:
+    joinProcess = list(
+        list(
+            functionNames = c(
+                "IndividualDataStations", 
+                "IndividualData"
+            ), 
+            newFunctionName = "Individuals",
+            model = "Baseline"
+        ), 
+        list(
+            functionName = "WriteProcessData", 
+            model = "Baseline"
+        )
+    )
+    
+    
 )
 
 
@@ -743,7 +926,8 @@ backwardCompatibility2.7 <- list(
 
 stratumpolygon2.7ToTable <- function(stratumpolygon) {
     # Get polygon keys:
-    polygonkey <- sapply(stratumpolygon, function(x) x$.attrs["polygonkey"])
+    #polygonkey <- sapply(stratumpolygon, function(x) x$.attrs["polygonkey"])
+    polygonkey <- sapply(stratumpolygon, attr, "polygonkey")
     
     # Convert to a list with one list per polygon:
     stratumpolygonList <- split(stratumpolygon, polygonkey)

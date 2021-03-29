@@ -41,7 +41,14 @@ initiateRstoxFramework <- function(){
     InstalledRstoxPackageVersion <- as.list(getPackageVersion(officialStoxLibraryPackagesAll, only.version = TRUE))
     
     # Get the versions of the dependencies:
-    dependentPackageVersion <- getDependentPackageVersion(officialStoxLibraryPackagesAll)
+    dependentPackageVersion <- getDependentPackageVersion(
+        packageName = officialStoxLibraryPackagesAll, 
+        dependencyTypes = NA, 
+        Rstox.repos = NULL, 
+        # Get dependencies from the locally installed packates (setting nonRstox.repos to NULL). 
+        nonRstox.repos = NULL, 
+        sort = FALSE
+    )
     
     # Define the possible projectDescription file formats:
     projectDescriptionFileFormats <- c("JSON", "RData")
@@ -250,10 +257,8 @@ initiateRstoxFramework <- function(){
     )
     
     #### Fundamental settings of StoX: ####
-    # Define the number of digits to use in JSON files:
-    digits <- list(
-        JSON = 6
-    )
+    # The time format used in the project.json:
+    StoxDateTimeFormat <- "%Y-%m-%dT%H:%M:%OS"
     
     # Define the permitted classes for individual outputs from StoX functions:
     validOutputDataClasses <- c(

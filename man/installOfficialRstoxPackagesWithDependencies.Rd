@@ -10,7 +10,7 @@ installOfficialRstoxPackagesWithDependencies(
   destdir = NA,
   Rstox.repos = "https://stoxproject.github.io/repo",
   download.repos = "https://cloud.r-project.org",
-  dependencies = NA,
+  dependencyTypes = NA,
   sort = FALSE,
   platform = NA,
   skip.identical = FALSE,
@@ -26,9 +26,9 @@ installOfficialRstoxPackagesWithDependencies(
 
 \item{destdir}{The directory to download binaries to, defaulted to NA which implies tempdir().}
 
-\item{Rstox.repos}{Either NULL to search for packages locally, or a repository passed to \code{\link[utils]{available.packages}}, where \code{Rstox.repos} is used to locate direct dependencies of the Rstox packages, and \code{nonRstox.reposs} is used to get the dependencies of the direct dependencies recursievly, defaulted to the CRAN repository.}
+\item{Rstox.repos}{Either NULL to search for packages locally, or a repository passed to \code{\link[utils]{available.packages}}, where \code{Rstox.repos} is used to locate direct dependencies of the Rstox packages, and \code{nonRstox.reposs} is used to get the dependencies of the direct dependencies recursively, defaulted to the CRAN repository.}
 
-\item{dependencies}{A character vector listing the dependencies to get, with possible values "Depends", "Imports", "LinkingTo", "Suggests", "Enhances". Default is NA, implying c("Depends", "Imports", "LinkingTo").}
+\item{dependencyTypes}{A character vector listing the dependencies to get, with possible values "Depends", "Imports", "LinkingTo", "Suggests", "Enhances". Default is NA, implying c("Depends", "Imports", "LinkingTo").}
 
 \item{sort}{Logical: If TRUE sort the dependent packages, defaulted to FALSE to enable installing the most basic dependencies first.}
 

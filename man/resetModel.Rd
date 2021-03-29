@@ -10,7 +10,8 @@ resetModel(
   processID = NULL,
   processDirty = FALSE,
   shift = 0,
-  returnProcessTable = FALSE
+  returnProcessTable = FALSE,
+  purgeOutputFiles = FALSE
 )
 }
 \arguments{

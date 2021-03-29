@@ -6,6 +6,10 @@
 \usage{
 runProject(
   projectPath,
+  modelNames = getRstoxFrameworkDefinitions("stoxModelNames"),
+  processes = NULL,
+  startProcess = 1,
+  endProcess = Inf,
   run = TRUE,
   save = TRUE,
   force.restart = FALSE,
@@ -15,11 +19,17 @@ runProject(
   setUseProcessDataToTRUE = TRUE,
   purge.processData = FALSE,
   try = TRUE,
+  drop = TRUE,
+  close = FALSE,
   ...
 )
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
+
+\item{startProcess}{xx}
+
+\item{endProcess}{Integer value speicfying the}
 
 \item{run}{Logical: If TRUE run the model.}
 

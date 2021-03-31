@@ -989,21 +989,30 @@ redefineAcousticPSUFrom2.7 <- function(projectPath, newProjectPath) {
     
     # Create the StratumPSU table:
     Stratum_PSU <- data.table::as.data.table(
-        matrix(
-            unlist(projectList$processdata$psustratum), 
-            ncol = 2, 
-            byrow = TRUE
+        #matrix(
+        #    unlist(projectList$processdata$psustratum), 
+        #    ncol = 2, 
+        #    byrow = TRUE
+        #
+        cbind(
+            Stratum = unlist(projectList$processdata$psustratum), 
+            PSU = sapply(projectList$processdata$psustratum, attr, "psu")
         )
     )
-    names(Stratum_PSU) <- c("Stratum", "PSU")
+    #names(Stratum_PSU) <- c("Stratum", "PSU")
     
     EDSU_PSU <- data.table::as.data.table(
-        matrix(
-            unlist(projectList$processdata$edsupsu), 
-            ncol = 2, 
-            byrow = TRUE
+        # matrix(
+        #        unlist(projectList$processdata$edsupsu), 
+        #        ncol = 2, 
+        #        byrow = TRUE
+        #    )
+        cbind(
+            PSU = unlist(projectList$processdata$edsupsu), 
+            EDSU = sapply(projectList$processdata$edsupsu, attr, "edsu")
         )
     )
+    
     names(EDSU_PSU) <- c("PSU", "EDSU")
     data.table::setcolorder(EDSU_PSU, c("EDSU", "PSU"))
     

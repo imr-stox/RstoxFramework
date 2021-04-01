@@ -981,29 +981,81 @@ copyStoXMultipolygonWKTFrom2.7 <- function(projectPath, stratumPolygonFileName =
     return(stratumpolygonFilePath)
 }
 
+#' Backward compabitibility actions:
+#' 
+#' @inheritParams general_arguments
+#' @param projectPath2.7 The path to the StoX 2.7 project to convert to StoX 3.x.x.
+#' @param projectPath3 The path to the StoX 3.x.x project used as model for the conversion.
+#' @param newProjectPath3 The path to the StoX 3.x.x project to create.
+#' 
+#' @export
+#' 
+convertStoX2.7To3 <- function(projectPath2.7, projectPath3, newProjectPath3 = NULL, ow = FALSE) {
+    
+    # Save to a different project:
+    if(!length(newProjectPath3)) {
+        newProjectPath3 <- projectPath3
+    }
+    else {
+        copyProject(
+            projectPath = projectPath3, 
+            newProjectPath = newProjectPath3, 
+            ow = ow
+        )
+    }
+    
+    # Replace input data.
+    if(ow) {
+        inputDir2.7 <- file.path(projectPath2.7, "input")
+        inputDir3 <- file.path(newProjectPath3, "input")
+        unlink(inputDir3, force = TRUE, recursive = TRUE)
+        file.copy(inputDir2.7, inputDir3, recursive = TRUE)
+    }
+    
+    
+    redefineAcousticPSUFrom2.7(
+        projectPath2.7 = projectPath2.7, 
+        projectPath3 = projectPath3, 
+        newProjectPath3 = newProjectPath3, 
+        ow = ow
+    )
+    
+    updateInputDataFiles(newProjectPath3)
+}
 
-redefineAcousticPSUFrom2.7 <- function(projectPath, newProjectPath) {
+
+
+redefineAcousticPSUFrom2.7 <- function(projectPath2.7, projectPath3, newProjectPath3 = NULL, ow = FALSE) {
     
     # Read the old project.xml file:
-    projectList <- readProjectXMLToList(projectPath)
+    projectList <- readProjectXMLToList(projectPath2.7)
     
     # Create the StratumPSU table:
     Stratum_PSU <- data.table::as.data.table(
-        matrix(
-            unlist(projectList$processdata$psustratum), 
-            ncol = 2, 
-            byrow = TRUE
+        #matrix(
+        #    unlist(projectList$processdata$psustratum), 
+        #    ncol = 2, 
+        #    byrow = TRUE
+        #
+        cbind(
+            Stratum = unlist(projectList$processdata$psustratum), 
+            PSU = sapply(projectList$processdata$psustratum, attr, "psu")
         )
     )
-    names(Stratum_PSU) <- c("Stratum", "PSU")
+    #names(Stratum_PSU) <- c("Stratum", "PSU")
     
     EDSU_PSU <- data.table::as.data.table(
-        matrix(
-            unlist(projectList$processdata$edsupsu), 
-            ncol = 2, 
-            byrow = TRUE
+        # matrix(
+        #        unlist(projectList$processdata$edsupsu), 
+        #        ncol = 2, 
+        #        byrow = TRUE
+        #    )
+        cbind(
+            PSU = unlist(projectList$processdata$edsupsu), 
+            EDSU = sapply(projectList$processdata$edsupsu, attr, "edsu")
         )
     )
+    
     names(EDSU_PSU) <- c("PSU", "EDSU")
     data.table::setcolorder(EDSU_PSU, c("EDSU", "PSU"))
     
@@ -1019,8 +1071,7 @@ redefineAcousticPSUFrom2.7 <- function(projectPath, newProjectPath) {
     
     EDSU_PSU[, EDSU := paste(..Cruise, ..DateTime, sep = "/")]
     
-    openProject(newProjectPath)
-    projectDescription <- readProjectDescription(newProjectPath)
+    projectDescription <- readProjectDescription(projectPath3)
     asDefineAcousticPSU <- which(sapply(projectDescription$projectDescription$baseline, "[[", "functionName") == "RstoxBase::DefineAcousticPSU")
     
     projectDescription$projectDescription$baseline[[asDefineAcousticPSU]]$processData <- list(
@@ -1029,10 +1080,52 @@ redefineAcousticPSUFrom2.7 <- function(projectPath, newProjectPath) {
         PSUByTime = data.table::data.table()
     )
     
-    writeProjectDescription(newProjectPath, projectDescription = projectDescription$projectDescription)
+    openProject(newProjectPath3)
+    writeProjectDescription(newProjectPath3, projectDescription = projectDescription$projectDescription)
+    
+    closeProject(projectPath3)
+    closeProject(newProjectPath3)
+    
+    return(unname(newProjectPath3))
 }
 
+updateInputDataFiles <- function(projectPath, inputDataTypes = c("Acoustic", "Biotic", "Landing")) {
+    openProject(projectPath)
+    baselineTable <- getProcessAndFunctionNames(projectPath, "baseline")
+    
+    lapply(
+        inputDataTypes, 
+        updateInputDataFilesOne, 
+        projectPath = projectPath, 
+        baselineTable = baselineTable
+    )
+    
+    saveProject(projectPath)
+}
 
+updateInputDataFilesOne <- function(inputDataType, projectPath, baselineTable) {
+    
+    # Get the input files:
+    inputFiles <- list.files(getProjectPaths(projectPath, inputDataType), full.names = TRUE)
+    
+    inputFunctionName <- paste0("Read", inputDataType)
+    inputProcessNames <- baselineTable[endsWith(functionName, inputFunctionName), processName]
+    
+    for(inputProcessName in inputProcessNames) {
+        modifyProcess(
+            projectPath = projectPath, 
+            modelName = "baseline", 
+            processName = inputProcessName, 
+            newValues = list(
+                functionParameters = list(
+                    FileNames = inputFiles
+                )
+            )
+        )
+    }
+    
+    return(inputFiles)
+}
 
 # Unifnished!!!!!!!!!!!!
 redefineBioticAssignmentFrom2.7 <- function(projectPath, newProjectPath) {

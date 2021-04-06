@@ -1009,7 +1009,7 @@ convertStoX2.7To3 <- function(projectPath2.7, projectPath3, newProjectPath3 = NU
         inputDir2.7 <- file.path(projectPath2.7, "input")
         inputDir3 <- file.path(newProjectPath3, "input")
         unlink(inputDir3, force = TRUE, recursive = TRUE)
-        file.copy(inputDir2.7, inputDir3, recursive = TRUE)
+        file.copy(inputDir2.7, newProjectPath3, recursive = TRUE)
     }
     
     
@@ -1020,7 +1020,11 @@ convertStoX2.7To3 <- function(projectPath2.7, projectPath3, newProjectPath3 = NU
         ow = ow
     )
     
+    redefineBioticAssignmentFrom2.7(projectPath2.7, newProjectPath3)
+    
     updateInputDataFiles(newProjectPath3)
+    
+    closeProject(newProjectPath3)
 }
 
 
@@ -1130,32 +1134,27 @@ updateInputDataFilesOne <- function(inputDataType, projectPath, baselineTable) {
 # Unifnished!!!!!!!!!!!!
 redefineBioticAssignmentFrom2.7 <- function(projectPath, newProjectPath) {
     
-    # Read the old project.xml file:
-    projectList <- readProjectXMLToList(projectPath)
-    
     # Read the BioticAssignment:
-    bioticassignment <- data.table::as.data.table(
-        matrix(
-            unlist(projectList$processdata$bioticassignment), 
-            ncol = 3, 
-            byrow = TRUE
-        )
-    )
+    bioticassignment <- readStox2.7ProcessDataTable(projectPath, "bioticassignment")
     names(bioticassignment) <- c("WeightingFactor", "AssignmentID", "Haul")
     
     # Read the link between AssignmentID and PSU:
-    suassignment <- data.table::as.data.table(
-        matrix(
-            unlist(projectList$processdata$suassignment), 
-            ncol = 3, 
-            byrow = TRUE
-        )
-    )
+    suassignment <- readStox2.7ProcessDataTable(projectPath, "suassignment")
     names(suassignment) <- c("AssignmentID", "PSU", "Layer")
+    
+    # Read the link between Stratum and PSU:
+    psustratum <- readStox2.7ProcessDataTable(projectPath, "psustratum")
+    names(psustratum) <- c("Stratum", "PSU")
+    
     
     if(!suassignment[, RstoxBase::allEqual(Layer)]) {
         stop("Currently, only StoX 2.7 projects with layer type \"WaterColumn\" can be automatically converted to StoX 3.0 and higher.")
     }
+    
+    
+    # Unifnished from here. Also we need to treat DepthLayer, WaterColumn and PChanel!!!!!!!
+    
+    
     suassignment[, Layer := "WaterColumn"]
     
     # Add stratum:
@@ -1175,7 +1174,36 @@ redefineBioticAssignmentFrom2.7 <- function(projectPath, newProjectPath) {
 }
 
 
-
+readStox2.7ProcessDataTable <- function(projectPath, processDataName) {
+    projectList <- readProjectXMLToList(projectPath)
+    
+    # Read the BioticAssignment:
+    dataNames <- names(projectList$processdata[[processDataName]][1])
+    attNames <- names(attributes(projectList$processdata[[processDataName]][[1]]))
+    columnNames <- c(
+        dataNames, 
+        attNames
+    )
+    
+    # Get the data:
+    data <- matrix(unlist(projectList$processdata[[processDataName]]), ncol = length(dataNames), byrow = TRUE)
+    # Get the attributes:
+    att <- lapply(projectList$processdata[[processDataName]], attributes)
+    att <- matrix(unlist(att), ncol = length(attNames), byrow = TRUE)
+    
+    
+    
+    # Add the attributes to the data:
+    processDataTable <- data.table::as.data.table(
+        cbind(
+            data, 
+            att
+        )
+    )
+    names(processDataTable) <- columnNames
+    
+    return(processDataTable)
+}
 
 
 # Functions to subset an NMDBiotic or NMDEchosounder file, useful for creating small test-projects:

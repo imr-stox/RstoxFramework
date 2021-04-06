@@ -468,7 +468,9 @@ openProject <- function(
     
     # If already open, repoen if force:
     if(!force && isOpenProject(projectPath)) {
-        warning("StoX: Project ", projectPath, " is already open.")
+        if(showWarnings) {
+            warning("StoX: Project ", projectPath, " is already open.")
+        }
         
         # Reset the active process if requested:
         if(reset) {
@@ -542,7 +544,7 @@ closeProject <- function(
     projectPath, 
     save = NULL, 
     Application = R.version.string,
-    msg =TRUE
+    msg = TRUE
 ) {
     # Check that the project has been saved:
     if(isOpenProject(projectPath)) {
@@ -576,7 +578,7 @@ closeProject <- function(
         unlink(projectSessionFolderStructure, recursive = TRUE, force = TRUE)
     }
     else if(msg){
-        message("StoX: Project ", projectPath, " is not open")
+        message("StoX: Project ", projectPath, " is already closed.")
     }
 }
 ##' 
@@ -664,7 +666,7 @@ copyProject <- function(projectPath, newProjectPath, ow = FALSE) {
     if(ow) {
         unlink(newProjectPath, force = TRUE, recursive = TRUE)
     }
-    dir.create(newProjectPath, recursive = TRUE)
+    suppressWarnings(dir.create(newProjectPath, recursive = TRUE))
     lapply(list.dirs(projectPath, recursive = FALSE), file.copy, newProjectPath, recursive = TRUE)
     #file.copy(projectPath, newProjectPath, recursive=TRUE)
 }

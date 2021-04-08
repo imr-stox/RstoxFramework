@@ -43,7 +43,7 @@ getResamplableProcesses <- function(projectPath) {
    
     # Get the data types that can be resampled:
     resamplableDataTypes <- getRstoxFrameworkDefinitions("resamplableDataTypes")
-    # Find the processes that can be resampled:
+    # Find the functions that can be resampled:
     stoxLibrary <- getRstoxFrameworkDefinitions("stoxLibrary")
     validFunctions <- names(stoxLibrary)[sapply(stoxLibrary, "[[", "functionOutputDataType")  %in% resamplableDataTypes]
     

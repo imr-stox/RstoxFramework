@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function to download all official Rstox packages and their CRAN dependencies — installOfficialRstoxPackagesWithDependencies • RstoxFramework</title>
+<title>Backward compabitibility actions: — convertStoX2.7To3 • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Function to download all official Rstox packages and their CRAN dependencies — installOfficialRstoxPackagesWithDependencies" />
-<meta property="og:description" content="Function to download all official Rstox packages and their CRAN dependencies" />
+<meta property="og:title" content="Backward compabitibility actions: — convertStoX2.7To3" />
+<meta property="og:description" content="Backward compabitibility actions:" />
 
 
 
@@ -114,64 +114,40 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Function to download all official Rstox packages and their CRAN dependencies</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Versions.R'><code>R/Versions.R</code></a></small>
-    <div class="hidden name"><code>installOfficialRstoxPackagesWithDependencies.Rd</code></div>
+    <h1>Backward compabitibility actions:</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/backwardCompatibility.R'><code>R/backwardCompatibility.R</code></a></small>
+    <div class="hidden name"><code>convertStoX2.7To3.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Function to download all official Rstox packages and their CRAN dependencies</p>
+    <p>Backward compabitibility actions:</p>
     </div>
 
-    <pre class="usage"><span class='fu'>installOfficialRstoxPackagesWithDependencies</span><span class='op'>(</span>
-  <span class='va'>StoXGUIVersion</span>,
-  <span class='va'>officialRstoxPackageVersionsFile</span>,
-  destdir <span class='op'>=</span> <span class='cn'>NA</span>,
-  Rstox.repos <span class='op'>=</span> <span class='st'>"https://stoxproject.github.io/repo"</span>,
-  download.repos <span class='op'>=</span> <span class='st'>"https://cloud.r-project.org"</span>,
-  dependencyTypes <span class='op'>=</span> <span class='cn'>NA</span>,
-  sort <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  platform <span class='op'>=</span> <span class='cn'>NA</span>,
-  skip.identical <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  twoDigitRVersion <span class='op'>=</span> <span class='cn'>NA</span>,
-  toJSON <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  quiet <span class='op'>=</span> <span class='cn'>FALSE</span>
+    <pre class="usage"><span class='fu'>convertStoX2.7To3</span><span class='op'>(</span>
+  <span class='va'>projectPath2.7</span>,
+  <span class='va'>projectPath3</span>,
+  newProjectPath3 <span class='op'>=</span> <span class='cn'>NULL</span>,
+  ow <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>StoXGUIVersion</th>
-      <td><p>The version of the StoX GUI defining the combination of official Rstox package versions.</p></td>
+      <th>projectPath2.7</th>
+      <td><p>The path to the StoX 2.7 project to convert to StoX 3.x.x.</p></td>
     </tr>
     <tr>
-      <th>officialRstoxPackageVersionsFile</th>
-      <td><p>The path to the file holding the link between StoX GUI version and Rstox package versions.</p></td>
+      <th>projectPath3</th>
+      <td><p>The path to the StoX 3.x.x project used as model for the conversion.</p></td>
     </tr>
     <tr>
-      <th>destdir</th>
-      <td><p>The directory to download binaries to, defaulted to NA which implies tempdir().</p></td>
+      <th>newProjectPath3</th>
+      <td><p>The path to the StoX 3.x.x project to create.</p></td>
     </tr>
     <tr>
-      <th>Rstox.repos</th>
-      <td><p>Either NULL to search for packages locally, or a repository passed to <code><a href='https://rdrr.io/r/utils/available.packages.html'>available.packages</a></code>, where <code>Rstox.repos</code> is used to locate direct dependencies of the Rstox packages, and <code>nonRstox.reposs</code> is used to get the dependencies of the direct dependencies recursively, defaulted to the CRAN repository.</p></td>
-    </tr>
-    <tr>
-      <th>dependencyTypes</th>
-      <td><p>A character vector listing the dependencies to get, with possible values "Depends", "Imports", "LinkingTo", "Suggests", "Enhances". Default is NA, implying c("Depends", "Imports", "LinkingTo").</p></td>
-    </tr>
-    <tr>
-      <th>sort</th>
-      <td><p>Logical: If TRUE sort the dependent packages, defaulted to FALSE to enable installing the most basic dependencies first.</p></td>
-    </tr>
-    <tr>
-      <th>platform</th>
-      <td><p>The platfor to downoad binaries for, defaulted to the current platform, but with the option to download for other platforms (possible values are "windows" and "macosx").</p></td>
-    </tr>
-    <tr>
-      <th>twoDigitRVersion</th>
-      <td><p>The two digit R version to downoad binaries for, defaulted to the current version, but with the option to download for other versions such as 3.6.</p></td>
+      <th>ow</th>
+      <td><p>Logical: If TRUE overwrite the project.</p></td>
     </tr>
     </table>
 

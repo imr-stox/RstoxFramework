@@ -1,5 +1,5 @@
 Package: RstoxFramework
-Version: 3.0.7
+Version: 3.0.8
 Date: 2021-04-08
 Title: The Engine of StoX
 Authors@R: c(
@@ -51,7 +51,7 @@ Imports:
     XML (>= 3.99-0.1),
     stringr (>= 1.0.0),
     RstoxData (>= 1.1.2),
-    RstoxBase (>= 1.3.4)
+    RstoxBase (>= 1.3.5)
 Suggests: 
     testthat,
     XML

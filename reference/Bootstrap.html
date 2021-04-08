@@ -81,7 +81,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.8</span>
       </span>
     </div>
 
@@ -145,7 +145,7 @@
     </tr>
     <tr>
       <th>BootstrapMethodTable</th>
-      <td><p>A table of the columns ProcessName, ResampleFunction and Seed, where each row defines the resample function to apply to the output of the given process (and the seed to use in the resampling). Run RstoxFramework::getResampleFunctions() to get a list of the implemented resample functions.</p></td>
+      <td><p>A table of the columns ProcessName, ResampleFunction and Seed, where each row defines the resample function to apply to the output of the given process (and the seed to use in the resampling). Run RstoxFramework::getResampleFunctions() to get a list of the implemented resample functions. Note that if a process is selected inn <code>BootstrapMethodTable</code> that is not used in the model up to the <code>OutputProcesses</code>, the bootstrapping of that process will not be effective on the end result (e.g. select the correct process that returns BioticAssignment data type).</p></td>
     </tr>
     <tr>
       <th>NumberOfBootstraps</th>

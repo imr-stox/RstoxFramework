@@ -4,7 +4,7 @@
 #' 
 #' @param outputData The output of the function from an earlier run.
 #' @param projectPath The path to the project to containing the baseline to bootstrap.
-#' @param BootstrapMethodTable A table of the columns ProcessName, ResampleFunction and Seed, where each row defines the resample function to apply to the output of the given process (and the seed to use in the resampling). Run RstoxFramework::getResampleFunctions() to get a list of the implemented resample functions. 
+#' @param BootstrapMethodTable A table of the columns ProcessName, ResampleFunction and Seed, where each row defines the resample function to apply to the output of the given process (and the seed to use in the resampling). Run RstoxFramework::getResampleFunctions() to get a list of the implemented resample functions. Note that if a process is selected inn \code{BootstrapMethodTable} that is not used in the model up to the \code{OutputProcesses}, the bootstrapping of that process will not be effective on the end result (e.g. select the correct process that returns BioticAssignment data type).
 #' @param NumberOfBootstraps Integer: The number of bootstrap replicates.
 #' @param OutputProcesses A vector of the processes to save from each bootstrap replicate.
 #' @param UseOutputData Logical: If TRUE use the existing output file from the function.

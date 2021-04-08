@@ -2341,6 +2341,20 @@ readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NUL
         # startProcess and endProcess can be given as process names or IDs:
         startProcessNumeric <- matchProcesses(startProcess, processIndexTable)
         endProcessNumeric <- matchProcesses(endProcess, processIndexTable)
+        # If there are less elements affter matching, issue a warning:
+        if(any(is.na(startProcessNumeric))) {
+            warning(
+                "The following processes are not present in the project. ", 
+                paste0(startProcess[is.na(startProcessNumeric)], collapse = ", ")
+            )
+        }
+        if(any(is.na(endProcessNumeric))) {
+            warning(
+                "The following processes are not present in the project. ", 
+                paste0(endProcess[is.na(endProcessNumeric)], collapse = ", ")
+            )
+        }
+        
         if(!length(startProcessNumeric) && !length(endProcessNumeric)) {
             stop("StoX: At least one of startProcess and endProcess must specify valid processes")
         }
@@ -4361,7 +4375,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         # Write to memory files:
         writeProcessOutputMemoryFiles(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, type = "memory")
         
-        # Write to text files:
+        # Write to text/RData files:
         # Use fileOutput if given and process$processParameters$fileOutput otherwise to determine whether to write the output to the output.file.type:
         if(if(length(fileOutput)) fileOutput else process$processParameters$fileOutput) {
             writeProcessOutputTextFile(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, output.file.type = output.file.type)
@@ -5150,6 +5164,7 @@ writeProcessOutputTextFile <- function(processOutput, projectPath, modelName, pr
     # Return NULL for empty process output:
     if(length(processOutput)) {
         # Unlist introduces dots, and we replace by underscore:
+        
         processOutput <- unlistToDataType(processOutput)
         
         filePath <- getProcessOutputTextFilePath(
@@ -5246,28 +5261,60 @@ unlistToDataType <- function(processOutput) {
     areAllValidOutputDataClasses <- function(processOutput) {
         validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
         classes <- sapply(processOutput, firstClass)
-        #classes <- unlist(lapply(classes, "[[", 1))
         all(classes %in% validOutputDataClasses)
     }
     
     
-    unlistOne <- function(processOutput) {
+    unlistOneStep <- function(processOutput) {
+        
         # Unlist and add the names:
         if(!areAllValidOutputDataClasses(processOutput)){
+            # A trick to prepare for unlist(). Add one list level to all elements which are valid class:
+            validClass <- sapply(processOutput, isValidOutputDataOne)
+            processOutput[validClass] <- lapply(processOutput[validClass], list)
+            
             # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
-            processOutputNames <- unlist(lapply(names(processOutput), function(x) paste(x, names(processOutput[[x]]), sep = "_")))
+            processOutputNames <- unlist(lapply(names(processOutput), function(x) if(length(names(processOutput[[x]]))) paste(x, names(processOutput[[x]]), sep = "_") else x))
             # Unlist down one level:
             processOutput <- unlist(processOutput, recursive = FALSE)
             # Add the names again:
             names(processOutput) <- processOutputNames
         }
         
+        
+        ######## browser()
+        ######## # Run through the elements of processOutput and unlist if not a valid output class:
+        ######## for (processOutputName in names(processOutput)) {
+        ########     if(is.list(processOutput[[processOutputName]]) && !isValidOutputDataOne(processOutput[[processOutputName]])) {
+        ########         # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
+        ########         thisProcessOutputNames <- paste(
+        ########             names(processOutput[processOutputName]), 
+        ########             names(processOutput[[processOutputName]]), 
+        ########             sep = "_"
+        ########         )
+        ########         # Unlist down one level:
+        ########         processOutput[[processOutputName]] <- unlist(processOutput[[processOutputName]], recursive = FALSE)
+        ########         # Add the names again:
+        ########         names(processOutput[[processOutputName]]) <- thisProcessOutputNames
+        ########     }
+        ######## }
+        
+        ### # Unlist and add the names:
+        ### if(!areAllValidOutputDataClasses(processOutput)){
+        ###     # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
+        ###     processOutputNames <- unlist(lapply(names(processOutput), function(x) paste(x, names(processOutput[[x]]), sep = "_")))
+        ###     # Unlist down one level:
+        ###     processOutput <- unlist(processOutput, recursive = FALSE)
+        ###     # Add the names again:
+        ###     names(processOutput) <- processOutputNames
+        ### }
+        
         processOutput
     }
     
     # Unlist through 2 levels:
     for(i in seq_len(2)) {
-        processOutput <- unlistOne(processOutput)
+        processOutput <- unlistOneStep(processOutput)
     }
     
     return(processOutput)
@@ -5297,7 +5344,7 @@ writeProcessOutputTables <- function(processOutput, folderPath, writeOrderFile =
         # Create the folder if not existing:
         dir.create(folderPath, recursive = TRUE, showWarnings = FALSE)
         
-        # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2):
+        # Detect whether the output is a list of tables (depth 1) or a list of lists of tables (depth 2), and possibly a list of both tables and lists of tables (treated as depth 2):
         outputDepth <- getOutputDepth(processOutput)
         
         # Get the file paths of the memory files and prepare the processOutput for writing to these files:
@@ -5316,9 +5363,23 @@ writeProcessOutputTables <- function(processOutput, folderPath, writeOrderFile =
             lapply(folderPaths, dir.create, recursive = TRUE, showWarnings = FALSE)
             
             # Create the file names and add the folder paths to the file names (flattening the output):
-            fileNamesSansExt <- lapply(processOutput, names)
+            #fileNamesSansExt <- lapply(processOutput, names)
+            
+            
+            fileNamesSansExt <- vector("list", length(processOutput))
+            # Add names of the elements which are lists of valid output data types (typically table):
+            areValid <- sapply(processOutput, isValidOutputDataOne)
+            fileNamesSansExt[areValid] <- as.list(names(processOutput)[areValid])
+            
+            # Add the names of the list for lists of valid output data types:
+            fileNamesSansExt[!areValid] <- lapply(processOutput[!areValid], names)
             filePaths <- mapply(file.path, folderPaths, fileNamesSansExt, SIMPLIFY = FALSE)
         }
+        
+        
+        
+        
+        
         # Write the individual tables:
         mapply(writeMemoryFiles, processOutput, filePaths, writeOrderFile = writeOrderFile)
     }
@@ -5329,23 +5390,61 @@ writeProcessOutputTables <- function(processOutput, folderPath, writeOrderFile =
 
 
 # Function to get the depth of the data, 1 for a list of valid output data objects, and 2 for a list of such lists:
-getOutputDepth <- function(x) {
-    # If the process output is a list of valid output data classes, set outputDepth to 1:
-    if(length(x) && isValidOutputData(x)) {
-        outputDepth <- 1
-    }
-    else if(length(x[[1]]) && isValidOutputData(x[[1]])) {
-        outputDepth <- 2
-    }
-    else if(length(x[[1]][[1]]) && isValidOutputData(x[[1]][[1]])) {
-        stop("StoX: Process output must be a list of objects defined by getRstoxFrameworkDefinitions(\"validOutputDataClasses\"), or a list of such lists (not a list of lists of such lists).")
-    }
-    else {
-        stop("...............")
-    }
+#getOutputDepth <- function(x) {
+#    # If the process output is a list of valid output data classes, set outputDepth to 1:
+#    if(length(x) && isValidOutputData(x)) {
+#        outputDepth <- 1
+#    }
+#    else if(length(x[[1]]) && isValidOutputData(x[[1]])) {
+#        outputDepth <- 2
+#    }
+#    else if(length(x[[1]][[1]]) && isValidOutputData(x[[1]][[1]])) {
+#        stop("StoX: Process output must be a list of objects defined by getRstoxFrameworkDefinitions(\"validOutputDataClasses\"), or a list of such lists (not a list of lists of such lists).")
+#    }
+#    else {
+#        stop("...............")
+#    }
+#    
+#    return(outputDepth)
+#}
+getOutputDepth <- function(outputData) {
+    
+    outputDepths <- sapply(outputData, getOutputDepthOne)
+    
+    outputDepth <- max(outputDepths)
     
     return(outputDepth)
 }
+
+getOutputDepthOne <- function(outputDataOne) {
+    # If the outputDataOne has length 0 or is of valid output data classes, set outputDepth to 1:
+    if(!length(outputDataOne) || isValidOutputDataOne(outputDataOne)) {
+        outputDepth <- 1
+    }
+    # Else if outputDataOne is a list, check all elements:
+    else if(length(outputDataOne) && is.list(outputDataOne)) {
+        areValid <- sapply(outputDataOne, isValidOutputDataOne) | lengths(outputDataOne) == 0
+        if(all(areValid)) {
+            outputDepth <- 2
+        }
+        else {
+            stop("StoX: Process output must be a list of objects defined by getRstoxFrameworkDefinitions(\"validOutputDataClasses\"), or a list of such lists (not a list of lists of such lists).")
+        }
+    }
+    
+    
+    return(outputDepth)
+}
+
+#isValidOutputData <- function(x) {
+#    validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
+#    is.list(x) && !firstClass(x) %in% validOutputDataClasses && firstClass(x[[1]]) %in% validOutputDataClasses
+#}
+isValidOutputDataOne <- function(outputDataOne) {
+    firstClass(outputDataOne) %in% getRstoxFrameworkDefinitions("validOutputDataClasses")
+}
+
+
 # Function to get the folder of the memory files, 1 for all files in one folder, and 2 for a subfolders:
 getFolderDepth <- function(folderPath) {
     # List the files in the folder:
@@ -5355,12 +5454,6 @@ getFolderDepth <- function(folderPath) {
         folderDepth <- 2
     }
     folderDepth
-}
-
-
-isValidOutputData <- function(x) {
-    validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
-    is.list(x) && !firstClass(x) %in% validOutputDataClasses && firstClass(x[[1]]) %in% validOutputDataClasses
 }
 
 

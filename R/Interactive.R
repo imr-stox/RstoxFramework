@@ -1,5 +1,5 @@
 
-# Decided after discussion with Åsmund on 2019-11-12:
+# Decided after discussion with Aasmund on 2019-11-12:
 
 # 1. We will strive for minimum redundancy in the process data. Process data will be saved as data tables with the possibility of variable length vectors in each cell, such as StratumID, StratumName and a vector of PSUs, and saved to the project.xml as JSON
 

@@ -1569,12 +1569,12 @@ sortUnique <- function(y) {
     #    NULL
     #}
     # Get unique values only if not all are unique
-    if(length(uniquey) == length(y) && length(y) > 1) {
-        NULL
-    }
-    else {
+    ###if(length(uniquey) == length(y) && length(y) > 1) {
+    ###    NULL
+    ###}
+    ###else {
         sort(uniquey, na.last = FALSE)
-    }
+    ###}
 }
 
 

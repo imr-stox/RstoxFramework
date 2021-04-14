@@ -523,6 +523,9 @@ openProject <- function(
         archive = FALSE, 
         add.defaults = FALSE
     )
+    # Save the project description attributes:
+    writeProjectDescriptionAttributes(projectDescription, projectPath)
+    
     # Store the changes:
     archiveProject(projectPath)
     
@@ -976,11 +979,10 @@ JSON2processData <- function(JSON) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Application = R.version.string, projectDescription = NULL) {
+writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Application = R.version.string, projectDescription = NULL, verbose = FALSE) {
     
     # Read the project.RData or project.xml file depending on the 'type':
     type <- match.arg(type)
-    
     projectSessionFolder <- getProjectPaths(projectPath, "projectSessionFolder")
     if(!file.exists(projectSessionFolder)) {
         stop("StoX: The project memory folder ", projectSessionFolder, " does not exist. Project ", projectPath, " cannot be saved.")
@@ -988,14 +990,20 @@ writeProjectDescription <- function(projectPath, type = c("JSON", "RData"), Appl
     
     # Get full project description:
     if(!length(projectDescription)) {
-        projectDescription <- getProjectMemoryData(projectPath, modelName = "all", named.list = TRUE)
+        # Include the attributes in order to apply the backward compatibility (in case Rstox-pakages changed whilst the project was open):
+        projectDescription <- getProjectMemoryData(projectPath, modelName = "all", named.list = TRUE, addAttributes = TRUE)
     }
     
     # Get the file to write it to:
     projectDescriptionFile <- getProjectPaths(projectPath, paste0("project", type, "File"))
     
     # Unname the processes (removing processIDs):
+    att <- attributes(projectDescription)
     projectDescription <- lapply(projectDescription, unname)
+    attributes(projectDescription) <- att
+    
+    # Apply backward compatibility also when saving, as one can update the Rstox packages while a project is open(due to the memory files and not in RAM):
+    projectDescription <- applyBackwardCompatibility(projectDescription, verbose = verbose)
     
     # Add the attirbutes:
     projectDescription <- addProjectDescriptionAttributes(projectDescription)
@@ -2347,12 +2355,14 @@ readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NUL
                 "The following processes are not present in the project. ", 
                 paste0(startProcess[is.na(startProcessNumeric)], collapse = ", ")
             )
+            startProcessNumeric <- startProcessNumeric[!is.na(startProcessNumeric)]
         }
         if(any(is.na(endProcessNumeric))) {
             warning(
                 "The following processes are not present in the project. ", 
                 paste0(endProcess[is.na(endProcessNumeric)], collapse = ", ")
             )
+            endProcessNumeric <- endProcessNumeric[!is.na(endProcessNumeric)]
         }
         
         if(!length(startProcessNumeric) && !length(endProcessNumeric)) {
@@ -3407,34 +3417,6 @@ detectFilePaths <- function(functionParameters, projectPath, modelName, processI
 # Function to detect function parameter format filePath, filePaths or directoryPath, and convert to relative paths if the projectPath is present in the paths:
 convertToRelativePaths <- function(functionParameters, projectPath, modelName, processID, warn = FALSE) {
     
-    # Function to attempt to convert to relative path:
-    getRelativePath <- function(filePath, projectPath) {
-        # Expand the paths:
-        projectPath <- path.expand(projectPath)
-        filePath <- path.expand(filePath)
-        
-        # Check whether the filePath is a relative path already:
-        fullFilePath <- file.path(projectPath, filePath)
-        if(file.exists(fullFilePath) && isFALSE(file.info(fullFilePath)$isdir)) {
-            return(filePath)
-        }
-        
-        # If the projectPath is in the filePath, convert to a relative file path:
-        if(grepl(projectPath, filePath)) {
-            filePath <- sub(projectPath, "", filePath, fixed = TRUE)
-            # Remove also the trailing file separator:
-            filePath <- substring(filePath, 2)
-        }
-        else if(warn) {
-            warning("StoX: The specified file ", filePath, " is not present in the project folder (", projectPath, ")")
-        }
-        filePath
-    }
-    
-    getRelativePaths <- function(filePaths, projectPath) {
-        unname(sapply(filePaths, getRelativePath, projectPath))
-    }
-    
     # Detect the file paths:
     areFilePathsAndNonEmpty <- detectFilePaths(
         functionParameters = functionParameters, 
@@ -3445,60 +3427,50 @@ convertToRelativePaths <- function(functionParameters, projectPath, modelName, p
     
     # Get relative paths:
     if(any(areFilePathsAndNonEmpty)) {
+        warning("StoX: projectPath: ", projectPath)
+        warning("StoX: Absolute file paths: ", paste(functionParameters[areFilePathsAndNonEmpty], collapse = ", "))
         functionParameters[areFilePathsAndNonEmpty] <- lapply(
             functionParameters[areFilePathsAndNonEmpty], 
             getRelativePaths, 
-            projectPath = projectPath
+            projectPath = projectPath, 
+            warn = warn
         )
+        warning("StoX: Relative file paths: ", paste(functionParameters[areFilePathsAndNonEmpty], collapse = ", "))
     }
     
     functionParameters
 }
 
-# Function to detect function parameter format filePath, filePaths or directoryPath, and convert to abolute paths for use in functions:
-getAbsolutePaths <- function(functionParameters, projectPath, modelName, processID) {
+# Function to attempt to convert to relative path:
+getRelativePath <- function(filePath, projectPath, warn = FALSE) {
+    # Expand the paths:
+    projectPath <- path.expand(projectPath)
+    filePath <- path.expand(filePath)
     
-    #browser()
-    ## Function to attempt to convert to relative path:
-    #getAbsolutePath <- function(filePath, projectPath) {
-    #    # Check first whether the file exists as a relative path:
-    #    absolutePath <- file.path(projectPath, filePath)
-    #    if(all(file.exists(absolutePath))) {
-    #        absolutePath
-    #    }
-    #    else if(all(file.exists(filePath))) {
-    #        filePath
-    #    }
-    #    else {
-    #        #warning("StoX: The file ", filePath, " does not exist.")
-    #        filePath
-    #    }
-    #}
-    
-    
-    
-    getAbsolutePath <- function(filePath, projectPath) {
-        
-        getAbsolutePathOne <- function(filePath, projectPath) {
-            # Check first whether the file exists as a relative path:
-            absolutePath <- file.path(projectPath, filePath)
-            if(file.exists(absolutePath)) {
-                absolutePath
-            }
-            else if(file.exists(filePath)) {
-                filePath
-            }
-            else {
-                #warning("StoX: The file ", filePath, " does not exist.")
-                filePath
-            }
-        }
-        
-        # Check first whether the file exists as a relative path:
-        sapply(filePath, getAbsolutePathOne, projectPath = projectPath)
+    # Check whether the filePath is a relative path already:
+    fullFilePath <- file.path(projectPath, filePath)
+    if(file.exists(fullFilePath) && isFALSE(file.info(fullFilePath)$isdir)) {
+        return(filePath)
     }
     
-    
+    # If the projectPath is in the filePath, convert to a relative file path:
+    if(startsWith(filePath, paste0(projectPath, "/"))) {
+        filePath <- substring(filePath, nchar(projectPath) + 2)
+    }
+    else if(warn) {
+        warning("StoX: The specified file ", filePath, " is not present in the project folder (", projectPath, ")")
+    }
+    filePath
+}
+
+getRelativePaths <- function(filePaths, projectPath, warn = FALSE) {
+    unname(sapply(filePaths, getRelativePath, projectPath = projectPath, warn = warn))
+}
+
+
+
+# Function to detect function parameter format filePath, filePaths or directoryPath, and convert to abolute paths for use in functions:
+getAbsolutePaths <- function(functionParameters, projectPath, modelName, processID) {
     # Detect the file paths:
     areFilePathsAndNonEmpty <- detectFilePaths(
         functionParameters = functionParameters, 
@@ -3519,7 +3491,26 @@ getAbsolutePaths <- function(functionParameters, projectPath, modelName, process
     functionParameters
 }
 
-
+getAbsolutePath <- function(filePath, projectPath) {
+    
+    getAbsolutePathOne <- function(filePath, projectPath) {
+        # Check first whether the file exists as a relative path:
+        absolutePath <- file.path(projectPath, filePath)
+        if(file.exists(absolutePath)) {
+            absolutePath
+        }
+        else if(file.exists(filePath)) {
+            filePath
+        }
+        else {
+            #warning("StoX: The file ", filePath, " does not exist.")
+            filePath
+        }
+    }
+    
+    # Check first whether the file exists as a relative path:
+    sapply(filePath, getAbsolutePathOne, projectPath = projectPath)
+}
 
 #' Modify a process
 #' 
@@ -4375,7 +4366,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         # Write to memory files:
         writeProcessOutputMemoryFiles(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, type = "memory")
         
-        # Write to text/RData files:
+        # Write to text files:
         # Use fileOutput if given and process$processParameters$fileOutput otherwise to determine whether to write the output to the output.file.type:
         if(if(length(fileOutput)) fileOutput else process$processParameters$fileOutput) {
             writeProcessOutputTextFile(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, output.file.type = output.file.type)
@@ -5164,7 +5155,6 @@ writeProcessOutputTextFile <- function(processOutput, projectPath, modelName, pr
     # Return NULL for empty process output:
     if(length(processOutput)) {
         # Unlist introduces dots, and we replace by underscore:
-        
         processOutput <- unlistToDataType(processOutput)
         
         filePath <- getProcessOutputTextFilePath(
@@ -5261,6 +5251,7 @@ unlistToDataType <- function(processOutput) {
     areAllValidOutputDataClasses <- function(processOutput) {
         validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
         classes <- sapply(processOutput, firstClass)
+        #classes <- unlist(lapply(classes, "[[", 1))
         all(classes %in% validOutputDataClasses)
     }
     
@@ -5280,34 +5271,6 @@ unlistToDataType <- function(processOutput) {
             # Add the names again:
             names(processOutput) <- processOutputNames
         }
-        
-        
-        ######## browser()
-        ######## # Run through the elements of processOutput and unlist if not a valid output class:
-        ######## for (processOutputName in names(processOutput)) {
-        ########     if(is.list(processOutput[[processOutputName]]) && !isValidOutputDataOne(processOutput[[processOutputName]])) {
-        ########         # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
-        ########         thisProcessOutputNames <- paste(
-        ########             names(processOutput[processOutputName]), 
-        ########             names(processOutput[[processOutputName]]), 
-        ########             sep = "_"
-        ########         )
-        ########         # Unlist down one level:
-        ########         processOutput[[processOutputName]] <- unlist(processOutput[[processOutputName]], recursive = FALSE)
-        ########         # Add the names again:
-        ########         names(processOutput[[processOutputName]]) <- thisProcessOutputNames
-        ########     }
-        ######## }
-        
-        ### # Unlist and add the names:
-        ### if(!areAllValidOutputDataClasses(processOutput)){
-        ###     # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
-        ###     processOutputNames <- unlist(lapply(names(processOutput), function(x) paste(x, names(processOutput[[x]]), sep = "_")))
-        ###     # Unlist down one level:
-        ###     processOutput <- unlist(processOutput, recursive = FALSE)
-        ###     # Add the names again:
-        ###     names(processOutput) <- processOutputNames
-        ### }
         
         processOutput
     }
@@ -5363,9 +5326,6 @@ writeProcessOutputTables <- function(processOutput, folderPath, writeOrderFile =
             lapply(folderPaths, dir.create, recursive = TRUE, showWarnings = FALSE)
             
             # Create the file names and add the folder paths to the file names (flattening the output):
-            #fileNamesSansExt <- lapply(processOutput, names)
-            
-            
             fileNamesSansExt <- vector("list", length(processOutput))
             # Add names of the elements which are lists of valid output data types (typically table):
             areValid <- sapply(processOutput, isValidOutputDataOne)
@@ -5375,11 +5335,6 @@ writeProcessOutputTables <- function(processOutput, folderPath, writeOrderFile =
             fileNamesSansExt[!areValid] <- lapply(processOutput[!areValid], names)
             filePaths <- mapply(file.path, folderPaths, fileNamesSansExt, SIMPLIFY = FALSE)
         }
-        
-        
-        
-        
-        
         # Write the individual tables:
         mapply(writeMemoryFiles, processOutput, filePaths, writeOrderFile = writeOrderFile)
     }
@@ -5390,23 +5345,6 @@ writeProcessOutputTables <- function(processOutput, folderPath, writeOrderFile =
 
 
 # Function to get the depth of the data, 1 for a list of valid output data objects, and 2 for a list of such lists:
-#getOutputDepth <- function(x) {
-#    # If the process output is a list of valid output data classes, set outputDepth to 1:
-#    if(length(x) && isValidOutputData(x)) {
-#        outputDepth <- 1
-#    }
-#    else if(length(x[[1]]) && isValidOutputData(x[[1]])) {
-#        outputDepth <- 2
-#    }
-#    else if(length(x[[1]][[1]]) && isValidOutputData(x[[1]][[1]])) {
-#        stop("StoX: Process output must be a list of objects defined by getRstoxFrameworkDefinitions(\"validOutputDataClasses\"), or a list of such lists (not a list of lists of such lists).")
-#    }
-#    else {
-#        stop("...............")
-#    }
-#    
-#    return(outputDepth)
-#}
 getOutputDepth <- function(outputData) {
     
     outputDepths <- sapply(outputData, getOutputDepthOne)
@@ -5415,7 +5353,6 @@ getOutputDepth <- function(outputData) {
     
     return(outputDepth)
 }
-
 getOutputDepthOne <- function(outputDataOne) {
     # If the outputDataOne has length 0 or is of valid output data classes, set outputDepth to 1:
     if(!length(outputDataOne) || isValidOutputDataOne(outputDataOne)) {
@@ -5436,15 +5373,6 @@ getOutputDepthOne <- function(outputDataOne) {
     return(outputDepth)
 }
 
-#isValidOutputData <- function(x) {
-#    validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
-#    is.list(x) && !firstClass(x) %in% validOutputDataClasses && firstClass(x[[1]]) %in% validOutputDataClasses
-#}
-isValidOutputDataOne <- function(outputDataOne) {
-    firstClass(outputDataOne) %in% getRstoxFrameworkDefinitions("validOutputDataClasses")
-}
-
-
 # Function to get the folder of the memory files, 1 for all files in one folder, and 2 for a subfolders:
 getFolderDepth <- function(folderPath) {
     # List the files in the folder:
@@ -5454,6 +5382,16 @@ getFolderDepth <- function(folderPath) {
         folderDepth <- 2
     }
     folderDepth
+}
+
+
+# A valid process output (from running the process in runProcess()) must be a pure list with class not in the valid classes, and where the first element of the list HAS a valid class:
+#isValidOutputData <- function(x) {
+#    validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
+#    is.list(x) && !firstClass(x) %in% validOutputDataClasses && firstClass(x[[1]]) %in% validOutputDataClasses
+#}
+isValidOutputDataOne <- function(outputDataOne) {
+    firstClass(outputDataOne) %in% getRstoxFrameworkDefinitions("validOutputDataClasses")
 }
 
 

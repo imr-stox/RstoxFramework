@@ -542,8 +542,8 @@ writeMemoryFile <- function(x, filePathSansExt, ext = NULL) {
 
 writeMemoryFiles <- function(objects, filePathsSansExt, writeOrderFile = TRUE) {
     
-    # Write the files:
-    if(isValidOutputDataOne(objects)) {
+    # Write the files, in an mapply loop if not a valid class at the top level (for outputDepth 2):
+    if(firstClass(objects) %in% getRstoxFrameworkDefinitions("validOutputDataClasses")) {
         filePaths <- writeMemoryFile(objects, filePathsSansExt)
     }
     else {
@@ -557,6 +557,7 @@ writeMemoryFiles <- function(objects, filePathsSansExt, writeOrderFile = TRUE) {
         write(filePaths, orderFileName)
     }
 }
+
 
 readMemoryFile <- function(filePath) {
     

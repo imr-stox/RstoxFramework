@@ -150,7 +150,7 @@ getNonEmptyModels <- function(projectPath) {
 #' 
 #' @export
 #'
-getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE, argumentFilePaths = NULL, named.list = TRUE) {
+getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE, argumentFilePaths = NULL, named.list = TRUE, addAttributes = FALSE) {
     
     # Get the argument files:
     if(length(argumentFilePaths) > 0 && length(modelName) == 1 && length(processID) == 1 && length(argumentName) == 1 ) {
@@ -190,6 +190,11 @@ getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL
         }
     }
     
+    # Add the stored project attributes:
+    if(addAttributes) {
+        output <- addStoredProjectDescriptionAttributes(output, projectPath)
+    }
+    
     return(output)
 }
 
@@ -200,6 +205,31 @@ readPointerFile <- function(pointerFile, projectPath) {
 }
 
 
+addStoredProjectDescriptionAttributes <- function(projectDescription, projectPath) {
+    # Read the stored attributes:
+    storedProjectDescriptionAttributes <- readStoredProjectDescriptionAttributes(projectPath)
+    # Add the attributes:
+    for(attrsName in names(storedProjectDescriptionAttributes)) {
+        attr(projectDescription, attrsName) <- storedProjectDescriptionAttributes[[attrsName]]
+    }
+    
+    return(projectDescription)
+}
+
+readStoredProjectDescriptionAttributes <- function(projectPath) {
+    # Read the stored attributes:
+    projectDescriptionAttributesFile <- getProjectPaths(projectPath, "projectDescriptionAttributesFile")
+    storedProjectDescriptionAttributes <- readRDS(projectDescriptionAttributesFile)
+    return(storedProjectDescriptionAttributes)
+}
+    
+
+writeProjectDescriptionAttributes <- function(projectDescription, projectPath) {
+    # Read the stored attributes:
+    projectDescriptionAttributesFile <- getProjectPaths(projectPath, "projectDescriptionAttributesFile")
+    saveRDS(attributes(projectDescription), file = projectDescriptionAttributesFile)
+    return(projectDescriptionAttributesFile)
+}
 
 
 

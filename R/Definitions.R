@@ -515,6 +515,11 @@ initiateRstoxFramework <- function(){
     maxProcessIntegerIDFile <- file.path(memoryCurrentFolder, "maxProcessIntegerID.txt")
     
     
+    # The file containing the project description attributes:
+    projectDescriptionAttributesFile <- file.path(memoryModelsFolder, "projectDescriptionAttributes.rds")
+    
+    
+    
     #### Define an object with all path objects for convenience in getProjectPaths(): ####
     paths <- c(
         stoxFolderStructureList, 
@@ -552,7 +557,9 @@ initiateRstoxFramework <- function(){
             projectMemoryIndexFile = projectMemoryIndexFile, 
             processIndexTableFile = processIndexTableFile, 
             activeProcessIDFile = activeProcessIDFile, 
-            maxProcessIntegerIDFile = maxProcessIntegerIDFile
+            maxProcessIntegerIDFile = maxProcessIntegerIDFile, 
+            
+            projectDescriptionAttributesFile = projectDescriptionAttributesFile
         )
     )
     

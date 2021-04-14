@@ -30,7 +30,8 @@ writeProjectDescription(
   projectPath,
   type = c("JSON", "RData"),
   Application = R.version.string,
-  projectDescription = NULL
+  projectDescription = NULL,
+  verbose = FALSE
 )
 
 initiateActiveProcessID(projectPath)

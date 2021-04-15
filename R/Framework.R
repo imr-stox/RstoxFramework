@@ -3447,6 +3447,10 @@ getRelativePath <- function(filePath, projectPath, warn = FALSE) {
     projectPath <- path.expand(projectPath)
     filePath <- path.expand(filePath)
     
+    # Remove any double slashes:
+    projectPath <- gsub(pattern="//", replacement="/", x = projectPath)
+    filePath <- gsub(pattern="//", replacement="/", x = filePath)
+    
     # Check whether the filePath is a relative path already:
     fullFilePath <- file.path(projectPath, filePath)
     if(file.exists(fullFilePath) && isFALSE(file.info(fullFilePath)$isdir)) {

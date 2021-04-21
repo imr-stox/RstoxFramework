@@ -3427,15 +3427,12 @@ convertToRelativePaths <- function(functionParameters, projectPath, modelName, p
     
     # Get relative paths:
     if(any(areFilePathsAndNonEmpty)) {
-        warning("StoX: projectPath: ", projectPath)
-        warning("StoX: Absolute file paths: ", paste(functionParameters[areFilePathsAndNonEmpty], collapse = ", "))
         functionParameters[areFilePathsAndNonEmpty] <- lapply(
             functionParameters[areFilePathsAndNonEmpty], 
             getRelativePaths, 
             projectPath = projectPath, 
             warn = warn
         )
-        warning("StoX: Relative file paths: ", paste(functionParameters[areFilePathsAndNonEmpty], collapse = ", "))
     }
     
     functionParameters

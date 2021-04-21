@@ -712,70 +712,6 @@ getStationColours <- function(n = 5, as.rgb = FALSE) {
 
 
 ##### Process properties: #####
-#' 
-#' @export
-#' 
-getProcessPropertyNames <- function() {
-    
-    # Parameter data types, default (null) value, test:
-    # logical: file(x), inherits(x, "connection")
-    # character: "", is.character()
-    # integer
-    # double
-    # filePath
-    # directoryPath
-    # 
-    
-    # We separate the primitive data types of parameters and the parameterformat which is a GUI specific tag indicating which action the GUI should take to aid the user to create the parameter value, such as selecting a file or building a table.
-    
-    
-    # parameterformat: 
-    #    filter, 
-    #    fileSelector, directorySelector
-    #    splitNASC, length2tsAcousticCategory, 
-    #    catchability
-    #    length2tsLayerPSU, 
-    
-
-    
-}
-
-
-
-parameter2JSONString <- function(parameter) {
-    # If already a character, return immediately:
-    if(is.character(parameter)) {
-        return(parameter)
-    }
-    else {
-        return(as.character(RstoxBase::toJSON_Rstox(parameter)))
-    }
-}
-
-
-formatJSONString <- function(parameter) {
-    as.character(RstoxBase::toJSON_Rstox(parameter))
-}
-
-
-#isMultipleParameter <- function(functionName, parameterName) {
-#    multiple <- unlist(getRstoxFrameworkDefinitions("processPropertyFormats")$multiple)
-#    format <- unlist(getFunctionParameterFormats(functionName)[parameterName])
-#    isMultiple <- format %in% multiple
-#    return(isMultiple)
-#}
-### isVectorParameter <- function(format) {
-###     # Find those formats that are vector:
-###     processPropertyFormats <- getRstoxFrameworkDefinitions("processPropertyFormats")
-###     isVector <- sapply(format, isVectorParameterOne, processPropertyFormats)
-###     return(isVector)
-### }
-### 
-### isVectorParameterOne <- function(format, processPropertyFormats) {
-###     # 2020-06-24: Changed from == to identical (Jira, STOX-225):
-###     #identical(processPropertyFormats[[format]]$type, "vector")
-###     identical(processPropertyFormats[[format]]$class, "vector")
-### }
 
 
 getFormatClass <- function(format) {
@@ -1103,6 +1039,7 @@ replaceEmpty <- function(x, vector = TRUE) {
 
 # Function to convert to JSON string, used to send only strings and arrays of strings to the GUI:
 toJSONString <- function(DT) {
+    
     # Convert the possible values, which can have 0 or positive length:
     ####possibleValuesToJSONString(DT)
     #DT[, possibleValues := lapply(possibleValues, vectorToJSONStringOne, stringifyVector = FALSE)]
@@ -1125,6 +1062,9 @@ toJSONString <- function(DT) {
 cellToJSONString <- function(DT, cols) {
     DT[, (cols) := lapply(.SD, cellToJSONStringOneColumn), .SDcols = cols]
 }
+cellToJSONStringOneColumn <- function(x) {
+    lapply(x, cellToJSONStringOne)
+}
 cellToJSONStringOne <- function(x) {
     if(length(x) == 0) {
         #warning("StoX: Length 1 required for process properties except possibleValues.")
@@ -1135,9 +1075,7 @@ cellToJSONStringOne <- function(x) {
     }
     return(x)
 }
-cellToJSONStringOneColumn <- function(x) {
-    lapply(x, cellToJSONStringOne)
-}
+
 
 
 

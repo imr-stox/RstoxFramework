@@ -9,6 +9,8 @@
 #' @param OutputProcesses A vector of the processes to save from each bootstrap replicate.
 #' @param UseOutputData Logical: If TRUE use the existing output file from the function.
 #' 
+#' @details The Bootstrap function runs the Baseline model \code{NumberOfBootstraps} times while resampling data as specified by the \code{BootstrapMethodTable}. Is is advised, for minimum processing time, to place the processes listed in \code{BootstrapMethodTable} as late in the Baseline model as possible, so that unnessecary processing steps are not run in the bootstrapping.
+#' 
 #' @return
 #' A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.
 #' 
@@ -347,7 +349,7 @@ resampleOne <- function(subData, seed, varToResample, varToScale) {
 #' 
 #' This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.
 #' 
-#' @param MeanLengthDistributionData The \code{\link[RstoxBase]{MeanLengthDistributionData}} data.
+#' @inheritParams RstoxBase::ModelData
 #' @param Seed The seed, given as a sinigle initeger.
 #' 
 #' @export
@@ -394,8 +396,8 @@ ResampleMeanLengthDistributionData <- function(MeanLengthDistributionData, Seed)
 #' 
 #' This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.
 #' 
-#' @param MeanLengthDistributionData The \code{\link[RstoxBase]{MeanLengthDistributionData}} data.
-#' @param Seed The seed, given as a sinigle initeger.
+#' @inheritParams RstoxBase::ModelData
+#' @inheritParamsinheritParams ResampleMeanLengthDistributionData
 #' 
 #' @export
 #' 
@@ -418,8 +420,8 @@ ResampleBioticAssignment <- function(BioticAssignment, Seed) {
 #' 
 #' This function resamples acoustic PSUs with replacement within each Stratum, changing the MeanNASC
 #' 
-#' @param MeanNASC The \code{\link[RstoxBase]{MeanNASC}} data.
-#' @param Seed The seed, given as a sinigle initeger.
+#' @inheritParams RstoxBase::ModelData
+#' @inheritParamsinheritParams ResampleMeanLengthDistributionData
 #' 
 #' @export
 #' 
@@ -477,6 +479,12 @@ ReportBootstrap <- function(
     BootstrapReportWeightingVariable = character()
 ) 
 {
+    
+    if(!length(BootstrapData[[BaselineProcess]])) {
+        warning("StoX: The process name ", BaselineProcess, " is does not match any processes in Baseline.")
+        return(NULL)
+    }
+    
     # Run the initial aggregation (only applicable for single output functions):
     AggregationFunction <- match.arg(AggregationFunction)
     out <- RstoxBase::aggregateBaselineDataOneTable(

@@ -13,7 +13,6 @@
 #' 
 #' @param Stratum The stratum name related to the PSU.
 #' @param PSU The acoustic primary sampling unit (PSU) for which to add/remove the haul.
-#' @param Layer The acoustic Layer for which to add/remove the haul.
 #' @param Haul The biotic haul to add/remove (can be a vector of hauls).
 #' @inheritParams general_arguments
 #' 

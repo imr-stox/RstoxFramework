@@ -47,7 +47,13 @@ setNotRunning(projectPath, modelName)
 
 \item{type}{The type of file to read.}
 
+\item{verbose}{Logical: If TRUE, print extra information to the console, e.g. about backward compatibility.}
+
+\item{projectDescriptionFile}{The optional path to the project description (project.json) file.}
+
 \item{Application}{A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.}
+
+\item{projectDescription}{The projectDescription as read from the \code{projectDescriptionFile}.}
 
 \item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
 }

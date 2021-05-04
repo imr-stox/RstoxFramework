@@ -74,9 +74,11 @@ copyProject(projectPath, newProjectPath, ow = FALSE)
 
 \item{saveIfAlreadyOpen}{Logical: If TRUE save the project before closing if already open and force is TRUE.}
 
-\item{verbose}{Logical: If TRUE, print information to the console, e.g. about backward compatibility.}
+\item{verbose}{Logical: If TRUE, print extra information to the console, e.g. about backward compatibility.}
 
 \item{save}{Logical: If TRUE save the project before closing. Default (NULL) is to ask the user whether to save the project before closing.}
+
+\item{msg}{Logical: If TRUE, print information to the console.}
 
 \item{newProjectPath}{The path to the copied StoX project.}
 }

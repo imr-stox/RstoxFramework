@@ -22,8 +22,6 @@ removeHaulFromAssignment(Stratum, PSU, Haul, projectPath, modelName, processID)
 \item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
 
 \item{processID}{The ID of the process.}
-
-\item{Layer}{The acoustic Layer for which to add/remove the haul.}
 }
 \description{
 The functions \code{addHaulsToAssignment} and \code{removeHaulsFromAssignment} adds or removes biotic hauls from the \code{\link{BioticAssignment}} process data of the specified process.

@@ -932,11 +932,11 @@ stratumpolygon2.7ToTable <- function(stratumpolygon) {
     # Convert to a list with one list per polygon:
     stratumpolygonList <- split(stratumpolygon, polygonkey)
     # ... and extract the includeintotal and polygon:
-    stratumpolygonList <- lapply(stratumpolygonList, function(x) lapply(x, function(y) y$text))
+    stratumpolygonList <- lapply(stratumpolygonList, unlist)
     
     # Rbind to a data.table and add names:
-    stratumpolygonTable <- data.table::rbindlist(stratumpolygonList)
-    stratumpolygonTable <- cbind(names(stratumpolygonList), stratumpolygonTable)
+    stratumpolygonTable <- do.call(rbind, stratumpolygonList)
+    stratumpolygonTable <- data.table::data.table(names(stratumpolygonList), stratumpolygonTable)
     names(stratumpolygonTable) <- c("polygonkey", "includeintotal", "polygon")
     
     return(stratumpolygonTable)
@@ -1031,6 +1031,7 @@ convertStoX2.7To3 <- function(projectPath2.7, projectPath3, newProjectPath3 = NU
 
 redefineAcousticPSUFrom2.7 <- function(projectPath2.7, projectPath3, newProjectPath3 = NULL, ow = FALSE) {
     
+    browser()
     # Read the old project.xml file:
     projectList <- readProjectXMLToList(projectPath2.7)
     
@@ -1076,13 +1077,22 @@ redefineAcousticPSUFrom2.7 <- function(projectPath2.7, projectPath3, newProjectP
     EDSU_PSU[, EDSU := paste(..Cruise, ..DateTime, sep = "/")]
     
     projectDescription <- readProjectDescription(projectPath3)
-    asDefineAcousticPSU <- which(sapply(projectDescription$projectDescription$baseline, "[[", "functionName") == "RstoxBase::DefineAcousticPSU")
+    atDefineAcousticPSU <- which(sapply(projectDescription$projectDescription$baseline, "[[", "functionName") == "RstoxBase::DefineAcousticPSU")
     
-    projectDescription$projectDescription$baseline[[asDefineAcousticPSU]]$processData <- list(
-        Stratum_PSU = Stratum_PSU, 
-        EDSU_PSU = EDSU_PSU, 
-        PSUByTime = data.table::data.table()
-    )
+    if(!length(atDefineAcousticPSU)) {
+        warning("No process using RstoxBase::DefineAcousticPSU found in the project", newProjectPath3)
+        return(FALSE)
+    }
+    else if(length(atDefineAcousticPSU) > 1) {
+        warning("Multiple processes using RstoxBase::DefineAcousticPSU found in the project", newProjectPath3, ". All were modified.")
+    }
+    for(ind in atDefineAcousticPSU) {
+        projectDescription$projectDescription$baseline[[ind]]$processData <- list(
+            Stratum_PSU = Stratum_PSU, 
+            EDSU_PSU = EDSU_PSU, 
+            PSUByTime = data.table::data.table()
+        )
+    }
     
     openProject(newProjectPath3)
     writeProjectDescription(newProjectPath3, projectDescription = projectDescription$projectDescription)

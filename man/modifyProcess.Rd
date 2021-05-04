@@ -21,6 +21,10 @@ modifyProcess(
 \item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
 
 \item{processName}{The name of the process.}
+
+\item{archive}{Logical: If TRUE arghive the project as one point in the memory history.}
+
+\item{add.defaults}{}
 }
 \description{
 Modify a process

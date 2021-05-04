@@ -373,7 +373,8 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' @param newProjectPath    The path to the copied StoX project.
 #' @param type              The type of file to save the project to.
 #' @param Application       A single string naming the application used when saving the project. Defaulted to R.version.string.
-#' @param verbose           Logical: If TRUE, print information to the console, e.g. about backward compatibility.
+#' @param msg               Logical: If TRUE, print information to the console.
+#' @param verbose           Logical: If TRUE, print extra information to the console, e.g. about backward compatibility.
 #' 
 #' @name Projects
 #' 
@@ -689,7 +690,10 @@ copyProject <- function(projectPath, newProjectPath, ow = FALSE) {
 #' Utilities for projects.
 #' 
 #' @inheritParams general_arguments
+#' @inheritParams Projects
 #' @param type The type of file to read.
+#' @param projectDescriptionFile The optional path to the project description (project.json) file.
+#' @param projectDescription The projectDescription as read from the \code{projectDescriptionFile}.
 #' 
 #' @name ProjectUtils
 #' 
@@ -2584,11 +2588,13 @@ modifyProcessNameInFunctionInputs <- function(projectPath, modelName, processNam
     nProcesses <- nrow(processTable)
     atProcess <- which(processTable$processName == newProcessName)
     
+    
     # Modify the process name in the function inputs:
     if(atProcess < nProcesses) {
         for(index in seq(atProcess + 1, nProcesses)) {
-            atProcessName <- unlist(processTable$functionInputs[[index]]) == processName
-            if(any(atProcessName)) {
+            #atProcessName <- unlist(processTable$functionInputs[[index]]) == processName
+            atProcessName <- match(processName, processTable$functionInputs[[index]])
+            if(any(atProcessName, na.rm = TRUE)) {
                 # Define the list of function inputs to modify:
                 dataType <- names(processTable$functionInputs[[index]][atProcessName])
                 insertList <- list(
@@ -3427,12 +3433,15 @@ convertToRelativePaths <- function(functionParameters, projectPath, modelName, p
     
     # Get relative paths:
     if(any(areFilePathsAndNonEmpty)) {
+        #warning("StoX: projectPath: ", projectPath)
+        #warning("StoX: Absolute file paths: ", paste(functionParameters[areFilePathsAndNonEmpty], collapse = ", "))
         functionParameters[areFilePathsAndNonEmpty] <- lapply(
             functionParameters[areFilePathsAndNonEmpty], 
             getRelativePaths, 
             projectPath = projectPath, 
             warn = warn
         )
+        #warning("StoX: Relative file paths: ", paste(functionParameters[areFilePathsAndNonEmpty], collapse = ", "))
     }
     
     functionParameters
@@ -3516,6 +3525,8 @@ getAbsolutePath <- function(filePath, projectPath) {
 #' Modify a process
 #' 
 #' @inheritParams general_arguments
+#' @param archive Logical: If TRUE arghive the project as one point in the memory history.
+#' @param add.defaults
 #' 
 #' @export
 #' 
@@ -3618,8 +3629,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
 
 #' Function to format a process as read from the project.json
 #' 
-#' @param parameter 
-#' @param simplifyVector 
+#' @param process A StoX process.
 #' 
 # Convert JSON input to list:
 formatProcess <- function(process) {

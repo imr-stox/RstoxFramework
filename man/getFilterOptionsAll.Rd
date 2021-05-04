@@ -18,6 +18,10 @@ getFilterOptionsAll(
 \item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
 
 \item{processID}{The ID of the process.}
+
+\item{include.numeric}{Logical: If TRUE get possible values for numeric ariables as well as categorical variables.}
+
+\item{stopIfEmptyPossibleValues}{Logical: If TRUE get possible values for numeric ariables as well as categorical variables.}
 }
 \description{
 GUI function: Get possible tables, operators and unique values for use in the filter expression builder.

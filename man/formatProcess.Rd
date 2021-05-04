@@ -7,9 +7,7 @@
 formatProcess(process)
 }
 \arguments{
-\item{parameter}{}
-
-\item{simplifyVector}{}
+\item{process}{A StoX process.}
 }
 \description{
 Function to format a process as read from the project.json

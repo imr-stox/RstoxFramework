@@ -1385,6 +1385,8 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 #' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
 #' 
 #' @inheritParams general_arguments
+#' @param include.numeric Logical: If TRUE get possible values for numeric ariables as well as categorical variables.
+#' @param stopIfEmptyPossibleValues Logical: If TRUE get possible values for numeric ariables as well as categorical variables.
 #' 
 #' @export
 #' 

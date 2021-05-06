@@ -85,6 +85,9 @@
     <loc>/reference/getAvailableStoxFunctionNames.html</loc>
   </url>
   <url>
+    <loc>/reference/getBootstrapProgress.html</loc>
+  </url>
+  <url>
     <loc>/reference/getFilterOptionsAll.html</loc>
   </url>
   <url>
@@ -161,6 +164,9 @@
   </url>
   <url>
     <loc>/reference/setProcessPropertyValue.html</loc>
+  </url>
+  <url>
+    <loc>/reference/stopBootstrap.html</loc>
   </url>
   <url>
     <loc>/reference/unReDoProject.html</loc>

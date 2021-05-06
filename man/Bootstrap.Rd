@@ -10,7 +10,8 @@ Bootstrap(
   BootstrapMethodTable = data.table::data.table(),
   NumberOfBootstraps = 1L,
   OutputProcesses = character(),
-  UseOutputData = FALSE
+  UseOutputData = FALSE,
+  NumberOfCores = 1L
 )
 }
 \arguments{
@@ -31,7 +32,4 @@ A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\
 }
 \description{
 Run a subset of the baseline model a number of times after resampling e.g. Hauls in each Stratum, EDUSs in each Stratum.
-}
-\details{
-The Bootstrap function runs the Baseline model \code{NumberOfBootstraps} times while resampling data as specified by the \code{BootstrapMethodTable}. Is is advised, for minimum processing time, to place the processes listed in \code{BootstrapMethodTable} as late in the Baseline model as possible, so that unnessecary processing steps are not run in the bootstrapping.
 }

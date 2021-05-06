@@ -464,6 +464,10 @@ initiateRstoxFramework <- function(){
     memoryFolder <- file.path(projectSessionFolder, "memory")
     statusFolder <- file.path(projectSessionFolder, "status")
     
+    bootstrapProgressFile <- file.path(statusFolder, "bootstrapProgress.txt")
+    NumberOfBootstrapsFile <- file.path(statusFolder, "NumberOfBootstraps.txt")
+    stopBootstrapFile <- file.path(statusFolder, "stopBootstrap.txt")
+    
     # Sub folders of the data folder:
     dataModelsFolder <- file.path(dataFolder, "models")
     dataModelsFolders <- file.path(dataModelsFolder, stoxModelFolders)
@@ -535,6 +539,9 @@ initiateRstoxFramework <- function(){
             dataFolder = dataFolder, 
             memoryFolder = memoryFolder, 
             statusFolder = statusFolder, 
+            bootstrapProgressFile = bootstrapProgressFile,
+            NumberOfBootstrapsFile = NumberOfBootstrapsFile,
+            stopBootstrapFile = stopBootstrapFile, 
             dataModelsFolder = dataModelsFolder, 
             dataModelsFolders = dataModelsFolders, 
             memoryCurrentFolder = memoryCurrentFolder, 

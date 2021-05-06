@@ -360,9 +360,9 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 
 ##################################################
 ##################################################
-#' Create, open, close, save, saveAs and copy StoX projects.
+#' Create, open, close, save, saveAs, copy and delete a StoX project.
 #' 
-#' Create a StoX project using \code{createProject}, possibly specifying a template; open an existing (un-opened) project using \code{openProject}, which involves creating files holding the memory of the project; close a project using  \code{closeProject}, which removes the memory files; save the project using \code{saveProject}, which saves the memory file to the project description file or make a copy using \code{saveProject} or \code{saveProject}, where the former closes the given project unsaved and opens the copy.
+#' Create a StoX project using \code{createProject}; open an existing (un-opened) project using \code{openProject}, which involves creating files holding the memory of the project; close a project using  \code{closeProject}, which removes the memory files; save the project using \code{saveProject}, which saves the memory files to the project description file; make a copy using \code{copyProject} or \code{saveAsProject}, where the former closes the given project unsaved and opens the copy, or delete a project using \code{deleteProject}.
 #' 
 #' @inheritParams general_arguments
 #' @param open              Logical: If TRUE open the project after creating it.
@@ -373,8 +373,7 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' @param newProjectPath    The path to the copied StoX project.
 #' @param type              The type of file to save the project to.
 #' @param Application       A single string naming the application used when saving the project. Defaulted to R.version.string.
-#' @param msg               Logical: If TRUE, print information to the console.
-#' @param verbose           Logical: If TRUE, print extra information to the console, e.g. about backward compatibility.
+#' @param verbose           Logical: If TRUE, print information to the console, e.g. about backward compatibility.
 #' 
 #' @name Projects
 #' 
@@ -671,8 +670,16 @@ copyProject <- function(projectPath, newProjectPath, ow = FALSE) {
         unlink(newProjectPath, force = TRUE, recursive = TRUE)
     }
     suppressWarnings(dir.create(newProjectPath, recursive = TRUE))
-    lapply(list.dirs(projectPath, recursive = FALSE), file.copy, newProjectPath, recursive = TRUE)
+    #lapply(list.dirs(projectPath, recursive = FALSE), file.copy, newProjectPath, recursive = TRUE)
+    lapply(getProjectPaths(projectPath, "stoxFolders"), file.copy, newProjectPath, recursive = TRUE)
     #file.copy(projectPath, newProjectPath, recursive=TRUE)
+}
+#' 
+#' @export
+#' @rdname Projects
+#' 
+deleteProject <- function(projectPath) {
+    unlink(projectPath, force = TRUE, recursive = TRUE)
 }
 ### #' 
 ### #' @export
@@ -684,16 +691,12 @@ copyProject <- function(projectPath, newProjectPath, ow = FALSE) {
 ### }
 
 
-
 ##################################################
 ##################################################
 #' Utilities for projects.
 #' 
 #' @inheritParams general_arguments
-#' @inheritParams Projects
 #' @param type The type of file to read.
-#' @param projectDescriptionFile The optional path to the project description (project.json) file.
-#' @param projectDescription The projectDescription as read from the \code{projectDescriptionFile}.
 #' 
 #' @name ProjectUtils
 #' 
@@ -2588,13 +2591,11 @@ modifyProcessNameInFunctionInputs <- function(projectPath, modelName, processNam
     nProcesses <- nrow(processTable)
     atProcess <- which(processTable$processName == newProcessName)
     
-    
     # Modify the process name in the function inputs:
     if(atProcess < nProcesses) {
         for(index in seq(atProcess + 1, nProcesses)) {
-            #atProcessName <- unlist(processTable$functionInputs[[index]]) == processName
-            atProcessName <- match(processName, processTable$functionInputs[[index]])
-            if(any(atProcessName, na.rm = TRUE)) {
+            atProcessName <- unlist(processTable$functionInputs[[index]]) == processName
+            if(any(atProcessName)) {
                 # Define the list of function inputs to modify:
                 dataType <- names(processTable$functionInputs[[index]][atProcessName])
                 insertList <- list(
@@ -3433,15 +3434,12 @@ convertToRelativePaths <- function(functionParameters, projectPath, modelName, p
     
     # Get relative paths:
     if(any(areFilePathsAndNonEmpty)) {
-        #warning("StoX: projectPath: ", projectPath)
-        #warning("StoX: Absolute file paths: ", paste(functionParameters[areFilePathsAndNonEmpty], collapse = ", "))
         functionParameters[areFilePathsAndNonEmpty] <- lapply(
             functionParameters[areFilePathsAndNonEmpty], 
             getRelativePaths, 
             projectPath = projectPath, 
             warn = warn
         )
-        #warning("StoX: Relative file paths: ", paste(functionParameters[areFilePathsAndNonEmpty], collapse = ", "))
     }
     
     functionParameters
@@ -3525,8 +3523,6 @@ getAbsolutePath <- function(filePath, projectPath) {
 #' Modify a process
 #' 
 #' @inheritParams general_arguments
-#' @param archive Logical: If TRUE arghive the project as one point in the memory history.
-#' @param add.defaults
 #' 
 #' @export
 #' 
@@ -3629,7 +3625,8 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
 
 #' Function to format a process as read from the project.json
 #' 
-#' @param process A StoX process.
+#' @param parameter 
+#' @param simplifyVector 
 #' 
 # Convert JSON input to list:
 formatProcess <- function(process) {
@@ -4256,6 +4253,8 @@ isProcess <- function(x) {
 #' 
 runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProcessData = TRUE, returnProcessOutput = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds"), try = TRUE) {
     
+    startTime <- proc.time()[3]
+    
     # Get the function argument and the process info:
     functionArguments <- getFunctionArguments(
         projectPath = projectPath, 
@@ -4282,8 +4281,9 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
             getProcessIndexFromProcessID(projectPath, modelName, processID), 
             ": ", 
             getProcessName(projectPath, modelName, processID), 
-            "..."
-            )
+            "...", 
+            appendLF = FALSE
+        )
     }
     
     # Reset the model to the process just before the process to be run:
@@ -4382,6 +4382,13 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         if(if(length(fileOutput)) fileOutput else process$processParameters$fileOutput) {
             writeProcessOutputTextFile(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, output.file.type = output.file.type)
         }
+        
+        # Add info of the time spent:
+        timeSpent <- proc.time()[3] - startTime
+        message(
+            "(time used: ", round(timeSpent, digits = 3), " s)"
+        )
+        
         
         #invisible(processOutput)
         TRUE

@@ -129,9 +129,6 @@ Bootstrap <- function(
     
     # Here we need to merge the NeCDF4 bootstrap files, when we get these files implemented. For now all bootstrap data are accumulated in memory and dumped to an RData file.
     
-    # Delete the projects afterwards:
-    mapply(deleteProject, projectPath_copies)
-    
     # Changed on 2020-11-02 to run the baseline out after bootstrapping (with no modification, so a clean baseline run):
     ### # Reset the model to the last process before the bootstrapped processes:
     ### resetModel(

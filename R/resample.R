@@ -8,6 +8,8 @@
 #' @param NumberOfBootstraps Integer: The number of bootstrap replicates.
 #' @param OutputProcesses A vector of the processes to save from each bootstrap replicate.
 #' @param UseOutputData Logical: If TRUE use the existing output file from the function.
+#' @param NumberOfCores The number of cores to use for parallel processing. A copy of fthe project is created in tempdir() for each core.
+#' @param BaselineSeed The seed to use for any processes requiring a \code{Seed} parameter, currenly only the \code{\link[RstoxBase]{ImputeSuperIndividuals}}.
 #' 
 #' @return
 #' A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.
@@ -22,7 +24,8 @@ Bootstrap <- function(
     NumberOfBootstraps = 1L, 
     OutputProcesses = character(), 
     UseOutputData = FALSE, 
-    NumberOfCores = 1L
+    NumberOfCores = 1L, 
+    BaselineSeed = 1L
 ) {
     
     # Use preivously generated output data if specified:
@@ -76,7 +79,9 @@ Bootstrap <- function(
     replaceDataList <- createReplaceData(Seed = SeedList, BootstrapMethodTable = BootstrapMethodTable)
     
     # This should be exposed as a parameter.
-    BaselineSeed <- 1
+    if(!length(BaselineSeed)) {
+        stop("The BaselineSeed (used to set the seeds of any seed used in the Baseline model, currently only applied in the ImputeSuperIndividuals function) must be set.")
+    }
     BaselineSeedVector <- RstoxBase::getSeedVector(BaselineSeed, size = NumberOfBootstraps)
     replaceArgs <- lapply(BaselineSeedVector, function(x) list(Seed = x))
     
@@ -329,35 +334,37 @@ addBootstrapIDOne <- function(x, ind) {
 # }
 
 
-getReplaceData <- function(x, size) {
-    # Get seeds:
-    seeds <- RstoxBase::getSeedVector(x$Seed, size)
-    x_expanded <- data.table::data.table(
-        x[, !"Seed"], 
-        Seed = seeds
-    )
-    
-    # Split rows into a list:
-    x_split <- split(x_expanded, by = "Seed")
-    
-    x_split <- lapply(x_split, function(x) list(x$ResampleFunction, as.list(x[, !c("ResampleFunction")])))
-    
-    return(x_split)
-}
+#getReplaceData <- function(x, size) {
+#    # Get seeds:
+#    seeds <- RstoxBase::getSeedVector(x$Seed, size)
+#    x_expanded <- data.table::data.table(
+#        x[, !"Seed"], 
+#        Seed = seeds
+#    )
+#    
+#    # Split rows into a list:
+#    x_split <- split(x_expanded, by = "Seed")
+#    
+#    x_split <- lapply(x_split, function(x) list(x$ResampleFunction, as.list(x[, !c("ResampleFunction")])))
+#    
+#    return(x_split)
+#}
 
 
 
 
 #' Resamples StoX data
 #' 
-#' This function resamples PSUs with replacement by altering the input data
+#' This function resamples varToResample with replacement by altering the input data
 #' 
 #' @export
 #' 
 resampleDataBy <- function(data, seed, varToScale, varToResample, resampleBy) {
     
-    # Get the unique resampleBy:
-    uniqueResampleBy <- unique(data[[resampleBy]])
+    # Get the unique resampleBy, and sort in C-locale for consistensy across platforms:
+    #uniqueResampleBy <- unique(data[[resampleBy]])
+    uniqueResampleBy <- stringi::stri_sort(unique(data[[resampleBy]]), locale = "C")
+    
     
     # Build a table of Stratum and Seed and merge with the MeanLengthDistributionData:
     seedTable <- data.table::data.table(

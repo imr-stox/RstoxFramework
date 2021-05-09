@@ -11,7 +11,8 @@ Bootstrap(
   NumberOfBootstraps = 1L,
   OutputProcesses = character(),
   UseOutputData = FALSE,
-  NumberOfCores = 1L
+  NumberOfCores = 1L,
+  BaselineSeed = 1L
 )
 }
 \arguments{
@@ -26,6 +27,10 @@ Bootstrap(
 \item{OutputProcesses}{A vector of the processes to save from each bootstrap replicate.}
 
 \item{UseOutputData}{Logical: If TRUE use the existing output file from the function.}
+
+\item{NumberOfCores}{The number of cores to use for parallel processing. A copy of fthe project is created in tempdir() for each core.}
+
+\item{BaselineSeed}{The seed to use for any processes requiring a \code{Seed} parameter, currenly only the \code{\link[RstoxBase]{ImputeSuperIndividuals}}.}
 }
 \value{
 A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.

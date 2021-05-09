@@ -7,5 +7,5 @@
 resampleDataBy(data, seed, varToScale, varToResample, resampleBy)
 }
 \description{
-This function resamples PSUs with replacement by altering the input data
+This function resamples varToResample with replacement by altering the input data
 }

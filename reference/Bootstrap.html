@@ -81,7 +81,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.18</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.19</span>
       </span>
     </div>
 
@@ -130,7 +130,8 @@
   NumberOfBootstraps <span class='op'>=</span> <span class='fl'>1L</span>,
   OutputProcesses <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
   UseOutputData <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  NumberOfCores <span class='op'>=</span> <span class='fl'>1L</span>
+  NumberOfCores <span class='op'>=</span> <span class='fl'>1L</span>,
+  BaselineSeedTable <span class='op'>=</span> <span class='fu'>data.table</span><span class='fu'>::</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -159,6 +160,14 @@
     <tr>
       <th>UseOutputData</th>
       <td><p>Logical: If TRUE use the existing output file from the function.</p></td>
+    </tr>
+    <tr>
+      <th>NumberOfCores</th>
+      <td><p>The number of cores to use for parallel processing. A copy of fthe project is created in tempdir() for each core.</p></td>
+    </tr>
+    <tr>
+      <th>BaselineSeedTable</th>
+      <td><p>A table of ProcessName and Seed, givng the seed to use for the Baseline processes that requires a Seed parameter.</p></td>
     </tr>
     </table>
 

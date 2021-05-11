@@ -10,36 +10,48 @@
 getProcessTable(
   projectPath,
   modelName = NULL,
+  startProcess = 1,
+  endProcess = Inf,
   afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL,
-  only.valid = TRUE
+  only.valid = TRUE,
+  return.processIndex = FALSE
 )
 
 scanForModelError(
   projectPath,
   modelName = NULL,
+  startProcess = 1,
+  endProcess = Inf,
   afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL,
-  only.valid = TRUE
+  only.valid = TRUE,
+  return.processIndex = FALSE
 )
 
 getProcessesSansProcessData(
   projectPath,
   modelName = NULL,
+  startProcess = 1,
+  endProcess = Inf,
   afterProcessID = NULL,
   beforeProcessID = NULL,
   argumentFilePaths = NULL,
-  only.valid = FALSE
+  only.valid = FALSE,
+  return.processIndex = FALSE
 )
 
 getProcessAndFunctionNames(
   projectPath,
   modelName = NULL,
+  startProcess = 1,
+  endProcess = Inf,
   afterProcessID = NULL,
   beforeProcessID = NULL,
-  argumentFilePaths = NULL
+  argumentFilePaths = NULL,
+  return.processIndex = FALSE
 )
 }
 \arguments{

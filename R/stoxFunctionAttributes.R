@@ -12,7 +12,8 @@ stoxFunctionAttributes <- list(
         functionOutputDataType = "BootstrapData", 
         functionParameterFormat = list(
             BootstrapMethodTable = "bootstrapMethodTable", 
-            OutputProcesses = "outputProcesses"
+            OutputProcesses = "outputProcesses", 
+            BaselineSeedTable = "baselineSeedTable"
         )
     ), 
     
@@ -98,6 +99,31 @@ processPropertyFormats <- list(
         #    getResampleFunctions(),
         #    NULL
         #)
+    ), 
+    
+    baselineSeedTable = list(
+        class = "table", 
+        title = "Define the seeds for Baseline processes with a Seed parameter",
+        columnNames = c(
+            "ProcessName", 
+            "Seed"
+        ), 
+        variableTypes = c(
+            "character",
+            "integer"
+        ), 
+        possibleValues = function(projectPath, BootstrapMethodTable, OutputProcesses) {
+            # Get the processes to run:
+            processesSansProcessData <- getProcessesSansProcessData(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = OutputProcesses, return.processIndex = TRUE)
+            # Scan through the baseline processes to be run and look for processes with the parameter Seed:
+            hasSeed <- sapply(processesSansProcessData$functionParameters, function(x) "Seed" %in% names(x))
+            
+            # Must be an unnamed list:
+            possibleValues = list(
+                processesSansProcessData$processName[hasSeed], 
+                NULL
+            )
+        }
     ), 
     
     targetVariable_ReportBootstrap = list(

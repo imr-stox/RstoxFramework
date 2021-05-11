@@ -558,33 +558,33 @@ removeStratum <- function(stratumName, projectPath, modelName, processID) {
     )
 }
 
-removePSUsByStratum <- function(stratumName, projectPath, modelName, processID) {
-    # Detect all processes returning PSUs (function names ending with PSU):
-    processTable <- getProcessAndFunctionNames(projectPath = projectPath, modelName = modelName, afterProcessID = processID)
-    PSUProccessIDs <- processTable[endsWith(functionName, "PSU"), processID]
-    
-    lapply(PSUProccessIDs, removePSUsByStratumOnePSUProcess, stratumName = stratumName, projectPath = projectPath, modelName = modelName)
-}
-
-removePSUsByStratumOnePSUProcess <- function(processID, stratumName, projectPath, modelName) {
-    # Get the processData:
-    PSUs <- getProcessData(projectPath, modelName, processID)
-    
-    # Get PSU type:
-    PSUType <- ifelse("Station_PSU" %in% names(PSUs), "Biotic", "Acoustic")
-    
-    # Find all PSUs of the stratum to be removed:
-    PSUs <- PSUs$Stratum_PSU[Stratum == stratumName]$PSU
-    
-    # Remove either swept area or acoustic PSUs:
-    nameOfRemoveFunction <- paste0("remove", PSUType, "PSU")
-    do.call(nameOfRemoveFunction, list(
-        PSU = PSUs, 
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID
-    ))
-}
+#removePSUsByStratum <- function(stratumName, projectPath, modelName, processID) {
+#    # Detect all processes returning PSUs (function names ending with PSU):
+#    processTable <- getProcessAndFunctionNames(projectPath = projectPath, modelName = modelName, afterProcessID = processID)
+#    PSUProccessIDs <- processTable[endsWith(functionName, "PSU"), processID]
+#    
+#    lapply(PSUProccessIDs, removePSUsByStratumOnePSUProcess, stratumName = stratumName, projectPath = projectPath, modelName = modelName)
+#}
+#
+#removePSUsByStratumOnePSUProcess <- function(processID, stratumName, projectPath, modelName) {
+#    # Get the processData:
+#    PSUs <- getProcessData(projectPath, modelName, processID)
+#    
+#    # Get PSU type:
+#    PSUType <- ifelse("Station_PSU" %in% names(PSUs), "Biotic", "Acoustic")
+#    
+#    # Find all PSUs of the stratum to be removed:
+#    PSUs <- PSUs$Stratum_PSU[Stratum == stratumName]$PSU
+#    
+#    # Remove either swept area or acoustic PSUs:
+#    nameOfRemoveFunction <- paste0("remove", PSUType, "PSU")
+#    do.call(nameOfRemoveFunction, list(
+#        PSU = PSUs, 
+#        projectPath = projectPath, 
+#        modelName = modelName, 
+#        processID = processID
+#    ))
+#}
 
 
 #' 

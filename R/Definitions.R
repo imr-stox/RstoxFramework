@@ -136,6 +136,7 @@ initiateRstoxFramework <- function(){
         "renameFunction", 
         "removeParameter", 
         "renameParameter", 
+        "addParameter", 
         "translateParameter", 
         "renameProcessData"
     )
@@ -268,7 +269,9 @@ initiateRstoxFramework <- function(){
         "numeric", 
         "integer", 
         "logical", 
-        "SpatialPolygonsDataFrame"
+        "SpatialPolygonsDataFrame"#, 
+        #"StoX_multipolygon_WKT", 
+        #"StoX_shapefile"
     )
     vectorClasses <- c(
         "character", 

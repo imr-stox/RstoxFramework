@@ -9,7 +9,7 @@
 #' @param OutputProcesses A vector of the processes to save from each bootstrap replicate.
 #' @param UseOutputData Logical: If TRUE use the existing output file from the function.
 #' @param NumberOfCores The number of cores to use for parallel processing. A copy of fthe project is created in tempdir() for each core.
-#' @param BaselineSeed The seed to use for any processes requiring a \code{Seed} parameter, currenly only the \code{\link[RstoxBase]{ImputeSuperIndividuals}}.
+#' @param BaselineSeedTable A table of ProcessName and Seed, givng the seed to use for the Baseline processes that requires a Seed parameter.
 #' 
 #' @return
 #' A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.
@@ -25,7 +25,7 @@ Bootstrap <- function(
     OutputProcesses = character(), 
     UseOutputData = FALSE, 
     NumberOfCores = 1L, 
-    BaselineSeed = 1L
+    BaselineSeedTable = data.table::data.table()
 ) {
     
     # Use preivously generated output data if specified:
@@ -36,12 +36,12 @@ Bootstrap <- function(
     }
     
     # Identify the first process set for resampling by the BootstrapMethodTable (here BootstrapMethodTable$ProcessName can be a vector, in which case the table is returned from the first process of these and onwards):
-    processIndexTable <- readProcessIndexTable(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = OutputProcesses, return.processIndex = TRUE)
+    processesSansProcessData <- getProcessesSansProcessData(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = OutputProcesses, return.processIndex = TRUE)
     
     # Check the output processes:
-    if(length(OutputProcesses) && !all(OutputProcesses %in% processIndexTable$processName)) {
-        warning("StoX: The following processes specified in OutputProcesses were not recognized: ", paste(setdiff(OutputProcesses, processIndexTable$processName), collapse = ", "))
-        OutputProcesses <- intersect(OutputProcesses, processIndexTable$processName)
+    if(length(OutputProcesses) && !all(OutputProcesses %in% processesSansProcessData$processName)) {
+        warning("StoX: The following processes specified in OutputProcesses were not recognized: ", paste(setdiff(OutputProcesses, processesSansProcessData$processName), collapse = ", "))
+        OutputProcesses <- intersect(OutputProcesses, processesSansProcessData$processName)
     }
     if(!length(OutputProcesses)) {
         stop("StoX: 
@@ -57,8 +57,8 @@ Bootstrap <- function(
             modelName = "baseline"
         )$processID
     )
-    #preRunTo <- min(processIndexTable$processIndex) - 1
-    preRunTo <- min(processIndexTable$processIndex)
+    #preRunTo <- min(processesSansProcessData$processIndex) - 1
+    preRunTo <- min(processesSansProcessData$processIndex)
     if(activeProcessID < preRunTo) {
         message("StoX: Running baseline until the first process to bootstrap...")
         temp <- runProcesses(
@@ -71,19 +71,41 @@ Bootstrap <- function(
     }
     
     # Draw the seeds in a table, and then split into a list for each bootstrap run:
-    SeedTable <- data.table::as.data.table(lapply(BootstrapMethodTable$Seed, RstoxBase::getSeedVector, size = NumberOfBootstraps))
-    names(SeedTable) <- BootstrapMethodTable$ProcessName
-    SeedList <- split(SeedTable, seq_len(nrow(SeedTable)))
-    
+    #SeedTable <- data.table::as.data.table(lapply(BootstrapMethodTable$Seed, RstoxBase::getSeedVector, size = NumberOfBootstraps))
+    #names(SeedTable) <- BootstrapMethodTable$ProcessName
+    #SeedList <- split(SeedTable, seq_len(nrow(SeedTable)))
+    SeedList <- drawSeedList(
+        table = BootstrapMethodTable, 
+        NumberOfBootstraps = NumberOfBootstraps, 
+        listOf = "table"
+    )
     # Create the replaceDataList input to runProcesses, which defines the seed for each bootstrap run:
-    replaceDataList <- createReplaceData(Seed = SeedList, BootstrapMethodTable = BootstrapMethodTable)
+    replaceDataList <- createReplaceData(SeedList = SeedList, BootstrapMethodTable = BootstrapMethodTable)
     
-    # This should be exposed as a parameter.
-    if(!length(BaselineSeed)) {
-        stop("The BaselineSeed (used to set the seeds of any seed used in the Baseline model, currently only applied in the ImputeSuperIndividuals function) must be set.")
+    
+    # Scan through the baseline processes to be run and look for processes with the parameter Seed:
+    hasSeed <- sapply(processesSansProcessData$functionParameters, function(x) "Seed" %in% names(x))
+    # Error if the BaselineSeedTable does not contain exactly the processes using Seed in the Baseline processes to be run:
+    if(any(hasSeed)) {
+        presentInBaselineButNotInBaselineSeedTable <- setdiff(
+            processesSansProcessData$processName[hasSeed], 
+            BaselineSeedTable$ProcessName
+        )
+        presentInBaselineSeedTableButNotInBaseline <- setdiff(
+            BaselineSeedTable$ProcessName, 
+            processesSansProcessData$processName[hasSeed]
+        )
+        if(length(presentInBaselineButNotInBaselineSeedTable) || length(presentInBaselineSeedTableButNotInBaseline)) {
+            stop("The BaselineSeedTable must contain Seed for the processes (and only the processes) ", paste(processesSansProcessData$processName[hasSeed], collapse = ", "), ".")
+        }
     }
-    BaselineSeedVector <- RstoxBase::getSeedVector(BaselineSeed, size = NumberOfBootstraps)
-    replaceArgs <- lapply(BaselineSeedVector, function(x) list(Seed = x))
+    # Construct a list of lists, where each list contains a list of Seed named by the processes using Seed in the Baseline:
+    BaselineSeedList <- drawSeedList(
+        table = BaselineSeedTable, 
+        NumberOfBootstraps = NumberOfBootstraps, 
+        listOf = "list"
+    )
+    replaceArgs <- BaselineSeedList
     
     # Get the number of cores to open:
     NumberOfCores <- RstoxData::getNumberOfCores(NumberOfCores, n  = NumberOfBootstraps)
@@ -108,16 +130,16 @@ Bootstrap <- function(
         unlink(stopBootstrapFile, force = TRUE, recursive = TRUE)
     }
     
+    # Prepare for progress info:
     writeLines(as.character(NumberOfBootstraps), NumberOfBootstrapsFile)
     
-    
+    # Run the bootstrap:
     bootstrapIndex <- seq_len(NumberOfBootstraps)
     BootstrapData <- RstoxData::mapplyOnCores(
         FUN = runOneBootstrapSaveOutput, 
         NumberOfCores = NumberOfCores, 
         # Vector inputs:
         ind = bootstrapIndex, 
-        Seed = SeedList, 
         replaceArgs = replaceArgs, 
         replaceDataList = replaceDataList, 
         projectPath = projectPath_copies, 
@@ -125,8 +147,8 @@ Bootstrap <- function(
         # Other inputs:
         MoreArgs = list(
             projectPath_original = projectPath, 
-            startProcess = min(processIndexTable$processIndex), 
-            endProcess = max(processIndexTable$processIndex), 
+            startProcess = min(processesSansProcessData$processIndex), 
+            endProcess = max(processesSansProcessData$processIndex), 
             outputProcessesIDs = OutputProcesses, 
             bootstrapProgressFile = bootstrapProgressFile
         )
@@ -139,7 +161,7 @@ Bootstrap <- function(
     ### resetModel(
     ###     projectPath = projectPath, 
     ###     modelName = "baseline", 
-    ###     processID = processIndexTable$processID[1], 
+    ###     processID = processesSansProcessData$processID[1], 
     ###     processDirty = FALSE, 
     ###     shift = -1
     ### )
@@ -147,7 +169,7 @@ Bootstrap <- function(
     temp <- runProcesses(
         projectPath, 
         modelName = "baseline", 
-        startProcess = processIndexTable$processIndex[1], 
+        startProcess = processesSansProcessData$processIndex[1], 
         save = FALSE, 
         saveProcessData = FALSE
     )
@@ -169,6 +191,19 @@ Bootstrap <- function(
     
     return(BootstrapData)
 }
+
+
+# Funcion to draw seeds for each process given in the table and each bootstrap run, and reshape the seeds into a list of either data.table with rows 
+drawSeedList <- function(table, NumberOfBootstraps, listOf = c("table", "list")) {
+    SeedTable <- data.table::as.data.table(lapply(table$Seed, RstoxBase::getSeedVector, size = NumberOfBootstraps))
+    names(SeedTable) <- table$ProcessName
+    SeedList <- split(SeedTable, seq_len(nrow(SeedTable)))
+    if(listOf == "list") {
+        SeedList <- lapply(SeedList, function(x) structure(as.list(x), names = names(x)))
+    }
+    return(SeedList)
+}
+
 
 
 
@@ -199,15 +234,15 @@ addFunctionNameToReplaceData <- function(replaceData, BootstrapMethodTable) {
     names(out) <- names(replaceData)
     return(out)
 }
-createReplaceData <- function(Seed, BootstrapMethodTable) {
-    replaceDataList <- lapply(Seed, createReplaceDataSansFunctionName)
+createReplaceData <- function(SeedList, BootstrapMethodTable) {
+    replaceDataList <- lapply(SeedList, createReplaceDataSansFunctionName)
     replaceDataList <- lapply(replaceDataList, addFunctionNameToReplaceData, BootstrapMethodTable = BootstrapMethodTable)
     return(replaceDataList)
 }
 
 
 # Define a function to run processes and save the output of the last process to the output folder:
-runOneBootstrapSaveOutput <- function(ind, Seed, replaceArgs, replaceDataList, projectPath, projectPath_original, startProcess, endProcess, outputProcessesIDs, bootstrapProgressFile) {
+runOneBootstrapSaveOutput <- function(ind, replaceArgs, replaceDataList, projectPath, projectPath_original, startProcess, endProcess, outputProcessesIDs, bootstrapProgressFile) {
     
     # Stop if the file stopBootstrap.txt exists:
     if(file.exists(getProjectPaths(projectPath_original, "stopBootstrapFile"))) {

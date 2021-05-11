@@ -12,7 +12,7 @@ Bootstrap(
   OutputProcesses = character(),
   UseOutputData = FALSE,
   NumberOfCores = 1L,
-  BaselineSeed = 1L
+  BaselineSeedTable = data.table::data.table()
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ Bootstrap(
 
 \item{NumberOfCores}{The number of cores to use for parallel processing. A copy of fthe project is created in tempdir() for each core.}
 
-\item{BaselineSeed}{The seed to use for any processes requiring a \code{Seed} parameter, currenly only the \code{\link[RstoxBase]{ImputeSuperIndividuals}}.}
+\item{BaselineSeedTable}{A table of ProcessName and Seed, givng the seed to use for the Baseline processes that requires a Seed parameter.}
 }
 \value{
 A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.

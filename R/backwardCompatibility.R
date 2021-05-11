@@ -21,6 +21,19 @@ backwardCompatibility <- list(
             attributeName = "OfficialRstoxFrameworkVersion", 
             attributeValue = FALSE
         )
+    ), 
+    
+    addParameter  = list(
+        list(
+            changeVersion = "3.0.19", 
+            functionName = "Bootstrap", 
+            modelName = "analysis", 
+            parameterName = "BaselineSeedTable", 
+            parameterValue = data.table::data.table(
+                ProcessName = "ImputeSuperIndividuals", 
+                Seed = 1
+            )
+        )
     )
 )
 
@@ -60,8 +73,6 @@ applyBackwardCompatibilityActions <- function(
     projectDescription, 
     verbose = FALSE
 ) {
-    
-    
     # Run through the supported backward compatibility action names:
     for(backwardCompatibilityActionName in backwardCompatibilityActionNames) {
         
@@ -298,6 +309,24 @@ applyRenameProcessData <- function(action, projectDescription, packageName, verb
     
     return(projectDescription)
 }
+
+applyAddParameter <- function(action, projectDescription, packageName, verbose = FALSE) {
+    # Get the indices at functions to apply the action to:
+    atFunctionName <- getIndicesAtFunctionName(
+        projectDescription = projectDescription, 
+        action = action, 
+        packageName = packageName
+    )
+    
+    for(ind in atFunctionName) {
+        # Add the function parameter: 
+        projectDescription[[action$modelName]][[ind]]$functionParameters[[action$parameterName]] <- action$parameterValue
+    }
+    
+    return(projectDescription)
+}
+
+
 
 
 #applySplitFunction <- function(action, projectDescription, packageName, verbose = FALSE) {
@@ -1031,7 +1060,6 @@ convertStoX2.7To3 <- function(projectPath2.7, projectPath3, newProjectPath3 = NU
 
 redefineAcousticPSUFrom2.7 <- function(projectPath2.7, projectPath3, newProjectPath3 = NULL, ow = FALSE) {
     
-    browser()
     # Read the old project.xml file:
     projectList <- readProjectXMLToList(projectPath2.7)
     

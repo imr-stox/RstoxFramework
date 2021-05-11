@@ -2304,7 +2304,7 @@ checkDataType <- function(dataType, projectPath, modelName, processID) {
     
 
 ##### Functions for manipulating the process index table, which defines the order of the processes. These functions are used by the frontend to delete, add, and reorder processes: #####
-readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NULL, startProcess = 1, endProcess = Inf, return.processIndex = FALSE, warn = TRUE) {
+readProcessIndexTable <- function(projectPath, modelName = NULL, processes = NULL, startProcess = 1, endProcess = Inf, warn = TRUE, return.processIndex = FALSE) {
     
     # Get the path to the process index file:
     processIndexTableFile <- getProjectPaths(projectPath, "processIndexTableFile")
@@ -2637,7 +2637,7 @@ modifyProcessNameInFunctionInputs <- function(projectPath, modelName, processNam
 #' 
 #' @export
 #' 
-getProcessTable <- function(projectPath, modelName = NULL, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE) {
+getProcessTable <- function(projectPath, modelName = NULL, startProcess = 1, endProcess = Inf, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE, return.processIndex = FALSE) {
     
     # Maybe we should set only.valid to FALSE by default, just as is done in scanForModelError()???
     
@@ -2652,10 +2652,13 @@ getProcessTable <- function(projectPath, modelName = NULL, afterProcessID = NULL
     processTable <- scanForModelError(
         projectPath = projectPath, 
         modelName = modelName, 
+        startProcess = startProcess, 
+        endProcess = endProcess, 
         afterProcessID = afterProcessID, 
         beforeProcessID = beforeProcessID, 
         argumentFilePaths = argumentFilePaths, 
-        only.valid = only.valid
+        only.valid = only.valid, 
+        return.processIndex = return.processIndex
     )
     # Return an empty data.table if the processTable is empty:
     if(nrow(processTable) == 0) {
@@ -2686,7 +2689,7 @@ getProcessTable <- function(projectPath, modelName = NULL, afterProcessID = NULL
 #' @export
 #' @rdname getProcessTable
 #' 
-scanForModelError <- function(projectPath, modelName = NULL, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE) {
+scanForModelError <- function(projectPath, modelName = NULL, startProcess = 1, endProcess = Inf, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = TRUE, return.processIndex = FALSE) {
     
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
@@ -2699,10 +2702,13 @@ scanForModelError <- function(projectPath, modelName = NULL, afterProcessID = NU
         projectPath = projectPath, 
         #modelName = modelName, 
         modelName = NULL, 
+        startProcess = startProcess, 
+        endProcess = endProcess, 
         afterProcessID = afterProcessID, 
         beforeProcessID = beforeProcessID, 
         argumentFilePaths = argumentFilePaths, 
-        only.valid = only.valid
+        only.valid = only.valid, 
+        return.processIndex = return.processIndex
     )
     # Return an empty data.table if the processTable is empty:
     if(nrow(processTable) == 0) {
@@ -2746,7 +2752,7 @@ scanForModelError <- function(projectPath, modelName = NULL, afterProcessID = NU
 #' @export
 #' @rdname getProcessTable
 #' 
-getProcessesSansProcessData <- function(projectPath, modelName = NULL, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = FALSE) {
+getProcessesSansProcessData <- function(projectPath, modelName = NULL, startProcess = 1, endProcess = Inf, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, only.valid = FALSE, return.processIndex = FALSE) {
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -2757,9 +2763,12 @@ getProcessesSansProcessData <- function(projectPath, modelName = NULL, afterProc
     processTable <- getProcessAndFunctionNames(
         projectPath = projectPath, 
         modelName = modelName, 
+        startProcess = startProcess, 
+        endProcess = endProcess, 
         afterProcessID = afterProcessID, 
         beforeProcessID = beforeProcessID, 
-        argumentFilePaths = argumentFilePaths
+        argumentFilePaths = argumentFilePaths, 
+        return.processIndex = return.processIndex
     )
     if(length(processTable) == 0) {
         return(processTable)
@@ -2817,7 +2826,7 @@ getProcessesSansProcessData <- function(projectPath, modelName = NULL, afterProc
 #' @export
 #' @rdname getProcessTable
 #' 
-getProcessAndFunctionNames <- function(projectPath, modelName = NULL, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL) {
+getProcessAndFunctionNames <- function(projectPath, modelName = NULL, startProcess = 1, endProcess = Inf, afterProcessID = NULL, beforeProcessID = NULL, argumentFilePaths = NULL, return.processIndex = FALSE) {
     
     # Read the memory file paths once, and insert to the get* functions below to speed things up:
     if(length(argumentFilePaths) == 0) {
@@ -2825,14 +2834,21 @@ getProcessAndFunctionNames <- function(projectPath, modelName = NULL, afterProce
     }
     
     ##### (1) Get the table of process name and ID: #####
-    processIndexTable <- readProcessIndexTable(projectPath, modelName)
+    processIndexTable <- readProcessIndexTable(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        startProcess = startProcess, 
+        endProcess = endProcess, 
+        return.processIndex = return.processIndex
+    )
     # Return an empty data.table if the processIndexTable is empty:
     if(nrow(processIndexTable) == 0) {
         return(data.table::data.table())
     }
     
-    # Subset the table to up until the reuqested beforeProcessID, if given:
+    # If afterProcessID and beforeProcessID are given, subset the table to up until the reuqested beforeProcessID, if given:
     processIDs <- getProcessIDsFromBeforeAfter(
+        projectPath = projectPath, 
         afterProcessID = afterProcessID, 
         beforeProcessID = beforeProcessID, 
         processIndexTable = processIndexTable
@@ -2857,7 +2873,7 @@ getProcessAndFunctionNames <- function(projectPath, modelName = NULL, afterProce
     return(processIndexTable)
 }
 
-getProcessIDsFromBeforeAfter <- function(afterProcessID = NULL, beforeProcessID = NULL, processIndexTable) {
+getProcessIDsFromBeforeAfter <- function(projectPath, afterProcessID = NULL, beforeProcessID = NULL, processIndexTable) {
     # First get the model hierarchy. This enables us to search for processes in one model before the other: 
     stoxModelHierarchy <- getRstoxFrameworkDefinitions("stoxModelHierarchy")
     
@@ -5222,6 +5238,11 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
         #jsonlite::write_json(jsonObject, path = filePath)
         write(jsonObject, file = filePath)
     }
+    # To be implemented
+    #else if("StoX_shapefile" %in% class(processOutputOne)) {
+    #    dirPath <- dirname(filePath)
+    #    writeOGR(obj = processOutputOne, dsn = dirPath, driver = "ESRI Shapefile")
+    #}
     else if("data.table" %in% class(processOutputOne)) {
         # Write the file:
         if(length(processOutputOne) == 0) {

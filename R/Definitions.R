@@ -467,9 +467,12 @@ initiateRstoxFramework <- function(){
     memoryFolder <- file.path(projectSessionFolder, "memory")
     statusFolder <- file.path(projectSessionFolder, "status")
     
-    bootstrapProgressFile <- file.path(statusFolder, "bootstrapProgress.txt")
-    NumberOfBootstrapsFile <- file.path(statusFolder, "NumberOfBootstraps.txt")
-    stopBootstrapFile <- file.path(statusFolder, "stopBootstrap.txt")
+    #bootstrapProgressFile <- file.path(statusFolder, "bootstrapProgress.txt")
+    #NumberOfBootstrapsFile <- file.path(statusFolder, "NumberOfBootstraps.txt")
+    #stopBootstrapFile <- file.path(statusFolder, "stopBootstrap.txt")
+    progressFile <- structure(mapply(file.path, statusFolder, paste0(stoxModelNames, "Progress.txt"), SIMPLIFY = FALSE), names = stoxModelNames)
+    NFile <- structure(mapply(file.path, statusFolder, paste0(stoxModelNames, "N.txt"), SIMPLIFY = FALSE), names = stoxModelNames)
+    stopFile <- structure(mapply(file.path, statusFolder, paste0(stoxModelNames, "Stop.txt"), SIMPLIFY = FALSE), names = stoxModelNames)
     
     # Sub folders of the data folder:
     dataModelsFolder <- file.path(dataFolder, "models")
@@ -506,11 +509,12 @@ initiateRstoxFramework <- function(){
     projectJSONFile <- file.path(stoxFolders["Process"], "project.json")
     projectSavedStatusFile <- file.path(statusFolder, "projectSavedStatus.txt")
     #projectIsRunningFile <- file.path(statusFolder, "projectIsRunning.txt")
-    modelIsRunningFile <- list(
-        baseline = file.path(statusFolder, "baselineIsRunning.txt"), 
-        analysis = file.path(statusFolder, "analysisIsRunning.txt"), 
-        report = file.path(statusFolder, "reportIsRunning.txt")
-    )
+    #modelIsRunningFile <- list(
+    #    baseline = file.path(statusFolder, "baselineIsRunning.txt"), 
+    #    analysis = file.path(statusFolder, "analysisIsRunning.txt"), 
+    #    report = file.path(statusFolder, "reportIsRunning.txt")
+    #)
+    modelIsRunningFile <- structure(mapply(file.path, paste0(stoxModelNames, "IsRunning.txt"), SIMPLIFY = FALSE), names = stoxModelNames)
     
     # Memory files:
     projectMemoryIndexFile <- file.path(memoryHistoryFolder, "projectMemoryIndex.txt")
@@ -542,9 +546,12 @@ initiateRstoxFramework <- function(){
             dataFolder = dataFolder, 
             memoryFolder = memoryFolder, 
             statusFolder = statusFolder, 
-            bootstrapProgressFile = bootstrapProgressFile,
-            NumberOfBootstrapsFile = NumberOfBootstrapsFile,
-            stopBootstrapFile = stopBootstrapFile, 
+            #bootstrapProgressFile = bootstrapProgressFile,
+            #NumberOfBootstrapsFile = NumberOfBootstrapsFile,
+            #stopBootstrapFile = stopBootstrapFile, 
+            progressFile = progressFile, 
+            NFile = NFile, 
+            stopFile = stopFile, 
             dataModelsFolder = dataModelsFolder, 
             dataModelsFolders = dataModelsFolders, 
             memoryCurrentFolder = memoryCurrentFolder, 

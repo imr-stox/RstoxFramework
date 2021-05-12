@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get bootstrap progress — getBootstrapProgress • RstoxFramework</title>
+<title>Get bootstrap progress — progressOfProcesses • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,7 @@
 
 
 
-<meta property="og:title" content="Get bootstrap progress — getBootstrapProgress" />
+<meta property="og:title" content="Get bootstrap progress — progressOfProcesses" />
 <meta property="og:description" content="Get bootstrap progress" />
 
 
@@ -81,7 +81,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.19</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.20</span>
       </span>
     </div>
 
@@ -116,14 +116,14 @@
     <div class="page-header">
     <h1>Get bootstrap progress</h1>
     <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/resample.R'><code>R/resample.R</code></a></small>
-    <div class="hidden name"><code>getBootstrapProgress.Rd</code></div>
+    <div class="hidden name"><code>progressOfProcesses.Rd</code></div>
     </div>
 
     <div class="ref-description">
     <p>Get bootstrap progress</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getBootstrapProgress</span><span class='op'>(</span><span class='va'>projectPath</span>, percent <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>progressOfProcesses</span><span class='op'>(</span><span class='va'>projectPath</span>, <span class='va'>modelName</span>, percent <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -131,6 +131,10 @@
     <tr>
       <th>projectPath</th>
       <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
+    </tr>
+    <tr>
+      <th>modelName</th>
+      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
     </tr>
     <tr>
       <th>percent</th>

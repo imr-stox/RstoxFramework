@@ -486,7 +486,8 @@ checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, proj
         # ..of the relevant package:
         lastSavedVersion <- lastSavedVersion[startsWith(lastSavedVersion, packageName)]
         lastSavedVersion <- interpretVersionString(lastSavedVersion)
-        convert <- lastSavedVersion < backwardCompatibilityAction$changeVersion
+        #convert <- lastSavedVersion < backwardCompatibilityAction$changeVersion
+        convert <- utils::compareVersion(backwardCompatibilityAction$changeVersion, lastSavedVersion) == 1
     }
     # NA is introduced 
     else if(is.na(lastSavedVersion)) {

@@ -4269,6 +4269,12 @@ isProcess <- function(x) {
 #' 
 runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProcessData = TRUE, returnProcessOutput = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds"), try = TRUE) {
     
+    # Stop if the stop file is present:
+    stopFile <- getProjectPaths(projectPath, "stopFile")[[modelName]]
+    if(file.exists(stopFile)) {
+        stop("runProcesses() aborted by the user.")
+    }
+    
     startTime <- proc.time()[3]
     
     # Get the function argument and the process info:
@@ -5469,6 +5475,7 @@ runProcesses <- function(
     replaceArgs = list(), 
     output.file.type = c("default", "text", "RData", "rds"), 
     try = TRUE, 
+    prugeStopFile = FALSE, 
     ...
 ) {
     
@@ -5530,6 +5537,13 @@ runProcesses <- function(
     })
     
     # Loop through the processes:
+    if(prugeStopFile) {
+        stopFile <- getProjectPaths(projectPath, "stopFile")[[modelName]]
+        if(file.exists(stopFile)) {
+            unlink(stopFile, force = TRUE, recursive = TRUE)
+        }
+    }
+    
     mapply(
         runProcess, 
         processID = processIDs, 

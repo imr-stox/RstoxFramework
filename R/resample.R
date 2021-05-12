@@ -123,9 +123,10 @@ Bootstrap <- function(
     
     
     # Run the subset of the baseline model:
-    bootstrapProgressFile <- getProjectPaths(projectPath, "bootstrapProgressFile")
-    NumberOfBootstrapsFile <- getProjectPaths(projectPath, "NumberOfBootstrapsFile")
-    stopBootstrapFile <- getProjectPaths(projectPath, "stopBootstrapFile")
+    #bootstrapProgressFile <- getProjectPaths(projectPath, "bootstrapProgressFile")
+    bootstrapProgressFile <- getProjectPaths(projectPath, "progressFile")$analysis
+    NumberOfBootstrapsFile <- getProjectPaths(projectPath, "NFile")$analysis
+    stopBootstrapFile <- getProjectPaths(projectPath, "stopFile")$analysis
     if(file.exists(stopBootstrapFile)) {
         unlink(stopBootstrapFile, force = TRUE, recursive = TRUE)
     }
@@ -150,7 +151,8 @@ Bootstrap <- function(
             startProcess = min(processesSansProcessData$processIndex), 
             endProcess = max(processesSansProcessData$processIndex), 
             outputProcessesIDs = OutputProcesses, 
-            bootstrapProgressFile = bootstrapProgressFile
+            bootstrapProgressFile = bootstrapProgressFile, 
+            stopBootstrapFile = stopBootstrapFile
         )
     )
     
@@ -242,11 +244,11 @@ createReplaceData <- function(SeedList, BootstrapMethodTable) {
 
 
 # Define a function to run processes and save the output of the last process to the output folder:
-runOneBootstrapSaveOutput <- function(ind, replaceArgs, replaceDataList, projectPath, projectPath_original, startProcess, endProcess, outputProcessesIDs, bootstrapProgressFile) {
+runOneBootstrapSaveOutput <- function(ind, replaceArgs, replaceDataList, projectPath, projectPath_original, startProcess, endProcess, outputProcessesIDs, bootstrapProgressFile, stopBootstrapFile) {
     
     # Stop if the file stopBootstrap.txt exists:
-    if(file.exists(getProjectPaths(projectPath_original, "stopBootstrapFile"))) {
-        stop("Bootstrap aborted")
+    if(file.exists(stopBootstrapFile)) {
+        stop("Bootstrap aborted by the user.")
     }
     
     # Re-run the baseline:
@@ -289,14 +291,24 @@ runOneBootstrapSaveOutput <- function(ind, replaceArgs, replaceDataList, project
 }
 
 
-#' Stop a bootstrap run.
+### #' Stop a bootstrap run.
+### #' 
+### #' @inheritParams general_arguments
+### #' 
+### #' @export
+### #' 
+### stopBootstrap <- function(projectPath) {
+###     write("", file = getProjectPaths(projectPath, "stopBootstrapFile"))
+### }
+#' Stop runProcesses().
 #' 
 #' @inheritParams general_arguments
 #' 
 #' @export
 #' 
-stopBootstrap <- function(projectPath) {
-    write("", file = getProjectPaths(projectPath, "stopBootstrapFile"))
+stopProcesses <- function(projectPath, modelName) {
+    stopFile <- getProjectPaths(projectPath, "stopFile")[[modelName]]
+    write("", file = stopFile)
 }
 #' Get bootstrap progress
 #' 
@@ -305,17 +317,17 @@ stopBootstrap <- function(projectPath) {
 #' 
 #' @export
 #' 
-getBootstrapProgress <- function(projectPath, percent = FALSE) {
-    bootstrapProgressFile <- getProjectPaths(projectPath, "bootstrapProgressFile")
-    NumberOfBootstrapsFile <- getProjectPaths(projectPath, "NumberOfBootstrapsFile")
-    NumberOfBootstraps <- as.numeric(readLines(NumberOfBootstrapsFile, warn = FALSE))
-    bootstrapProgress <- readLines(bootstrapProgressFile, warn = FALSE)
-    NumberOfSuccessfulBootstraps <- lengths(regmatches(bootstrapProgress, gregexpr(".", bootstrapProgress)))
-    bootstrapProgress <- NumberOfSuccessfulBootstraps / NumberOfBootstraps
+progressOfProcesses <- function(projectPath, modelName, percent = FALSE) {
+    ProgressFile <- getProjectPaths(projectPath, "progressFile")[[modelName]]
+    NFile <- getProjectPaths(projectPath, "NFile")[[modelName]]
+    N <- as.numeric(readLines(NFile, warn = FALSE))
+    Progress <- readLines(ProgressFile, warn = FALSE)
+    n <- lengths(regmatches(Progress, gregexpr(".", Progress)))
+    Progress <- n / N
     if(percent) {
-        bootstrapProgress <- bootstrapProgress * 100
+        Progress <- Progress * 100
     }
-    return(bootstrapProgress)
+    return(Progress)
 }
 
 addBootstrapID <- function(x, ind) {

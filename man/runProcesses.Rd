@@ -21,6 +21,7 @@ runProcesses(
   replaceArgs = list(),
   output.file.type = c("default", "text", "RData", "rds"),
   try = TRUE,
+  prugeStopFile = FALSE,
   ...
 )
 }

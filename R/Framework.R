@@ -4275,7 +4275,9 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         stop("runProcesses() aborted by the user.")
     }
     
-    startTime <- proc.time()[3]
+    if(msg) {
+        startTime <- proc.time()[3]
+    }
     
     # Get the function argument and the process info:
     functionArguments <- getFunctionArguments(
@@ -4304,7 +4306,7 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
             ": ", 
             getProcessName(projectPath, modelName, processID), 
             "...", 
-            appendLF = FALSE
+            appendLF = TRUE
         )
     }
     
@@ -4406,11 +4408,12 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         }
         
         # Add info of the time spent:
-        timeSpent <- proc.time()[3] - startTime
-        message(
-            "(time used: ", round(timeSpent, digits = 3), " s)"
-        )
-        
+        if(msg) {
+            timeSpent <- proc.time()[3] - startTime
+            message(
+                    "(time used: ", round(timeSpent, digits = 3), " s)"
+            )
+        }
         
         #invisible(processOutput)
         TRUE

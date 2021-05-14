@@ -82,7 +82,6 @@ Bootstrap <- function(
     # Create the replaceDataList input to runProcesses, which defines the seed for each bootstrap run:
     replaceDataList <- createReplaceData(SeedList = SeedList, BootstrapMethodTable = BootstrapMethodTable)
     
-    
     # Scan through the baseline processes to be run and look for processes with the parameter Seed:
     hasSeed <- sapply(processesSansProcessData$functionParameters, function(x) "Seed" %in% names(x))
     # Error if the BaselineSeedTable does not contain exactly the processes using Seed in the Baseline processes to be run:
@@ -197,12 +196,21 @@ Bootstrap <- function(
 
 # Funcion to draw seeds for each process given in the table and each bootstrap run, and reshape the seeds into a list of either data.table with rows 
 drawSeedList <- function(table, NumberOfBootstraps, listOf = c("table", "list")) {
-    SeedTable <- data.table::as.data.table(lapply(table$Seed, RstoxBase::getSeedVector, size = NumberOfBootstraps))
-    names(SeedTable) <- table$ProcessName
-    SeedList <- split(SeedTable, seq_len(nrow(SeedTable)))
-    if(listOf == "list") {
-        SeedList <- lapply(SeedList, function(x) structure(as.list(x), names = names(x)))
+    if(!length(table)) {
+        SeedList <- vector("list", NumberOfBootstraps)
+        if(listOf == "list") {
+            SeedList <- lapply(SeedList, as.data.table)
+        }
     }
+    else {
+        SeedTable <- data.table::as.data.table(lapply(table$Seed, RstoxBase::getSeedVector, size = NumberOfBootstraps))
+        names(SeedTable) <- table$ProcessName
+        SeedList <- split(SeedTable, seq_len(nrow(SeedTable)))
+        if(listOf == "list") {
+            SeedList <- lapply(SeedList, function(x) structure(as.list(x), names = names(x)))
+        }
+    }
+    
     return(SeedList)
 }
 

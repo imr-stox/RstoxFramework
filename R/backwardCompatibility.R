@@ -476,6 +476,10 @@ checkBackwardCompatibilityVersion <-  function(backwardCompatibilityAction, proj
     if(!checkActionKeys(backwardCompatibilityAction)) {
         return(FALSE)
     }
+    # Skip if the projectDescription does not have the required attribute:
+    if(!length(attr(projectDescription, "RstoxPackageVersion"))) {
+        return(FALSE)
+    }
     
     # Do only if the old version is lower than or equal to the fromVersion, and that the current version is higher than or equal to the toVersion:
     # Get last saved version:

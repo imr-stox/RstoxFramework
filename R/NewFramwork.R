@@ -219,12 +219,17 @@ addStoredProjectDescriptionAttributes <- function(projectDescription, projectPat
 readStoredProjectDescriptionAttributes <- function(projectPath) {
     # Read the stored attributes:
     projectDescriptionAttributesFile <- getProjectPaths(projectPath, "projectDescriptionAttributesFile")
-    storedProjectDescriptionAttributes <- readRDS(projectDescriptionAttributesFile)
+    if(file.exists(projectDescriptionAttributesFile)) {
+        storedProjectDescriptionAttributes <- readRDS(projectDescriptionAttributesFile)
+    }
+    else {
+        storedProjectDescriptionAttributes <- NULL
+    }
     return(storedProjectDescriptionAttributes)
 }
     
 
-writeProjectDescriptionAttributes <- function(projectDescription, projectPath) {
+writeProjectDescriptionAttributes <- function(projectPath, projectDescription) {
     # Read the stored attributes:
     projectDescriptionAttributesFile <- getProjectPaths(projectPath, "projectDescriptionAttributesFile")
     saveRDS(attributes(projectDescription), file = projectDescriptionAttributesFile)

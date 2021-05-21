@@ -417,6 +417,7 @@ createProject <- function(
         archive = FALSE, 
         add.defaults = FALSE
     )
+    
     # Store the changes:
     archiveProject(projectPath)
     
@@ -524,7 +525,7 @@ openProject <- function(
         add.defaults = FALSE
     )
     # Save the project description attributes:
-    writeProjectDescriptionAttributes(projectDescription, projectPath)
+    writeProjectDescriptionAttributes(projectPath, projectDescription = projectDescription)
     
     # Store the changes:
     archiveProject(projectPath)
@@ -862,8 +863,8 @@ readProjectDescriptionJSON <- function(projectDescriptionFile) {
         stop("StoX: The file ", projectDescriptionFile, " is not a valid project.json file.")
     }
     
-    # Read project.json file to R list. Use simplifyVector = FALSE to presere names:
-    projectDescriptionList <- jsonlite::read_json(projectDescriptionFile, simplifyVector = FALSE, auto_unbox = TRUE)
+    # Read project.json file to R list. Use simplifyVector = FALSE to preserve names:
+    projectDescriptionList <- jsonlite::read_json(projectDescriptionFile, simplifyVector = FALSE)
     
     # Add the headers as attributes:
     projectDescription <- projectDescriptionList$project$models
@@ -3827,6 +3828,7 @@ formatProcessDataOne <-  function(processDataOne) {
     # If a data.table:
     else if(length(processDataOne) && data.table::is.data.table(processDataOne)) {
         convertToPosixInDataTable(processDataOne)
+        convertStringToNA(processDataOne)
     }
     # Otherwise try to convert to data.table:
     else if(length(processDataOne) && is.convertableToTable(processDataOne)) {
@@ -3834,6 +3836,8 @@ formatProcessDataOne <-  function(processDataOne) {
         processDataOne <- data.table::as.data.table(processDataOne)
         
         convertToPosixInDataTable(processDataOne)
+        
+        convertStringToNA(processDataOne)
     }
     else {
         stop("StoX: ProcessData must be a list of SpatialPolygonsDataFrame or data.table. No other objects are allowed.")
@@ -3848,6 +3852,12 @@ simplifyListReadFromJSON <- function(x) {
     jsonlite::fromJSON(RstoxBase::toJSON_Rstox(x), simplifyVector = TRUE)
 }
 
+
+convertStringToNA <- function(x) {
+    chcols = names(x)[sapply(x, is.character)]
+    #x[, (chcols) := lapply(.SD, replace, as.is=TRUE), .SDcols=chcols] # Changed to numeric when not intended
+    x[,(chcols) := lapply(.SD, function(x) ifelse(x == "NA", NA, x)), .SDcols = chcols]
+}
 
 
 #parseParameter <- function(parameter, simplifyVector = TRUE) {

@@ -514,7 +514,7 @@ initiateRstoxFramework <- function(){
     #    analysis = file.path(statusFolder, "analysisIsRunning.txt"), 
     #    report = file.path(statusFolder, "reportIsRunning.txt")
     #)
-    modelIsRunningFile <- structure(mapply(file.path, paste0(stoxModelNames, "IsRunning.txt"), SIMPLIFY = FALSE), names = stoxModelNames)
+    modelIsRunningFile <- structure(mapply(file.path, statusFolder, paste0(stoxModelNames, "IsRunning.txt"), SIMPLIFY = FALSE), names = stoxModelNames)
     
     # Memory files:
     projectMemoryIndexFile <- file.path(memoryHistoryFolder, "projectMemoryIndex.txt")

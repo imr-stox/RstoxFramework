@@ -7,9 +7,9 @@
 parseParameter(parameter, simplifyVector = TRUE)
 }
 \arguments{
-\item{parameter}{}
+\item{parameter}{A JSON string holding the parameters.}
 
-\item{simplifyVector}{}
+\item{simplifyVector}{coerce JSON arrays containing only primitives into an atomic vector}
 }
 \description{
 Function to parse a parameter coming from the GUI

@@ -18,7 +18,6 @@
 #' @return
 #' A list of definitions.
 #' 
-#' @noRd
 #' @seealso Use \code{\link{getRstoxFrameworkDefinitions}} to get the definitions.
 #' 
 initiateRstoxFramework <- function(){
@@ -235,7 +234,7 @@ initiateRstoxFramework <- function(){
     # Check that there are no functions with the same name as a datatype:
     commonFunctionAndDataTypeName <- intersect(stoxDataTypes$functionOutputDataType, stoxDataTypes$functionName)
     if(length(commonFunctionAndDataTypeName)) {
-        warning("StoX: The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes$packageName[stoxDataTypes$functionName == commonFunctionAndDataTypeName], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and RstoxAPI::runModel(). Please notify the packcage maintainer.")
+        warning("StoX: The function name ", paste0("\"", commonFunctionAndDataTypeName, "\"", collapse = ", "), " of the package ", paste0("\"", stoxDataTypes$packageName[stoxDataTypes$functionName == commonFunctionAndDataTypeName], "\"", collapse = ", "),  " is identical to the name of a data type. This may lead to unexpected errors when overriding a model using 'replaceArgs' and '...' in RstoxBase::runProcesses() and runModel(). Please notify the packcage maintainer.")
     }
     
     
@@ -335,16 +334,16 @@ initiateRstoxFramework <- function(){
     
     # Define the StoX folders, data sources, model names, model display names, model descriptions, and the latter three grouped as model info:
     stoxFolders <- c(
-        Input = "input", 
-        Output = "output", 
-        Process = "process"
+        input = "input", 
+        output = "output", 
+        process = "process"
     )
     stoxFoldersList <- as.list(stoxFolders)
     names(stoxFoldersList) <- names(stoxFolders)
     stoxDataSourceFolders <- c(
-        Acoustic = "acoustic", 
-        Biotic = "biotic", 
-        Landing = "landing"
+        acoustic = "acoustic", 
+        biotic = "biotic", 
+        landing = "landing"
     )
     stoxModelFolders <- c(
         baseline = "baseline", 
@@ -386,13 +385,16 @@ initiateRstoxFramework <- function(){
     stoxFolderStructure <- list(
         stoxDataSourceFolders, 
         stoxModelFolders, 
-        c(Process = "")
+        c(process = "")
     )
     stoxFolderStructureNames <- unlist(lapply(stoxFolderStructure, names))
     stoxFolderStructure <- unname(unlist(mapply(file.path, stoxFolders, stoxFolderStructure)))
     stoxFolderStructure <- gsub('\\/$', '', stoxFolderStructure)
     names(stoxFolderStructure) <- stoxFolderStructureNames
     stoxFolderStructureList <- as.list(stoxFolderStructure)
+    
+    stoxFolderStructureList$outputFolders <- stoxFolderStructure[stoxModelFolders]
+    
     
     # Define data types which can be plotted in the map (includes also changing colour etc, such as assigned stations of an acoustic PSU):
     dataTypesToShowInMap <- c(
@@ -460,7 +462,7 @@ initiateRstoxFramework <- function(){
     
     
     #### Define the folders and paths used when a project is open: ####
-    projectSessionFolder <- file.path(stoxFolders["Process"], "projectSession")
+    projectSessionFolder <- file.path(stoxFolders["process"], "projectSession")
     
     # Sub folders 1:
     dataFolder <- file.path(projectSessionFolder, "data")
@@ -504,9 +506,9 @@ initiateRstoxFramework <- function(){
     
     
     #### Project description: ####
-    projectRDataFile <- file.path(stoxFolders["Process"], "project.RData")
-    projectXMLFile <- file.path(stoxFolders["Process"], "project.xml")
-    projectJSONFile <- file.path(stoxFolders["Process"], "project.json")
+    projectRDataFile <- file.path(stoxFolders["process"], "project.RData")
+    projectXMLFile <- file.path(stoxFolders["process"], "project.xml")
+    projectJSONFile <- file.path(stoxFolders["process"], "project.json")
     projectSavedStatusFile <- file.path(statusFolder, "projectSavedStatus.txt")
     #projectIsRunningFile <- file.path(statusFolder, "projectIsRunning.txt")
     #modelIsRunningFile <- list(
@@ -589,44 +591,45 @@ initiateRstoxFramework <- function(){
     # Add the stoxTemplates: 
     definitions$stoxTemplates <- stoxTemplates
     
+    # The globalVariables were moved to pkgnameFile written by RstoxBuild:
     #### Create the RstoxFrameworkEnv environment, holding definitions on folder structure and all the projects. This environment cna be accesses using RstoxFramework:::RstoxFrameworkEnv: ####
     #utils::globalVariables("RstoxFrameworkEnv")
-    utils::globalVariables(c(
-        "RstoxFrameworkEnv", 
-        ":=", ".", 
-        "..PSU", 
-        "..activeProcessID", 
-        "..clickPointNames", 
-        "..coordinateNames", 
-        "..functionInputs", 
-        "..functionName", 
-        "..functionParameters", 
-        "..infoToKeep", 
-        "..processDirty", 
-        "..newProcessName", 
-        "CruiseKey", 
-        "Latitude", 
-        "Latitude2", 
-        "LogOrigin", 
-        "LogOrigin2", 
-        "Longitude", 
-        "Longitude2", 
-        "PSU", 
-        "atRemove", 
-        "canShowInMap", 
-        "filePahts", 
-        "functionName", 
-        "functionOutputDataType", 
-        "hasBeenRun", 
-        "hasProcessData", 
-        "modelName", 
-        "processDirty", 
-        "name", 
-        "possibleValues", 
-        "processID", 
-        "projectPath", 
-        "value"
-    ))
+    #utils::globalVariables(c(
+    #    "RstoxFrameworkEnv", 
+    #    ":=", ".", 
+    #    "..PSU", 
+    #    "..activeProcessID", 
+    #    "..clickPointNames", 
+    #    "..coordinateNames", 
+    #    "..functionInputs", 
+    #    "..functionName", 
+    #    "..functionParameters", 
+    #    "..infoToKeep", 
+    #    "..processDirty", 
+    #    "..newProcessName", 
+    #    "CruiseKey", 
+    #    "Latitude", 
+    #    "Latitude2", 
+    #    "LogOrigin", 
+    #    "LogOrigin2", 
+    #    "Longitude", 
+    #    "Longitude2", 
+    #    "PSU", 
+    #    "atRemove", 
+    #    "canShowInMap", 
+    #    "filePahts", 
+    #    "functionName", 
+    #    "functionOutputDataType", 
+    #    "hasBeenRun", 
+    #    "hasProcessData", 
+    #    "modelName", 
+    #    "processDirty", 
+    #    "name", 
+    #    "possibleValues", 
+    #    "processID", 
+    #    "projectPath", 
+    #    "value"
+    #))
     
     
     assign("RstoxFrameworkEnv", new.env(), parent.env(environment()))

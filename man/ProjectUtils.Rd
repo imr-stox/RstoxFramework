@@ -23,7 +23,9 @@ readProjectDescription(
   projectPath,
   type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"),
   verbose = FALSE,
-  projectDescriptionFile = NULL
+  projectDescriptionFile = NULL,
+  applyBackwardCompatibility = TRUE,
+  formatProcesses = TRUE
 )
 
 writeProjectDescription(
@@ -47,9 +49,19 @@ setNotRunning(projectPath, modelName)
 
 \item{type}{The type of file to read.}
 
-\item{Application}{A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.}
+\item{verbose}{Logical: If TRUE extra messages are printed to console.}
 
-\item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
+\item{projectDescriptionFile}{The path to the file holding the projectDescription.}
+
+\item{applyBackwardCompatibility}{Logical: If TRUE apply backward compatibility actions when running \code{readProjectDescription}.}
+
+\item{formatProcesses}{Logical: If TRUE format the processes after reading the projectDescription file, ensuring correct primitive types. This has a use of FALSE in \code{readModelData}, but should otherwise be set to TRUE.}
+
+\item{Application}{A single string naming the application used when saving the project. Defaulted to R.version.string.}
+
+\item{projectDescription}{A list holding the project description, as read using \code{\link{readProjectDescription}}.}
+
+\item{modelName}{The name of the model(s) (possible values are "baseline", "analysis" and "report").}
 }
 \description{
 Utilities for projects.

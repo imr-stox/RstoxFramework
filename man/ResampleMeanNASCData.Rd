@@ -7,9 +7,9 @@
 ResampleMeanNASCData(MeanNASCData, Seed)
 }
 \arguments{
-\item{Seed}{The seed, given as a sinigle initeger.}
+\item{MeanNASCData}{The \code{\link[RstoxBase]{MeanNASCData}} data.}
 
-\item{MeanNASC}{The \code{\link[RstoxBase]{MeanNASC}} data.}
+\item{Seed}{The seed, given as a sinigle initeger.}
 }
 \description{
 This function resamples acoustic PSUs with replacement within each Stratum, changing the MeanNASC

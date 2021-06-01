@@ -5,18 +5,29 @@
 #' All functions referring to a project, a model, a process or an output table use the same parameters, listed here.
 #' 
 #' @param projectPath The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.
-#' @param modelName The name of the model (one of "baseline", "analysis" and "report").
+#' @param modelName,modelNames The name of the model(s) (possible values are "baseline", "analysis" and "report").
 #' @param processID The ID of the process.
-#' @param processName The name of the process.
+#' @param processName,processes The name of the process(es).
 #' @param tableName The name of the output table to get from the process.
+#' @param startProcess,endProcess The process index, name or ID at which to start and stop the model run.
+#' @param afterProcessID,beforeProcessID The ID of the process after or before which to get the procecss table (place a process or in the case of afterProcessID).
+#' @param warn Logical: If TRUE show warnings that are not highly important.
+#' @param verbose Logical: If TRUE extra messages are printed to console.
+#' @param msg Logical: If FALSE no messages are printed to console (except possibly for extremely important ones).
+#' @param archive Logical: Should the project memory state be archived using \code{archiveProject}? This stores one step in the history.
 #' @param template A string naming the template to use when generating the project. See \code{getAvaiableTemplates} for a list of available templates.
 #' @param ow Logical: If TRUE overwrite the project.
 #' @param showWarnings Logical: If TRUE display warninigs when creting the project folders.
-#' @param Application A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.
+#' @param Application       A single string naming the application used when saving the project. Defaulted to R.version.string.
+#' @param argumentFilePaths A nested list of paths to argument files of a model, as returned from \code{getArgumentFilePaths}. This is used to speed up some functions.
+#' @param only.valid Logical: If TRUE subset function arguments (inputs and parameters) to only those to be shown as a consequence of argument hierarchy (e.g., one argument being irrelevant for a specific setting of another).
+#' @param returnProcessTable Logical: If TRUE return the process table (much used in functions used by the GUI).
 #' 
 #' @name general_arguments
 #' 
 NULL
+
+
 
 ##################################################
 ##################################################
@@ -372,7 +383,6 @@ createProjectSessionFolderStructure <- function(projectPath, showWarnings = FALS
 #' @param saveIfAlreadyOpen Logical: If TRUE save the project before closing if already open and force is TRUE.
 #' @param newProjectPath    The path to the copied StoX project.
 #' @param type              The type of file to save the project to.
-#' @param Application       A single string naming the application used when saving the project. Defaulted to R.version.string.
 #' @param verbose           Logical: If TRUE, print information to the console, e.g. about backward compatibility.
 #' 
 #' @name Projects
@@ -671,6 +681,7 @@ copyProject <- function(projectPath, newProjectPath, ow = FALSE) {
         unlink(newProjectPath, force = TRUE, recursive = TRUE)
     }
     suppressWarnings(dir.create(newProjectPath, recursive = TRUE))
+    
     #lapply(list.dirs(projectPath, recursive = FALSE), file.copy, newProjectPath, recursive = TRUE)
     lapply(getProjectPaths(projectPath, "stoxFolders"), file.copy, newProjectPath, recursive = TRUE)
     #file.copy(projectPath, newProjectPath, recursive=TRUE)
@@ -698,6 +709,10 @@ deleteProject <- function(projectPath) {
 #' 
 #' @inheritParams general_arguments
 #' @param type The type of file to read.
+#' @param projectDescription A list holding the project description, as read using \code{\link{readProjectDescription}}.
+#' @param projectDescriptionFile The path to the file holding the projectDescription.
+#' @param applyBackwardCompatibility Logical: If TRUE apply backward compatibility actions when running \code{readProjectDescription}.
+#' @param formatProcesses Logical: If TRUE format the processes after reading the projectDescription file, ensuring correct primitive types. This has a use of FALSE in \code{readModelData}, but should otherwise be set to TRUE.
 #' 
 #' @name ProjectUtils
 #' 
@@ -711,8 +726,26 @@ isProject <- function(projectPath) {
 }
 # Checks only one project:
 isProjectOne <- function(projectPath) {
-    existsFolders <- sapply(getProjectPaths(projectPath, "stoxFolders"), file.exists)
-    length(existsFolders) && all(existsFolders)
+    # If the project is zipped, read the paths without unzipping:
+    if(tolower(tools::file_ext(projectPath)) == "zip") {
+        files <- utils::unzip(projectPath, list = TRUE)
+        projectName <- basename(tools::file_path_sans_ext(projectPath))
+        projectNameWithSlash <- paste0(projectName, "/")
+        if(!projectNameWithSlash %in% files$Name) {
+            stop("A zipped StoX project must be a zip with the same name as the project contained in the zip (excluding file extension), such as testProject.zip for a project named testProject.")
+        }
+        else {
+            stoxFolders <- unlist(getRstoxFrameworkDefinitions("stoxFoldersList"))
+            stoxFoldersWithSlash <- paste0(projectNameWithSlash, stoxFolders, "/")
+            valid <- all(stoxFoldersWithSlash %in% files$Name)
+        }
+    }
+    else {
+        existsFolders <- sapply(getProjectPaths(projectPath, "stoxFolders"), file.exists)
+        valid <- length(existsFolders) && all(existsFolders)
+    }
+    
+    return(valid)
 }
 #' 
 #' @export
@@ -752,7 +785,7 @@ isOpenProject <- function(projectPath) {
 #' @export
 #' @rdname ProjectUtils
 #' 
-readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), verbose = FALSE, projectDescriptionFile = NULL) {
+readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefinitions("projectDescriptionFileFormats"), verbose = FALSE, projectDescriptionFile = NULL, applyBackwardCompatibility = TRUE, formatProcesses = TRUE) {
     # Read the project.RData or json file depending on the 'type':
     type <- match.arg(type)
     
@@ -805,11 +838,14 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
     }
     
     # Apply backward compatibility:
-    projectDescriptionAfterBackwardCompatibility <- applyBackwardCompatibility(projectDescription, verbose = verbose)
-    # Set saved to TRUE if no backward compatibility actions were taken: 
-    saved <- identical(projectDescription, projectDescriptionAfterBackwardCompatibility)
-    #setSavedStatus(projectPath, status = saved)
-    projectDescription <- projectDescriptionAfterBackwardCompatibility
+    saved <- TRUE
+    if(applyBackwardCompatibility) {
+        projectDescriptionAfterBackwardCompatibility <- applyBackwardCompatibility(projectDescription, verbose = verbose)
+        # Set saved to TRUE if no backward compatibility actions were taken: 
+        saved <- identical(projectDescription, projectDescriptionAfterBackwardCompatibility)
+        #setSavedStatus(projectPath, status = saved)
+        projectDescription <- projectDescriptionAfterBackwardCompatibility
+    }
     
     # Warning if not certified Rstox packages:
     if(!isTRUE(attr(projectDescription, "AllCertifiedRstoxPackageVersion"))) {
@@ -824,10 +860,12 @@ readProjectDescription <- function(projectPath, type = getRstoxFrameworkDefiniti
     }
     
     
-    # Format the processes, ensuring correcct primitive types:
-    for(modelName in names(projectDescription)) {
-        for(processIndex in seq_along(projectDescription [[modelName]])) {
-            projectDescription [[modelName]] [[processIndex]] <- formatProcess(projectDescription [[modelName]] [[processIndex]])
+    # Format the processes, ensuring correct primitive types:
+    if(formatProcesses) {
+        for(modelName in names(projectDescription)) {
+            for(processIndex in seq_along(projectDescription [[modelName]])) {
+                projectDescription [[modelName]] [[processIndex]] <- formatProcess(projectDescription [[modelName]] [[processIndex]])
+            }
         }
     }
     
@@ -1038,6 +1076,7 @@ writeProjectDescriptionRData <- function(projectDescription, projectDescriptionF
 #' 
 #' This function writes project description to json file.
 #' 
+#' @inheritParams general_arguments
 #' @param projectDescription  a list of lists with project description.
 #' @param projectDescriptionFile  a file name.
 #' 
@@ -1091,8 +1130,9 @@ writeProjectDescriptionJSON <- function(projectDescription, projectDescriptionFi
 
 
 isOfficialRstoxFrameworkVersion <- function() {
-    StoXVersion <- attr(getOfficialRstoxPackageVersion(), "StoX")
-    officialRstoxFrameworkVersion <- endsWith(StoXVersion, ".0")
+    #StoXVersion <- attr(getOfficialRstoxPackageVersion(), "StoX")
+    #officialRstoxFrameworkVersion <- endsWith(StoXVersion, ".0")
+    officialRstoxFrameworkVersion <- attr(getOfficialRstoxPackageVersion(), "Official")
     return(officialRstoxFrameworkVersion)
 }
 
@@ -1453,12 +1493,14 @@ writeActiveProcessIDFromTable <- function(projectPath, activeProcessIDTable) {
 #' Reset a StoX model.
 #' 
 #' @inheritParams general_arguments
-#' @param processDirty Logical: Indicates whether the model has been modified when reseting.
 #' @inheritParams unReDoProject
+#' @param processDirty Logical: Indicates whether the model has been modified when reseting.
+#' @param delete A character vector naming which elements to delete, where possible values are "memory", for deleting the output files that are stored as memory files, and "text" to delete the output text files.
+#' @param purgeOutputFiles Logical: If the model has not been run, should the output text files be deleted first. This was used at an earlier stage, when there was not complete control of how process output was deleted, and data were frequently not deleted eevn though the process was deleted.
 #' 
 #' @export
 #'
-resetModel <- function(projectPath, modelName, processID = NULL, processDirty = FALSE, shift = 0, returnProcessTable = FALSE, purgeOutputFiles = FALSE) {
+resetModel <- function(projectPath, modelName, processID = NULL, processDirty = FALSE, shift = 0, returnProcessTable = FALSE, delete = c("memory", "text"), purgeOutputFiles = FALSE) {
     
     # Get the process ID to reset the model to:
     processIndexTable <- readProcessIndexTable(projectPath, modelName)
@@ -1504,25 +1546,29 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
             writeActiveProcessID(projectPath, modelName, newActiveProcessID, processDirty = processDirty)
         #}
         
-        ##### (2) Delete process output of the processes from the new active process: #####
+        ##### (2) Delete process output of the processes from the new active process and onwards: #####
         if(currentActiveProcessIndex > processIndex) {
-            # Get all processes from the process to reset to and on:
+            # Get all processes from the process to reset to and onwards:
             allProcessIndex <- getProcessIndexFromProcessID(
                 projectPath = projectPath, 
                 modelName = modelName, 
                 processIndexTable$processID
             )
-            IDsOfProcessesToDelete <- processIndexTable$processID[allProcessIndex > processIndex]
-            foldersToDelete <- sapply(
-                IDsOfProcessesToDelete, 
-                function(thisProcessID) getProcessOutputFolder(
-                    projectPath = projectPath, 
-                    modelName = modelName, 
-                    processID = thisProcessID, 
-                    type = "memory"
+            
+            if("memory" %in% delete) {
+                IDsOfProcessesToDelete <- processIndexTable$processID[allProcessIndex > processIndex]
+                foldersToDelete <- sapply(
+                    IDsOfProcessesToDelete, 
+                    function(thisProcessID) getProcessOutputFolder(
+                        projectPath = projectPath, 
+                        modelName = modelName, 
+                        processID = thisProcessID, 
+                        type = "memory"
+                    )
                 )
-            )
-            unlink(foldersToDelete, recursive = TRUE, force = TRUE)
+                unlink(foldersToDelete, recursive = TRUE, force = TRUE)
+            }
+            
             
             ##### (3) Delete process output text files: #####
             
@@ -1536,17 +1582,19 @@ resetModel <- function(projectPath, modelName, processID = NULL, processDirty = 
             ###
             #### Delete the files:
             ###unlink(filesToDelete, recursive = TRUE, force = TRUE)
-            namesOfProcessesToDelete <- processIndexTable$processName[allProcessIndex > processIndex]
-            foldersToDelete <- sapply(
-                IDsOfProcessesToDelete, 
-                function(thisProcessID) getProcessOutputFolder(
-                    projectPath = projectPath, 
-                    modelName = modelName, 
-                    processID = thisProcessID, 
-                    type = "text"
+            if("text" %in% delete) {
+                namesOfProcessesToDelete <- processIndexTable$processName[allProcessIndex > processIndex]
+                foldersToDelete <- sapply(
+                    IDsOfProcessesToDelete, 
+                    function(thisProcessID) getProcessOutputFolder(
+                        projectPath = projectPath, 
+                        modelName = modelName, 
+                        processID = thisProcessID, 
+                        type = "text"
+                    )
                 )
-            )
-            unlink(foldersToDelete, recursive = TRUE, force = TRUE)
+                unlink(foldersToDelete, recursive = TRUE, force = TRUE)
+            }
         }
     }
     else if(purgeOutputFiles) {
@@ -2240,7 +2288,7 @@ getProcessParameters <- function(projectPath, modelName, processID, argumentFile
     )
 }
 
-# This function gets the process data as stored in the process memory files. These process data may diffre from the process data output from the process, stored in the output data files, particularly if interactive functions have been used. In this case, the process must be run again with UseProcessData = TRUE (automatically set by RstoxFramework) to update the process output, which is used in runProcess() using getProcessOutput(). 
+# This function gets the process data as stored in the process memory files. These process data may differ from the process data output from the process, stored in the output data files, particularly if interactive functions have been used. In this case, the process must be run again with UseProcessData = TRUE (automatically set by RstoxFramework) to update the process output, which is used in runProcess() using getProcessOutput(). 
 getProcessData <- function(projectPath, modelName, processID, argumentFilePaths = NULL) {
     getProjectMemoryData(
         projectPath, 
@@ -2635,6 +2683,7 @@ modifyProcessNameInFunctionInputs <- function(projectPath, modelName, processNam
 #' Functions to get the process table of a model.
 #'
 #' @inheritParams general_arguments
+#' @param return.processIndex Logical: If TRUE include the process indices as a sequence starting from 1 in each model.
 #' 
 #' @export
 #' 
@@ -3540,6 +3589,9 @@ getAbsolutePath <- function(filePath, projectPath) {
 #' Modify a process
 #' 
 #' @inheritParams general_arguments
+#' @inheritParams addProcess
+#' @param newValues A list named by the elements to modify (see getRstoxFrameworkDefinitions("processProperties") for possible elements), holding the values to modify to (e.g., list(functionParameter = list(DefinitionMethod = "Stratum"))).
+#' @param purge.processData Logical: If TRUE replace process data entirely.
 #' 
 #' @export
 #' 
@@ -3640,11 +3692,7 @@ modifyProcess <- function(projectPath, modelName, processName, newValues, archiv
 }
 
 
-#' Function to format a process as read from the project.json
-#' 
-#' @param parameter 
-#' @param simplifyVector 
-#' 
+# Function to format a process as read from the project.json
 # Convert JSON input to list:
 formatProcess <- function(process) {
     
@@ -3996,9 +4044,7 @@ createProcessIDString <- function(integerID) {
 
 
 
-#' 
-#' @export
-#' 
+# Function to add an empty StoX process:
 addEmptyProcess <- function(projectPath, modelName, processName = NULL, archive = TRUE, strict = TRUE) {
     
     # Get a default new process name, or check the validity of the given process name:
@@ -4106,10 +4152,13 @@ addProcesses <- function(projectPath, projectMemory, returnProcessTable = TRUE, 
 
 #' Add a StoX process to a model.
 #' 
+#' @inheritParams general_arguments
 #' @inheritParams Projects
 #' @inheritParams getProcessOutput
 #' @param values A list of values to assign to the process, such as list(processName = "ReadBiotic", functionName = "RstoxBase::ReadBiotic").
 #' @param returnProcessTable Logical: If TRUE return the process table.
+#' @param add.defaults Logical: If TRUE defaults of a function are added when setting the function of the process.
+#' @param strict Logical: If FALSE a proposed process nname is changed to the default new process name, whereas TRUE throws an error.
 #' 
 #' @export
 #' 
@@ -4166,6 +4215,9 @@ addProcess <- function(projectPath, modelName, values = NULL, returnProcessTable
         return(TRUE)
     }
 }
+#' Remove a StoX process
+#' 
+#' @inheritParams general_arguments
 #' 
 #' @export
 #' 
@@ -4233,6 +4285,9 @@ duplicateProcess <- function(projectPath, modelName, processID, newProcessName =
 }
 
 
+#' Rearrange processes of a StoX model.
+#' 
+#' @inheritParams general_arguments
 #' 
 #' @export
 #' 
@@ -4272,12 +4327,28 @@ isProcess <- function(x) {
 #' Run one process
 #'
 #' @inheritParams general_arguments
+#' @inheritParams modifyProcess
+#' @param replaceArgs A list of function parameters and inputs to override.
 #' @param replaceData Either the data to replace the process output by, or a list of two elements \code{FunctionName} and \code{MoreArgs}, giving a function to apply to the output from the process with additional arguments stored in \code{MoreArgs}. The function is applied using \code{\link{do.call}}, with \code{args} being a list with the process output first, followed by the \code{MoreArgs}.
-#' @param returnProcessOutput  Logical: If TRUE return the process output immediately after it is available. Used to get filter options.
+#' @param returnProcessOutput Logical: If TRUE return the process output immediately after it is available. Used to get filter options.
+#' @param saveProcessData Logical: If TRUE save the output as ProcessData, if the proecss is a ProcessData process.
+#' @param fileOutput Logical: If TRUE save the output as a text file (or other format specified by the class or attributes of the output). If NULL (defafult) use the corresponding parameter of the process.
+#' @param setUseProcessDataToTRUE Logical: If TRUE set the UseProcessData function parameter to TRUE in the process memory after execution, if the process is a ProcessData process.
+#' @param try Logical: If FALSE do not run the process in a \code{tryCatch}. Set this to FALSE when debugging, as the \code{tryCatch} masks the errors in the \code{traceback}.
+#' 
 #' 
 #' @export
 #' 
-runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProcessData = TRUE, returnProcessOutput = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, replaceArgs = list(), replaceData = NULL, output.file.type = c("default", "text", "RData", "rds"), try = TRUE) {
+runProcess <- function(
+    projectPath, modelName, processID, 
+    msg = TRUE, 
+    saveProcessData = TRUE, 
+    returnProcessOutput = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, 
+    purge.processData = FALSE, 
+    replaceArgs = list(), replaceData = NULL, 
+    #output.file.type = c("default", "text", "RData", "rds"), # Not needed. This was maybe used in the early stages of the development.
+    try = TRUE
+) {
     
     # Stop if the stop file is present:
     stopFile <- getProjectPaths(projectPath, "stopFile")[[modelName]]
@@ -4306,6 +4377,16 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     # Extract the process and the function arguments:
     process <- functionArguments$process
     functionArguments <- functionArguments$functionArguments
+        
+    # The fileOutput overrides the process parameter:
+    if(!length(fileOutput)) {
+        fileOutput <- process$processParameters$fileOutput
+    }
+    # If there is a parameter UseOutputData that is set to TRUE, do not write output and do not delete it prior to running the function:
+    if(isTRUE(functionArguments$UseOutputData)) {
+        fileOutput <- FALSE
+    }
+
     
     # Try running the function, and return FALSE if failing:
     failed <- FALSE
@@ -4322,7 +4403,9 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
     
     # Reset the model to the process just before the process to be run:
     if(!returnProcessOutput) {
-        resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1, purgeOutputFiles = TRUE)
+        #resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1, delete = c("memory", if(fileOutput) "text"), purgeOutputFiles = TRUE)
+        # Changed to purgeOutputFiles = FALSE, as if TRUE Bootstrap output i deleted when this is changed and is the first process (in which case active proces becomes NA):
+        resetModel(projectPath = projectPath, modelName = modelName, processID = processID, shift = -1, delete = c("memory", if(fileOutput) "text"), purgeOutputFiles = FALSE)
     }
     
     # Run the process:
@@ -4404,8 +4487,8 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
             }
         }
         else {
-            # Set the propertyDirty flag to TRUE, so that a GUI can update the properties:
-            writeActiveProcessID(projectPath, modelName, propertyDirty = FALSE) 
+            # Set the propertyDirty flag to FALSE, as no change has been made to the UseProcessData flag:
+            writeActiveProcessID(projectPath, modelName, propertyDirty = FALSE)
         }
         
         # Write to memory files:
@@ -4413,8 +4496,8 @@ runProcess <- function(projectPath, modelName, processID, msg = TRUE, saveProces
         
         # Write to text files:
         # Use fileOutput if given and process$processParameters$fileOutput otherwise to determine whether to write the output to the output.file.type:
-        if(if(length(fileOutput)) fileOutput else process$processParameters$fileOutput) {
-            writeProcessOutputTextFile(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, output.file.type = output.file.type)
+        if(fileOutput) {
+            writeProcessOutputTextFile(processOutput = processOutput, projectPath = projectPath, modelName = modelName, processID = process$processID, output.file.type = "default")
         }
         
         # Add info of the time spent:
@@ -4441,7 +4524,7 @@ setUseProcessDataToTRUE <- function(projectPath, modelName, processID) {
 }
 
 
-getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs = list(), keepEmptyFunctionInputs = TRUE) {
+getFunctionArguments <- function(projectPath, modelName, processID, arguments = NULL, replaceArgs = list(), keepEmptyFunctionInputs = TRUE) {
     
     # Get the process:
     process <- getProcess(
@@ -4477,29 +4560,18 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
             functionArguments$processData <- functionArguments$processData[[1]]
         }
     }
-    # Add the projectPath and outputData path if a bootstrap function:
+    # Add the projectPath and outputData file path if a bootstrap function (return only the outputData file path, and then open the file in Bootstrap() if needed):
     if(isBootstrapFunction(process$functionName)) {
         
         functionArguments$projectPath <- projectPath
         # Get and read any bootstrap file from before:
-        outputDataPath <- getProcessOutputTextFilePath(
+        functionArguments["outputData"] <- getProcessOutputTextFilePath(
             projectPath = projectPath, 
             modelName = modelName, 
             processID = process$processID, 
             processOutput = NULL, 
             output.file.type = "RData"
         )
-        # Read the outputData (from a former run of the proecss). Use functionArguments["outputData"] to add the data, since using functionArguments$outputData will delete this element if trying to giev it the value NULL:
-        if(file.exists(outputDataPath)) {
-            functionArguments["outputData"] <- tryCatch(
-                list(get(load(outputDataPath))), 
-                error = function(err) list(NULL)
-            )
-        }
-        else {
-            functionArguments["outputData"] <- list(NULL)
-        }
-        #functionArguments$outputData <- readOutputRDataFile(outputDataPath)
     }
      
     # Add functionInputs and functionParameters:
@@ -4572,19 +4644,6 @@ getFunctionArguments <- function(projectPath, modelName, processID, replaceArgs 
     functionArguments
 }
 
-readOutputRDataFile <- function(outputDataPath) {
-    if(file.exists(outputDataPath)) {
-        outputData <- tryCatch(
-            get(load(functionArguments$outputDataPath)), 
-            error = function(err) NULL
-        )
-    }
-    else {
-        outputData <- NULL
-    }
-    
-    return(outputData)
-}
 
 
 ##################################################
@@ -4703,10 +4762,15 @@ unlistProcessOutput <- function(processOutput) {
 }
 
 
+#' Get output data from processes of a StoX model
+#' 
+#' @inheritParams general_arguments
+#' @param drop.datatype Logical: If TRUE, drop the top level of the output list if it has length 1 and that single element is named by the datatype name.
+#' @param unlistDepth2 Logical: Related to \code{drop.datatype}, but setting this to TRUE unlists output data that are nested in 2 levels, such as output from \code{\link[RstoxData]{ReadBiotic}}, which outputs a set of tables for each input file. Using unlistDepth2 = TRUE puts all these tables in one list, and uses the concatenation of the file names and the table name separated by underscore. This is how it is displayed in the StoX GUI when selecting "View output".
 #' 
 #' @export
 #' 
-getModelData <- function(projectPath, modelName, processes = NULL, startProcess = 1, endProcess = Inf, drop.datatype = TRUE, warn = TRUE) {
+getModelData <- function(projectPath, modelName, processes = NULL, startProcess = 1, endProcess = Inf, drop.datatype = TRUE, warn = TRUE, unlistDepth2 = FALSE) {
     
     # Get the processes to get output from, either specified with the 'processes' argument or the 'startProcess' and 'endProcess' arguments:
     processTable <- readProcessIndexTable(
@@ -4732,6 +4796,10 @@ getModelData <- function(projectPath, modelName, processes = NULL, startProcess 
     }
     else {
         processOutput <- NULL
+    }
+    
+    if(unlistDepth2) {
+        processOutput <- lapply(processOutput, unlistToDataType)
     }
     
     return(processOutput)
@@ -4947,8 +5015,9 @@ listMemoryFiles <- function(folderPath) {
 
 
 
+#' Get the names of the output tables of a process
 #' 
-#' @inheritParams Projects
+#' @inheritParams general_arguments
 #' @export
 #' 
 getProcessOutputTableNames <- function(projectPath, modelName, processID) {
@@ -4983,7 +5052,7 @@ getProcessOutputFolder <- function(projectPath, modelName, processID, type = c("
         folderPath <- file.path(
             getProjectPaths(
                 projectPath, 
-                "Output"
+                "output"
             ), 
             modelName, 
             processName
@@ -5089,7 +5158,11 @@ getProcessOutputTextFilePath <- function(
     # Define the process output file path:
     if(output.file.type == "RData") {
         # Define a single file output named by the process name:
-        fileNameSansExt <- processName
+        #fileNameSansExt <- processName
+        dataType <- getDataType(projectPath, modelName, processID = getProcessIDFromProcessName(projectPath, modelName, processName)$processID)
+        fileNameSansExt <- dataType
+        
+        
         filePathSansExt <- file.path(folderPath, fileNameSansExt)
         # Set file extension:
         ext <- "RData"
@@ -5220,10 +5293,24 @@ writeProcessOutputTextFile <- function(processOutput, projectPath, modelName, pr
 
         # Store the process output:
         if(output.file.type == "RData") {
-            # Rename the process output to the process name:
-            assign(processName, processOutput)
+            ## Rename the process output to the process name:
+            #assign(processName, processOutput)
+            
+            
+            # Rename the process output to the datatype:
+            dataType <- getDataType(projectPath, modelName, processID = getProcessIDFromProcessName(projectPath, modelName, processName)$processID)
+            assign(dataType, processOutput)
+            
             # Write to RData file:
-            save(list = processName, file = filePath)
+            save(list = dataType, file = filePath)
+            
+            
+            #saveListElements(processOutput, filePath)
+            
+            #processOutputNames <- names(processOutput)
+            #temp <- mapply(assign, processOutputNames, processOutput, MoreArgs= list(pos = parent.frame()))
+            #save(list = processOutputNames, file = filePath)
+            
         }
         else {
             mapply(
@@ -5238,6 +5325,12 @@ writeProcessOutputTextFile <- function(processOutput, projectPath, modelName, pr
     }
 }
 
+
+#saveListElements <- function(x, file, ...) {
+#    xNames <- names(x)
+#    temp <- mapply(assign, xNames, x, MoreArgs= list(pos = parent.frame()))
+#    save(list = xNames, file = file, envir = environment(), ...)
+#} 
 
 
 # Function for writing one element of the function output list:
@@ -5305,40 +5398,40 @@ removeIDsFromGeojson <- function(json) {
 # Function to flatten the list and add names from the levels of the list:
 unlistToDataType <- function(processOutput) {
     
-    # Function to check that all the output elements are of the valid classes:
-    areAllValidOutputDataClasses <- function(processOutput) {
-        validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
-        classes <- sapply(processOutput, firstClass)
-        #classes <- unlist(lapply(classes, "[[", 1))
-        all(classes %in% validOutputDataClasses)
-    }
-    
-    
-    unlistOneStep <- function(processOutput) {
-        
-        # Unlist and add the names:
-        if(!areAllValidOutputDataClasses(processOutput)){
-            # A trick to prepare for unlist(). Add one list level to all elements which are valid class:
-            validClass <- sapply(processOutput, isValidOutputDataOne)
-            processOutput[validClass] <- lapply(processOutput[validClass], list)
-            
-            # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
-            processOutputNames <- unlist(lapply(names(processOutput), function(x) if(length(names(processOutput[[x]]))) paste(x, names(processOutput[[x]]), sep = "_") else x))
-            # Unlist down one level:
-            processOutput <- unlist(processOutput, recursive = FALSE)
-            # Add the names again:
-            names(processOutput) <- processOutputNames
-        }
-        
-        processOutput
-    }
-    
     # Unlist through 2 levels:
     for(i in seq_len(2)) {
         processOutput <- unlistOneStep(processOutput)
     }
     
     return(processOutput)
+}
+
+
+unlistOneStep <- function(processOutput) {
+    
+    # Unlist and add the names:
+    if(!areAllValidOutputDataClasses(processOutput)){
+        # A trick to prepare for unlist(). Add one list level to all elements which are valid class:
+        validClass <- sapply(processOutput, isValidOutputDataOne)
+        processOutput[validClass] <- lapply(processOutput[validClass], list)
+        
+        # Define the names of the files first, by pasting the level and the sub-level names separated by underscore:
+        processOutputNames <- unlist(lapply(names(processOutput), function(x) if(length(names(processOutput[[x]]))) paste(x, names(processOutput[[x]]), sep = "_") else x))
+        # Unlist down one level:
+        processOutput <- unlist(processOutput, recursive = FALSE)
+        # Add the names again:
+        names(processOutput) <- processOutputNames
+    }
+    
+    processOutput
+}
+
+# Function to check that all the output elements are of the valid classes:
+areAllValidOutputDataClasses <- function(processOutput) {
+    validOutputDataClasses <- getRstoxFrameworkDefinitions("validOutputDataClasses")
+    classes <- sapply(processOutput, firstClass)
+    #classes <- unlist(lapply(classes, "[[", 1))
+    all(classes %in% validOutputDataClasses)
 }
 
 
@@ -5456,7 +5549,7 @@ isValidOutputDataOne <- function(outputDataOne) {
 
 #' Delete the contents of the output folder of a model.
 #' 
-#' This function is run by \code{\link[RstoxAPI]{runModel}} to clear off any files present in the output folder of a model. It should also be used by GUIs when running a model.
+#' This function is run by \code{\link{runModel}} to clear off any files present in the output folder of a model. It should also be used by GUIs when running a model.
 #' 
 #' @inheritParams general_arguments
 #' 
@@ -5471,7 +5564,12 @@ purgeOutput <- function(projectPath, modelName) {
 #' Run processes of a model.
 #' 
 #' @inheritParams general_arguments
+#' @inheritParams runProcess
+#' @inheritParams Projects
 #' @param replaceDataList A list named by the processes to replace output data for. See \code{\link{runProcess}}.
+#' @param force.restart Logical: If TRUE, start the processes even if the status file indicating that the model is being run exists. This is useuful when something crached in a preivous run, in which case the model is still appearing as running.
+#' @param prugeStopFile Logical: Should the file that signals that the model should be stopped be deleted if present before running? This parameter does not yet seem to in use by any other function.
+#' @param ... \code{replaceArgs} can also be given directly.
 #' 
 #' @export
 #' 
@@ -5483,10 +5581,10 @@ runProcesses <- function(
     msg = TRUE, 
     save = TRUE, saveProcessData = TRUE, Application = R.version.string, 
     force.restart = FALSE, 
-    fileOutput = NULL, setUseProcessDataToTRUE = TRUE, purge.processData = FALSE, 
+    returnProcessOutput = FALSE, fileOutput = NULL, setUseProcessDataToTRUE = TRUE, 
+    purge.processData = FALSE, 
     replaceDataList = list(), 
     replaceArgs = list(), 
-    output.file.type = c("default", "text", "RData", "rds"), 
     try = TRUE, 
     prugeStopFile = FALSE, 
     ...
@@ -5566,11 +5664,10 @@ runProcesses <- function(
             projectPath = projectPath, 
             modelName = modelName, 
             msg = msg, 
-            saveProcessData = saveProcessData, 
+            saveProcessData = saveProcessData, returnProcessOutput = returnProcessOutput,
             fileOutput = fileOutput, 
             setUseProcessDataToTRUE = setUseProcessDataToTRUE, 
             purge.processData = purge.processData, 
-            output.file.type = output.file.type, 
             replaceArgs = replaceArgs, 
             try = try
         )

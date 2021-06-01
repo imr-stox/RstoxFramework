@@ -3920,14 +3920,14 @@ convertStringToNA <- function(x) {
 #    }
 #    parameter
 #}
+
 #' Function to parse a parameter coming from the GUI
 #' 
-#' @param parameter 
-#' @param simplifyVector 
+#' @param parameter A JSON string holding the parameters.
+#' @inheritParams jsonlite::fromJSON
 #' 
 #' @export
 #' 
-# Convert JSON input to list:
 parseParameter <- function(parameter, simplifyVector = TRUE) {
     # If empty string, convert to NULL for non-character type:
     if(is.character(parameter) && nchar(parameter) == 0) {

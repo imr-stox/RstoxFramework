@@ -43,8 +43,8 @@ Encoding: UTF-8
 Config/testthat/edition: 3
 Config/testthat/parallel: true
 Imports: 
-    data.table (>= 1.12.6),
     geojsonsf (>= 2.0.0),
+    data.table (>= 1.12.6),
     jsonlite (>= 1.6),
     jsonvalidate (>= 1.1.0),
     rgdal (>= 1.5.0),

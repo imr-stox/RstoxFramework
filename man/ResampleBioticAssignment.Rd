@@ -7,9 +7,9 @@
 ResampleBioticAssignment(BioticAssignment, Seed)
 }
 \arguments{
-\item{Seed}{The seed, given as a sinigle initeger.}
+\item{BioticAssignment}{The \code{\link[RstoxBase]{BioticAssignment}} data.}
 
-\item{MeanLengthDistributionData}{The \code{\link[RstoxBase]{MeanLengthDistributionData}} data.}
+\item{Seed}{The seed, given as a sinigle initeger.}
 }
 \description{
 This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.

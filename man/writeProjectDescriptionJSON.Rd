@@ -14,6 +14,8 @@ writeProjectDescriptionJSON(
 \item{projectDescription}{a list of lists with project description.}
 
 \item{projectDescriptionFile}{a file name.}
+
+\item{Application}{A single string naming the application used when saving the project. Defaulted to R.version.string.}
 }
 \description{
 This function writes project description to json file.

@@ -14,13 +14,18 @@
 
 # Global variables
 utils::globalVariables(c(
-	 "..Cruise", "..DateTime", "..EDSUInfoToKeep", "..haulInfoToKeep", "..ind", "..propertyDirty",
-	 "..stationInfoToKeep", "..validInd", "BootstrapID", "EDSU", "JavaJEXL2R", "Layer", "Package",
-	 "ProcessName", "ResampleFunction", "StoX", "Stratum", "Version", "attriributes<-",
-	 "capture.output", "col2rgb", "colorRampPalette", "dataTable2SpatialPolygonsDataFrame",
-	 "dataType", "download.file", "functionArguments", "install.packages", "models", "newVersion",
-	 "processIndex", "processName", "projectList", "read.table", "remove.packages",
-	 "resampledCountWithUniqueName"))
+	 ".", "..Cruise", "..DateTime", "..EDSUInfoToKeep", "..PSU", "..activeProcessID",
+	 "..clickPointNames", "..coordinateNames", "..functionInputs", "..functionName",
+	 "..functionParameters", "..haulInfoToKeep", "..ind", "..newProcessName", "..processDirty",
+	 "..propertyDirty", "..stationInfoToKeep", "..validInd", "BootstrapID", "CruiseKey", "EDSU",
+	 "JavaJEXL2R", "Latitude", "Latitude2", "Layer", "LogOrigin", "LogOrigin2", "Longitude",
+	 "Longitude2", "PSU", "Package", "ProcessName", "ResampleFunction", "StoX", "Version",
+	 "attriributes<-", "canShowInMap", "capture.output", "col2rgb", "colorRampPalette",
+	 "dataTable2SpatialPolygonsDataFrame", "dataType", "download.file", "functionName",
+	 "functionOutputDataType", "hasProcessData", "install.packages", "modelName", "models", "name",
+	 "newVersion", "possibleValues", "processID", "processIndex", "processName", "processNames",
+	 "projectList", "projectPath", "read.table", "remove.packages", "resampledCountWithUniqueName",
+	 "value"))
 
 .onLoad <- function(libname, pkgname) {
 	# Initiate the RstoxFramework environment:

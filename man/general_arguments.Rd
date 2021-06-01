@@ -6,13 +6,25 @@
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
-\item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
+\item{modelName, modelNames}{The name of the model(s) (possible values are "baseline", "analysis" and "report").}
 
 \item{processID}{The ID of the process.}
 
-\item{processName}{The name of the process.}
+\item{processName, processes}{The name of the process(es).}
 
 \item{tableName}{The name of the output table to get from the process.}
+
+\item{startProcess, endProcess}{The process index, name or ID at which to start and stop the model run.}
+
+\item{afterProcessID, beforeProcessID}{The ID of the process after or before which to get the procecss table (place a process or in the case of afterProcessID).}
+
+\item{warn}{Logical: If TRUE show warnings that are not highly important.}
+
+\item{verbose}{Logical: If TRUE extra messages are printed to console.}
+
+\item{msg}{Logical: If FALSE no messages are printed to console (except possibly for extremely important ones).}
+
+\item{archive}{Logical: Should the project memory state be archived using \code{archiveProject}? This stores one step in the history.}
 
 \item{template}{A string naming the template to use when generating the project. See \code{getAvaiableTemplates} for a list of available templates.}
 
@@ -20,7 +32,13 @@
 
 \item{showWarnings}{Logical: If TRUE display warninigs when creting the project folders.}
 
-\item{Application}{A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.}
+\item{Application}{A single string naming the application used when saving the project. Defaulted to R.version.string.}
+
+\item{argumentFilePaths}{A nested list of paths to argument files of a model, as returned from \code{getArgumentFilePaths}. This is used to speed up some functions.}
+
+\item{only.valid}{Logical: If TRUE subset function arguments (inputs and parameters) to only those to be shown as a consequence of argument hierarchy (e.g., one argument being irrelevant for a specific setting of another).}
+
+\item{returnProcessTable}{Logical: If TRUE return the process table (much used in functions used by the GUI).}
 }
 \description{
 All functions referring to a project, a model, a process or an output table use the same parameters, listed here.

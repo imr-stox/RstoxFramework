@@ -81,6 +81,8 @@ deleteProject(projectPath)
 
 \item{save}{Logical: If TRUE save the project before closing. Default (NULL) is to ask the user whether to save the project before closing.}
 
+\item{msg}{Logical: If FALSE no messages are printed to console (except possibly for extremely important ones).}
+
 \item{newProjectPath}{The path to the copied StoX project.}
 }
 \description{

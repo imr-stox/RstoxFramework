@@ -17,6 +17,8 @@ ReportBootstrap(
 )
 }
 \arguments{
+\item{BootstrapData}{The \code{\link{BootstrapData}} data output from \code{\link{Bootstrap}}.}
+
 \item{BaselineProcess}{A strings naming the baseline process to report from the boostrap output.}
 
 \item{TargetVariable}{The variable to report.}
@@ -41,10 +43,4 @@ Reports the sum, mean or other functions on a variable of the \code{\link{Bootst
 }
 \details{
 This function is useful to, e.g, sum Biomass for each SpeciesCategory and IndividualTotalLenght, or average IndividualTotalLenght for each IndiivdualAge and Stratum.
-}
-\examples{
-
-}
-\seealso{
-
 }

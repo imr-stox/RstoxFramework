@@ -11,19 +11,26 @@ resetModel(
   processDirty = FALSE,
   shift = 0,
   returnProcessTable = FALSE,
+  delete = c("memory", "text"),
   purgeOutputFiles = FALSE
 )
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
-\item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
+\item{modelName}{The name of the model(s) (possible values are "baseline", "analysis" and "report").}
 
 \item{processID}{The ID of the process.}
 
 \item{processDirty}{Logical: Indicates whether the model has been modified when reseting.}
 
 \item{shift}{The position relative to the current memory status to un/redo to.}
+
+\item{returnProcessTable}{Logical: If TRUE return the process table (much used in functions used by the GUI).}
+
+\item{delete}{A character vector naming which elements to delete, where possible values are "memory", for deleting the output files that are stored as memory files, and "text" to delete the output text files.}
+
+\item{purgeOutputFiles}{Logical: If the model has not been run, should the output text files be deleted first. This was used at an earlier stage, when there was not complete control of how process output was deleted, and data were frequently not deleted eevn though the process was deleted.}
 }
 \description{
 Reset a StoX model.

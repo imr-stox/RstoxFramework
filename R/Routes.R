@@ -1,13 +1,50 @@
 ##### Models: #####
 
+
+##################################################
+##################################################
+#' Get objects for use in the GUI
+#'
+#' \code{getModelNames} and \code{getModelInfo} return the names and description of the StoX models. \cr \cr
+#' \code{getCanShowInMap}: can the data produces by a process using this function be shown in the map? \cr \cr
+#' \code{getInteractiveData} and \code{getInteractiveMode} get the interactive data and the mode of interactive data (data that canbe set and get iva the GUI) . \cr \cr
+#' \code{getMapData} gets the data to plot in the map of the GUI. \cr \cr
+#' \code{getProcessPropertySheet} gets the properties of a process. \cr \cr
+#' \code{setProcessPropertyValue} gets the properties of a process. \cr \cr
+#' \code{getFunctionHelpAsHtml} and \code{getObjectHelpAsHtml} get the R documentation of a StoX function or object as html for display in the GUI. \cr \cr
+#' \code{getFilterOptionsAll} gets possible tables, operators and unique values for use in the filter expression builder. \cr \cr
+#' \code{getParameterTableInfo} and \code{getParameterVectorInfo} get information of a parameter table or vector. \cr \cr
+#' 
+#' @inheritParams general_arguments
+#' @param n The number of colour steps.
+#' @param as.rgb Logical: If TRUE return RGB table instead of HEX.
+#' @param col A vector of colour steps.
+#' @param groupName The name of the property group, one of "processArguments", "functionInputs" and "functionParameters".
+#' @param name The name of the property, such as "processName", "functionName", one of the process parameters ("enabled", "showInMap" and "fileOutput"), the name of a funciton input, or the name of a function parameter. 
+#' @param value The value to set to the property (string).
+#' @param stylesheet The html stylesheet to use, defaulted to no stylesheet.
+#' @param include.numeric Logical: If TRUE get possible values for numeric ariables as well as categorical variables.
+#' @param stopIfEmptyPossibleValues Logical: If TRUE get possible values for numeric ariables as well as categorical variables.
+#' @param format A character string naming the format to get info for.
+#' @param objectName The R object to get help as html for.
+#' @param packageName The package holding the object to get
+#'  help as html for.
+#' 
+#' @name StoXGUI_interfaces
+#'
+NULL
+
+
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
 getModelNames <- function() {
     getRstoxFrameworkDefinitions("stoxModelTypes")
 }
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
 getModelInfo <- function() {
     getRstoxFrameworkDefinitions("stoxModelInfo")
@@ -18,18 +55,19 @@ getModelInfo <- function() {
 
 ##### Templates: #####
 
-#' 
-#' @export
-#' 
-getAvailableTemplatesDescriptions <- function() {
-    # Get the evailable templates:
-    availableTemplates <- getAvaiableTemplates(TRUE)
-    # Return the tempates as a data frame of name and description:
-    data.table::data.table(
-        name = names(availableTemplates), 
-        description = sapply(availableTemplates, attr, "description")
-    )
-} 
+# This function is unused, as templates are abandoned in StoX 3.0.0
+### #' 
+### #' @export
+### #' 
+### getAvailableTemplatesDescriptions <- function() {
+###     # Get the evailable templates:
+###     availableTemplates <- getAvaiableTemplates(TRUE)
+###     # Return the tempates as a data frame of name and description:
+###     data.table::data.table(
+###         name = names(availableTemplates), 
+###         description = sapply(availableTemplates, attr, "description")
+###     )
+### } 
 ##########
 
 
@@ -43,7 +81,7 @@ getCanShowInMap <- function(functionName, dataType = NULL) {
     }
     
     # Is the datatype of the dataTypesToShowInMap?:
-    if(length(dataType) == 0 || nchar(dataType) == 0) {
+    if(length(dataType) == 0 || (length(dataType) && nchar(dataType[1]) == 0)) {
         return(FALSE)
     }
     else {
@@ -51,64 +89,6 @@ getCanShowInMap <- function(functionName, dataType = NULL) {
     }
 }
 
-# Function to set show in map to TRUE, and to FALSE for all other relevant processes:
-setShowInMap <- function(projectPath, modelName, processID) {
-    
-    # Get processes with the same datatype (where processes with FilterStoxBiotic is considered different from those with StoxBiotic)
-    processTable <- scanForModelError(
-        projectPath = projectPath, 
-        modelName = modelName
-    )
-    
-    # Get the index of the current process:
-    processIDs <- processTable$processID
-    atCurrentProcessID <- which(processIDs == processID)
-    
-    # Get the data types and function names.
-    dataTypes <- processTable$functionOutputDataType
-    
-    # Return if show in map is not relevant:
-    if(!getCanShowInMap(dataType = dataType[atCurrentProcessID])) {
-        return(FALSE)
-    }
-    
-    functionNames <- getFunctionNameFromPackageFunctionName(processTable$functionName)
-    # Find all processes with the same data type:
-    sameDataType <- dataTypes == dataTypes[atCurrentProcessID]
-    sameDataType[atCurrentProcessID] <- FALSE
-    # If the current function name starts with "Filter", subset to the processes with the same suffix:
-    if(startsWith(functionNames[[processID]], "Filter")) {
-        sameDataType <- sameDataType & startsWith(functionNames, "Filter")
-    }
-    
-    # Set the current process to show in map:
-    modifyProcessParameters(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        newProcessParameters = list(
-            showInMap = TRUE
-        )
-    )
-    
-    ## Set all other processes with the same data type to not show in map:
-    #if(sum(sameDataType)) {
-    #    for(ind in which(sameDataType)) {
-    #        modifyProcessParameters(
-    #            projectPath = projectPath, 
-    #            modelName = modelName, 
-    #            processID = processIDs[ind], 
-    #            newProcessParameters = list(
-    #                showInMap = FALSE
-    #            )
-    #        )
-    #    }
-    #}
-    
-    return(TRUE)
-}
-
-##########
 
 
 ##### Interactive: #####
@@ -116,6 +96,7 @@ setShowInMap <- function(projectPath, modelName, processID) {
 # Function for getting the interactive mode of the process:
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
 getInteractiveMode <- function(projectPath, modelName, processID) {
     
@@ -176,6 +157,7 @@ getInteractiveMode <- function(projectPath, modelName, processID) {
 # Functions for getting the appropriate process data from the process, called depending on the interactive mode:
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
 getInteractiveData  <- function(projectPath, modelName, processID) {
     
@@ -233,6 +215,7 @@ getInteractiveData  <- function(projectPath, modelName, processID) {
 # Functions for getting the appropriate map data from the process, called depending on the map mode:
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
 getMapData  <- function(projectPath, modelName, processID) {
     
@@ -679,24 +662,26 @@ extrapolateLongitudeLatitude <- function(Log) {
 
 
 
-# Define color scale for EDSU map data:
+#' Define color scale for EDSU map data:
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
-getEDSUColours <- function(n = 5, as.rgb = FALSE) {
-    col <- colorRampPalette(c("pink", "red4", "darkorange2"))(n)
+getEDSUColours <- function(n = 5, as.rgb = FALSE, col = c("pink", "red4", "darkorange2")) {
+    col <- colorRampPalette(col)(n)
     if(as.rgb) {
         col <- grDevices::col2rgb(col)
     }
     return(col)
 }
 
-# Define color scale for Station map data:
+#' Define color scale for Station map data:
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
-getStationColours <- function(n = 5, as.rgb = FALSE) {
-    col <- grDevices::colorRampPalette(c("steelblue2", "darkblue", "mediumvioletred"))(n)
+getStationColours <- function(n = 5, as.rgb = FALSE, col = c("steelblue2", "darkblue", "mediumvioletred")) {
+    col <- grDevices::colorRampPalette(col)(n)
     if(as.rgb) {
         col <- col2rgb(col)
     }
@@ -739,8 +724,9 @@ isSingleParameter <- function(format) {
 
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
-getProcessPropertySheet <- function(projectPath, modelName, processID, outfile = NULL) {
+getProcessPropertySheet <- function(projectPath, modelName, processID) {
     
     # The project properties contains the following elements:
     # 1. name
@@ -996,6 +982,7 @@ getProcessPropertySheet <- function(projectPath, modelName, processID, outfile =
     )
     
     # Set the propertyDirty flag to FALSE, so that a GUI can update the properties:
+    # Do we really need this??????????????!!!!!!!!!!!!!!!!!!!!
     writeActiveProcessID(projectPath, modelName, propertyDirty = FALSE)
     
     # Return the list of process property groups (process property sheet):
@@ -1146,12 +1133,8 @@ possibleValuesToJSONStringOne <- function(x, nrow) {
 
 #' GUI function: Set procecss properties.
 #' 
-#' @param groupName The name of the property group, one of "processArguments", "functionInputs" and "functionParameters".
-#' @param name The name of the property, such as "processName", "functionName", one of the process parameters ("enabled", "showInMap" and "fileOutput"), the name of a funciton input, or the name of a function parameter. 
-#' @param value The value to set to the property (string).
-#' @inheritParams general_arguments
-#' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
 setProcessPropertyValue <- function(groupName, name, value, projectPath, modelName, processID) {
     
@@ -1162,6 +1145,20 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
     
     # The flag updateHelp is TRUE only if the functionName is changed:
     updateHelp <- FALSE
+    
+    # Reset the active process ID to the process before the modified process:
+    resetModel(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID, 
+        processDirty = hasBeenRun(
+            projectPath = projectPath, 
+            modelName = modelName, 
+            processID = processID
+        ), 
+        shift = 0, 
+        delete = c("memory", if(!hasUseOutputData(projectPath, modelName, processID)) "text")
+    )
     
     # If the process property 'processArguments' is given, modify the process name, function name or process parameters:
     if(groupName == "processArguments") {
@@ -1255,18 +1252,6 @@ setProcessPropertyValue <- function(groupName, name, value, projectPath, modelNa
         )
     }
     
-    # Reset the active process ID to the process before the modified process:
-    resetModel(
-        projectPath = projectPath, 
-        modelName = modelName, 
-        processID = processID, 
-        processDirty = hasBeenRun(
-            projectPath = projectPath, 
-            modelName = modelName, 
-            processID = processID
-        )
-    )
-    
     # Return the modified process properties:
     output <- getProcessPropertySheet(
         projectPath = projectPath, 
@@ -1327,10 +1312,12 @@ getPathToSingleFunctionPDF <- function(functionName) {
 
 
 
+#' Function used by the GUI to display R documentation.
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
-getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = NULL, stylesheet = "") {
+getFunctionHelpAsHtml <- function(projectPath, modelName, processID, stylesheet = "") {
     
     # Extract the packageName::functionName:
     packageName_functionName <- getFunctionName(
@@ -1347,15 +1334,16 @@ getFunctionHelpAsHtml <- function(projectPath, modelName, processID, outfile = N
     packageName <- getPackageNameFromPackageFunctionName(packageName_functionName)
     functionName <- getFunctionNameFromPackageFunctionName(packageName_functionName)
     # Get the help:
-    html <- getObjectHelpAsHtml(packageName = packageName, objectName = functionName, outfile = outfile, stylesheet = stylesheet)
+    html <- getObjectHelpAsHtml(packageName = packageName, objectName = functionName, stylesheet = stylesheet)
     return(html)
 }
 
 
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
-getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesheet = "") {
+getObjectHelpAsHtml <- function(packageName, objectName, stylesheet = "") {
     
     # Read the documentation database:
     db <- tools::Rd_db(packageName)
@@ -1370,9 +1358,7 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
     }
     
     # Write to a temporary file
-    if(length(outfile) == 0) {
-        outfile <- tempfile(fileext = ".html")
-    }
+    outfile <- tempfile(fileext = ".html")
     tools::Rd2HTML(db[[objectName.Rd]], out = outfile, Links = Links, stylesheet = stylesheet)
     html <- paste(readLines(outfile), collapse="\n")
     unlink(outfile, force = TRUE)
@@ -1382,13 +1368,9 @@ getObjectHelpAsHtml <- function(packageName, objectName, outfile = NULL, stylesh
 
 
 
-#' GUI function: Get possible tables, operators and unique values for use in the filter expression builder.
-#' 
-#' @inheritParams general_arguments
-#' @param include.numeric Logical: If TRUE get possible values for numeric ariables as well as categorical variables.
-#' @param stopIfEmptyPossibleValues Logical: If TRUE get possible values for numeric ariables as well as categorical variables.
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
 getFilterOptionsAll <- function(projectPath, modelName, processID, include.numeric = TRUE, stopIfEmptyPossibleValues = FALSE) {
 
@@ -1628,12 +1610,9 @@ getParameterVectorPossibleValues <- function(projectPath, modelName, processID, 
 
 
 
-#' GUI function: Function to get the info required for populating a parameter table builder in the GUI
-#' 
-#' @inheritParams general_arguments
-#' @param format A character string naming the format to get info for.
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
 getParameterTableInfo <- function(projectPath, modelName, processID, format, stopIfEmptyPossibleValues = FALSE) {
     list(
@@ -1669,14 +1648,9 @@ getParameterTableInfo <- function(projectPath, modelName, processID, format, sto
 }
 
 
-
-
-#' GUI function: Function to get the info required for populating a parameter table builder in the GUI
-#' 
-#' @inheritParams general_arguments
-#' @param format A character string naming the format to get info for.
 #' 
 #' @export
+#' @rdname StoXGUI_interfaces
 #' 
 getParameterVectorInfo <- function(projectPath, modelName, processID, format, stopIfEmptyPossibleValues = FALSE) {
     list(

@@ -1,6 +1,7 @@
-# A list of the attributes of the exported StoX functions:
-# The format describes the actual content, such as catchabilityTable, filePath, filter, etc. These are used by StoX to choose action on these parameters.
-# The primitive type (one of integer, double, logical, character) will be interpreted in the process property functions from the type of the function input or parameter.
+#' A list of the attributes of the exported StoX functions:
+#' 
+#' The format describes the actual content, such as catchabilityTable, filePath, filter, etc. These are used by StoX to choose action on these parameters.
+#' The primitive type (one of integer, double, logical, character) will be interpreted in the process property functions from the type of the function input or parameter.
 #' 
 #' @export
 #' 
@@ -37,6 +38,9 @@ stoxFunctionAttributes <- list(
     )
 )
 
+#' Utility function for processPropertyFormats. This is exported in order for processPropertyFormats to be albe to use it:
+#' 
+#' @inheritParams general_arguments
 #' 
 #' @export
 #' 
@@ -59,6 +63,9 @@ getResamplableProcesses <- function(projectPath) {
     return(processNames)
 }
 
+#' Utility function for processPropertyFormats. This is exported in order for processPropertyFormats to be albe to use it:
+#' 
+#' @inheritParams general_arguments
 #' 
 #' @export
 #' 
@@ -66,7 +73,7 @@ getResampleFunctions <- function() {
     paste0("Resample", getRstoxFrameworkDefinitions("resamplableDataTypes"))
 }
 
-# Define the process property formats:
+#' Process property formats for RstoxFramework
 #' 
 #' @export
 #' 
@@ -147,9 +154,9 @@ processPropertyFormats <- list(
         class = "vector", 
         title = "One or more processes to store in BootstrapData", 
         possibleValues = function(projectPath, BootstrapMethodTable) {
-            # Get the reasmpled processes:
-            reasmpledProcesses <- BootstrapMethodTable$ProcessName
-            
+            ## Get the reasmpled processes:
+            #reasmpledProcesses <- BootstrapMethodTable$ProcessName
+            #
             # Get the process table:
             processIndexTable <- readProcessIndexTable(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = Inf)
             

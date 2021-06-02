@@ -3543,7 +3543,7 @@ getRelativePaths <- function(filePaths, projectPath, warn = FALSE) {
 
 
 
-# Function to detect function parameter format filePath, filePaths or directoryPath, and convert to abolute paths for use in functions:
+# Function to detect function parameter format filePath, filePaths or directoryPath, and convert to absolute paths for use in functions:
 getAbsolutePaths <- function(functionParameters, projectPath, modelName, processID) {
     # Detect the file paths:
     areFilePathsAndNonEmpty <- detectFilePaths(
@@ -3577,6 +3577,7 @@ getAbsolutePath <- function(filePath, projectPath) {
             filePath
         }
         else {
+            stop(filePath)
             #warning("StoX: The file ", filePath, " does not exist.")
             filePath
         }

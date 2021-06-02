@@ -22,8 +22,8 @@ jobs:
           - {os: macOS-latest,   r: 'release', pkgext: '.tgz'}
           - {os: windows-latest, r: 'oldrel',  pkgext: '.zip'}
           - {os: windows-latest, r: 'release', pkgext: '.zip'}
-          - {os: ubuntu-latest,  r: 'release', pkgext: '.tar.gz'}
-          - {os: ubuntu-latest,  r: 'oldrel',  pkgext: '.tar.gz'}
+          - {os: ubuntu-18.04,  r: 'release', pkgext: '.tar.gz'}
+          - {os: ubuntu-18.04,  r: 'oldrel',  pkgext: '.tar.gz'}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true

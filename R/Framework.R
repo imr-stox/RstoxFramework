@@ -3577,7 +3577,7 @@ getAbsolutePath <- function(filePath, projectPath) {
             filePath
         }
         else {
-            warning("filePath************** ": filePath)
+            warning("filePath************** ", filePath)
             #warning("StoX: The file ", filePath, " does not exist.")
             filePath
         }

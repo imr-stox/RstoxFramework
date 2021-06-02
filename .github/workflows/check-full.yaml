@@ -22,11 +22,12 @@ jobs:
           - {os: macOS-latest,   r: 'release', pkgext: '.tgz'}
           - {os: windows-latest, r: 'oldrel',  pkgext: '.zip'}
           - {os: windows-latest, r: 'release', pkgext: '.zip'}
-          - {os: ubuntu-18.04,  r: 'release', pkgext: '.tar.gz'}
-          - {os: ubuntu-18.04,  r: 'oldrel',  pkgext: '.tar.gz'}
+          - {os: ubuntu-18.04,   r: 'release', pkgext: '.tar.gz', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
+          - {os: ubuntu-18.04,   r: 'oldrel',  pkgext: '.tar.gz', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      RSPM: ${{ matrix.config.rspm }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
@@ -72,8 +73,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
-          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
+          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-2-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-2-
 
       - name: Install system dependencies
         if: runner.os == 'Linux'

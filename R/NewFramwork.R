@@ -130,7 +130,11 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     }
     
     # Read the pointer files:
+    print("pointerFilePaths")
+    print(pointerFilePaths)
     argumentFilePaths <- rapply(pointerFilePaths, readPointerFile, projectPath = projectPath, how = "replace")
+    print("argumentFilePaths")
+    print(argumentFilePaths)
     
     
     return(argumentFilePaths)
@@ -150,6 +154,7 @@ getNonEmptyModels <- function(projectPath) {
 # Function to get memory of a process (or an argument of a process):
 getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE, argumentFilePaths = NULL, named.list = TRUE, addAttributes = FALSE) {
     
+    print(argumentFilePaths)
     # Get the argument files:
     if(length(argumentFilePaths) > 0 && length(modelName) == 1 && length(processID) == 1 && length(argumentName) == 1 ) {
         # Select the requested argument file path(s):
@@ -160,6 +165,9 @@ getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL
     else {
         argumentFilePaths <- getArgumentFilePaths(projectPath, modelName = modelName, processID = processID, argumentName = argumentName)
     }
+    
+    print(argumentFilePaths)
+    print("----------")
     
     # Read the memory files:
     output <- rapply(argumentFilePaths, readRDS, how = "replace")
@@ -254,6 +262,8 @@ setProcessMemory <- function(projectPath, modelName, processID, argumentName, ar
         argumentName = argumentName, 
         argumentValue = argumentValue
     )
+    
+    write(newArgumentFiles, file.path(tempdir(), "heihei.txt"), append = TRUE)
 
     # Save all the pointer files:
     mapply(

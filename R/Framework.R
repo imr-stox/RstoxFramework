@@ -1693,7 +1693,7 @@ appendProjectDescription <- function(projectDescription, modelName, processID, a
 
 
 # Function for getting the file path of one specific process argument file.
-getNewArgumentFileSansExt <- function(projectPath, modelName, processID, argumentName) {
+getNewArgumentFilePathSansExt <- function(projectPath, modelName, processID, argumentName) {
     
     # Get the folder holding the project descriptions:
     memoryModelsFolder <- getProjectPaths(projectPath, "memoryModelsFolder")
@@ -1753,7 +1753,7 @@ addTimeToFileName <- function(fileName, dir) {
 saveArgumentFile <- function(projectPath, modelName, processID, argumentName, argumentValue, ext = "rds") {
     
     # Get the path to the new argument file:
-    argumentFileSansExt <- getNewArgumentFileSansExt(projectPath, modelName, processID, argumentName)
+    argumentFileSansExt <- getNewArgumentFilePathSansExt(projectPath, modelName, processID, argumentName)
     
     # Save the argument to the file, and return the file path:
     argumentFilePath <- writeMemoryFile(

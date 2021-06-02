@@ -466,7 +466,7 @@ runFunction <- function(what, args, package = "RstoxFramework", removeCall = TRU
     args <- parseParameter(args)
     
     # Reset the warnings:
-    assign("last.warning", NULL, envir = baseenv())
+    #assign("last.warning", NULL, envir = baseenv())
     
     # Run the function 'what' and store the warnings and error along with the result:
     warn <- character(0)

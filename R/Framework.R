@@ -3569,6 +3569,7 @@ getAbsolutePath <- function(filePath, projectPath) {
     
     getAbsolutePathOne <- function(filePath, projectPath) {
         # Check first whether the file exists as a relative path:
+        warning("filePath************** ", filePath)
         absolutePath <- file.path(projectPath, filePath)
         if(file.exists(absolutePath)) {
             absolutePath
@@ -3577,7 +3578,6 @@ getAbsolutePath <- function(filePath, projectPath) {
             filePath
         }
         else {
-            warning("filePath************** ", filePath)
             #warning("StoX: The file ", filePath, " does not exist.")
             filePath
         }

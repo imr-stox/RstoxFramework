@@ -1,5 +1,5 @@
-#*********************************************
-#*********************************************
+##############################################
+##############################################
 #' Merge two data tables with all=TRUE and the specified columns and keys.
 #' 
 #' Merges two data tables (see \code{\link[data.table]{data.table}}) with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.

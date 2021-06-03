@@ -1693,7 +1693,7 @@ appendProjectDescription <- function(projectDescription, modelName, processID, a
 
 
 # Function for getting the file path of one specific process argument file.
-getNewArgumentFilePathSansExt <- function(projectPath, modelName, processID, argumentName) {
+getNewArgumentFileSansExt <- function(projectPath, modelName, processID, argumentName) {
     
     # Get the folder holding the project descriptions:
     memoryModelsFolder <- getProjectPaths(projectPath, "memoryModelsFolder")
@@ -1753,7 +1753,7 @@ addTimeToFileName <- function(fileName, dir) {
 saveArgumentFile <- function(projectPath, modelName, processID, argumentName, argumentValue, ext = "rds") {
     
     # Get the path to the new argument file:
-    argumentFileSansExt <- getNewArgumentFilePathSansExt(projectPath, modelName, processID, argumentName)
+    argumentFileSansExt <- getNewArgumentFileSansExt(projectPath, modelName, processID, argumentName)
     
     # Save the argument to the file, and return the file path:
     argumentFilePath <- writeMemoryFile(
@@ -1763,7 +1763,11 @@ saveArgumentFile <- function(projectPath, modelName, processID, argumentName, ar
     )
     
     # Return the file path relative to the project path:
-    relativePath <- sub(projectPath, "", argumentFilePath)
+    #relativePath <- sub(projectPath, "", argumentFilePath)
+    relativePath <- getRelativePath(
+        filePath = argumentFilePath, 
+        projectPath = projectPath
+    )
     
     return(relativePath)
 }
@@ -3518,8 +3522,12 @@ getRelativePath <- function(filePath, projectPath, warn = FALSE) {
     filePath <- path.expand(filePath)
     
     # Remove any double slashes:
-    projectPath <- gsub(pattern="//", replacement="/", x = projectPath)
-    filePath <- gsub(pattern="//", replacement="/", x = filePath)
+    projectPath <- gsub("//", "/", projectPath)
+    filePath <- gsub("//", "/", filePath)
+    
+    # Also translate escaped backslash to single forwardslash:
+    projectPath <- gsub("\\\\", "/", projectPath)
+    filePath <- gsub("\\\\", "/", filePath)
     
     # Check whether the filePath is a relative path already:
     fullFilePath <- file.path(projectPath, filePath)
@@ -3569,7 +3577,6 @@ getAbsolutePath <- function(filePath, projectPath) {
     
     getAbsolutePathOne <- function(filePath, projectPath) {
         # Check first whether the file exists as a relative path:
-        warning("filePath************** ", filePath)
         absolutePath <- file.path(projectPath, filePath)
         if(file.exists(absolutePath)) {
             absolutePath

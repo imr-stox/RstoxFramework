@@ -65,8 +65,6 @@ getResamplableProcesses <- function(projectPath) {
 
 #' Utility function for processPropertyFormats. This is exported in order for processPropertyFormats to be albe to use it:
 #' 
-#' @inheritParams general_arguments
-#' 
 #' @export
 #' 
 getResampleFunctions <- function() {

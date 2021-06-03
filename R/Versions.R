@@ -711,7 +711,7 @@ getPackageBinaryURL <- function(packageName, version = NULL, repos = "https://cl
     # Get the R version as two digit string:
     twoDigitRVersion <- getTwoDigitRVersion(twoDigitRVersion)
     
-    # Get the file extention:
+    # Get the file extension:
     fileExt <- getBinaryFileExt(platform)
     
     # Build the path to the package binary:

@@ -777,9 +777,17 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     
     atNotTRUE <- !uallTests %in% TRUE
     
+    
     if(any(atNotTRUE)) {
         out <- uallTests[atNotTRUE]
         warning(paste(names(out), out, collapse = ",", sep = "-"))
+        
+        if(length(dat_orig[["StoxBiotic"]])) {
+            allSpeciesCategoryKey1 <- sort(unique(dat_orig[["StoxBiotic"]][["SpeciesCategory"]][["allSpeciesCategoryKey"]]))
+            allSpeciesCategoryKey2 <- sort(unique(dat[["StoxBiotic"]][["SpeciesCategory"]][["allSpeciesCategoryKey"]]))
+            warning(paste(allSpeciesCategoryKey1, collapse = ", "))
+            warning(paste(allSpeciesCategoryKey2, collapse = ", "))
+        }
     }
      
     

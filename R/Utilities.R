@@ -772,8 +772,9 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     
     ok <- all(unlist(allTests) %in% TRUE)
     
+    warning(paste(names(unlist(allTests)), unlist(allTests), collapse = ",",sep = "-"))
     if(!ok) {
-        print(allTests)
+        warning(paste(names(unlist(allTests)), unlist(allTests), collapse = ",",sep = "-"))
         return(allTests)
     }
     else {

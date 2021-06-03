@@ -775,7 +775,7 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     
     uallTests <- unlist(allTests)
     
-    atNotTRUE <- uallTests %in% TRUE
+    atNotTRUE <- !uallTests %in% TRUE
     
     if(any(atNotTRUE)) {
         out <- uallTests[atNotTRUE]

@@ -778,6 +778,7 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     atNotTRUE <- !uallTests %in% TRUE
     
     
+    
     if(any(atNotTRUE)) {
         out <- uallTests[atNotTRUE]
         warning(paste(names(out), out, collapse = ",", sep = "-"))
@@ -785,8 +786,20 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
         if(length(dat_orig[["StoxBiotic"]])) {
             allSpeciesCategoryKey1 <- sort(unique(dat_orig[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]]))
             allSpeciesCategoryKey2 <- sort(unique(dat[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]]))
-            warning(paste(allSpeciesCategoryKey1, collapse = ", "))
-            warning(paste(allSpeciesCategoryKey2, collapse = ", "))
+            #warning(paste(allSpeciesCategoryKey1, collapse = ", "))
+            #warning(paste(allSpeciesCategoryKey2, collapse = ", "))
+            
+            p <- paste(
+                apply(
+                    cbind(
+                        dat_orig[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]], 
+                        dat[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]]
+                    ), 
+                    1, 
+                    paste, collapse = " = "
+                ), collapse = "; "
+            )
+            warning(p)
         }
     }
      

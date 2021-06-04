@@ -783,8 +783,8 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
         warning(paste(names(out), out, collapse = ",", sep = "-"))
         
         if(length(dat_orig[["StoxBiotic"]])) {
-            allSpeciesCategoryKey1 <- sort(unique(dat_orig[["StoxBiotic"]][["SpeciesCategory"]][["allSpeciesCategoryKey"]]))
-            allSpeciesCategoryKey2 <- sort(unique(dat[["StoxBiotic"]][["SpeciesCategory"]][["allSpeciesCategoryKey"]]))
+            allSpeciesCategoryKey1 <- sort(unique(dat_orig[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]]))
+            allSpeciesCategoryKey2 <- sort(unique(dat[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]]))
             warning(paste(allSpeciesCategoryKey1, collapse = ", "))
             warning(paste(allSpeciesCategoryKey2, collapse = ", "))
         }

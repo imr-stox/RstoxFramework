@@ -22,6 +22,13 @@
 #' 
 initiateRstoxFramework <- function(){
     
+    # Supported R versions:
+    supportedRVersion <- c(
+        "4.1", 
+        "4.0", 
+        "3.6"
+    )
+    
     ##### Packages: #####
     officialStoxLibraryPackages <- c(
         "RstoxBase", 

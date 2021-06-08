@@ -734,8 +734,11 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
             
     p1 <- paste(exampleData[["SpeciesCategory"]][["SpeciesCategoryKey"]], collapse = "; ")
     p2 <- paste(dat[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]], collapse = "; ")
+    warning("p111111111111111111111111111111111111111111111")
     warning(p1)
+    warning("p2222222222222222222222222222222222222222222")
     warning(p2)
+    warning("333333333333333333333333333333333333333333333")
     
     
     

@@ -744,6 +744,10 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     warning(Sys.getlocale())
     warning("5555555555555555555555555555555555555555555555555")
     
+    ii <- installed.packages()
+    warning(unname(apply(ii[, c("Package", "Version")], 1, paste, collapse = " v")))
+    warning("6666666666666666666666666666666666666")
+    
     
     
     

@@ -725,6 +725,23 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     openProject(projectPath_copy)
     dat <- runProject(projectPath_copy, unlist.models = TRUE, drop.datatype = FALSE, unlistDepth2 = TRUE)
     
+    bioticFile <- system.file("test",  "biotic_2020821.xml", package = "RstoxFramework")
+    exampleData <- StoxBiotic(ReadBiotic(bioticFile))
+    
+    
+    
+    
+            
+    p1 <- paste(exampleData[["SpeciesCategory"]][["SpeciesCategoryKey"]], collapse = "; ")
+    p2 <- paste(dat[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]], collapse = "; ")
+    warning(p1)
+    warning(p2)
+    
+    
+    
+    
+    
+    
     # Read the original data:
     dat_orig <- readModelData(projectPath_original, unlist.models = TRUE)
     
@@ -784,11 +801,6 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
         warning(paste(names(out), out, collapse = ",", sep = "-"))
         
         if(length(dat_orig[["StoxBiotic"]])) {
-            allSpeciesCategoryKey1 <- sort(unique(dat_orig[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]]))
-            allSpeciesCategoryKey2 <- sort(unique(dat[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]]))
-            #warning(paste(allSpeciesCategoryKey1, collapse = ", "))
-            #warning(paste(allSpeciesCategoryKey2, collapse = ", "))
-            
             p <- paste(
                 apply(
                     cbind(

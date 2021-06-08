@@ -45,7 +45,7 @@ getOfficialRstoxPackageVersion(
 
 \item{dependencyTypes}{A character vector listing the dependencies to get, with possible values "Depends", "Imports", "LinkingTo", "Suggests", "Enhances". Default is NA, implying c("Depends", "Imports", "LinkingTo").}
 
-\item{Rstox.repos, nonRstox.repos}{Either NULL to search for packages locally, or a repository passed to \code{\link[utils]{available.packages}}, where \code{Rstox.repos} is used to locate direct dependencies of the Rstox packages, and \code{nonRstox.reposs} is used to get the dependencies of the direct dependencies recursively, defaulted to the CRAN repository.}
+\item{Rstox.repos, nonRstox.repos}{Either NULL to search for packages locally, or a repository passed to \code{\link[utils]{available.packages}}, where \code{Rstox.repos} is used to locate direct dependencies of the Rstox packages, and \code{nonRstox.repos} is used to get the dependencies of the direct dependencies recursively, defaulted to the CRAN repository.}
 
 \item{sort}{Logical: If TRUE sort the dependent packages, defaulted to FALSE to enable installing the most basic dependencies first.}
 

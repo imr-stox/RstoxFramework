@@ -741,6 +741,8 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     warning("333333333333333333333333333333333333333333333")
     warning(options("encoding"))
     warning("44444444444444444444444444444444444444444444444")
+    warning(Sys.getlocale())
+    warning("5555555555555555555555555555555555555555555555555")
     
     
     

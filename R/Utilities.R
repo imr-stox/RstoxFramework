@@ -739,12 +739,12 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     warning("p2222222222222222222222222222222222222222222")
     warning(p2)
     warning("333333333333333333333333333333333333333333333")
-    warning(options("encoding"))
+    warning(unlist(options("encoding")))
     warning("44444444444444444444444444444444444444444444444")
     warning(Sys.getlocale())
     warning("5555555555555555555555555555555555555555555555555")
     
-    ii <- installed.packages()
+    ii <- utils::installed.packages()
     warning(unname(apply(ii[, c("Package", "Version")], 1, paste, collapse = " v")))
     warning("6666666666666666666666666666666666666")
     

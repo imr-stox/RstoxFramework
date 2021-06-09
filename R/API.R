@@ -394,7 +394,7 @@ readStoxOutputFile <- function(path) {
         output <- reasdGeoJSON(path)
     }
     else if(tolower(ext) == "txt") {
-        output <- data.table::fread(path, na.strings = c("NA", ""), tz = "UTC")
+        output <- data.table::fread(path, na.strings = c("NA", ""), tz = "UTC", encoding = "UTF-8")
         # If here are any keys that are time (such as LogKey of the StoxAcoustic format), convert these to character with 3 digits:
         areKeys <- endsWith(names(output), "Key")
         areDateTime <- sapply(output, firstClass) %in% "POSIXct"

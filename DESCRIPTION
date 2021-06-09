@@ -54,7 +54,7 @@ Imports:
     stringr (>= 1.0.0),
     stringi (>= 1.4.3),
     RstoxData (>= 1.1.14),
-    RstoxBase (>= 1.3.25)
+    RstoxBase (>= 1.3.27)
 Suggests: 
     testthat
 Additional_repositories: 

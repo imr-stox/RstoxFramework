@@ -91,7 +91,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           rm '/usr/local/bin/gfortran'
-          brew install gdal
+          brew install gdal udunits
         shell: bash
 
       - name: Install dependencies

@@ -22,14 +22,6 @@
 #' 
 initiateRstoxFramework <- function(){
     
-    # Set encoding to UTF-8. The same is done in the StoX GUI:
-    # windows doesnt have native encoding UTF-8, (R uses native encoding)
-    # options ensures that project.json is written as utf-8
-    options(encoding = "UTF-8")
-    # Reading resource files in rstoxdata requires locale utf8 on all os.
-    Sys.setlocale(category = "LC_ALL", locale = "UTF-8")
-    
-    
     # Supported R versions:
     supportedRVersion <- c(
         "4.1", 

@@ -727,32 +727,7 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     
     bioticFile <- system.file("test",  "biotic_2020821.xml", package = "RstoxFramework")
     exampleData <- StoxBiotic(ReadBiotic(bioticFile))
-    
-    
-    
-    
-            
-    p1 <- paste(exampleData[["SpeciesCategory"]][["SpeciesCategoryKey"]], collapse = "; ")
-    p2 <- paste(dat[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]], collapse = "; ")
-    warning("p111111111111111111111111111111111111111111111")
-    warning(p1)
-    warning("p2222222222222222222222222222222222222222222")
-    warning(p2)
-    warning("333333333333333333333333333333333333333333333")
-    warning(unlist(options("encoding")))
-    warning("44444444444444444444444444444444444444444444444")
-    warning(Sys.getlocale())
-    warning("5555555555555555555555555555555555555555555555555")
-    
-    ii <- utils::installed.packages()
-    warning(unname(apply(ii[, c("Package", "Version")], 1, paste, collapse = " v")))
-    warning("6666666666666666666666666666666666666")
-    
-    
-    
-    
-    
-    
+
     # Read the original data:
     dat_orig <- readModelData(projectPath_original, unlist.models = TRUE)
     

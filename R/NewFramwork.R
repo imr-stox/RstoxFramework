@@ -132,7 +132,6 @@ getArgumentFilePaths <- function(projectPath, modelName = NULL, processID = NULL
     # Read the pointer files:
     argumentFilePaths <- rapply(pointerFilePaths, readPointerFile, projectPath = projectPath, how = "replace")
     
-    
     return(argumentFilePaths)
 }
 
@@ -147,9 +146,7 @@ getNonEmptyModels <- function(projectPath) {
 
 
 
-#' 
-#' @export
-#'
+# Function to get memory of a process (or an argument of a process):
 getProjectMemoryData <- function(projectPath, modelName = NULL, processID = NULL, argumentName = NULL, drop1 = FALSE, argumentFilePaths = NULL, named.list = TRUE, addAttributes = FALSE) {
     
     # Get the argument files:
@@ -238,9 +235,7 @@ writeProjectDescriptionAttributes <- function(projectPath, projectDescription) {
 
 
 
-#' 
-#' @export
-#' 
+# Set the memory of a StoX process
 setProcessMemory <- function(projectPath, modelName, processID, argumentName, argumentValue, process = NULL, archive = TRUE) {
     
     # Get the arguments and argument names from the process:
@@ -258,7 +253,7 @@ setProcessMemory <- function(projectPath, modelName, processID, argumentName, ar
         argumentName = argumentName, 
         argumentValue = argumentValue
     )
-
+    
     # Save all the pointer files:
     mapply(
         savePointerFile, 
@@ -361,9 +356,7 @@ getPointerFile <- function(projectPath, modelName, processID, argumentName) {
 }
 
 
-#' 
-#' @export
-#' 
+# Function to remove the memory of a process:
 removeProcessMemory <- function(projectPath, modelName, processID) {
     # Get the path to the directory of the process:
     dir <- getArgumentFilesDir(projectPath = projectPath, modelName = modelName, processID = processID)

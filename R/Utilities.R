@@ -1,5 +1,5 @@
-#*********************************************
-#*********************************************
+##############################################
+##############################################
 #' Merge two data tables with all=TRUE and the specified columns and keys.
 #' 
 #' Merges two data tables (see \code{\link[data.table]{data.table}}) with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
@@ -197,7 +197,9 @@ getNewDefaultName <- function(names, prefix) {
     return(newName)
 }
 
-# Function to convert from json to R expression:
+#' Function to convert from json to R expression:
+#' 
+#' @param json A JSON string
 #' 
 #' @export
 #' 
@@ -210,11 +212,14 @@ json2expression <- function(json) {
 }
 
 
-# Function to convert from R list to R expression:
+#' Function to convert from R list to R expression:
+#' 
+#' @param l An R list.
+#' @param parentHasSiblings Logical: If TRUE there are more than one element in the top level of the list.
 #' 
 #' @export
 #' 
-list2expression <- function(l, parentHasSiblings=FALSE) {
+list2expression <- function(l, parentHasSiblings = FALSE) {
     # Declare the resulting expression
     result <- NULL
     # If the current rules or expression should be negated, we need to enclose the expression in paretheses:
@@ -228,7 +233,7 @@ list2expression <- function(l, parentHasSiblings=FALSE) {
         link <- paste('', l$condition, '')
         
         # Recurse into the children:
-        result <- paste(lapply(l$rules, list2expression, parentHasSiblings=length(l$rules) > 1), collapse = link)
+        result <- paste(lapply(l$rules, list2expression, parentHasSiblings = length(l$rules) > 1), collapse = link)
     } 
     # Otherwise build the expression:
     else {
@@ -606,6 +611,15 @@ isProcessOutputDataType <- function(processOutput) {
 }
 
 
+hasUseOutputData <- function(projectPath, modelName, processID) {
+    functionParameters <- getFunctionParameters(
+        projectPath = projectPath, 
+        modelName = modelName, 
+        processID = processID
+    )
+    "UseOutputData" %in% names(functionParameters)
+}
+
 
 
 emptyNamedList <- function() {
@@ -660,4 +674,186 @@ as.list1 <- function(x) {
 
 capitalizeFirstLetter <- function(x) {
     gsub("(^[[:alpha:]])", "\\U\\1", x, perl=TRUE)
+}
+
+
+
+
+
+#' Function for unzipping a zipped StoX project
+#' 
+#' @param projectPath The project to be run and tested against the existing output files of the project gievn by \code{projectPath_original}.
+#' @param exdir The direcory to unzip to, defaulted to the current directory.
+#' 
+#' @export
+#'
+unzipProject <- function(projectPath, exdir = ".") {
+    if(!isProject(projectPath)) {
+        stop("The zip ", projectPath, " does not contain a valid StoX project at the root folder.")
+    }
+    
+    utils::unzip(projectPath, exdir = exdir)
+    projectName <- basename(tools::file_path_sans_ext(projectPath))
+    unzippedProjectPath <- file.path(exdir, projectName)
+    return(unzippedProjectPath)
+}
+
+
+
+#' Function for comparing existing output files with the memory read using runProject()
+#' 
+#' @param projectPath The project to be run and tested against the existing output files of the project gievn by \code{projectPath_original}.
+#' @param projectPath_original The project holding the existing output files, defaulted to \code{projectPath}.
+#' 
+#' @export
+#'
+compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original = projectPath) {
+    
+    # Unzip if zipped:
+    if(tolower(tools::file_ext(projectPath)) == "zip") {
+        projectPath <- unzipProject(projectPath, exdir = tempdir())
+    }
+    if(projectPath_original != projectPath && tolower(tools::file_ext(projectPath_original)) == "zip") {
+        projectPath_original <- unzipProject(projectPath_original, exdir = tempdir())
+    }
+    
+    # Run the test project:
+    projectPath_copy <- file.path(tempdir(), paste0(basename(projectPath), "_copy"))
+    temp <- copyProject(projectPath, projectPath_copy, ow = TRUE)
+    
+    
+    openProject(projectPath_copy)
+    dat <- runProject(projectPath_copy, unlist.models = TRUE, drop.datatype = FALSE, unlistDepth2 = TRUE)
+    
+    bioticFile <- system.file("test",  "biotic_2020821.xml", package = "RstoxFramework")
+    exampleData <- StoxBiotic(ReadBiotic(bioticFile))
+
+    # Read the original data:
+    dat_orig <- readModelData(projectPath_original, unlist.models = TRUE)
+    
+    # Compare only those elemens common to the two datasets:
+    processNames_present <- all(names(dat_orig) %in% names(dat))
+    
+    # Expect all column names:
+    tableNames_identical <- list()
+    columnNames_identical <- list()
+    for(name in names(dat_orig)) {
+        # Check identical table names: 
+        tableNames_identical[[name]] <- identical(sort(names(dat_orig[[name]])), sort(names(dat[[name]])))
+        # Check identical column names: 
+        columnNames_identical[[name]] <- list()
+        for(subname in names(dat_orig[[name]])) {
+            columnNames_identical[[name]][[subname]] <- identical(names(dat_orig[[name]][[subname]]), names(dat[[name]][[subname]]))
+        }
+    }
+    
+    # Check the actual data:
+    data_equal <- list()
+    
+    for(name in names(dat_orig)) {
+        data_equal[[name]] <- list()
+        for(subname in names(dat_orig[[name]])) {
+            if(data.table::is.data.table(dat_orig[[name]][[subname]])) {
+                data_equal[[name]][[subname]] <- compareDataTablesUsingClassOfFirst(dat_orig[[name]][[subname]], dat[[name]][[subname]])
+                #data_equal[[name]][[subname]] <- compareDataTablesUsingClassOfSecond(dat_orig[[name]][[subname]], dat[[name]][[subname]])
+            }
+            else if("SpatialPolygonsDataFrame" %in% class(dat_orig[[name]][[subname]])){
+                data_equal[[name]][[subname]] <- compareSPDF(dat_orig[[name]][[subname]], dat[[name]][[subname]])
+            }
+            else {
+                data_equal[[name]][[subname]] <- all.equal(dat_orig[[name]][[subname]], dat[[name]][[subname]])
+            }
+        }
+    }
+    
+    allTests <- list(
+        processNames_present = processNames_present,
+        tableNames_identical = tableNames_identical,
+        columnNames_identical = columnNames_identical,
+        data_equal = data_equal
+    )
+    
+    ok <- all(unlist(allTests) %in% TRUE)
+    
+    
+    uallTests <- unlist(allTests)
+    
+    atNotTRUE <- !uallTests %in% TRUE
+    
+    
+    
+    if(any(atNotTRUE)) {
+        out <- uallTests[atNotTRUE]
+        warning(paste(names(out), out, collapse = ",", sep = "-"))
+        
+        if(length(dat_orig[["StoxBiotic"]])) {
+            p <- paste(
+                apply(
+                    cbind(
+                        dat_orig[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]], 
+                        dat[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]]
+                    ), 
+                    1, 
+                    paste, collapse = " = "
+                ), collapse = "; "
+            )
+            warning(p)
+        }
+    }
+     
+    
+    
+    
+    if(!ok) {
+        return(allTests)
+    }
+    else {
+        return(TRUE)
+    }
+}
+
+# Compare two data.tables while ignoring attributes and coercing classes of the first to classes of the second:
+compareDataTablesUsingClassOfFirst <- function(x, y) {
+    # Get the classes of the first and second table:
+    classes_in_x <- sapply(x, firstClass)
+    classes_in_y <- sapply(y, firstClass)
+    if(!identical(classes_in_x, classes_in_y)) {
+        # Coerce to the class in the memory:
+        differ <- names(x)[classes_in_x != classes_in_y]
+        for(col in differ){
+            data.table::set(x, j = col, value = methods::as(x[[col]], classes_in_y[col]))
+        }
+    }
+    # Check equality:
+    all.equal(x, y, check.attributes = FALSE)
+}
+
+# Compare two data.tables while ignoring attributes and coercing classes of the first to classes of the second:
+compareDataTablesUsingClassOfSecond <- function(x, y) {
+    # Get the classes of the first and second table:
+    classes_in_x <- sapply(x, firstClass)
+    classes_in_y <- sapply(y, firstClass)
+    if(!identical(classes_in_x, classes_in_y)) {
+        # Coerce to the class in the memory:
+        differ <- names(x)[classes_in_x != classes_in_y]
+        for(col in differ){
+            data.table::set(y, j = col, value = methods::as(y[[col]], classes_in_x[col]))
+        }
+    }
+    # Check equality:
+    all.equal(x, y, check.attributes = FALSE)
+}
+
+# Get all coordinates of a SpatialPolygonsDataFrame in one data.table:
+getAllCoords <- function(x) {
+    out <- RstoxBase::getStratumPolygonList(x)
+    out <- data.table::rbindlist(lapply(out, unname))
+    return(out)
+}
+
+# Compare two SpatialPolygonsDataFrames using only the polygons:
+compareSPDF <- function(x, y) {
+    xc<- getAllCoords(x)
+    yc<- getAllCoords(y)
+    all.equal(xc, yc)
 }

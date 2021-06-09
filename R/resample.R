@@ -1,3 +1,14 @@
+##################################################
+##################################################
+#' Bootstrap data
+#' 
+#' The BootstrapData model data is a list of the data specified using \code{OutputProcesses} in \code{\link{Bootstrap}}, where each table is rbinded over all bootstrap runs, added the BootstrapID.
+#' 
+#' @name BootstrapData
+#' 
+NULL
+
+
 #' Bootstrap the baseline model
 #' 
 #' Run a subset of the baseline model a number of times after resampling e.g. Hauls in each Stratum, EDUSs in each Stratum.
@@ -8,11 +19,13 @@
 #' @param NumberOfBootstraps Integer: The number of bootstrap replicates.
 #' @param OutputProcesses A vector of the processes to save from each bootstrap replicate.
 #' @param UseOutputData Logical: If TRUE use the existing output file from the function.
-#' @param NumberOfCores The number of cores to use for parallel processing. A copy of fthe project is created in tempdir() for each core.
+#' @param NumberOfCores The number of cores to use for parallel processing. A copy of the project is created in tempdir() for each core, also when using only one core. Note that this will require disc space equivalent to the \code{NumberOfCores} time the size of the project folder (excluding the output/analysis/Bootstrap folder, which will be deleted before copies are made).
 #' @param BaselineSeedTable A table of ProcessName and Seed, givng the seed to use for the Baseline processes that requires a Seed parameter.
 #' 
+#' @details A copy of the project is made for each core given by \code{NumberOfCores}. In the case that NumberOfCores == 1, this is still done for safety.
+#' 
 #' @return
-#' A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.
+#' A \code{\link{BootstrapData}} object, which is a list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.
 #' 
 #' @export
 #' 
@@ -32,9 +45,22 @@ Bootstrap <- function(
     if(UseOutputData) {
         # This was moved to getFunctionArguments() on 2020-10-22:
         #outputData <- get(load(outputDataPath))
+        
+        # Read the outputData (from a former run of the proecss). Use functionArguments["outputData"] to add the data, since using functionArguments$outputData will delete this element if trying to giev it the value NULL:
+        if(is.character(outputData)) {
+            if(length(outputData) && file.exists(outputData)) {
+                outputData <- tryCatch(
+                    get(load(outputData)), 
+                    error = function(err) list(NULL)
+                )
+            }
+            else {
+                outputData <- list(NULL)
+            }
+        }
+        
         return(outputData)
     }
-    
     # Identify the first process set for resampling by the BootstrapMethodTable (here BootstrapMethodTable$ProcessName can be a vector, in which case the table is returned from the first process of these and onwards):
     processesSansProcessData <- getProcessesSansProcessData(projectPath, modelName = "baseline", startProcess = BootstrapMethodTable$ProcessName, endProcess = OutputProcesses, return.processIndex = TRUE)
     
@@ -44,12 +70,11 @@ Bootstrap <- function(
         OutputProcesses <- intersect(OutputProcesses, processesSansProcessData$processName)
     }
     if(!length(OutputProcesses)) {
-        stop("StoX: 
-             At least one valid process name must be given in OutputProcesses")
+        stop("StoX: At least one valid process name must be given in OutputProcesses")
     }
     
-    # Run the baseline until the startProcess:
-    activeProcessID <- getProcessIndexFromProcessID(
+    # The baseline must have been run until the last output process:
+    activeProcessIndex <- getProcessIndexFromProcessID(
         projectPath = projectPath, 
         modelName = "baseline", 
         processID = getActiveProcess(
@@ -58,16 +83,20 @@ Bootstrap <- function(
         )$processID
     )
     #preRunTo <- min(processesSansProcessData$processIndex) - 1
-    preRunTo <- min(processesSansProcessData$processIndex)
-    if(activeProcessID < preRunTo) {
-        message("StoX: Running baseline until the first process to bootstrap...")
-        temp <- runProcesses(
-            projectPath, 
-            modelName = "baseline", 
-            endProcess = preRunTo, 
-            save = FALSE, 
-            saveProcessData = FALSE
-        )
+    # preRunTo <- min(processesSansProcessData$processIndex)
+    #if(activeProcessID < preRunTo) {
+    
+    baselineMustHaveBeenRunTo <- max(processesSansProcessData$processIndex)
+    if(activeProcessIndex < baselineMustHaveBeenRunTo) {
+        #message("StoX: Running baseline until the first process to bootstrap...")
+        #temp <- runProcesses(
+        #    projectPath, 
+        #    modelName = "baseline", 
+        #    endProcess = preRunTo, 
+        #    save = FALSE, 
+        #    saveProcessData = FALSE
+        #)
+        stop("The Baseline model must be run at least until the last output process \"", getProcessNameFromProcessID(projectPath, modelName = "baseline", processID = processesSansProcessData[processIndex == baselineMustHaveBeenRunTo, processID]), "\"")
     }
     
     # Draw the seeds in a table, and then split into a list for each bootstrap run:
@@ -111,15 +140,14 @@ Bootstrap <- function(
     
     # Copy the projec to the tempdir for each core:
     projecName <- basename(projectPath)
-    if(NumberOfCores > 1)  {
-        projectPath_copies <- file.path(tempdir(), paste0(projecName, seq_len(NumberOfCores)))
-        #mapply(copyProject, projectPath, projectPath_copies, ow = TRUE)
-        RstoxData::mapplyOnCores(copyProject, MoreArgs = list(ow = TRUE, projectPath = projectPath), projectPath_copies, NumberOfCores = NumberOfCores)
-    }
-    else {
-        projectPath_copies <- projectPath
-    }
-    
+    # As of 2021-05-27 (v3.0.23) make a copy even if running on only one core. This for safety:
+    #if(NumberOfCores > 1)  {
+        projectPath_copies <- file.path("~/workspace", paste0(projecName, seq_len(NumberOfCores)))
+        temp <- RstoxData::mapplyOnCores(copyProject, MoreArgs = list(ow = TRUE, projectPath = projectPath), projectPath_copies, NumberOfCores = NumberOfCores)
+    #}
+    #else {
+    #    projectPath_copies <- projectPath
+    #}
     
     # Run the subset of the baseline model:
     #bootstrapProgressFile <- getProjectPaths(projectPath, "bootstrapProgressFile")
@@ -166,14 +194,19 @@ Bootstrap <- function(
     ###     processDirty = FALSE, 
     ###     shift = -1
     ### )
-    # Rerun the baseline to the end:
-    temp <- runProcesses(
-        projectPath, 
-        modelName = "baseline", 
-        startProcess = processesSansProcessData$processIndex[1], 
-        save = FALSE, 
-        saveProcessData = FALSE
-    )
+    
+    
+    ## Rerun the baseline processes that were run in the bootstrapping:
+    #temp <- runProcesses(
+    #    projectPath, 
+    #    modelName = "baseline", 
+    #    startProcess = min(processesSansProcessData$processIndex), 
+    #    endProcess = max(processesSansProcessData$processIndex, activeProcessIndex), 
+    #    save = FALSE, 
+    #    # Be sure to not touch the process data and file output:
+    #    saveProcessData = FALSE, 
+    #    fileOutput = FALSE
+    #)
     
     # Get the data types to return:
     dataTypeNames <- names(BootstrapData[[1]])
@@ -186,6 +219,9 @@ Bootstrap <- function(
             BootstrapData[[dataType]] <- BootstrapData[[dataType]][[1]]
         }
     }
+    
+    # Special care must be taken here to make sure that the output is a list with the datatype as element, since runProcess will not recognize a list of datatypes as a valid datatype:
+    #BootstrapData <- list(BootstrapData = BootstrapData)
     
     unlink(NumberOfBootstrapsFile, force = TRUE, recursive = TRUE)
     unlink(bootstrapProgressFile, force = TRUE, recursive = TRUE)
@@ -213,10 +249,6 @@ drawSeedList <- function(table, NumberOfBootstraps, listOf = c("table", "list"))
     
     return(SeedList)
 }
-
-
-
-
 
 
 rbindlistByName <- function(name, x) {
@@ -259,13 +291,14 @@ runOneBootstrapSaveOutput <- function(ind, replaceArgs, replaceDataList, project
         stop("Bootstrap aborted by the user.")
     }
     
-    # Re-run the baseline:
+    # Run the part of the baseline that containes the processes to be modified to those to be returned:
     runProcesses(
         projectPath, 
         modelName = "baseline", 
         startProcess = startProcess, 
         endProcess = endProcess, 
         save = FALSE, 
+        # Be sure to not touch the process data and file output, the latter mostly for speed if the bootstrap is run on a copy of the project (see if this is the case in the code of Bootstrap()):
         saveProcessData = FALSE, 
         fileOutput = FALSE, 
         setUseProcessDataToTRUE = FALSE, 
@@ -318,7 +351,7 @@ stopProcesses <- function(projectPath, modelName) {
     stopFile <- getProjectPaths(projectPath, "stopFile")[[modelName]]
     write("", file = stopFile)
 }
-#' Get bootstrap progress
+#' Get process progress
 #' 
 #' @inheritParams general_arguments
 #' @param percent Logical: If TRUE return the progress in percent, otherwise in [0,1].
@@ -326,8 +359,13 @@ stopProcesses <- function(projectPath, modelName) {
 #' @export
 #' 
 progressOfProcesses <- function(projectPath, modelName, percent = FALSE) {
+    # Get the pahts to the progress and N files:
     ProgressFile <- getProjectPaths(projectPath, "progressFile")[[modelName]]
     NFile <- getProjectPaths(projectPath, "NFile")[[modelName]]
+    if(!file.exists(ProgressFile)) {
+        return(NA)
+    }
+    # Read number of dots and compare the N:
     N <- as.numeric(readLines(NFile, warn = FALSE))
     Progress <- readLines(ProgressFile, warn = FALSE)
     n <- lengths(regmatches(Progress, gregexpr(".", Progress)))
@@ -337,6 +375,45 @@ progressOfProcesses <- function(projectPath, modelName, percent = FALSE) {
     }
     return(Progress)
 }
+#' Get process progress
+#' 
+#' @inheritParams general_arguments
+#' @param string.out Logical: If TRUE return a string listing the time remaining and the total estimated time.
+#' 
+#' @export
+#' 
+estimateTimeOfProcesses <- function(projectPath, modelName, string.out = TRUE) {
+    # Get progress:
+    progress <- progressOfProcesses(projectPath, modelName)
+    # Read time of NFile:
+    NFile <- getProjectPaths(projectPath, "NFile")$analysis
+    if(!file.exists(NFile)) {
+        return(NA)
+    }
+    startTime <- file.info(NFile)$ctime
+    # And compare to the present time:
+    now <- Sys.time()
+    timeUsed <- now - startTime
+    
+    # Predict the total time:
+    totalTimePredicted <- timeUsed / progress
+    
+    # Predict time remaninig:
+    remainingTimePredicted <- totalTimePredicted - timeUsed
+    
+    # Paste to a string message:
+    if(string.out) {
+        output <- paste0("Estimated ", round(remainingTimePredicted, 1), " ", attr(remainingTimePredicted, "units"), " remaining (", 100 * progress, " percent elapsed of total estimated time ", round(totalTimePredicted, 1), " ", attr(totalTimePredicted, "units"), ")")
+    }
+    else {
+        output <- remainingTimePredicted
+    }
+    
+    
+    return(output)
+}
+
+
 
 addBootstrapID <- function(x, ind) {
     if(is.list(x) && !data.table::is.data.table(x)){
@@ -408,12 +485,7 @@ addBootstrapIDOne <- function(x, ind) {
 
 
 
-#' Resamples StoX data
-#' 
-#' This function resamples varToResample with replacement by altering the input data
-#' 
-#' @export
-#' 
+# This function resamples varToResample with replacement by altering the input data. Used in ResampleMeanLengthDistributionData(), ResampleBioticAssignment() and ResampleMeanNASCData():
 resampleDataBy <- function(data, seed, varToScale, varToResample, resampleBy) {
     
     # Get the unique resampleBy, and sort in C-locale for consistensy across platforms:
@@ -525,7 +597,7 @@ ResampleMeanLengthDistributionData <- function(MeanLengthDistributionData, Seed)
 #' 
 #' This function resamples biotic PSUs with replacement within each Stratum, changing the MeanLengthDistributionWeight.
 #' 
-#' @param MeanLengthDistributionData The \code{\link[RstoxBase]{MeanLengthDistributionData}} data.
+#' @param BioticAssignment The \code{\link[RstoxBase]{BioticAssignment}} data.
 #' @param Seed The seed, given as a sinigle initeger.
 #' 
 #' @export
@@ -549,7 +621,7 @@ ResampleBioticAssignment <- function(BioticAssignment, Seed) {
 #' 
 #' This function resamples acoustic PSUs with replacement within each Stratum, changing the MeanNASC
 #' 
-#' @param MeanNASC The \code{\link[RstoxBase]{MeanNASC}} data.
+#' @param MeanNASCData The \code{\link[RstoxBase]{MeanNASCData}} data.
 #' @param Seed The seed, given as a sinigle initeger.
 #' 
 #' @export
@@ -576,8 +648,7 @@ ResampleMeanNASCData <- function(MeanNASCData, Seed) {
 #' 
 #' Reports the sum, mean or other functions on a variable of the \code{\link{BootstrapData}}.
 #' 
-#' @inheritParams RstoxBase::ModelData
-#' @inheritParams RstoxBase::ProcessData
+#' @param BootstrapData The \code{\link{BootstrapData}} data output from \code{\link{Bootstrap}}.
 #' @inheritParams RstoxBase::general_report_arguments
 #' @param BaselineProcess A strings naming the baseline process to report from the boostrap output.
 #' @param AggregationFunction The function to apply to each bootstrap run. This must be a function returning a single value.
@@ -589,10 +660,6 @@ ResampleMeanNASCData <- function(MeanNASCData, Seed) {
 #' 
 #' @return
 #' A \code{\link{ReportBootstrapData}} object.
-#' 
-#' @examples
-#' 
-#' @seealso 
 #' 
 #' @export
 #' 

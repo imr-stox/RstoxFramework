@@ -1,6 +1,4 @@
-#' Backward compabitibility actions:
-#' @export
-#' @noRd
+# Backward compabitibility actions. These need not to be exported as is the case for any other Rstox-packages, since RstoxFramework is the package that collects the backwardCompatibility objects:
 backwardCompatibility <- list(
     renameAttribute = list(
         list(
@@ -895,63 +893,63 @@ findProcessFromFunctionName <- function(functionName, projectDescription, modelN
 
 
 
-# A list of functions performing conversions of the projectDescription to ensure backward compatibility:
-#' 
-#' @export
-#' 
-backwardCompatibility2.7 <- list(
-    
-    # 1. Move process between models:
-    moveProcess = list(
-        list(
-            functionName = "ImpuetByAge", 
-            model = "R", 
-            newModel = "Baseline"
-        )
-    ), 
-    
-    # 2. Remove process: 
-    removeProcess = list(
-        list(
-            functionName = "ReadProcessData", 
-            model = "Baseline"
-        ), 
-        list(
-            functionName = "WriteProcessData", 
-            model = "Baseline"
-        ), 
-        list(
-            functionName = "SumDensity", 
-            model = "Baseline"
-        ), 
-        list(
-            functionName = "saveProjectData", 
-            model = "Analysis"
-        )
-    ), 
-    
-    # 3. Rename process:
-    
-    # 4. Split process:
-    
-    # 5. Join processes:
-    joinProcess = list(
-        list(
-            functionNames = c(
-                "IndividualDataStations", 
-                "IndividualData"
-            ), 
-            newFunctionName = "Individuals",
-            model = "Baseline"
-        ), 
-        list(
-            functionName = "WriteProcessData", 
-            model = "Baseline"
-        )
-    )
-    
-    
-)
+### # A list of functions performing conversions of the projectDescription to ensure backward compatibilit### y:
+### #' 
+### #' @export
+### #' 
+### backwardCompatibility2.7 <- list(
+###     
+###     # 1. Move process between models:
+###     moveProcess = list(
+###         list(
+###             functionName = "ImpuetByAge", 
+###             model = "R", 
+###             newModel = "Baseline"
+###         )
+###     ), 
+###     
+###     # 2. Remove process: 
+###     removeProcess = list(
+###         list(
+###             functionName = "ReadProcessData", 
+###             model = "Baseline"
+###         ), 
+###         list(
+###             functionName = "WriteProcessData", 
+###             model = "Baseline"
+###         ), 
+###         list(
+###             functionName = "SumDensity", 
+###             model = "Baseline"
+###         ), 
+###         list(
+###             functionName = "saveProjectData", 
+###             model = "Analysis"
+###         )
+###     ), 
+###     
+###     # 3. Rename process:
+###     
+###     # 4. Split process:
+###     
+###     # 5. Join processes:
+###     joinProcess = list(
+###         list(
+###             functionNames = c(
+###                 "IndividualDataStations", 
+###                 "IndividualData"
+###             ), 
+###             newFunctionName = "Individuals",
+###             model = "Baseline"
+###         ), 
+###         list(
+###             functionName = "WriteProcessData", 
+###             model = "Baseline"
+###         )
+###     )
+###     
+###     
+### )
 
 
 
@@ -976,21 +974,21 @@ stratumpolygon2.7ToTable <- function(stratumpolygon) {
     return(stratumpolygonTable)
 }
 
-
-saveStoXMultipolygonWKT <- function(stratumpolygonTable, projectPath, stratumPolygonFileName = "stratumPolygon.txt") {
-    stratumpolygonFilePath <- file.path(
-        getProjectPaths(projectPath, "Input"), 
-        stratumPolygonFileName
-    )
-    
-    data.table::fwrite(
-        stratumpolygonTable[, c("polygonkey", "polygon")], 
-        stratumpolygonFilePath, 
-        col.names = FALSE
-    )
-    
-    return(stratumpolygonFilePath)
-}
+# Unused??
+#saveStoXMultipolygonWKT <- function(stratumpolygonTable, projectPath, stratumPolygonFileName = #"stratumPolygon.txt") {
+#    stratumpolygonFilePath <- file.path(
+#        getProjectPaths(projectPath, "input"), 
+#        stratumPolygonFileName
+#    )
+#    
+#    data.table::fwrite(
+#        stratumpolygonTable[, c("polygonkey", "polygon")], 
+#        stratumpolygonFilePath, 
+#        col.names = FALSE
+#    )
+#    
+#    return(stratumpolygonFilePath)
+#}
 
 
 copyStoXMultipolygonWKTFrom2.7 <- function(projectPath, stratumPolygonFileName = "stratumPolygon.txt") {
@@ -1002,7 +1000,7 @@ copyStoXMultipolygonWKTFrom2.7 <- function(projectPath, stratumPolygonFileName =
     stratumpolygonTable <- stratumpolygon2.7ToTable(projectList$processdata$stratumpolygon)
     # ... and write to file:
     stratumpolygonFilePath <- file.path(
-        getProjectPaths(projectPath, "Input"), 
+        getProjectPaths(projectPath, "input"), 
         stratumPolygonFileName
     )
     data.table::fwrite(
@@ -1060,8 +1058,6 @@ convertStoX2.7To3 <- function(projectPath2.7, projectPath3, newProjectPath3 = NU
     
     closeProject(newProjectPath3)
 }
-
-
 
 redefineAcousticPSUFrom2.7 <- function(projectPath2.7, projectPath3, newProjectPath3 = NULL, ow = FALSE) {
     
@@ -1136,7 +1132,7 @@ redefineAcousticPSUFrom2.7 <- function(projectPath2.7, projectPath3, newProjectP
     return(unname(newProjectPath3))
 }
 
-updateInputDataFiles <- function(projectPath, inputDataTypes = c("Acoustic", "Biotic", "Landing")) {
+updateInputDataFiles <- function(projectPath, inputDataTypes = c("acoustic", "biotic", "landing")) {
     openProject(projectPath)
     baselineTable <- getProcessAndFunctionNames(projectPath, "baseline")
     
@@ -1259,7 +1255,6 @@ subsetNMDBiotic <- function(NMDBioticFile, newNMDBioticFile, stationsIndex = 1) 
     )
 }
 
-
 subsetNMDEchosounder <- function(NMDEchosounderFile, newNMDEchosounderFile, distanceIndex = 1) {
     subsetXMLFile(
         XMLFile = NMDEchosounderFile, 
@@ -1268,6 +1263,7 @@ subsetNMDEchosounder <- function(NMDEchosounderFile, newNMDEchosounderFile, dist
         index = distanceIndex
     )
 }
+
 subsetXMLFile <- function(XMLFile, newXMLFile, tag = "fishstation", index = 1) {
     # Read the lines of the file:
     l <- readLines(XMLFile)

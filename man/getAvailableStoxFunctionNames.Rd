@@ -7,7 +7,7 @@
 getAvailableStoxFunctionNames(modelName)
 }
 \arguments{
-\item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
+\item{modelName}{The name of the model(s) (possible values are "baseline", "analysis" and "report").}
 }
 \description{
 Function returning the names of the StoX functions available for a model:

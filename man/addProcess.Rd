@@ -17,11 +17,17 @@ addProcess(
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
-\item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
+\item{modelName}{The name of the model(s) (possible values are "baseline", "analysis" and "report").}
 
 \item{values}{A list of values to assign to the process, such as list(processName = "ReadBiotic", functionName = "RstoxBase::ReadBiotic").}
 
 \item{returnProcessTable}{Logical: If TRUE return the process table.}
+
+\item{archive}{Logical: Should the project memory state be archived using \code{archiveProject}? This stores one step in the history.}
+
+\item{add.defaults}{Logical: If TRUE defaults of a function are added when setting the function of the process.}
+
+\item{strict}{Logical: If FALSE a proposed process nname is changed to the default new process name, whereas TRUE throws an error.}
 }
 \description{
 Add a StoX process to a model.

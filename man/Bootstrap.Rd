@@ -28,13 +28,16 @@ Bootstrap(
 
 \item{UseOutputData}{Logical: If TRUE use the existing output file from the function.}
 
-\item{NumberOfCores}{The number of cores to use for parallel processing. A copy of fthe project is created in tempdir() for each core.}
+\item{NumberOfCores}{The number of cores to use for parallel processing. A copy of the project is created in tempdir() for each core, also when using only one core. Note that this will require disc space equivalent to the \code{NumberOfCores} time the size of the project folder (excluding the output/analysis/Bootstrap folder, which will be deleted before copies are made).}
 
 \item{BaselineSeedTable}{A table of ProcessName and Seed, givng the seed to use for the Baseline processes that requires a Seed parameter.}
 }
 \value{
-A list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.
+A \code{\link{BootstrapData}} object, which is a list of the RstoxData \code{\link[RstoxData]{DataTypes}} and RstoxBase \code{\link[RstoxBase]{DataTypes}}.
 }
 \description{
 Run a subset of the baseline model a number of times after resampling e.g. Hauls in each Stratum, EDUSs in each Stratum.
+}
+\details{
+A copy of the project is made for each core given by \code{NumberOfCores}. In the case that NumberOfCores == 1, this is still done for safety.
 }

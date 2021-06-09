@@ -16,20 +16,33 @@ runProcess(
   purge.processData = FALSE,
   replaceArgs = list(),
   replaceData = NULL,
-  output.file.type = c("default", "text", "RData", "rds"),
   try = TRUE
 )
 }
 \arguments{
 \item{projectPath}{The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.}
 
-\item{modelName}{The name of the model (one of "baseline", "analysis" and "report").}
+\item{modelName}{The name of the model(s) (possible values are "baseline", "analysis" and "report").}
 
 \item{processID}{The ID of the process.}
 
+\item{msg}{Logical: If FALSE no messages are printed to console (except possibly for extremely important ones).}
+
+\item{saveProcessData}{Logical: If TRUE save the output as ProcessData, if the proecss is a ProcessData process.}
+
 \item{returnProcessOutput}{Logical: If TRUE return the process output immediately after it is available. Used to get filter options.}
 
+\item{fileOutput}{Logical: If TRUE save the output as a text file (or other format specified by the class or attributes of the output). If NULL (defafult) use the corresponding parameter of the process.}
+
+\item{setUseProcessDataToTRUE}{Logical: If TRUE set the UseProcessData function parameter to TRUE in the process memory after execution, if the process is a ProcessData process.}
+
+\item{purge.processData}{Logical: If TRUE replace process data entirely.}
+
+\item{replaceArgs}{A list of function parameters and inputs to override.}
+
 \item{replaceData}{Either the data to replace the process output by, or a list of two elements \code{FunctionName} and \code{MoreArgs}, giving a function to apply to the output from the process with additional arguments stored in \code{MoreArgs}. The function is applied using \code{\link{do.call}}, with \code{args} being a list with the process output first, followed by the \code{MoreArgs}.}
+
+\item{try}{Logical: If FALSE do not run the process in a \code{tryCatch}. Set this to FALSE when debugging, as the \code{tryCatch} masks the errors in the \code{traceback}.}
 }
 \description{
 Run one process

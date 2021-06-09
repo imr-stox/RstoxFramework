@@ -370,7 +370,12 @@ installOfficialRstoxPackages <- function(
 
 
 getSupportedRVersions <- function() {
-    supportedRVersion <- getRstoxFrameworkDefinitions("supportedRVersion")
+    supportedRVersion <- c(
+        "4.1", 
+        "4.0", 
+        "3.6"
+        )
+    #supportedRVersion <- getRstoxFrameworkDefinitions("supportedRVersion")
     twoDigitRVersion <- getTwoDigitRVersion()
     supportedRVersion <- supportedRVersion[supportedRVersion <= twoDigitRVersion]
     return(supportedRVersion)

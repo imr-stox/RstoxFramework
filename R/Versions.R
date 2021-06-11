@@ -391,8 +391,12 @@ getDependencies <- function(packageName, packageTable = NULL, repos = "https://c
     
     # Remove other starting patterns:
     warning("1111111111111111111111111111111111")
+    warning(paste(class(dependentPackages), collapse = ", "))
+    warning("1111111111111111111111111111111111bbbbbbbbbbbbbbbbbbbbbbbbbbbb")
     warning(paste(dependentPackages, collapse = ", "))
     warning("22222222222222222222222222222222")
+    warning(paste(class(excludeStartingWith), collapse = ", "))
+    warning("22222222222222222222222222222222bbbbbbbbbbbbbbbbbbbbbbbbbbbb")
     warning(paste(excludeStartingWith, collapse = ", "))
     warning("333333333333333333333333333333333")
     #if(length(excludeStartingWith)) {

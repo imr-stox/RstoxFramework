@@ -390,8 +390,8 @@ getDependencies <- function(packageName, packageTable = NULL, repos = "https://c
     }
     
     # Remove other starting patterns:
-    warnings(paste(dependentPackages, collapse = ", "))
-    warnings(paste(excludeStartingWith, collapse = ", "))
+    warning(paste(dependentPackages, collapse = ", "))
+    warning(paste(excludeStartingWith, collapse = ", "))
     #if(length(excludeStartingWith)) {
         for(pattern in excludeStartingWith) {
             dependentPackages <- subset(dependentPackages, !startsWith(dependentPackages, pattern))

@@ -14,7 +14,6 @@
 #' @param officialRstoxPackageVersionsFile The path to the file holding the link between StoX GUI version and Rstox package versions.
 #' @param destdir The directory to download binaries to, defaulted to NA which implies tempdir().
 #' @param platform The platform to download binaries for, defaulted to the current platform, but with the option to download for other platforms (possible values are "windows" and "macosx").
-#' @param twoDigitRVersion The two digit R version to downoad binaries for, defaulted to the current version, but with the option to download for other versions such as 3.6.
 #' @param packageName The packages considered official Rstox pakcages, "RstoxFramework","RstoxBase" and "RstoxData".
 #' @param toJSON Logical: If TRUE output a JSON string.
 #' @param list.out Logical: If TRUE wrap the output of \code{getOfficialRstoxPackageVersion} in a list with packageName and version.
@@ -74,7 +73,6 @@ installOfficialRstoxPackagesWithDependencies <- function(
     lib = NULL, 
     sort = FALSE, 
     platform = NA, 
-    twoDigitRVersion = NA, 
     toJSON = FALSE, 
     quiet = FALSE
 ) {
@@ -102,6 +100,7 @@ installOfficialRstoxPackagesWithDependencies <- function(
     
     #### # Step 1: Identify the Rstox-packages available for the current R version and lower supported versions: ####
     # Get the table of Rstox packages to be installed, for the current R version or lower supported R versions if the requested package version 
+    twoDigitRVersion <- getTwoDigitRVersion()
     officialRstoxPackagesInfo <- getOfficialRstoxPackagesInfo(
         StoXGUIVersion = StoXGUIVersion, 
         officialRstoxPackageVersionsFile = officialRstoxPackageVersionsFile, 
@@ -123,10 +122,16 @@ installOfficialRstoxPackagesWithDependencies <- function(
     
     # Step 3: Install the dependencies
     toInstall <- remotes::package_deps(dependencies, dependencies = c("Depends", "Imports", "LinkingTo"), repos = dependency.repos, type = "binary")
-    toInstall <- subset(toInstall, toInstall$diff != 0)
+    # Install only packages with lower loacllu installed version:
+    toInstall <- subset(toInstall, toInstall$diff < 0)
     
     #removeExistingPackages(toInstall$package, lib = lib)
-        
+    # Locate lockced folders:
+    dirs <- list.dirs(lib, recursive = FALSE)
+    lockedDirs <- subset(dirs, startsWith(basename(dirs), "00LOCK"))
+    if(length(lockedDirs)) {
+        warning("The directory ", lib, " contains locked folders (name starting with 00LOCK). If problems are expreienced during installation of the R pacckcages, you may try deleting such folders manually.")
+    }
     utils::install.packages(toInstall$package, repos = dependency.repos)
     
     # Step 4: Install the Rstox packages
@@ -145,7 +150,6 @@ installOfficialRstoxPackagesWithDependencies <- function(
     if(length(lockedDirs)) {
         warning("The directory ", lib, " contains locked folders (name starting with 00LOCK). If problems are expreienced during installation of the R pacckcages, you may try deleting such folders manually.")
     }
-    
     # Then install into first of .libPaths():
     installedRstoxPackages <- utils::install.packages(binaryLocalFiles, type = "binary", repos = NULL, quiet = quiet, lib = lib)
     
@@ -827,19 +831,27 @@ getOfficialRstoxPackagesInfo <- function(
         ), 
         SIMPLIFY = FALSE
     )
+    buildRVersion <- rep(supportedRVersion, sapply(binaries, NROW))
     binaries <- do.call(rbind, binaries)
+    binaries$buildRVersion <- buildRVersion
     
     # The followinng was slow, as it actually downloads:
     #suppressWarnings(URLExists <- lapply(binaries$path, tryDownload))
     #URLExists <- URLExists %in% 0
     # Check that the URLs exist and subset to only those that exist:
     URLExists <- RCurl::url.exists(binaries$path)
-    binaries <- binaries[URLExists]
+    binaries <- binaries[URLExists, ]
     
     # Get the latest possible:
     binaries <- binaries[!duplicated(binaries$Package), ]
     if(!all(officialRstoxPackageName %in% binaries$Package)) {
         stop("The following Rstox packages could not be found: ", paste(setdiff(officialRstoxPackageName, binaries$Package), collapse = ", "))
+    }
+    
+    # Give a warning if the buildRVersion not identical to the requested:
+    notIdenticalTwoDigitRVersion <- binaries$buildRVersion != twoDigitRVersion
+    if(any(notIdenticalTwoDigitRVersion)) {
+        warning("The following Rstox packages were built under older (two digit) R versions than the current (R ", twoDigitRVersion, "): ", paste0(binaries$Package[notIdenticalTwoDigitRVersion], " v", binaries$Version[notIdenticalTwoDigitRVersion], " (R ", binaries$buildRVersion[notIdenticalTwoDigitRVersion],  ")", collapse = ", "))
     }
     
     return(binaries)

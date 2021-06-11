@@ -25,7 +25,6 @@ installOfficialRstoxPackagesWithDependencies(
   lib = NULL,
   sort = FALSE,
   platform = NA,
-  twoDigitRVersion = NA,
   toJSON = FALSE,
   quiet = FALSE
 )
@@ -63,8 +62,6 @@ getOfficialRstoxPackageVersion(
   }
 
 \item{platform}{The platform to download binaries for, defaulted to the current platform, but with the option to download for other platforms (possible values are "windows" and "macosx").}
-
-\item{twoDigitRVersion}{The two digit R version to downoad binaries for, defaulted to the current version, but with the option to download for other versions such as 3.6.}
 
 \item{toJSON}{Logical: If TRUE output a JSON string.}
 

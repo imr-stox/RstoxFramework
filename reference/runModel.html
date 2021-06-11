@@ -58,7 +58,6 @@
 
 
 
-
   
 
   
@@ -81,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.22</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.27</span>
       </span>
     </div>
 
@@ -129,6 +128,8 @@
   processes <span class='op'>=</span> <span class='cn'>NULL</span>,
   startProcess <span class='op'>=</span> <span class='fl'>1</span>,
   endProcess <span class='op'>=</span> <span class='cn'>Inf</span>,
+  drop.datatype <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  unlistDepth2 <span class='op'>=</span> <span class='cn'>FALSE</span>,
   run <span class='op'>=</span> <span class='cn'>TRUE</span>,
   save <span class='op'>=</span> <span class='cn'>TRUE</span>,
   force.restart <span class='op'>=</span> <span class='cn'>FALSE</span>,
@@ -151,15 +152,27 @@
     </tr>
     <tr>
       <th>modelName</th>
-      <td><p>xx</p></td>
+      <td><p>The name of the model(s) (possible values are "baseline", "analysis" and "report").</p></td>
+    </tr>
+    <tr>
+      <th>processes</th>
+      <td><p>The name of the process(es).</p></td>
     </tr>
     <tr>
       <th>startProcess</th>
-      <td><p>xx</p></td>
+      <td><p>The process index, name or ID at which to start and stop the model run.</p></td>
     </tr>
     <tr>
       <th>endProcess</th>
-      <td><p>Integer value speicfying the</p></td>
+      <td><p>The process index, name or ID at which to start and stop the model run.</p></td>
+    </tr>
+    <tr>
+      <th>drop.datatype</th>
+      <td><p>Logical: If TRUE, drop the top level of the output list if it has length 1 and that single element is named by the datatype name.</p></td>
+    </tr>
+    <tr>
+      <th>unlistDepth2</th>
+      <td><p>Logical: Related to <code>drop.datatype</code>, but setting this to TRUE unlists output data that are nested in 2 levels, such as output from <code><a href='https://rdrr.io/pkg/RstoxData/man/ReadBiotic.html'>ReadBiotic</a></code>, which outputs a set of tables for each input file. Using unlistDepth2 = TRUE puts all these tables in one list, and uses the concatenation of the file names and the table name separated by underscore. This is how it is displayed in the StoX GUI when selecting "View output".</p></td>
     </tr>
     <tr>
       <th>run</th>
@@ -172,6 +185,38 @@
     <tr>
       <th>force.restart</th>
       <td><p>Logical: If TRUE restart the model before running.</p></td>
+    </tr>
+    <tr>
+      <th>replaceDataList</th>
+      <td><p>A list named by the processes to replace output data for. See <code><a href='runProcess.html'>runProcess</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>replaceArgs</th>
+      <td><p>A list of function parameters and inputs to override.</p></td>
+    </tr>
+    <tr>
+      <th>fileOutput</th>
+      <td><p>Logical: If TRUE save the output as a text file (or other format specified by the class or attributes of the output). If NULL (defafult) use the corresponding parameter of the process.</p></td>
+    </tr>
+    <tr>
+      <th>setUseProcessDataToTRUE</th>
+      <td><p>Logical: If TRUE set the UseProcessData function parameter to TRUE in the process memory after execution, if the process is a ProcessData process.</p></td>
+    </tr>
+    <tr>
+      <th>purge.processData</th>
+      <td><p>Logical: If TRUE replace process data entirely.</p></td>
+    </tr>
+    <tr>
+      <th>try</th>
+      <td><p>Logical: If FALSE do not run the process in a <code>tryCatch</code>. Set this to FALSE when debugging, as the <code>tryCatch</code> masks the errors in the <code>traceback</code>.</p></td>
+    </tr>
+    <tr>
+      <th>close</th>
+      <td><p>Logical: If TRUE close the project after running and getting the output.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p><code>replaceArgs</code> can also be given directly.</p></td>
     </tr>
     </table>
 

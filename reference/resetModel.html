@@ -58,7 +58,6 @@
 
 
 
-
   
 
   
@@ -81,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.22</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.27</span>
       </span>
     </div>
 
@@ -130,6 +129,7 @@
   processDirty <span class='op'>=</span> <span class='cn'>FALSE</span>,
   shift <span class='op'>=</span> <span class='fl'>0</span>,
   returnProcessTable <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  delete <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"memory"</span>, <span class='st'>"text"</span><span class='op'>)</span>,
   purgeOutputFiles <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></code></pre></div>
 
@@ -142,7 +142,7 @@
     </tr>
     <tr>
       <th>modelName</th>
-      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
+      <td><p>The name of the model(s) (possible values are "baseline", "analysis" and "report").</p></td>
     </tr>
     <tr>
       <th>processID</th>
@@ -155,6 +155,18 @@
     <tr>
       <th>shift</th>
       <td><p>The position relative to the current memory status to un/redo to.</p></td>
+    </tr>
+    <tr>
+      <th>returnProcessTable</th>
+      <td><p>Logical: If TRUE return the process table (much used in functions used by the GUI).</p></td>
+    </tr>
+    <tr>
+      <th>delete</th>
+      <td><p>A character vector naming which elements to delete, where possible values are "memory", for deleting the output files that are stored as memory files, and "text" to delete the output text files.</p></td>
+    </tr>
+    <tr>
+      <th>purgeOutputFiles</th>
+      <td><p>Logical: If the model has not been run, should the output text files be deleted first. This was used at an earlier stage, when there was not complete control of how process output was deleted, and data were frequently not deleted eevn though the process was deleted.</p></td>
     </tr>
     </table>
 

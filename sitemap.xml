@@ -49,16 +49,25 @@
     <loc>/reference/RstoxFramework.html</loc>
   </url>
   <url>
+    <loc>/reference/StoXGUI_interfaces.html</loc>
+  </url>
+  <url>
     <loc>/reference/Stratum.html</loc>
   </url>
   <url>
     <loc>/reference/addProcess.html</loc>
   </url>
   <url>
+    <loc>/reference/compareProjectToStoredOutputFiles.html</loc>
+  </url>
+  <url>
     <loc>/reference/convertStoX2.7To3.html</loc>
   </url>
   <url>
     <loc>/reference/duplicateProcess.html</loc>
+  </url>
+  <url>
+    <loc>/reference/estimateTimeOfProcesses.html</loc>
   </url>
   <url>
     <loc>/reference/expandDT.html</loc>
@@ -68,9 +77,6 @@
   </url>
   <url>
     <loc>/reference/fixedWidthTable.html</loc>
-  </url>
-  <url>
-    <loc>/reference/formatProcess.html</loc>
   </url>
   <url>
     <loc>/reference/general_arguments.html</loc>
@@ -85,19 +91,7 @@
     <loc>/reference/getAvailableStoxFunctionNames.html</loc>
   </url>
   <url>
-    <loc>/reference/getFilterOptionsAll.html</loc>
-  </url>
-  <url>
-    <loc>/reference/getNonRstoxDependencies.html</loc>
-  </url>
-  <url>
-    <loc>/reference/getOfficialRstoxPackageVersion.html</loc>
-  </url>
-  <url>
-    <loc>/reference/getParameterTableInfo.html</loc>
-  </url>
-  <url>
-    <loc>/reference/getParameterVectorInfo.html</loc>
+    <loc>/reference/getModelData.html</loc>
   </url>
   <url>
     <loc>/reference/getProcessOutput.html</loc>
@@ -106,10 +100,19 @@
     <loc>/reference/getProcessOutputFiles.html</loc>
   </url>
   <url>
+    <loc>/reference/getProcessOutputTableNames.html</loc>
+  </url>
+  <url>
     <loc>/reference/getProcessTable.html</loc>
   </url>
   <url>
     <loc>/reference/getProjectPaths.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getResamplableProcesses.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getResampleFunctions.html</loc>
   </url>
   <url>
     <loc>/reference/getRstoxFrameworkDefinitions.html</loc>
@@ -121,7 +124,16 @@
     <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/installOfficialRstoxPackagesWithDependencies.html</loc>
+    <loc>/reference/initiateRstoxFramework.html</loc>
+  </url>
+  <url>
+    <loc>/reference/installPackages.html</loc>
+  </url>
+  <url>
+    <loc>/reference/json2expression.html</loc>
+  </url>
+  <url>
+    <loc>/reference/list2expression.html</loc>
   </url>
   <url>
     <loc>/reference/modifyProcess.html</loc>
@@ -130,22 +142,31 @@
     <loc>/reference/parseParameter.html</loc>
   </url>
   <url>
+    <loc>/reference/processPropertyFormats.html</loc>
+  </url>
+  <url>
     <loc>/reference/progressOfProcesses.html</loc>
   </url>
   <url>
     <loc>/reference/purgeOutput.html</loc>
   </url>
   <url>
+    <loc>/reference/readModelData.html</loc>
+  </url>
+  <url>
     <loc>/reference/readProcessOutputFile.html</loc>
   </url>
   <url>
-    <loc>/reference/resampleDataBy.html</loc>
+    <loc>/reference/rearrangeProcesses.html</loc>
+  </url>
+  <url>
+    <loc>/reference/removeProcess.html</loc>
   </url>
   <url>
     <loc>/reference/resetModel.html</loc>
   </url>
   <url>
-    <loc>/reference/runFunction.JSON.html</loc>
+    <loc>/reference/runFunction.html</loc>
   </url>
   <url>
     <loc>/reference/runModel.html</loc>
@@ -163,13 +184,16 @@
     <loc>/reference/runProjects.html</loc>
   </url>
   <url>
-    <loc>/reference/setProcessPropertyValue.html</loc>
-  </url>
-  <url>
     <loc>/reference/stopProcesses.html</loc>
   </url>
   <url>
+    <loc>/reference/stoxFunctionAttributes.html</loc>
+  </url>
+  <url>
     <loc>/reference/unReDoProject.html</loc>
+  </url>
+  <url>
+    <loc>/reference/unzipProject.html</loc>
   </url>
   <url>
     <loc>/reference/writeProjectDescriptionJSON.html</loc>

@@ -58,7 +58,6 @@
 
 
 
-
   
 
   
@@ -81,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.22</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.27</span>
       </span>
     </div>
 
@@ -133,12 +132,12 @@
   saveProcessData <span class='op'>=</span> <span class='cn'>TRUE</span>,
   Application <span class='op'>=</span> <span class='va'>R.version.string</span>,
   force.restart <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  returnProcessOutput <span class='op'>=</span> <span class='cn'>FALSE</span>,
   fileOutput <span class='op'>=</span> <span class='cn'>NULL</span>,
   setUseProcessDataToTRUE <span class='op'>=</span> <span class='cn'>TRUE</span>,
   purge.processData <span class='op'>=</span> <span class='cn'>FALSE</span>,
   replaceDataList <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
   replaceArgs <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
-  output.file.type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"default"</span>, <span class='st'>"text"</span>, <span class='st'>"RData"</span>, <span class='st'>"rds"</span><span class='op'>)</span>,
   try <span class='op'>=</span> <span class='cn'>TRUE</span>,
   prugeStopFile <span class='op'>=</span> <span class='cn'>FALSE</span>,
   <span class='va'>...</span>
@@ -153,15 +152,71 @@
     </tr>
     <tr>
       <th>modelName</th>
-      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
+      <td><p>The name of the model(s) (possible values are "baseline", "analysis" and "report").</p></td>
+    </tr>
+    <tr>
+      <th>startProcess</th>
+      <td><p>The process index, name or ID at which to start and stop the model run.</p></td>
+    </tr>
+    <tr>
+      <th>endProcess</th>
+      <td><p>The process index, name or ID at which to start and stop the model run.</p></td>
+    </tr>
+    <tr>
+      <th>msg</th>
+      <td><p>Logical: If FALSE no messages are printed to console (except possibly for extremely important ones).</p></td>
+    </tr>
+    <tr>
+      <th>save</th>
+      <td><p>Logical: If TRUE save the project before closing. Default (NULL) is to ask the user whether to save the project before closing.</p></td>
+    </tr>
+    <tr>
+      <th>saveProcessData</th>
+      <td><p>Logical: If TRUE save the output as ProcessData, if the proecss is a ProcessData process.</p></td>
     </tr>
     <tr>
       <th>Application</th>
-      <td><p>A string naming the application (e.g. graphical user interface such as StoX) used to produce the description file.</p></td>
+      <td><p>A single string naming the application used when saving the project. Defaulted to R.version.string.</p></td>
+    </tr>
+    <tr>
+      <th>force.restart</th>
+      <td><p>Logical: If TRUE, start the processes even if the status file indicating that the model is being run exists. This is useuful when something crached in a preivous run, in which case the model is still appearing as running.</p></td>
+    </tr>
+    <tr>
+      <th>returnProcessOutput</th>
+      <td><p>Logical: If TRUE return the process output immediately after it is available. Used to get filter options.</p></td>
+    </tr>
+    <tr>
+      <th>fileOutput</th>
+      <td><p>Logical: If TRUE save the output as a text file (or other format specified by the class or attributes of the output). If NULL (defafult) use the corresponding parameter of the process.</p></td>
+    </tr>
+    <tr>
+      <th>setUseProcessDataToTRUE</th>
+      <td><p>Logical: If TRUE set the UseProcessData function parameter to TRUE in the process memory after execution, if the process is a ProcessData process.</p></td>
+    </tr>
+    <tr>
+      <th>purge.processData</th>
+      <td><p>Logical: If TRUE replace process data entirely.</p></td>
     </tr>
     <tr>
       <th>replaceDataList</th>
       <td><p>A list named by the processes to replace output data for. See <code><a href='runProcess.html'>runProcess</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>replaceArgs</th>
+      <td><p>A list of function parameters and inputs to override.</p></td>
+    </tr>
+    <tr>
+      <th>try</th>
+      <td><p>Logical: If FALSE do not run the process in a <code>tryCatch</code>. Set this to FALSE when debugging, as the <code>tryCatch</code> masks the errors in the <code>traceback</code>.</p></td>
+    </tr>
+    <tr>
+      <th>prugeStopFile</th>
+      <td><p>Logical: Should the file that signals that the model should be stopped be deleted if present before running? This parameter does not yet seem to in use by any other function.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p><code>replaceArgs</code> can also be given directly.</p></td>
     </tr>
     </table>
 

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get a template. — getTemplate • RstoxFramework</title>
+<title>Read the output files of a project — readModelData • RstoxFramework</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Get a template. — getTemplate" />
-<meta property="og:description" content="Get a template." />
+<meta property="og:title" content="Read the output files of a project — readModelData" />
+<meta property="og:description" content="This function reads all or some of the output files of a project, indicated by model and proccess names." />
 
 
 
@@ -113,26 +113,51 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get a template.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/Framework.R'><code>R/Framework.R</code></a></small>
-    <div class="hidden name"><code>getTemplate.Rd</code></div>
+    <h1>Read the output files of a project</h1>
+    <small class="dont-index">Source: <a href='https://github.com/StoXProject/RstoxFramework/blob/master/R/API.R'><code>R/API.R</code></a></small>
+    <div class="hidden name"><code>readModelData.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Get a template.</p>
+    <p>This function reads all or some of the output files of a project, indicated by model and proccess names.</p>
     </div>
 
-    <div class="ref-usage sourceCode"><pre class='sourceCode r'><code><span class='fu'>getTemplate</span><span class='op'>(</span><span class='va'>template</span><span class='op'>)</span></code></pre></div>
+    <div class="ref-usage sourceCode"><pre class='sourceCode r'><code><span class='fu'>readModelData</span><span class='op'>(</span>
+  <span class='va'>projectPath</span>,
+  modelName <span class='op'>=</span> <span class='cn'>NULL</span>,
+  processName <span class='op'>=</span> <span class='cn'>NULL</span>,
+  verifyFiles <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  unlist.models <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></code></pre></div>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>template</th>
-      <td><p>A string naming the template to use.</p></td>
+      <th>projectPath</th>
+      <td><p>The path to the StoX project, i.e., the folder of the project with the sub folders "input", "output" and "process". Can possibly be the path to a file inside the project folder.</p></td>
+    </tr>
+    <tr>
+      <th>modelName</th>
+      <td><p>The name of the model(s) (possible values are "baseline", "analysis" and "report").</p></td>
+    </tr>
+    <tr>
+      <th>processName</th>
+      <td><p>The name of the process(es).</p></td>
+    </tr>
+    <tr>
+      <th>verifyFiles</th>
+      <td><p>Logical: If TRUE verify that the files are from processes that exist in the project.</p></td>
+    </tr>
+    <tr>
+      <th>unlist.models</th>
+      <td><p>Logical: If TRUE unlist the top level so that all processes are in one list.</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>A list of model output.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

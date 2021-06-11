@@ -58,7 +58,6 @@
 
 
 
-
   
 
   
@@ -81,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.22</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.27</span>
       </span>
     </div>
 
@@ -163,7 +162,7 @@
     </tr>
     <tr>
       <th>NumberOfCores</th>
-      <td><p>The number of cores to use for parallel processing. A copy of fthe project is created in tempdir() for each core.</p></td>
+      <td><p>The number of cores to use for parallel processing. A copy of the project is created in tempdir() for each core, also when using only one core. Note that this will require disc space equivalent to the <code>NumberOfCores</code> time the size of the project folder (excluding the output/analysis/Bootstrap folder, which will be deleted before copies are made).</p></td>
     </tr>
     <tr>
       <th>BaselineSeedTable</th>
@@ -173,7 +172,10 @@
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A list of the RstoxData <code><a href='https://rdrr.io/pkg/RstoxData/man/DataTypes.html'>DataTypes</a></code> and RstoxBase <code><a href='https://rdrr.io/pkg/RstoxBase/man/DataTypes.html'>DataTypes</a></code>.</p>
+    <p>A <code><a href='BootstrapData.html'>BootstrapData</a></code> object, which is a list of the RstoxData <code><a href='https://rdrr.io/pkg/RstoxData/man/DataTypes.html'>DataTypes</a></code> and RstoxBase <code><a href='https://rdrr.io/pkg/RstoxBase/man/DataTypes.html'>DataTypes</a></code>.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>A copy of the project is made for each core given by <code>NumberOfCores</code>. In the case that NumberOfCores == 1, this is still done for safety.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

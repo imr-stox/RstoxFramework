@@ -57,7 +57,6 @@
 
 
 
-
   
 
   
@@ -80,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.22</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.27</span>
       </span>
     </div>
 
@@ -211,6 +210,12 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="StoXGUI_interfaces.html">getModelNames()</a></code> <code><a href="StoXGUI_interfaces.html">getModelInfo()</a></code> <code><a href="StoXGUI_interfaces.html">getInteractiveMode()</a></code> <code><a href="StoXGUI_interfaces.html">getInteractiveData()</a></code> <code><a href="StoXGUI_interfaces.html">getMapData()</a></code> <code><a href="StoXGUI_interfaces.html">getEDSUColours()</a></code> <code><a href="StoXGUI_interfaces.html">getStationColours()</a></code> <code><a href="StoXGUI_interfaces.html">getProcessPropertySheet()</a></code> <code><a href="StoXGUI_interfaces.html">setProcessPropertyValue()</a></code> <code><a href="StoXGUI_interfaces.html">getFunctionHelpAsHtml()</a></code> <code><a href="StoXGUI_interfaces.html">getObjectHelpAsHtml()</a></code> <code><a href="StoXGUI_interfaces.html">getFilterOptionsAll()</a></code> <code><a href="StoXGUI_interfaces.html">getParameterTableInfo()</a></code> <code><a href="StoXGUI_interfaces.html">getParameterVectorInfo()</a></code> </p>
+        </td>
+        <td><p>Get objects for use in the GUI</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="Stratum.html">addStratum()</a></code> <code><a href="Stratum.html">removeStratum()</a></code> <code><a href="Stratum.html">modifyStratum()</a></code> </p>
         </td>
         <td><p>Stratum manipulation</p></td>
@@ -223,6 +228,12 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="compareProjectToStoredOutputFiles.html">compareProjectToStoredOutputFiles()</a></code> </p>
+        </td>
+        <td><p>Function for comparing existing output files with the memory read using runProject()</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="convertStoX2.7To3.html">convertStoX2.7To3()</a></code> </p>
         </td>
         <td><p>Backward compabitibility actions:</p></td>
@@ -232,6 +243,12 @@
           <p><code><a href="duplicateProcess.html">duplicateProcess()</a></code> </p>
         </td>
         <td><p>Duplicate a StoX process.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="estimateTimeOfProcesses.html">estimateTimeOfProcesses()</a></code> </p>
+        </td>
+        <td><p>Get process progress</p></td>
       </tr><tr>
         
         <td>
@@ -250,12 +267,6 @@
           <p><code><a href="fixedWidthTable.html">fixedWidthTable()</a></code> </p>
         </td>
         <td><p>Function to convert data.table to fixed width:</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="formatProcess.html">formatProcess()</a></code> </p>
-        </td>
-        <td><p>Function to format a process as read from the project.json</p></td>
       </tr><tr>
         
         <td>
@@ -283,33 +294,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="getFilterOptionsAll.html">getFilterOptionsAll()</a></code> </p>
+          <p><code><a href="getModelData.html">getModelData()</a></code> </p>
         </td>
-        <td><p>GUI function: Get possible tables, operators and unique values for use in the filter expression builder.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getNonRstoxDependencies.html">getNonRstoxDependencies()</a></code> <code><a href="getNonRstoxDependencies.html">downloadNonRstoxDependencies()</a></code> </p>
-        </td>
-        <td><p>Function to get the non Rstox dependencies of a package</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getOfficialRstoxPackageVersion.html">getOfficialRstoxPackageVersion()</a></code> </p>
-        </td>
-        <td><p>Function to read the OfficialRstoxFrameworkVersions.txt file for the given StoX GUI version</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getParameterTableInfo.html">getParameterTableInfo()</a></code> </p>
-        </td>
-        <td><p>GUI function: Function to get the info required for populating a parameter table builder in the GUI</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getParameterVectorInfo.html">getParameterVectorInfo()</a></code> </p>
-        </td>
-        <td><p>GUI function: Function to get the info required for populating a parameter table builder in the GUI</p></td>
+        <td><p>Get output data from processes of a StoX model</p></td>
       </tr><tr>
         
         <td>
@@ -325,6 +312,12 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="getProcessOutputTableNames.html">getProcessOutputTableNames()</a></code> </p>
+        </td>
+        <td><p>Get the names of the output tables of a process</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="getProcessTable.html">getProcessTable()</a></code> <code><a href="getProcessTable.html">scanForModelError()</a></code> <code><a href="getProcessTable.html">getProcessesSansProcessData()</a></code> <code><a href="getProcessTable.html">getProcessAndFunctionNames()</a></code> </p>
         </td>
         <td><p>Functions to get the process table of a model.</p></td>
@@ -334,6 +327,18 @@
           <p><code><a href="getProjectPaths.html">getProjectPaths()</a></code> </p>
         </td>
         <td><p>This function gets the paths defined by <code>initiateRstoxFramework</code>.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getResamplableProcesses.html">getResamplableProcesses()</a></code> </p>
+        </td>
+        <td><p>Utility function for processPropertyFormats. This is exported in order for processPropertyFormats to be albe to use it:</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getResampleFunctions.html">getResampleFunctions()</a></code> </p>
+        </td>
+        <td><p>Utility function for processPropertyFormats. This is exported in order for processPropertyFormats to be albe to use it:</p></td>
       </tr><tr>
         
         <td>
@@ -349,9 +354,27 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="installOfficialRstoxPackagesWithDependencies.html">installOfficialRstoxPackagesWithDependencies()</a></code> </p>
+          <p><code><a href="initiateRstoxFramework.html">initiateRstoxFramework()</a></code> </p>
         </td>
-        <td><p>Function to download all official Rstox packages and their CRAN dependencies</p></td>
+        <td><p>Definitions stored in the RstoxFramework environment</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="installPackages.html">getNonRstoxDependencies()</a></code> <code><a href="installPackages.html">installOfficialRstoxPackagesWithDependencies()</a></code> <code><a href="installPackages.html">getOfficialRstoxPackageVersion()</a></code> </p>
+        </td>
+        <td><p>Tools to download and install Rstox packages and dependen packages.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="json2expression.html">json2expression()</a></code> </p>
+        </td>
+        <td><p>Function to convert from json to R expression:</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="list2expression.html">list2expression()</a></code> </p>
+        </td>
+        <td><p>Function to convert from R list to R expression:</p></td>
       </tr><tr>
         
         <td>
@@ -367,9 +390,15 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="processPropertyFormats.html">processPropertyFormats</a></code> </p>
+        </td>
+        <td><p>Process property formats for RstoxFramework</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="progressOfProcesses.html">progressOfProcesses()</a></code> </p>
         </td>
-        <td><p>Get bootstrap progress</p></td>
+        <td><p>Get process progress</p></td>
       </tr><tr>
         
         <td>
@@ -379,15 +408,27 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="readModelData.html">readModelData()</a></code> </p>
+        </td>
+        <td><p>Read the output files of a project</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="readProcessOutputFile.html">readProcessOutputFile()</a></code> </p>
         </td>
         <td><p>Function to read a single process output file, possibly by pages and in flattened and pretty view:</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="resampleDataBy.html">resampleDataBy()</a></code> </p>
+          <p><code><a href="rearrangeProcesses.html">rearrangeProcesses()</a></code> </p>
         </td>
-        <td><p>Resamples StoX data</p></td>
+        <td><p>Rearrange processes of a StoX model.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="removeProcess.html">removeProcess()</a></code> </p>
+        </td>
+        <td><p>Remove a StoX process</p></td>
       </tr><tr>
         
         <td>
@@ -397,9 +438,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="runFunction.JSON.html">runFunction.JSON()</a></code> </p>
+          <p><code><a href="runFunction.html">runFunction()</a></code> <code><a href="runFunction.html">runFunction.JSON()</a></code> </p>
         </td>
-        <td><p>This function may be used in the GUI.</p></td>
+        <td><p>General functions to run a function of an Rstox package, modeled by do.call().</p></td>
       </tr><tr>
         
         <td>
@@ -433,21 +474,27 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="setProcessPropertyValue.html">setProcessPropertyValue()</a></code> </p>
-        </td>
-        <td><p>GUI function: Set procecss properties.</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="stopProcesses.html">stopProcesses()</a></code> </p>
         </td>
         <td><p>Stop runProcesses().</p></td>
       </tr><tr>
         
         <td>
+          <p><code><a href="stoxFunctionAttributes.html">stoxFunctionAttributes</a></code> </p>
+        </td>
+        <td><p>A list of the attributes of the exported StoX functions:</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="unReDoProject.html">unReDoProject()</a></code> </p>
         </td>
         <td><p>Function to undo or redo, i.e., reset the current project description file and change the indices. There will be separate GUI functions for undo and redo:</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="unzipProject.html">unzipProject()</a></code> </p>
+        </td>
+        <td><p>Function for unzipping a zipped StoX project</p></td>
       </tr><tr>
         
         <td>

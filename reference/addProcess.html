@@ -58,7 +58,6 @@
 
 
 
-
   
 
   
@@ -81,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">RstoxFramework</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.22</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.27</span>
       </span>
     </div>
 
@@ -142,7 +141,7 @@
     </tr>
     <tr>
       <th>modelName</th>
-      <td><p>The name of the model (one of "baseline", "analysis" and "report").</p></td>
+      <td><p>The name of the model(s) (possible values are "baseline", "analysis" and "report").</p></td>
     </tr>
     <tr>
       <th>values</th>
@@ -151,6 +150,18 @@
     <tr>
       <th>returnProcessTable</th>
       <td><p>Logical: If TRUE return the process table.</p></td>
+    </tr>
+    <tr>
+      <th>archive</th>
+      <td><p>Logical: Should the project memory state be archived using <code>archiveProject</code>? This stores one step in the history.</p></td>
+    </tr>
+    <tr>
+      <th>add.defaults</th>
+      <td><p>Logical: If TRUE defaults of a function are added when setting the function of the process.</p></td>
+    </tr>
+    <tr>
+      <th>strict</th>
+      <td><p>Logical: If FALSE a proposed process nname is changed to the default new process name, whereas TRUE throws an error.</p></td>
     </tr>
     </table>
 

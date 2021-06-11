@@ -20,11 +20,11 @@ installOfficialRstoxPackagesWithDependencies(
   officialRstoxPackageVersionsFile,
   destdir = NA,
   Rstox.repos = "https://stoxproject.github.io/repo",
-  download.repos = "https://cloud.r-project.org",
+  dependency.repos = "https://cloud.r-project.org",
   dependencyTypes = NA,
+  lib = NULL,
   sort = FALSE,
   platform = NA,
-  skip.identical = FALSE,
   twoDigitRVersion = NA,
   toJSON = FALSE,
   quiet = FALSE
@@ -35,7 +35,6 @@ getOfficialRstoxPackageVersion(
   officialRstoxPackageVersionsFile = system.file("versions",
     "OfficialRstoxFrameworkVersions.txt", package = "RstoxFramework"),
   packageName = c("RstoxFramework", "RstoxBase", "RstoxData"),
-  include.optional = FALSE,
   toJSON = FALSE,
   list.out = FALSE
 )
@@ -55,11 +54,15 @@ getOfficialRstoxPackageVersion(
 
 \item{destdir}{The directory to download binaries to, defaulted to NA which implies tempdir().}
 
-\item{download.repos}{The repository to download from.}
+\item{dependency.repos}{The repository to download from.}
+
+\item{lib}{
+    character vector giving the library directories where to
+    install the packages.  Recycled as needed.  If missing, defaults to
+    the first element of \code{\link{.libPaths}()}.
+  }
 
 \item{platform}{The platform to download binaries for, defaulted to the current platform, but with the option to download for other platforms (possible values are "windows" and "macosx").}
-
-\item{skip.identical}{Logical: If TRUE do not install packages that are already installed with the exact same version.}
 
 \item{twoDigitRVersion}{The two digit R version to downoad binaries for, defaulted to the current version, but with the option to download for other versions such as 3.6.}
 
@@ -70,8 +73,6 @@ getOfficialRstoxPackageVersion(
     passed to \code{\link[utils]{available.packages}()} in case that is called, on
     purpose.
   }
-
-\item{include.optional}{Logical: If TRUE inclcude optional packages. Currently not used.}
 
 \item{list.out}{Logical: If TRUE wrap the output of \code{getOfficialRstoxPackageVersion} in a list with packageName and version.}
 }

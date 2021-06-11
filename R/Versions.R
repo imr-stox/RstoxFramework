@@ -390,9 +390,14 @@ getDependencies <- function(packageName, packageTable = NULL, repos = "https://c
     }
     
     # Remove other starting patterns:
-    for(pattern in excludeStartingWith) {
-        dependentPackages <- subset(dependentPackages, !startsWith(dependentPackages, pattern))
-    }
+    warnings(paste(dependentPackages, collapse = ", "))
+    warnings(paste(excludeStartingWith, collapse = ", "))
+    #if(length(excludeStartingWith)) {
+        for(pattern in excludeStartingWith) {
+            dependentPackages <- subset(dependentPackages, !startsWith(dependentPackages, pattern))
+        }
+    #}
+    
     
     dependentPackages <- unique(dependentPackages)
     if(sort) {

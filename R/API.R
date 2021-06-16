@@ -393,8 +393,11 @@ readStoxOutputFile <- function(path) {
     else if(tolower(ext) %in% c("json", "geojson")) {
         output <- reasdGeoJSON(path)
     }
-    else if(tolower(ext) == "txt") {
-        output <- data.table::fread(path, na.strings = c("NA", ""), tz = "UTC", encoding = "UTF-8")
+    else if(tolower(ext) %in% "txt") {
+        # Use "" as NA string, but do not inclcude "NA" as NA string, as "" is used when writing the data:
+        #output <- data.table::fread(path, na.strings = c("NA", ""), tz = "UTC", encoding = "UTF-8")
+        output <- data.table::fread(path, na.strings = "", tz = "UTC", encoding = "UTF-8")
+        
         # If here are any keys that are time (such as LogKey of the StoxAcoustic format), convert these to character with 3 digits:
         areKeys <- endsWith(names(output), "Key")
         areDateTime <- sapply(output, firstClass) %in% "POSIXct"
@@ -404,6 +407,10 @@ readStoxOutputFile <- function(path) {
                 output[, (col) := format(get(col), format = "%Y-%m-%dT%H:%M:%OS3Z")]
             }
         }
+    }
+    else if(tolower(ext) %in% "csv") {
+        # Use "" as NA string, but do not inclcude "NA" as NA string, as "" is used when writing the data:
+        output <- unname(as.matrix(utils::read.csv(path, encoding = "UTF-8", header = FALSE, na.strings = c(""))))
     }
     else if(tolower(ext) == "nc") {
         stop("NetCDF4 file not yet implemented.")

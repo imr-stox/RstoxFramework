@@ -721,9 +721,9 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     projectPath_copy <- file.path(tempdir(), paste0(basename(projectPath), "_copy"))
     temp <- copyProject(projectPath, projectPath_copy, ow = TRUE)
     
-    
+    print(projectPath_copy)
     openProject(projectPath_copy)
-    dat <- runProject(projectPath_copy, unlist.models = TRUE, drop.datatype = FALSE, unlistDepth2 = TRUE)
+    dat <- runProject(projectPath_copy, unlist.models = TRUE, drop.datatype = FALSE, unlistDepth2 = TRUE, close = TRUE)
     
     bioticFile <- system.file("test",  "biotic_2020821.xml", package = "RstoxFramework")
     exampleData <- StoxBiotic(ReadBiotic(bioticFile))
@@ -750,11 +750,14 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     # Check the actual data:
     data_equal <- list()
     
+    # Tests will fail for (1) strings "NA" that are written unquoted (as RstoxFramework do from objects of class data.table) and which are read as NA by data.table::fread, and (2) numbers stored as strings (e.g. software version numbers), which are strirpped of leading and trailing zeros by data.table::fread. Thus it is adivced to not compare CESAcocustic().
+    
     for(name in names(dat_orig)) {
         data_equal[[name]] <- list()
         for(subname in names(dat_orig[[name]])) {
             if(data.table::is.data.table(dat_orig[[name]][[subname]])) {
                 data_equal[[name]][[subname]] <- compareDataTablesUsingClassOfFirst(dat_orig[[name]][[subname]], dat[[name]][[subname]])
+                # This caused trouble when converting character to POSIXct:
                 #data_equal[[name]][[subname]] <- compareDataTablesUsingClassOfSecond(dat_orig[[name]][[subname]], dat[[name]][[subname]])
             }
             else if("SpatialPolygonsDataFrame" %in% class(dat_orig[[name]][[subname]])){
@@ -780,29 +783,11 @@ compareProjectToStoredOutputFiles <- function(projectPath, projectPath_original 
     
     atNotTRUE <- !uallTests %in% TRUE
     
-    
-    
     if(any(atNotTRUE)) {
         out <- uallTests[atNotTRUE]
+        print(allTests)
         warning(paste(names(out), out, collapse = ",", sep = "-"))
-        
-        if(length(dat_orig[["StoxBiotic"]])) {
-            p <- paste(
-                apply(
-                    cbind(
-                        dat_orig[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]], 
-                        dat[["StoxBiotic"]][["SpeciesCategory"]][["SpeciesCategoryKey"]]
-                    ), 
-                    1, 
-                    paste, collapse = " = "
-                ), collapse = "; "
-            )
-            warning(p)
-        }
     }
-     
-    
-    
     
     if(!ok) {
         return(allTests)
@@ -817,6 +802,7 @@ compareDataTablesUsingClassOfFirst <- function(x, y) {
     # Get the classes of the first and second table:
     classes_in_x <- sapply(x, firstClass)
     classes_in_y <- sapply(y, firstClass)
+    
     if(!identical(classes_in_x, classes_in_y)) {
         # Coerce to the class in the memory:
         differ <- names(x)[classes_in_x != classes_in_y]

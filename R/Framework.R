@@ -5369,7 +5369,7 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
             cat("", file = filePath)
         }
         else {
-            data.table::fwrite(processOutputOne, filePath, sep = "\t")
+            data.table::fwrite(processOutputOne, filePath, sep = "\t", na = "")
         }
     }
     else if("matrix" %in% class(processOutputOne)) {
@@ -5378,7 +5378,7 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
             cat("", file = filePath)
         }
         else {
-            data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE)
+            data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE, sep = ",", na = "")
         }
     }
     else if(any(getRstoxFrameworkDefinitions("vectorClasses") %in% class(processOutputOne))) {

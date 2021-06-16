@@ -1763,7 +1763,11 @@ saveArgumentFile <- function(projectPath, modelName, processID, argumentName, ar
     )
     
     # Return the file path relative to the project path:
-    relativePath <- sub(projectPath, "", argumentFilePath)
+    #relativePath <- sub(projectPath, "", argumentFilePath)
+    relativePath <- getRelativePath(
+        filePath = argumentFilePath, 
+        projectPath = projectPath
+    )
     
     return(relativePath)
 }
@@ -3518,8 +3522,12 @@ getRelativePath <- function(filePath, projectPath, warn = FALSE) {
     filePath <- path.expand(filePath)
     
     # Remove any double slashes:
-    projectPath <- gsub(pattern="//", replacement="/", x = projectPath)
-    filePath <- gsub(pattern="//", replacement="/", x = filePath)
+    projectPath <- gsub("//", "/", projectPath)
+    filePath <- gsub("//", "/", filePath)
+    
+    # Also translate escaped backslash to single forwardslash:
+    projectPath <- gsub("\\\\", "/", projectPath)
+    filePath <- gsub("\\\\", "/", filePath)
     
     # Check whether the filePath is a relative path already:
     fullFilePath <- file.path(projectPath, filePath)

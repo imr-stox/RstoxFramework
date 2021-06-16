@@ -1763,11 +1763,7 @@ saveArgumentFile <- function(projectPath, modelName, processID, argumentName, ar
     )
     
     # Return the file path relative to the project path:
-    #relativePath <- sub(projectPath, "", argumentFilePath)
-    relativePath <- getRelativePath(
-        filePath = argumentFilePath, 
-        projectPath = projectPath
-    )
+    relativePath <- sub(projectPath, "", argumentFilePath)
     
     return(relativePath)
 }
@@ -3522,12 +3518,8 @@ getRelativePath <- function(filePath, projectPath, warn = FALSE) {
     filePath <- path.expand(filePath)
     
     # Remove any double slashes:
-    projectPath <- gsub("//", "/", projectPath)
-    filePath <- gsub("//", "/", filePath)
-    
-    # Also translate escaped backslash to single forwardslash:
-    projectPath <- gsub("\\\\", "/", projectPath)
-    filePath <- gsub("\\\\", "/", filePath)
+    projectPath <- gsub(pattern="//", replacement="/", x = projectPath)
+    filePath <- gsub(pattern="//", replacement="/", x = filePath)
     
     # Check whether the filePath is a relative path already:
     fullFilePath <- file.path(projectPath, filePath)
@@ -5369,7 +5361,7 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
             cat("", file = filePath)
         }
         else {
-            data.table::fwrite(processOutputOne, filePath, sep = "\t")
+            data.table::fwrite(processOutputOne, filePath, sep = "\t", na = "")
         }
     }
     else if("matrix" %in% class(processOutputOne)) {
@@ -5378,7 +5370,7 @@ reportFunctionOutputOne <- function(processOutputOne, filePath) {
             cat("", file = filePath)
         }
         else {
-            data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE)
+            data.table::fwrite(data.table::as.data.table(processOutputOne), filePath, col.names = FALSE, sep = ",", na = "")
         }
     }
     else if(any(getRstoxFrameworkDefinitions("vectorClasses") %in% class(processOutputOne))) {
